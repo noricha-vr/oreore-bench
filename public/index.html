@@ -11,7 +11,7 @@
             --bg-soft: #f7f8fa;
             --fg: #1a1a1a;
             --fg-soft: #5a5a5a;
-            --muted-fg: #888888;
+            --muted-fg: #6b7280; /* WCAG AA を満たすよう濃く */
             --border: #e5e7eb;
             --border-strong: #d1d5db;
             --primary: #2563eb;        /* 明るい青 */
@@ -77,17 +77,38 @@
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 24px; /* Default padding for smaller screens */
+            padding-left: 24px;
+            padding-right: 24px;
         }
 
         @media (min-width: 768px) {
             .container {
-                padding: 0 48px; /* Larger padding for wider screens */
+                padding-left: 48px;
+                padding-right: 48px;
             }
         }
 
         section {
-            padding: 80px 0;
+            padding-top: 64px;
+            padding-bottom: 64px;
+        }
+        /* Hero は上を短く、下を抑えてカード一覧に自然に流す */
+        section.hero {
+            padding-top: 48px;
+            padding-bottom: 56px;
+        }
+        /* 最後のセクションは下を厚く */
+        section:last-of-type {
+            padding-bottom: 96px;
+        }
+
+        /* bg-gray-50 を section に直付けすると container 幅に収まってしまうので、フルブリード化する */
+        section.bg-gray-50 {
+            background-color: var(--bg-soft);
+            margin-left: calc(50% - 50vw);
+            margin-right: calc(50% - 50vw);
+            padding-left: calc(50vw - 50%);
+            padding-right: calc(50vw - 50%);
         }
 
         /* Utility classes */
@@ -103,6 +124,7 @@
         .grid { display: grid; }
         .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
         .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         .p-4 { padding: 1rem; }
         .p-6 { padding: 1.5rem; }
@@ -182,32 +204,71 @@
 
         .badge {
             display: inline-block;
-            padding: 4px 8px;
+            padding: 5px 10px;
             border-radius: var(--radius-sm);
-            font-size: 0.75rem;
-            font-weight: 600;
+            font-size: 0.8125rem;
+            font-weight: 700;
             line-height: 1;
-            text-transform: uppercase;
+            letter-spacing: 0.02em;
             color: var(--primary-fg);
             white-space: nowrap;
         }
 
-        /* Custom styles for the problem */
+        /* Entry card */
         .theme-card {
             background-color: var(--bg);
             border: 1px solid var(--border);
-            border-left: 5px solid; /* Left border for theme color, color will be set by JS */
+            border-left: 5px solid; /* Theme color set by JS */
             border-radius: var(--radius);
             padding: 1.5rem;
-            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            transition: transform 0.18s, box-shadow 0.18s;
             position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
         }
         .theme-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-4px);
             box-shadow: var(--shadow-md);
-            border-color: var(--primary); /* primary color on hover */
+            /* border-color はあえて変えない（左ボーダーのテーマ色を維持） */
         }
-        /* No separate .theme-card-left-border needed as border-left property handles it */
+        .theme-card .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .theme-card .card-title {
+            font-size: 1.0625rem;
+            font-weight: 700;
+            line-height: 1.4;
+            margin: 0;
+        }
+        .theme-card .card-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8125rem;
+            color: var(--fg-soft);
+            font-weight: 600;
+        }
+        .theme-card .card-note {
+            color: var(--fg-soft);
+            font-size: 0.875rem;
+            line-height: 1.7;
+            margin: 0;
+            flex-grow: 1;
+        }
+        .theme-card .card-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+        .theme-card .card-actions .btn-primary {
+            flex: 0 0 auto;
+        }
 
         .model-dot {
             display: inline-block;
@@ -218,34 +279,48 @@
             /* background-color will be overridden by inline style from JS */
         }
 
-        .step-icon {
-            width: 48px;
-            height: 48px;
-            background-color: var(--bg-soft);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary);
-            font-size: 1.5rem;
+        .step-num {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 3rem;
             font-weight: 700;
-            margin-bottom: 1rem;
+            color: var(--primary);
+            line-height: 1;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.04em;
         }
 
         /* Header Navigation */
         header {
-            padding: 24px 0;
+            padding: 18px 0;
             border-bottom: 1px solid var(--border);
             background-color: var(--bg);
             position: sticky;
             top: 0;
             z-index: 100;
+            backdrop-filter: saturate(180%) blur(8px);
+            background-color: rgba(255,255,255,0.92);
+        }
+        .brand-link {
+            font-size: 1.0625rem;
+            font-weight: 700;
+            color: var(--fg);
+            text-decoration: none;
+            letter-spacing: -0.01em;
+        }
+        .header-nav {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+        @media (max-width: 600px) {
+            .header-nav { gap: 14px; }
+            .header-nav .nav-link:not(:last-child) { display: none; }
         }
         .nav-link {
             color: var(--fg-soft);
             text-decoration: none;
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.875rem;
             transition: color 0.2s;
         }
         .nav-link:hover {
@@ -260,15 +335,41 @@
             border-color: var(--primary);
         }
 
+        /* Filters layout — 2行ペア、ラベルとボタン群を明確に分離 */
+        .filters {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .filter-label {
+            min-width: 64px;
+        }
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
         @media (max-width: 767px) {
-            h1 { font-size: 2rem; }
-            h2 { font-size: 1.75rem; }
-            section { padding: 60px 0; }
+            h1 { font-size: 1.85rem; }
+            h2 { font-size: 1.625rem; }
+            section { padding-top: 48px; padding-bottom: 48px; }
+            section.hero { padding-top: 32px; padding-bottom: 40px; }
             .md\:grid-cols-2 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+            .md\:grid-cols-3 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
             .lg\:grid-cols-3 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-            .ml-8 { margin-left: 0; margin-top: 1rem;} /* Adjust margin for smaller screens */
-            .flex-wrap { flex-direction: column; }
-            .flex-wrap > .text-label { margin-bottom: 0.5rem; }
+            /* Filter はラベル上、ボタン群下に積む */
+            .filter-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
         }
 
         @media (min-width: 768px) and (max-width: 1023px) {
@@ -279,8 +380,11 @@
 <body>
     <header>
         <div class="container flex justify-between items-center">
-            <div class="text-lg font-bold">oreore-bench</div>
-            <nav>
+            <a href="#" class="brand-link">oreore-bench</a>
+            <nav class="header-nav">
+                <a href="#bench-list" class="nav-link">ベンチ一覧</a>
+                <a href="#theme-description" class="nav-link">テーマ</a>
+                <a href="#how-to-use" class="nav-link">使い方</a>
                 <a href="https://github.com/noricha-vr/oreore-bench" target="_blank" rel="noopener noreferrer" class="nav-link">GitHub</a>
             </nav>
         </div>
@@ -288,7 +392,7 @@
 
     <main>
         <!-- Hero Section -->
-        <section class="bg-gray-50">
+        <section class="hero bg-gray-50">
             <div class="container flex flex-col items-center text-center">
                 <h1>同じプロンプト、違うAI。<br>LLMはここまで違う。</h1>
                 <p class="text-lg text-fg-soft mt-4 max-w-2xl">
@@ -297,40 +401,6 @@
                     見て、比べて、実感できるサイトです。
                 </p>
                 <a href="#bench-list" class="btn btn-primary mt-8">ベンチを見る</a>
-
-                <!-- Visual Element for Hero -->
-                <div class="mt-16 w-full max-w-3xl">
-                    <svg viewBox="0 0 800 240" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Prompt Box -->
-                        <rect x="0" y="70" width="180" height="100" rx="12" fill="var(--bg)" stroke="var(--border)" stroke-width="2"/>
-                        <text x="90" y="125" text-anchor="middle" font-size="20" fill="var(--fg)" font-weight="600">プロンプト</text>
-
-                        <!-- Arrows -->
-                        <path d="M190 120 L300 40" stroke="var(--border-strong)" stroke-width="2" marker-end="url(#arrowhead)"/>
-                        <path d="M190 120 L300 120" stroke="var(--border-strong)" stroke-width="2" marker-end="url(#arrowhead)"/>
-                        <path d="M190 120 L300 200" stroke="var(--border-strong)" stroke-width="2" marker-end="url(#arrowhead)"/>
-
-                        <!-- Output Boxes -->
-                        <rect x="310" y="0" width="180" height="80" rx="12" fill="var(--bg)" stroke="var(--border)" stroke-width="2"/>
-                        <rect x="310" y="80" width="180" height="80" rx="12" fill="var(--bg)" stroke="var(--border)" stroke-width="2"/>
-                        <rect x="310" y="160" width="180" height="80" rx="12" fill="var(--bg)" stroke="var(--border)" stroke-width="2"/>
-
-                        <!-- Model Colors for Output Boxes - Using colors directly as they are specific in the prompt -->
-                        <rect x="310" y="0" width="10" height="80" rx="0" ry="0" fill="#4285F4"/> <!-- Google Blue -->
-                        <rect x="310" y="80" width="10" height="80" rx="0" ry="0" fill="#CC785C"/> <!-- Anthropic Orange -->
-                        <rect x="310" y="160" width="10" height="80" rx="0" ry="0" fill="#4285F4"/> <!-- Google Blue -->
-
-                        <text x="400" y="45" text-anchor="middle" font-size="18" fill="var(--fg)">出力 1</text>
-                        <text x="400" y="125" text-anchor="middle" font-size="18" fill="var(--fg)">出力 2</text>
-                        <text x="400" y="205" text-anchor="middle" font-size="18" fill="var(--fg)">出力 3</text>
-
-                        <defs>
-                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
-                                <polygon points="0 0, 10 3.5, 0 7" fill="var(--border-strong)" />
-                            </marker>
-                        </defs>
-                    </svg>
-                </div>
             </div>
         </section>
 
@@ -338,15 +408,23 @@
         <section id="bench-list" class="container">
             <h2 class="text-center mb-12">ベンチマーク一覧</h2>
             <!-- Filters -->
-            <div class="flex flex-wrap items-center gap-4 mb-8">
-                <div class="text-label">テーマ</div>
-                <div id="theme-filters" class="flex flex-wrap gap-2"></div>
-                <div class="text-label ml-8">モデル</div>
-                <div id="model-filters" class="flex flex-wrap gap-2"></div>
+            <div class="filters mb-8">
+                <div class="filter-row">
+                    <div class="text-label filter-label">テーマ</div>
+                    <div id="theme-filters" class="filter-buttons"></div>
+                </div>
+                <div class="filter-row">
+                    <div class="text-label filter-label">モデル</div>
+                    <div id="model-filters" class="filter-buttons"></div>
+                </div>
             </div>
 
-            <div id="entry-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div id="entry-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Entry Cards will be populated here by JS -->
+            </div>
+            <div id="entry-empty" class="text-center text-fg-soft" style="display:none; padding: 64px 0;">
+                <p class="text-base">該当するエントリがありません。</p>
+                <p class="text-sm text-muted mt-2">フィルターを絞りすぎているかもしれません。</p>
             </div>
         </section>
 
@@ -361,7 +439,7 @@
         <!-- Model Description Section -->
         <section id="model-description" class="container">
             <h2 class="text-center mb-12">モデルについて</h2>
-            <div id="models-list" class="flex flex-wrap justify-center gap-8">
+            <div id="models-list" class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Model details will be populated here by JS -->
             </div>
         </section>
@@ -371,33 +449,52 @@
             <h2 class="text-center mb-12">使い方</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
                 <div class="flex flex-col items-center">
-                    <div class="step-icon">1</div>
+                    <div class="step-num">1</div>
                     <h3 class="text-lg font-semibold mb-2">テーマを選ぶ</h3>
-                    <p class="text-muted">様々なベンチマークテーマから気になるものを選びます。</p>
+                    <p class="text-fg-soft">気になるベンチマークテーマを選びます。</p>
                 </div>
                 <div class="flex flex-col items-center">
-                    <div class="step-icon">2</div>
+                    <div class="step-num">2</div>
                     <h3 class="text-lg font-semibold mb-2">各モデルの結果を比べる</h3>
-                    <p class="text-muted">同じプロンプトに対する異なるLLMの出力を比較します。</p>
+                    <p class="text-fg-soft">同じプロンプトに対する LLM ごとの出力を比較します。</p>
                 </div>
                 <div class="flex flex-col items-center">
-                    <div class="step-icon">3</div>
+                    <div class="step-num">3</div>
                     <h3 class="text-lg font-semibold mb-2">プロンプトを見て自分でも試す</h3>
-                    <p class="text-muted">使用されたプロンプトを確認し、実際に自分で試してみましょう。</p>
+                    <p class="text-fg-soft">同じプロンプトをコピーして手元の環境で再現します。</p>
                 </div>
             </div>
         </section>
     </main>
 
     <footer>
-        <div class="container text-center py-8 text-muted text-sm border-t">
-            <div>&copy; 2026 oreore-bench</div>
-            <div class="mt-2">
-                <a href="https://github.com/noricha-vr/oreore-bench" target="_blank" rel="noopener noreferrer" class="nav-link mx-2">GitHub</a>
-                <a href="#" class="nav-link mx-2">Add a model</a> <!-- Placeholder for "Add a model" link -->
+        <div class="container site-footer">
+            <div class="footer-copy">&copy; 2026 oreore-bench</div>
+            <div class="footer-links">
+                <a href="https://github.com/noricha-vr/oreore-bench" target="_blank" rel="noopener noreferrer" class="nav-link">GitHub</a>
+                <a href="https://github.com/noricha-vr/oreore-bench#新しいモデルを追加する" target="_blank" rel="noopener noreferrer" class="nav-link">新しいモデルを追加</a>
             </div>
         </div>
     </footer>
+
+    <style>
+        .site-footer {
+            border-top: 1px solid var(--border);
+            padding: 32px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--fg-soft);
+            font-size: 0.875rem;
+        }
+        .footer-links {
+            display: flex;
+            gap: 24px;
+        }
+        @media (max-width: 600px) {
+            .site-footer { flex-direction: column; gap: 12px; }
+        }
+    </style>
 
     <script>
         const THEMES = {
@@ -483,25 +580,36 @@
                 return themeMatch && modelMatch;
             });
 
+            const emptyEl = document.getElementById('entry-empty');
+            if (filteredEntries.length === 0) {
+                entryListContainer.style.display = 'none';
+                if (emptyEl) emptyEl.style.display = 'block';
+                return;
+            } else {
+                entryListContainer.style.display = '';
+                if (emptyEl) emptyEl.style.display = 'none';
+            }
+
             filteredEntries.forEach(entry => {
                 const theme = THEMES[entry.theme];
                 const model = MODELS[entry.model];
 
                 const card = document.createElement('div');
                 card.className = 'theme-card shadow-sm';
-                card.style.borderLeftColor = theme.color; // Apply theme color to left border
+                card.style.borderLeftColor = theme.color;
 
                 card.innerHTML = `
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="badge" style="background-color: ${theme.color};">${theme.title}</span>
-                        <div class="flex items-center">
+                    <div class="card-header">
+                        <span class="badge" style="background-color: ${theme.color};">${theme.short}</span>
+                        <div class="card-meta">
                             <span class="model-dot" style="background-color: ${model.color};"></span>
-                            <span class="text-sm font-semibold">${model.label}</span>
+                            <span>${model.label}</span>
                         </div>
                     </div>
-                    <p class="text-muted text-sm mb-4">${entry.note}</p>
-                    <div class="flex gap-2">
-                        <a href="./${entry.theme}/${entry.model}/index.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm flex-1">実物を見る</a>
+                    <h3 class="card-title">${theme.title}</h3>
+                    <p class="card-note">${entry.note}</p>
+                    <div class="card-actions">
+                        <a href="./${entry.theme}/${entry.model}/index.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">実物を見る</a>
                         <a href="./${entry.theme}/PROMPT.md" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">プロンプト</a>
                         <a href="https://github.com/noricha-vr/oreore-bench/tree/main/public/${entry.theme}/${entry.model}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">ソース</a>
                     </div>
@@ -538,12 +646,12 @@
                 const model = MODELS[modelKey];
                 const modelDiv = document.createElement('div');
                 modelDiv.className = 'p-4 bg-white rounded-lg shadow-sm border flex items-center gap-4';
-                modelDiv.style.minWidth = '280px';
+                const typeLabel = model.type === 'local' ? 'ローカルLLM' : 'API LLM';
                 modelDiv.innerHTML = `
-                    <span class="model-dot" style="background-color: ${model.color}; width: 12px; height: 12px;"></span>
+                    <span class="model-dot" style="background-color: ${model.color}; width: 12px; height: 12px; flex-shrink: 0;"></span>
                     <div>
                         <h3 class="text-base font-semibold">${model.label}</h3>
-                        <p class="text-muted text-sm">${model.provider} ${model.type === 'local' ? 'ローカルLLM' : 'API LLM'}</p>
+                        <p class="text-muted text-sm" style="margin: 0;">${model.provider} ${typeLabel}</p>
                     </div>
                 `;
                 modelsListContainer.appendChild(modelDiv);
