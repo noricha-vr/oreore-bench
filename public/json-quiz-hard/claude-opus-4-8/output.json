@@ -1,0 +1,184 @@
+{
+  "quiz": [
+    {
+      "id": 1,
+      "question": "大規模言語モデル（LLM）の訓練方法として本文で述べられているものはどれか。",
+      "difficulty": "easy",
+      "choices": [
+        { "label": "A", "text": "ラベル付きデータのみを用いた教師あり学習" },
+        { "label": "B", "text": "膨大なラベルなしテキストを用いた自己教師あり学習または半教師あり学習" },
+        { "label": "C", "text": "報酬関数のみに依存する強化学習" },
+        { "label": "D", "text": "遺伝的アルゴリズムによる進化的学習" }
+      ],
+      "answer": "B",
+      "explanation": "本文では「膨大なラベルなしテキストを使用して自己教師あり学習または半教師あり学習によって訓練が行われる」と明記されている。",
+      "related_topics": ["自己教師あり学習", "半教師あり学習", "ニューラルネットワーク"],
+      "source_excerpt": {
+        "section": "概要",
+        "quote": "膨大なラベルなしテキストを使用して自己教師あり学習または半教師あり学習によって訓練が行われる"
+      }
+    },
+    {
+      "id": 2,
+      "question": "LLMが登場し、自然言語処理研究のパラダイムが転換し始めたのはいつ頃と本文に記載されているか。",
+      "difficulty": "easy",
+      "choices": [
+        { "label": "A", "text": "2012年頃" },
+        { "label": "B", "text": "2015年頃" },
+        { "label": "C", "text": "2018年頃" },
+        { "label": "D", "text": "2021年頃" }
+      ],
+      "answer": "C",
+      "explanation": "本文に「LLMは2018年頃に登場し、さまざまなタスク（仕事）で優れた性能を発揮している」と記されている。",
+      "related_topics": ["自然言語処理", "LLMの歴史"],
+      "source_excerpt": {
+        "section": "概要",
+        "quote": "LLMは2018年頃に登場し、さまざまなタスク（仕事）で優れた性能を発揮している"
+      }
+    },
+    {
+      "id": 3,
+      "question": "本文によれば、LLMがタスクを実行する能力や対応可能範囲は何の関数であるように見えるか。",
+      "difficulty": "medium",
+      "choices": [
+        { "label": "A", "text": "設計における画期的な進歩" },
+        { "label": "B", "text": "アルゴリズムの新規性" },
+        { "label": "C", "text": "データ、パラメータサイズ、計算力など費やされた資源の量" },
+        { "label": "D", "text": "ファインチューニングの回数" }
+      ],
+      "answer": "C",
+      "explanation": "本文では「設計における画期的な進歩には依存せず、LLMに費やされた資源（データ、パラメータサイズ、計算力）の量の関数であるように見える」と説明している。",
+      "related_topics": ["スケーリング", "計算資源"],
+      "source_excerpt": {
+        "section": "概要",
+        "quote": "LLMに費やされた資源（データ、パラメータサイズ、計算力）の量の関数であるように見える"
+      }
+    },
+    {
+      "id": 4,
+      "question": "2023年のメタ分析が示唆するLLMの創造性に関する見解として最も適切なものはどれか。",
+      "difficulty": "medium",
+      "choices": [
+        { "label": "A", "text": "あらゆる測定基準で大規模言語モデルが小規模モデルを上回る創造性を示す" },
+        { "label": "B", "text": "創造性は完全に人間の評価者の主観に依存する" },
+        { "label": "C", "text": "LLMの創造性の優位性は測定基準の選択によるもので、基準を変えると優位性が見られない可能性がある" },
+        { "label": "D", "text": "LLMには創造性は一切認められない" }
+      ],
+      "answer": "C",
+      "explanation": "本文は「これは測定基準の選択によるものであり、創造性によるものではないことが示唆されている」と述べ、異なる測定基準では優位性が見られない可能性を指摘している。",
+      "related_topics": ["メタ分析", "創造性評価"],
+      "source_excerpt": {
+        "section": "概要",
+        "quote": "異なる測定基準を選択した場合、大規模言語モデルの創造性の優位性は見られない可能性が示唆されている"
+      }
+    },
+    {
+      "id": 5,
+      "question": "本文に挙げられている著名な事前訓練データセットの組み合わせとして正しいものはどれか。",
+      "difficulty": "easy",
+      "choices": [
+        { "label": "A", "text": "ImageNet、COCO、CIFAR-10" },
+        { "label": "B", "text": "Common Crawl、The Pile、MassiveText、Wikipedia、GitHub" },
+        { "label": "C", "text": "LibriSpeech、VoxCeleb、AudioSet" },
+        { "label": "D", "text": "MNIST、Fashion-MNIST、SVHN" }
+      ],
+      "answer": "B",
+      "explanation": "本文に「著名な事前訓練データとしては、Common Crawl、The Pile、MassiveText、Wikipedia、GitHubなどが知られている」とある。",
+      "related_topics": ["Common Crawl", "事前訓練データ"],
+      "source_excerpt": {
+        "section": "事前訓練データセット",
+        "quote": "著名な事前訓練データとしては、Common Crawl、The Pile、MassiveText、Wikipedia、GitHubなどが知られている"
+      }
+    },
+    {
+      "id": 6,
+      "question": "2022年10月現在の高品質な言語データ量の推定範囲として本文に示されている値はどれか。",
+      "difficulty": "medium",
+      "choices": [
+        { "label": "A", "text": "1,000億語から1兆語" },
+        { "label": "B", "text": "4兆6,000億語から17兆語" },
+        { "label": "C", "text": "20兆語から50兆語" },
+        { "label": "D", "text": "100兆語以上" }
+      ],
+      "answer": "B",
+      "explanation": "本文には「2022年10月現在、高品質な言語データは4兆6,000億語から17兆語の範囲内にあると推定されている」と記されている。",
+      "related_topics": ["言語データ量", "データ蓄積"],
+      "source_excerpt": {
+        "section": "事前訓練データセット",
+        "quote": "高品質な言語データは4兆6,000億語から17兆語の範囲内にあると推定されている"
+      }
+    },
+    {
+      "id": 7,
+      "question": "Chinchillaスケーリング則において、1つのトークンで訓練するためにパラメータごとにかかる費用として本文に示されている値はどれか。",
+      "difficulty": "hard",
+      "choices": [
+        { "label": "A", "text": "1 FLOPS" },
+        { "label": "B", "text": "2 FLOPS" },
+        { "label": "C", "text": "6 FLOPS" },
+        { "label": "D", "text": "12 FLOPS" }
+      ],
+      "answer": "C",
+      "explanation": "本文には「C_0=6、すなわち、1つのトークンで訓練するにはパラメータごとに6 FLOPSの費用がかかる」と明記されている。",
+      "related_topics": ["Chinchillaスケーリング則", "FLOPS", "訓練費用"],
+      "source_excerpt": {
+        "section": "スケーリング則",
+        "quote": "1つのトークンで訓練するにはパラメータごとに6 FLOPSの費用がかかる"
+      }
+    },
+    {
+      "id": 8,
+      "question": "本文によれば、1つのトークンを推論するのにかかる費用はパラメータあたりどのくらいか。",
+      "difficulty": "hard",
+      "choices": [
+        { "label": "A", "text": "0.1～0.5 FLOPS" },
+        { "label": "B", "text": "1～2 FLOPS" },
+        { "label": "C", "text": "6 FLOPS" },
+        { "label": "D", "text": "10 FLOPS以上" }
+      ],
+      "answer": "B",
+      "explanation": "本文に「1つのトークンを推論する費用はパラメータあたり1～2 FLOPSである」と明記されている。",
+      "related_topics": ["推論費用", "FLOPS"],
+      "source_excerpt": {
+        "section": "スケーリング則",
+        "quote": "1つのトークンを推論する費用はパラメータあたり1～2 FLOPSである"
+      }
+    },
+    {
+      "id": 9,
+      "question": "本文で説明されている「創発的能力（emergent abilities）」の特徴として最も適切なものはどれか。",
+      "difficulty": "medium",
+      "choices": [
+        { "label": "A", "text": "小規模モデルの性能を外挿すれば必ず予測できる" },
+        { "label": "B", "text": "プログラムされ設計された結果として現れる能力である" },
+        { "label": "C", "text": "小規模モデルの性能を外挿することでは予測できないことが多く、発見されるものである" },
+        { "label": "D", "text": "公開前のテスト段階で必ず確認されている" }
+      ],
+      "answer": "C",
+      "explanation": "本文は「こうした能力は『小規模モデルの性能を外挿することでは予測できない』ことが多い」「むしろ『発見される』ものであり」と述べている。",
+      "related_topics": ["創発的能力", "スケーリング則の破綻"],
+      "source_excerpt": {
+        "section": "創発的能力",
+        "quote": "こうした能力は「小規模モデルの性能を外挿することでは予測できない」ことが多い"
+      }
+    },
+    {
+      "id": 10,
+      "question": "Schaefferらが創発的能力について主張している内容として最も適切なものはどれか。",
+      "difficulty": "hard",
+      "choices": [
+        { "label": "A", "text": "創発的能力は予測不可能であり、スケーリング則ではまったく説明できない" },
+        { "label": "B", "text": "創発的能力は予測不可能な形ではなく、滑らかなスケーリング則に従って予測通りに獲得される" },
+        { "label": "C", "text": "創発的能力はパラメータ数とは無関係である" },
+        { "label": "D", "text": "創発的能力は人間の評価者が後付けで定義したものに過ぎない" }
+      ],
+      "answer": "B",
+      "explanation": "本文に「Schaefferらは、創発的な能力は予測不可能な形で獲得されるのではなく、滑らかなスケーリング則に従って予測通りに獲得されると主張している」とある。",
+      "related_topics": ["Schaeffer", "スケーリング則", "創発の解釈"],
+      "source_excerpt": {
+        "section": "創発的能力",
+        "quote": "創発的な能力は予測不可能な形で獲得されるのではなく、滑らかなスケーリング則に従って予測通りに獲得される"
+      }
+    }
+  ]
+}

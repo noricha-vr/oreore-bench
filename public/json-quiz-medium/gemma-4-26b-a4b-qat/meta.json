@@ -1,0 +1,9 @@
+{
+  "theme": "json-quiz-medium",
+  "valid_json": false,
+  "generated_at": "2026-06-30T12:50:14.759Z",
+  "raw_length": 4285,
+  "issues": [
+    "JSON parse failed"
+  ]
+}

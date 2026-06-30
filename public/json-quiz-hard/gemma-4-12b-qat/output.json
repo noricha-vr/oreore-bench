@@ -1,0 +1,184 @@
+{
+  "quiz": [
+    {
+      "id": 1,
+      "question": "大規模言語モデル（LLM）は、主にどのような構造で構成されていますか？",
+      "difficulty": "easy",
+      "choices": [
+        { "label": "A", "text": "多数のパラメータを持つ人工ニューラルネットワーク" },
+        { "label": "B", "text": "単一のルールベースのアルゴリズム" },
+        { "label": "C", "text": "完全に手動で記述された辞書" },
+        { "label": "D", "text": "物理的なハードウェア回路のみ" }
+      ],
+      "answer": "A",
+      "explanation": "LLMは数千万から数十億のパラメータを持つ人工ニューラルネットワークで構成されるコンピュータ言語モデルです。",
+      "related_topics": ["LLMの定義", "ニューラルネットワーク"],
+      "source_excerpt": {
+        "section": "概要",
+        "quote": "多数のパラメータ（数千万から数十億）を持つ人工ニューラルネットワークで構成される"
+      }
+    },
+    {
+      "id": 2,
+      "question": "2018年頃の自然言語処理の研究における主なパラダイムの転換は何ですか？",
+      "difficulty": "medium",
+      "choices": [
+        { "label": "A", "text": "特定のタスクに特化した教師ありモデルから汎用モデルへ" },
+        { "label": "B", "text": "人間による手動翻訳から自動翻訳へ" },
+        { "label": "C", "text": "統計的手法から完全なルールベースへ" },
+        { "label": "D", "text": "音声認識からテキスト生成へ" }
+      ],
+      "answer": "A",
+      "explanation": "自然言語処理の研究の焦点は、特定のタスクに特化したモデルを訓練する以前のパラダイムから転換しました。",
+      "related_topics": ["自然言語処理", "研究の歴史"],
+      "source_excerpt": {
+        "section": "概要",
+        "quote": "特定のタスクに特化した教師ありモデルを訓練するという以前のパラダイムから転換した"
+      }
+    },
+    {
+      "id": 3,
+      "question": "2023年のメタ分析において、LLMの「創造性」についてどのような示唆がなされていますか？",
+      "difficulty": "hard",
+      "choices": [
+        { "label": "A", "text": "LLMは人間よりも高い創造性を持つ" },
+        { "label": "B", "text": "創造性は測定基準の選択に依存するものであり、創造性そのものではない可能性がある" },
+        { "label": "C", "text": "小規模モデルには創造性が全く存在しない" },
+        { "label": "D", "text": "創造性はモデルのパラメータ数に完全に比例する" }
+      ],
+      "answer": "B",
+      "explanation": "創造性の優位性は測定基準の選択によるものであり、創造性そのものによるものではないことが示唆されています。",
+      "related_topics": ["創造性", "メタ分析"],
+      "source_excerpt": {
+        "section": "概要",
+        "quote": "これは測定基準の選択によるものであり、創造性によるものではないことが示唆されている"
+      }
+    },
+    {
+      "id": 4,
+      "question": "以下のうち、LLMの事前訓練データとして言及されていないものはどれですか？",
+      "difficulty": "easy",
+      "choices": [
+        { "label": "A", "text": "Common Crawl" },
+        { "label": "B", "text": "The Pile" },
+        { "label": "C", "text": "MassiveText" },
+        { "label": "D", "text": "Instagram Feed" }
+      ],
+      "answer": "D",
+      "explanation": "記事ではCommon Crawl、The Pile、MassiveText、Wikipedia、GitHubが挙げられていますが、Instagram Feedは含まれていません。",
+      "related_topics": ["事前訓練データ", "データセット"],
+      "source_excerpt": {
+        "section": "事前訓練データセット",
+        "quote": "著名な事前訓練データとしては、Common Crawl、The Pile、MassiveText、Wikipedia、GitHubなどが知られている"
+      }
+    },
+    {
+      "id": 5,
+      "question": "事前訓練データに評価データが混入することで起こる現象を何と呼びますか？",
+      "difficulty": "medium",
+      "choices": [
+        { "label": "A", "text": "データ汚染" },
+        { "label": "B", "text": "過学習" },
+        { "label": "C", "text": "勾配消失" },
+        { "label": "D", "text": "パラメータ崩壊" }
+      ],
+      "answer": "A",
+      "explanation": "事前訓練データに評価データが混入すると、ベンチマーク評価時のモデル性能に影響を与えるデータ汚染が起こります。",
+      "related_topics": ["データ汚染", "ベンチマーク"],
+      "source_excerpt": {
+        "section": "事前訓練データセット",
+        "quote": "事前訓練データに評価データが混入すると、ベンチマーク評価時のモデル性能に影響を与えるデータ汚染が起こる"
+      }
+    },
+    {
+      "id": 6,
+      "question": "スケーリング則において、LLMを特徴づけるための4つのパラメータは何ですか？",
+      "difficulty": "medium",
+      "choices": [
+        { "label": "A", "text": "モデルの大きさ、訓練データセットの大きさ、訓練費用、訓練後の性能" },
+        { "label": "B", "text": "語彙数、層の数、ヘッドの数、隠れ層の次元" },
+        { "label": "C", "text": "訓練時間、GPUの数、メモリ容量、電力消費量" },
+        { "label": "D", "text": "精度、速度、コスト、汎用性" }
+      ],
+      "answer": "A",
+      "explanation": "LLMはモデルの大きさ、訓練データセットの大きさ、訓練費用、訓練後の性能の4つのパラメータで特徴づけられます。",
+      "related_topics": ["スケーリング則", "パラメータ"],
+      "source_excerpt": {
+        "section": "スケーリング則",
+        "quote": "モデルの大きさ、訓練データセットの大きさ、訓練費用、訓練後の性能という4つのパラメータにより特徴づけられる"
+      }
+    },
+    {
+      "id": 7,
+      "question": "Chinchillaスケーリングにおいて、1つのトークンを訓練するのにパラメータごとに必要な費用（$C_0$）はいくらですか？",
+      "difficulty": "hard",
+      "choices": [
+        { "label": "A", "text": "1 FLOPS" },
+        { "label": "B", "text": "2 FLOPS" },
+        { "label": "C", "text": "6 FLOPS" },
+        { "label": "D", "text": "406.4 FLOPS" }
+      ],
+      "answer": "C",
+      "explanation": "統計パラメータ $C_0 = 6$ であり、1つのトークンで訓練するにはパラメータごとに6 FLOPSの費用がかかります。",
+      "related_topics": ["Chinchillaスケーリング", "計算コスト"],
+      "source_excerpt": {
+        "section": "スケーリング則",
+        "quote": "C0 = 6、すなわち、1つのトークンで訓練するにはパラメータごとに6 FLOPSの費用がかかる"
+      }
+    },
+    {
+      "id": 8,
+      "question": "訓練費用と比較して、1つのトークンを推論する費用はパラメータあたりどの程度とされていますか？",
+      "difficulty": "medium",
+      "choices": [
+        { "label": "A", "text": "0.1〜0.5 FLOPS" },
+        { "label": "B", "text": "1〜2 FLOPS" },
+        { "label": "C", "text": "6〜10 FLOPS" },
+        { "label": "D", "text": "100〜200 FLOPS" }
+      ],
+      "answer": "B",
+      "explanation": "1つのトークンを推論する費用はパラメータあたり1〜2 FLOPSです。",
+      "related_topics": ["推論費用", "計算コスト"],
+      "source_excerpt": {
+        "section": "スケーリング則",
+        "quote": "1つのトークンを推論する費用はパラメータあたり1～2 FLOPSである"
+      }
+    },
+    {
+      "id": 9,
+      "question": "「創発的能力（emergent abilities）」とはどのような現象を指しますか？",
+      "difficulty": "medium",
+      "choices": [
+        { "label": "A", "text": "モデルのサイズを大きくすると、小規模モデルとは異なる速度で突然に能力を獲得すること" },
+        { "label": "B", "text": "モデルが学習を停止した後に、自動的に新しいタスクを学習すること" },
+        { "label": "C", "text": "人間がプログラムによって直接モデルに組み込んだ能力" },
+        { "label": "D", "text": "訓練データセットのサイズを減らしても性能が向上すること" }
+      ],
+      "answer": "A",
+      "explanation": "大規模モデルが、小規模モデルとは異なる速度で突然に能力を獲得することを創発的能力と呼びます。",
+      "related_topics": ["創発的能力", "スケーリング"],
+      "source_excerpt": {
+        "section": "創発的能力",
+        "quote": "大規模モデルが、小規模モデルとは異なる速度で突然に能力を獲得することがある。これは「創発的能力」として知られている"
+      }
+    },
+    {
+      "id": 10,
+      "question": "Schaefferらは、創発的能力についてどのような主張をしていますか？",
+      "difficulty": "hard",
+      "choices": [
+        { "label": "A", "text": "創発的能力は完全に予測不可能であり、発見されるものに過ぎない" },
+        { "label": "B", "text": "創発的能力は滑らかなスケーリング則に従って予測通りに獲得される" },
+        { "label": "C", "text": "創発的能力はモデルのパラメータ数に依存しない" },
+        { "label": "D", "text": "創発的能力は訓練データの質にのみ依存する" }
+      ],
+      "answer": "B",
+      "explanation": "Schaefferらは、創発的な能力は予測不可能な形で獲得されるのではなく、滑らかなスケーリング則に従って予測通りに獲得されると主張しています。",
+      "related_topics": ["Schaeffer", "スケーリング則"],
+      "source_excerpt": {
+        "section": "創発的能力",
+        "quote": "創発的な能力は予測不可能な形で獲得されるのではなく、滑らかなスケーリング則に従って予測通りに獲得されると主張している"
+      }
+    }
+  ]
+}

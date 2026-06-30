@@ -1020,6 +1020,74 @@
                     "Reset・パス・終局表示の状態管理が安定しているか",
                     "コード品質: グローバル変数の少なさ・関数分離・モジュール化"
                 ]
+            },
+            "json-quiz-easy": {
+                title: "JSON クイズ (Easy)",
+                short: "JSON / 最小スキーマ",
+                desc: "Wikipedia 記事から 5 問の三択クイズを JSON で抽出。シンプルなスキーマで誰もが通る基準ライン。",
+                color: "#7C3AED",
+                colorDark: "#5B21B6",
+                icon: "fa-solid fa-list-check",
+                difficulty: "低（短文 JSON 出力、フィールド 4 個）",
+                deliverable: "output.json（左右 2 カラム HTML で表示）",
+                criteria: [
+                    "出力が有効な JSON である",
+                    "quiz 配列に 5 件",
+                    "各 question に choices が 3 つ（A/B/C）",
+                    "answer が A/B/C のいずれか",
+                    "JSON 以外の出力（説明文・コードフェンス）が混入していない"
+                ],
+                highlights: [
+                    "JSON 出力タスクの最低ライン",
+                    "全モデルが通過することを期待する基準テスト",
+                    "ここで失敗するモデルはチャット用途以外には不向き"
+                ]
+            },
+            "json-quiz-medium": {
+                title: "JSON クイズ (Medium)",
+                short: "JSON / 基本スキーマ",
+                desc: "Wikipedia 記事から 10 問の四択クイズを JSON で抽出。explanation 付きで現実的な実運用サイズ。",
+                color: "#7C3AED",
+                colorDark: "#5B21B6",
+                icon: "fa-solid fa-list-check",
+                difficulty: "中（中文 JSON 出力、フィールド 5 個）",
+                deliverable: "output.json（左右 2 カラム HTML で表示）",
+                criteria: [
+                    "出力が有効な JSON である",
+                    "quiz 配列に 10 件",
+                    "各 question に choices が 4 つ（A/B/C/D）",
+                    "answer が A/B/C/D のいずれか",
+                    "explanation が空文字でない",
+                    "出力長 4〜10K tokens を破綻なく書き切れる"
+                ],
+                highlights: [
+                    "実運用で最もよく使うサイズ",
+                    "出力長が伸びると小型モデルが構造を保てなくなる典型例",
+                    "MoE モデルが dense モデルより不安定になる現象がここで現れる"
+                ]
+            },
+            "json-quiz-hard": {
+                title: "JSON クイズ (Hard)",
+                short: "JSON / 複雑スキーマ",
+                desc: "10 問の四択 + enum (difficulty) + 配列 (related_topics) + ネスト (source_excerpt)。多次元スキーマ準拠を要求。",
+                color: "#7C3AED",
+                colorDark: "#5B21B6",
+                icon: "fa-solid fa-list-check",
+                difficulty: "高（長文 JSON + enum + 配列 + ネストオブジェクト）",
+                deliverable: "output.json（左右 2 カラム HTML で表示）",
+                criteria: [
+                    "出力が有効な JSON である",
+                    "quiz 配列に 10 件、各 choices 4 つ",
+                    "difficulty が easy/medium/hard の enum",
+                    "related_topics が 1〜4 個の文字列配列",
+                    "source_excerpt.section と quote が空文字でない",
+                    "出力長 10K tokens 超を破綻なく書き切れる"
+                ],
+                highlights: [
+                    "enum / 配列 / ネストオブジェクトを同時に保てるか",
+                    "長文 JSON の終盤でフィールドが脱落しないか",
+                    "本文の引用 (quote) を正確に持ってこられるか"
+                ]
             }
         };
 
@@ -1072,6 +1140,30 @@
                     { label: "Anthropic 公式", href: "https://www.anthropic.com/claude" }
                 ]
             },
+            "gemma-4-12b-qat": {
+                label: "Gemma 4 12B (QAT)",
+                provider: "Google",
+                type: "local",
+                color: "#4285F4",
+                colorDark: "#1A56DB",
+                release: "2026-06-03（QAT は 2026-06-05）",
+                size: "11.95B パラメータ（dense / encoder-free Unified アーキ）",
+                context: "256K tokens（実用 128K 目安）",
+                output: "8K tokens（公式未公表、運用値）",
+                quantization: "QAT q4_0 GGUF / w4a16-ct（vLLM）/ mobile-ct",
+                runtime: "llama.cpp / LM Studio / Ollama / Jan / vLLM / SGLang / Transformers.js",
+                stats: [
+                    { value: "12B", label: "パラメータ", note: "dense（11.95B）" },
+                    { value: "QAT 4-bit", label: "量子化", note: "学習時量子化済み" },
+                    { value: "256K", label: "コンテキスト", note: "実用 128K 目安" },
+                    { value: "8K", label: "最大出力", note: "公式未公表" }
+                ],
+                strengths: "最軽量クラスでも 12B あり日本語が崩れにくい。M1/M2 16GB で快適に動く（QAT 版は約 7GB）。Text + Image + Audio のマルチモーダル対応。",
+                weaknesses: "長文 JSON 構造化や複雑スキーマでは 31B / 26B-A4B に劣る場面あり（今回 json-quiz ベンチで観測）。",
+                links: [
+                    { label: "Google AI 公式", href: "https://ai.google.dev/gemma" }
+                ]
+            },
             "gemma-4-26b-a4b-qat": {
                 label: "Gemma 4 26B-A4B (QAT)",
                 provider: "Google",
@@ -1099,10 +1191,28 @@
         };
 
         const ENTRIES = [
-            { theme: "lp-nishibi", model: "gemma-4-31b",         runner: "gptme (LM Studio)",   note: "ローカルLLM単体の1ショットLP。418行/14KB。" },
-            { theme: "lp-nishibi", model: "claude-opus-4-8",     runner: "Claude Agent SDK",    note: "ローマ数字章番号、SVG西日アーク、メタジョーク3つ。1342行/40KB。" },
-            { theme: "othello",    model: "gemma-4-26b-a4b-qat", runner: "gptme (LM Studio)",   note: "ライトテーマ。CPU AIランダムに圧勝(53-10)。Reset挙動が一度だけ不安定。" },
-            { theme: "othello",    model: "gemma-4-31b",         runner: "gptme (LM Studio)",   note: "ダークBG+鮮緑盤+赤Reset。CPU AIが強く逆転勝利(34-30)。" }
+            { theme: "lp-nishibi", model: "gemma-4-31b",         runner: "gptme (LM Studio)",   note: "ローカルLLM単体の1ショットLP。418行/14KB。", kind: "html" },
+            { theme: "lp-nishibi", model: "claude-opus-4-8",     runner: "Claude Agent SDK",    note: "ローマ数字章番号、SVG西日アーク、メタジョーク3つ。1342行/40KB。", kind: "html" },
+            { theme: "othello",    model: "gemma-4-26b-a4b-qat", runner: "gptme (LM Studio)",   note: "ライトテーマ。CPU AIランダムに圧勝(53-10)。Reset挙動が一度だけ不安定。", kind: "html" },
+            { theme: "othello",    model: "gemma-4-31b",         runner: "gptme (LM Studio)",   note: "ダークBG+鮮緑盤+赤Reset。CPU AIが強く逆転勝利(34-30)。", kind: "html" },
+
+            // json-quiz-easy（5 問三択、最小スキーマ）
+            { theme: "json-quiz-easy",   model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。5/5 問、各 choices 3、answer OK。", kind: "json" },
+            { theme: "json-quiz-easy",   model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。MoE モデルでも easy は崩さず通過。", kind: "json" },
+            { theme: "json-quiz-easy",   model: "gemma-4-31b",         runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。最も出力長は短く完璧。", kind: "json" },
+            { theme: "json-quiz-easy",   model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "✅ スキーマ準拠 PASS。フロンティアモデルとして余裕。", kind: "json" },
+
+            // json-quiz-medium（10 問四択 + explanation）
+            { theme: "json-quiz-medium", model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。12B でも基本スキーマは安定。", kind: "json" },
+            { theme: "json-quiz-medium", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",  note: "❌ JSON parse 失敗。choices フィールドが途中で脱落する典型例。MoE が中規模 JSON で破綻。", kind: "json" },
+            { theme: "json-quiz-medium", model: "gemma-4-31b",         runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。dense 31B は安定。", kind: "json" },
+            { theme: "json-quiz-medium", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "✅ スキーマ準拠 PASS。", kind: "json" },
+
+            // json-quiz-hard（10 問四択 + enum + 配列 + ネスト）
+            { theme: "json-quiz-hard",   model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "✅ 全フィールド準拠（出力長 10K 級でも 12B が踏ん張った）。", kind: "json" },
+            { theme: "json-quiz-hard",   model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。Medium で失敗した MoE が Hard では復活する不思議。", kind: "json" },
+            { theme: "json-quiz-hard",   model: "gemma-4-31b",         runner: "LM Studio API",  note: "✅ enum / 配列 / ネスト全て準拠。", kind: "json" },
+            { theme: "json-quiz-hard",   model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "✅ スキーマ準拠 PASS。", kind: "json" }
         ];
 
         // theme: 'all' | キー（単一選択） / models: 'all' or Set of keys（複数選択。空 Set は全て）
@@ -1192,7 +1302,7 @@
                     </div>
                     <p class="card-note">${entry.note}</p>
                     <div class="card-actions">
-                        <a href="./${entry.theme}/${entry.model}/index.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">実物を見る</a>
+                        <a href="${entry.kind === 'json' ? `./${entry.theme}/${entry.model}/output.html` : `./${entry.theme}/${entry.model}/index.html`}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">実物を見る</a>
                         <a href="./${entry.theme}/prompt.html" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">プロンプト</a>
                         <a href="https://github.com/noricha-vr/oreore-bench/tree/main/public/${entry.theme}/${entry.model}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">ソース</a>
                     </div>

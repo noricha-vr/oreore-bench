@@ -1,0 +1,54 @@
+{
+  "quiz": [
+    {
+      "id": 1,
+      "question": "大規模言語モデル（LLM）の訓練に主に用いられる学習方法はどれか？",
+      "choices": [
+        { "label": "A", "text": "ラベル付きテキストを使った教師あり学習のみ" },
+        { "label": "B", "text": "ラベルなしテキストを使った自己教師あり学習または半教師あり学習" },
+        { "label": "C", "text": "報酬関数のみに基づく強化学習" }
+      ],
+      "answer": "B"
+    },
+    {
+      "id": 2,
+      "question": "記事によれば、LLMが幅広いタスクをこなす能力は主に何に依存しているように見えるか？",
+      "choices": [
+        { "label": "A", "text": "設計における画期的な進歩" },
+        { "label": "B", "text": "LLMに費やされたデータ・パラメータサイズ・計算力などの資源の量" },
+        { "label": "C", "text": "特定のタスクに特化した教師ありモデルとの組み合わせ" }
+      ],
+      "answer": "B"
+    },
+    {
+      "id": 3,
+      "question": "記事で著名な事前訓練データとして挙げられていないものはどれか？",
+      "choices": [
+        { "label": "A", "text": "Common Crawl" },
+        { "label": "B", "text": "Wikipedia" },
+        { "label": "C", "text": "ImageNet" }
+      ],
+      "answer": "C"
+    },
+    {
+      "id": 4,
+      "question": "Chinchillaスケーリング則において、1つのトークンを推論する費用はパラメータあたりどの程度とされているか？",
+      "choices": [
+        { "label": "A", "text": "1〜2 FLOPS" },
+        { "label": "B", "text": "6 FLOPS" },
+        { "label": "C", "text": "約100 FLOPS" }
+      ],
+      "answer": "A"
+    },
+    {
+      "id": 5,
+      "question": "記事における「創発的能力（emergent abilities）」の説明として正しいものはどれか？",
+      "choices": [
+        { "label": "A", "text": "設計者があらかじめプログラムして組み込む能力である" },
+        { "label": "B", "text": "小規模モデルの性能を外挿することで容易に予測できる能力である" },
+        { "label": "C", "text": "小規模モデルとは異なる速度で大規模モデルが突然獲得する、発見される能力である" }
+      ],
+      "answer": "C"
+    }
+  ]
+}
