@@ -325,6 +325,7 @@
             align-items: center;
             gap: 12px;
             margin-bottom: 6px;
+            padding-right: 36px; /* 閉じるボタンとの重なり回避 */
         }
         .modal-dot {
             width: 14px;
@@ -486,7 +487,7 @@
             opacity: 0.85;
         }
 
-        /* Theme info card (テーマについて セクション) */
+        /* Theme info card (テーマについて セクション、クリックでモーダル) */
         .theme-info-card {
             background-color: var(--bg);
             border: 1px solid var(--border);
@@ -495,11 +496,16 @@
             display: flex;
             flex-direction: column;
             gap: 0.75rem;
-            transition: box-shadow 0.18s, transform 0.18s;
+            transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+            cursor: pointer;
+            text-align: left;
+            font-family: inherit;
+            width: 100%;
         }
         .theme-info-card:hover {
             transform: translateY(-2px);
             box-shadow: var(--shadow-md);
+            border-color: var(--primary);
         }
         .theme-info-head {
             display: flex;
@@ -522,12 +528,34 @@
             font-weight: 700;
             margin: 0;
             color: var(--fg);
+            flex-grow: 1;
+        }
+        .theme-info-arrow {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--muted-fg);
+            white-space: nowrap;
         }
         .theme-info-desc {
             color: var(--fg-soft);
             font-size: 0.9375rem;
             line-height: 1.8;
             margin: 0;
+        }
+
+        /* Modal list (テーマモーダルの評価基準・見どころ) */
+        .modal-list {
+            margin: 4px 0 0 0;
+            padding-left: 1.25rem;
+            color: var(--fg-soft);
+            font-size: 0.9375rem;
+            line-height: 1.7;
+        }
+        .modal-list li {
+            margin-bottom: 4px;
+        }
+        .modal-list li::marker {
+            color: var(--muted-fg);
         }
 
         /* Header Navigation */
@@ -811,14 +839,47 @@
                 short: "ネタを真顔で",
                 desc: "「西日で焼く日焼けサロン」というネタ前提を、寡黙でプレミアムな高級ブランド LP として真顔で表現できるか。",
                 color: "#E25C2C",  // テラコッタ
-                icon: "fa-solid fa-pen-ruler"
+                icon: "fa-solid fa-pen-ruler",
+                difficulty: "中（コピーライティング + 配色 + 情報設計）",
+                deliverable: "単一 index.html（CSS/JS インライン化）",
+                criteria: [
+                    "ネタ前提を「冗談っぽさを排して」高級ブランドの語り口で表現できるか",
+                    "Hero / Philosophy / Service / Science / Studio / Testimonial / Footer の 7 セクションを破綻なく構成できるか",
+                    "オレンジ・テラコッタ・ベージュ・ダークブラウンの抑制的なパレットで品格を維持できるか",
+                    "「西日で焼く」ことの真面目すぎる正当化（疑似科学）を自然に書けるか",
+                    "セリフ系見出し + 明朝系本文のタイポグラフィ階層が機能しているか"
+                ],
+                highlights: [
+                    "コピーの詩性（「光は時間との対話」「sunset, the slowest medicine」級が出るか）",
+                    "Hero ビジュアルに SVG 等の独自視覚化を入れてくるか",
+                    "プラン名・料金設計・特典ディテールに「らしさ」を仕込めるか",
+                    "Testimonials の肩書選定（建築家・キュレーター等）と本文の物語性",
+                    "Footer の架空住所や SNS 選定の的確さ（南青山・Are.na・Substack 等）"
+                ]
             },
             "othello": {
                 title: "Othello (Reversi)",
                 short: "ゲームロジック",
                 desc: "HTML/CSS/JS 1 枚で動く 8x8 オセロ。状態管理 / 合法手判定 / CPU AI / UI ハイライト / 終局判定。",
                 color: "#2E7D32",  // 緑
-                icon: "fa-solid fa-chess-board"
+                icon: "fa-solid fa-chess-board",
+                difficulty: "中（ゲームロジック + UI 状態管理）",
+                deliverable: "単一 index.html（CSS/JS インライン化）",
+                criteria: [
+                    "8x8 盤の初期 4 石配置（中央 d4/e5=白、d5/e4=黒）",
+                    "合法手のリアルタイム判定とクリック前ハイライト表示",
+                    "8 方向の挟み込み判定で挟まれた石を全て反転",
+                    "CPU AI が合法手の中から角優先・辺加点・反転数加点で選択",
+                    "合法手なしの自動パス・両者パス時の終局判定・石数による勝敗表示",
+                    "Reset ボタンで初期化、レスポンシブ動作"
+                ],
+                highlights: [
+                    "盤面と石のビジュアル（深緑・グラデーション・影など）",
+                    "合法手ハイライトの分かりやすさ",
+                    "CPU の強さ（同レベルのランダム合法手プレイヤー相手の勝率）",
+                    "Reset・パス・終局表示の状態管理が安定しているか",
+                    "コード品質: グローバル変数の少なさ・関数分離・モジュール化"
+                ]
             }
         };
 
@@ -828,10 +889,10 @@
                 provider: "Google",
                 type: "local",
                 color: "#4285F4",
-                release: "2026-04",
+                release: "2026-04-02",
                 size: "31B パラメータ（dense）",
-                context: "128K tokens",
-                output: "8K tokens (推奨)",
+                context: "256K tokens（実用 128K 目安）",
+                output: "8K tokens（実運用目安）",
                 quantization: "MLX 4-bit / GGUF Q4_K_M 等",
                 runtime: "LM Studio / llama.cpp / Ollama",
                 strengths: "オープンウェイト最上位クラス。コード生成と日本語ライティング両方が強い。HTML/CSS/JS の 1 ショット実装で破綻が少ない。",
@@ -845,10 +906,10 @@
                 provider: "Anthropic",
                 type: "api",
                 color: "#CC785C",
-                release: "2026 年 Q1",
+                release: "2026-05-28",
                 size: "非公開",
-                context: "200K tokens",
-                output: "32K tokens",
+                context: "1M tokens（Microsoft Foundry 経由は 200K）",
+                output: "128K tokens（Batches API は 300K）",
                 quantization: "—（API モデル）",
                 runtime: "Anthropic API / Claude Code / Agent SDK",
                 strengths: "フロンティアモデル。コンセプト理解とコピーライティングが圧倒的。同じプロンプトから架空人物名・メタジョーク・SVG 可視化まで自発的に補完する情報密度。",
@@ -862,10 +923,10 @@
                 provider: "Google",
                 type: "local",
                 color: "#4285F4",
-                release: "2026-04",
+                release: "2026-04-02",
                 size: "26B 総パラメータ / 4B アクティブ（MoE / QAT）",
-                context: "128K tokens",
-                output: "8K tokens (推奨)",
+                context: "256K tokens（実用 128K 目安）",
+                output: "8K tokens（実運用目安）",
                 quantization: "Quantization Aware Training (QAT) 済み 4-bit",
                 runtime: "LM Studio / llama.cpp / Ollama",
                 strengths: "MoE + QAT で 4B アクティブ相当の速度なのに精度は 26B 級。ローカル LLM の現実解として推論速度と品質のバランスが良い。",
@@ -985,19 +1046,54 @@
             themesGridContainer.innerHTML = '';
             for (const themeKey in THEMES) {
                 const theme = THEMES[themeKey];
-                const themeDiv = document.createElement('div');
-                themeDiv.className = 'theme-info-card';
-                themeDiv.innerHTML = `
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'theme-info-card';
+                btn.innerHTML = `
                     <div class="theme-info-head">
                         <div class="theme-info-icon" style="background-color: ${theme.color};">
                             <i class="${theme.icon}" aria-hidden="true"></i>
                         </div>
                         <h3 class="theme-info-title">${theme.title}</h3>
+                        <span class="theme-info-arrow" aria-hidden="true">詳細 <i class="fa-solid fa-chevron-right"></i></span>
                     </div>
                     <p class="theme-info-desc">${theme.desc}</p>
                 `;
-                themesGridContainer.appendChild(themeDiv);
+                btn.onclick = () => openThemeModal(themeKey);
+                themesGridContainer.appendChild(btn);
             }
+        }
+
+        // --- Theme Modal ---
+        function openThemeModal(themeKey) {
+            const theme = THEMES[themeKey];
+            const overlay = document.getElementById('modal-overlay');
+            const body = overlay.querySelector('.modal-body');
+            const criteriaHtml = theme.criteria.map(c => `<li>${c}</li>`).join('');
+            const highlightsHtml = theme.highlights.map(h => `<li>${h}</li>`).join('');
+            body.innerHTML = `
+                <div class="modal-header">
+                    <div class="theme-info-icon" style="background-color: ${theme.color}; width: 32px; height: 32px; border-radius: 8px; font-size: 0.9rem;">
+                        <i class="${theme.icon}" aria-hidden="true"></i>
+                    </div>
+                    <h3 class="modal-title" id="modal-title">${theme.title}</h3>
+                </div>
+                <p class="modal-subtitle">${theme.desc}</p>
+                <dl class="modal-spec">
+                    <dt>難易度</dt><dd>${theme.difficulty}</dd>
+                    <dt>成果物</dt><dd>${theme.deliverable}</dd>
+                </dl>
+                <div class="modal-section">
+                    <h4>評価基準</h4>
+                    <ul class="modal-list">${criteriaHtml}</ul>
+                </div>
+                <div class="modal-section">
+                    <h4>見どころ</h4>
+                    <ul class="modal-list">${highlightsHtml}</ul>
+                </div>
+            `;
+            overlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
         }
 
         // --- Model Description Rendering ---
@@ -1060,7 +1156,7 @@
             document.body.style.overflow = 'hidden';
         }
 
-        function closeModelModal() {
+        function closeModal() {
             const overlay = document.getElementById('modal-overlay');
             overlay.classList.remove('open');
             document.body.style.overflow = '';
@@ -1070,12 +1166,12 @@
         document.addEventListener('DOMContentLoaded', () => {
             const overlay = document.getElementById('modal-overlay');
             const closeBtn = document.getElementById('modal-close');
-            closeBtn.addEventListener('click', closeModelModal);
+            closeBtn.addEventListener('click', closeModal);
             overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) closeModelModal();
+                if (e.target === overlay) closeModal();
             });
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && overlay.classList.contains('open')) closeModelModal();
+                if (e.key === 'Escape' && overlay.classList.contains('open')) closeModal();
             });
         });
 
