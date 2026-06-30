@@ -3,491 +3,559 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>oreore-bench</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>oreore-bench トップページ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #ffffff;
+            --bg-soft: #f7f8fa;
             --fg: #1a1a1a;
-            --fg-soft: #4a4a4a;
-            --card: #fafafa;
-            --card-hover: #f3f3f3;
-            --primary: #1a1a1a;
-            --primary-fg: #ffffff;
-            --accent: #c0392b;
-            --muted: #f5f5f5;
+            --fg-soft: #5a5a5a;
             --muted-fg: #888888;
-            --border: #e8e8e8;
-            --radius: 16px;
-        }
-
-        *, *::before, *::after {
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
+            --border: #e5e7eb;
+            --border-strong: #d1d5db;
+            --primary: #2563eb;        /* 明るい青 */
+            --primary-hover: #1d4ed8;
+            --primary-fg: #ffffff;
+            --accent: #f59e0b;          /* オレンジ（CTA 等） */
+            --success: #10b981;
+            --radius: 12px;
+            --radius-sm: 6px;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -1px rgba(0,0,0,0.04);
         }
 
         body {
+            font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+            margin: 0;
+            padding: 0;
             background-color: var(--bg);
             color: var(--fg);
-            font-family: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
-            font-weight: 500;
-            line-height: 1.9;
-            letter-spacing: 0.08em;
-            margin: 0;
-            padding: 120px 0;
+            line-height: 1.7;
+            font-size: 0.95rem;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
 
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 0 48px;
-        }
-
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
+        h1 {
             font-weight: 700;
-            line-height: 1.4;
-            letter-spacing: 0.08em;
+            font-size: 2.5rem;
+            line-height: 1.3;
+            letter-spacing: -0.02em;
             color: var(--fg);
+            margin-top: 0;
+            margin-bottom: 0;
         }
 
-        a {
-            color: var(--fg);
-            text-decoration: underline;
-            transition: color 0.3s ease;
-        }
-
-        a:hover {
-            color: var(--accent);
-        }
-
-        .font-serif {
-            font-family: 'Cormorant Garamond', 'Noto Serif JP', serif;
-            letter-spacing: 0.05em;
-        }
-        
-        .accent-text {
-            color: var(--accent);
-        }
-
-        /* --- Header --- */
-        .site-header {
-            text-align: left;
-            margin-bottom: 96px;
-        }
-
-        .site-header .title {
+        h2 {
+            font-weight: 700;
             font-size: 2rem;
-            margin: 0 0 8px 0;
+            line-height: 1.3;
+            letter-spacing: -0.02em;
+            color: var(--fg);
+            margin-top: 0;
+            margin-bottom: 0;
         }
 
-        .site-header .tagline {
-            font-size: 1rem;
-            margin: 0 0 24px 0;
-            color: var(--fg-soft);
-            max-width: 60ch;
-        }
-        
-        .site-header .stats {
-            display: flex;
-            gap: 24px;
-            align-items: center;
-            font-size: 0.875rem;
-            color: var(--fg-soft);
-        }
-
-        .site-header .stats .stat-item span {
+        h3 {
+            font-weight: 600;
             font-size: 1.25rem;
-        }
-
-        .site-header .github-link {
-            margin-left: auto;
-            font-size: 0.875rem;
-            text-decoration: none;
-            border: 1px solid var(--border);
-            padding: 8px 16px;
-            border-radius: var(--radius);
-            transition: background-color 0.3s ease, border-color 0.3s ease;
-        }
-
-        .site-header .github-link:hover {
-            background-color: var(--card);
-            border-color: var(--card-hover);
+            line-height: 1.5;
             color: var(--fg);
+            margin-top: 0;
+            margin-bottom: 0;
         }
 
-        /* --- Filters --- */
-        .filters {
-            margin-bottom: 32px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
+        .text-label {
+            font-weight: 600;
+            font-size: 0.8125rem;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            color: var(--fg-soft);
         }
 
-        .filter-group {
-            display: flex;
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px; /* Default padding for smaller screens */
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                padding: 0 48px; /* Larger padding for wider screens */
+            }
+        }
+
+        section {
+            padding: 80px 0;
+        }
+
+        /* Utility classes */
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .justify-between { justify-content: space-between; }
+        .flex-col { flex-direction: column; }
+        .flex-wrap { flex-wrap: wrap; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-4 { gap: 1rem; }
+        .gap-8 { gap: 2rem; }
+        .grid { display: grid; }
+        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .p-4 { padding: 1rem; }
+        .p-6 { padding: 1.5rem; }
+        .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+        .px-4 { padding-left: 1rem; padding-right: 1rem; }
+        .mt-4 { margin-top: 1rem; }
+        .mt-8 { margin-top: 2rem; }
+        .mt-16 { margin-top: 4rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mb-8 { margin-bottom: 2rem; }
+        .mb-12 { margin-bottom: 3rem; }
+        .mb-16 { margin-bottom: 4rem; }
+        .ml-8 { margin-left: 2rem; }
+        .rounded-md { border-radius: var(--radius-sm); }
+        .rounded-lg { border-radius: var(--radius); }
+        .shadow-sm { box-shadow: var(--shadow-sm); }
+        .shadow-md { box-shadow: var(--shadow-md); }
+        .bg-white { background-color: var(--bg); }
+        .bg-gray-50 { background-color: var(--bg-soft); }
+        .border { border: 1px solid var(--border); }
+        .border-gray-200 { border-color: var(--border); }
+        .border-t { border-top: 1px solid var(--border); }
+        .text-center { text-align: center; }
+        .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+        .text-base { font-size: 1rem; line-height: 1.5rem; }
+        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+        .text-xs { font-size: 0.75rem; line-height: 1rem; }
+        .text-primary { color: var(--primary); }
+        .text-fg-soft { color: var(--fg-soft); }
+        .text-muted { color: var(--muted-fg); }
+        .font-bold { font-weight: 700; }
+        .font-semibold { font-weight: 600; }
+        .max-w-2xl { max-width: 42rem; }
+        .max-w-3xl { max-width: 48rem; }
+        .w-full { width: 100%; }
+        .flex-1 { flex: 1 1 0%; }
+
+
+        .btn {
+            display: inline-flex;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 8px 24px;
-        }
-        
-        .filter-group .label {
-            font-size: 0.875rem;
-            color: var(--muted-fg);
-            width: 80px;
-        }
-
-        .filter-link {
-            font-size: 1rem;
-            font-weight: 500;
-            color: var(--fg-soft);
-            text-decoration: none;
-            padding-bottom: 4px;
-            border-bottom: 2px solid transparent;
-            transition: color 0.3s ease, border-color 0.3s ease;
-            cursor: pointer;
-        }
-
-        .filter-link:hover {
-            color: var(--fg);
-        }
-        
-        .filter-link.active {
-            color: var(--fg);
-            border-bottom-color: var(--accent);
-        }
-
-        /* --- Counter --- */
-        .counter {
-            margin-bottom: 96px;
-            font-size: 1.125rem;
-            color: var(--muted-fg);
-        }
-
-        .counter span {
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
-
-        /* --- Entries Grid --- */
-        .entries-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 120px 48px;
-        }
-
-        .entry-card {
-            background-color: var(--card);
-            border-radius: var(--radius);
-            padding: 32px;
-            transition: background-color 0.3s ease;
-        }
-
-        .entry-card:hover {
-            background-color: var(--card-hover);
-        }
-        
-        .entry-card .theme-title {
-            font-size: 0.875rem;
-            color: var(--muted-fg);
-            margin: 0;
-        }
-        
-        .entry-card .model-label {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin: 4px 0 16px 0;
-        }
-        
-        .entry-card .note {
-            font-size: 0.95rem;
-            color: var(--fg-soft);
-            margin: 0 0 32px 0;
-            min-height: 5em;
-        }
-        
-        .entry-card .links {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-        
-        .entry-card .card-link {
-            display: inline-block;
-            font-size: 0.875rem;
-            font-weight: 700;
-            text-decoration: none;
+            justify-content: center;
             padding: 10px 20px;
-            border-radius: 99px; /* pill shape */
-            transition: background-color 0.3s ease, color 0.3s ease;
-            border: 1px solid transparent;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s, color 0.2s;
+            text-decoration: none;
+            line-height: 1;
+            white-space: nowrap;
         }
-        
-        .entry-card .card-link.primary {
+
+        .btn-primary {
             background-color: var(--primary);
             color: var(--primary-fg);
+            border: 1px solid var(--primary);
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
         }
 
-        .entry-card .card-link.primary:hover {
-            background-color: var(--fg-soft);
-            color: var(--primary-fg);
-        }
-        
-        .entry-card .card-link.secondary {
-            background-color: transparent;
-            color: var(--fg-soft);
-            border-color: var(--border);
-        }
-
-        .entry-card .card-link.secondary:hover {
+        .btn-secondary {
             background-color: var(--bg);
-            border-color: var(--fg-soft);
+            color: var(--fg);
+            border: 1px solid var(--border-strong);
         }
-
-        /* --- Footer --- */
-        .site-footer {
-            margin-top: 120px;
-            padding-top: 48px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .btn-sm {
+            padding: 8px 16px;
             font-size: 0.875rem;
-            color: var(--muted-fg);
-        }
-        
-        /* --- Responsive --- */
-        @media (max-width: 900px) {
-            .entries-grid {
-                grid-template-columns: 1fr;
-                gap: 96px;
-            }
         }
 
-        @media (max-width: 768px) {
-            body {
-                padding: 48px 0;
-                letter-spacing: 0.06em;
-            }
-            .container {
-                padding: 0 24px;
-            }
-            .site-header {
-                margin-bottom: 64px;
-            }
-            .site-header .stats {
-                flex-wrap: wrap;
-            }
-            .site-header .github-link {
-                display: none;
-            }
-             .counter {
-                margin-bottom: 64px;
-            }
-            .site-footer {
-                flex-direction: column;
-                gap: 16px;
-                text-align: center;
-            }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 1;
+            text-transform: uppercase;
+            color: var(--primary-fg);
+            white-space: nowrap;
+        }
+
+        /* Custom styles for the problem */
+        .theme-card {
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 5px solid; /* Left border for theme color, color will be set by JS */
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            position: relative;
+        }
+        .theme-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary); /* primary color on hover */
+        }
+        /* No separate .theme-card-left-border needed as border-left property handles it */
+
+        .model-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+            /* background-color will be overridden by inline style from JS */
+        }
+
+        .step-icon {
+            width: 48px;
+            height: 48px;
+            background-color: var(--bg-soft);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        /* Header Navigation */
+        header {
+            padding: 24px 0;
+            border-bottom: 1px solid var(--border);
+            background-color: var(--bg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-link {
+            color: var(--fg-soft);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .nav-link:hover {
+            color: var(--primary);
+        }
+
+        /* Filter button specific styles */
+        #theme-filters .btn-secondary.active,
+        #model-filters .btn-secondary.active {
+            background-color: var(--primary);
+            color: var(--primary-fg);
+            border-color: var(--primary);
+        }
+
+        @media (max-width: 767px) {
+            h1 { font-size: 2rem; }
+            h2 { font-size: 1.75rem; }
+            section { padding: 60px 0; }
+            .md\:grid-cols-2 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+            .lg\:grid-cols-3 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+            .ml-8 { margin-left: 0; margin-top: 1rem;} /* Adjust margin for smaller screens */
+            .flex-wrap { flex-direction: column; }
+            .flex-wrap > .text-label { margin-bottom: 0.5rem; }
+        }
+
+        @media (min-width: 768px) and (max-width: 1023px) {
+            .lg\:grid-cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header class="site-header" id="site-header">
-            <!-- Header content will be generated by JS -->
-        </header>
+    <header>
+        <div class="container flex justify-between items-center">
+            <div class="text-lg font-bold">oreore-bench</div>
+            <nav>
+                <a href="https://github.com/noricha-vr/oreore-bench" target="_blank" rel="noopener noreferrer" class="nav-link">GitHub</a>
+            </nav>
+        </div>
+    </header>
 
-        <main>
-            <section class="filters" id="filters-container">
-                <!-- Filters will be generated by JS -->
-            </section>
-            
-            <div class="counter font-serif" id="entries-counter">
-                <!-- Counter will be generated by JS -->
+    <main>
+        <!-- Hero Section -->
+        <section class="bg-gray-50">
+            <div class="container flex flex-col items-center text-center">
+                <h1>同じプロンプト、違うAI。<br>LLMはここまで違う。</h1>
+                <p class="text-lg text-fg-soft mt-4 max-w-2xl">
+                    同じ依頼を異なるLLMに投げかけたらどうなるか。
+                    多角的なベンチマークで、それぞれのAIの特性と出力の差を、
+                    見て、比べて、実感できるサイトです。
+                </p>
+                <a href="#bench-list" class="btn btn-primary mt-8">ベンチを見る</a>
+
+                <!-- Visual Element for Hero -->
+                <div class="mt-16 w-full max-w-3xl">
+                    <svg viewBox="0 0 800 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Prompt Box -->
+                        <rect x="0" y="70" width="180" height="100" rx="12" fill="var(--bg)" stroke="var(--border)" stroke-width="2"/>
+                        <text x="90" y="125" text-anchor="middle" font-size="20" fill="var(--fg)" font-weight="600">プロンプト</text>
+
+                        <!-- Arrows -->
+                        <path d="M190 120 L300 40" stroke="var(--border-strong)" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        <path d="M190 120 L300 120" stroke="var(--border-strong)" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        <path d="M190 120 L300 200" stroke="var(--border-strong)" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+                        <!-- Output Boxes -->
+                        <rect x="310" y="0" width="180" height="80" rx="12" fill="var(--bg)" stroke="var(--border)" stroke-width="2"/>
+                        <rect x="310" y="80" width="180" height="80" rx="12" fill="var(--bg)" stroke="var(--border)" stroke-width="2"/>
+                        <rect x="310" y="160" width="180" height="80" rx="12" fill="var(--bg)" stroke="var(--border)" stroke-width="2"/>
+
+                        <!-- Model Colors for Output Boxes - Using colors directly as they are specific in the prompt -->
+                        <rect x="310" y="0" width="10" height="80" rx="0" ry="0" fill="#4285F4"/> <!-- Google Blue -->
+                        <rect x="310" y="80" width="10" height="80" rx="0" ry="0" fill="#CC785C"/> <!-- Anthropic Orange -->
+                        <rect x="310" y="160" width="10" height="80" rx="0" ry="0" fill="#4285F4"/> <!-- Google Blue -->
+
+                        <text x="400" y="45" text-anchor="middle" font-size="18" fill="var(--fg)">出力 1</text>
+                        <text x="400" y="125" text-anchor="middle" font-size="18" fill="var(--fg)">出力 2</text>
+                        <text x="400" y="205" text-anchor="middle" font-size="18" fill="var(--fg)">出力 3</text>
+
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="var(--border-strong)" />
+                            </marker>
+                        </defs>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bench List Section -->
+        <section id="bench-list" class="container">
+            <h2 class="text-center mb-12">ベンチマーク一覧</h2>
+            <!-- Filters -->
+            <div class="flex flex-wrap items-center gap-4 mb-8">
+                <div class="text-label">テーマ</div>
+                <div id="theme-filters" class="flex flex-wrap gap-2"></div>
+                <div class="text-label ml-8">モデル</div>
+                <div id="model-filters" class="flex flex-wrap gap-2"></div>
             </div>
 
-            <section class="entries-grid" id="entries-grid">
-                <!-- Entry cards will be generated by JS -->
-            </section>
-        </main>
+            <div id="entry-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Entry Cards will be populated here by JS -->
+            </div>
+        </section>
 
-        <footer class="site-footer">
-            <div class="copyright">&copy; 2024 oreore-bench</div>
-            <a href="https://github.com/noricha-vr/oreore-bench/issues/new?template=add-model.md" target="_blank" rel="noopener noreferrer">Add a model</a>
-        </footer>
-    </div>
+        <!-- Theme Description Section -->
+        <section id="theme-description" class="container bg-gray-50">
+            <h2 class="text-center mb-12">テーマについて</h2>
+            <div id="themes-grid" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Theme details will be populated here by JS -->
+            </div>
+        </section>
+
+        <!-- Model Description Section -->
+        <section id="model-description" class="container">
+            <h2 class="text-center mb-12">モデルについて</h2>
+            <div id="models-list" class="flex flex-wrap justify-center gap-8">
+                <!-- Model details will be populated here by JS -->
+            </div>
+        </section>
+
+        <!-- How to Use Section -->
+        <section id="how-to-use" class="container bg-gray-50">
+            <h2 class="text-center mb-12">使い方</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                <div class="flex flex-col items-center">
+                    <div class="step-icon">1</div>
+                    <h3 class="text-lg font-semibold mb-2">テーマを選ぶ</h3>
+                    <p class="text-muted">様々なベンチマークテーマから気になるものを選びます。</p>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="step-icon">2</div>
+                    <h3 class="text-lg font-semibold mb-2">各モデルの結果を比べる</h3>
+                    <p class="text-muted">同じプロンプトに対する異なるLLMの出力を比較します。</p>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="step-icon">3</div>
+                    <h3 class="text-lg font-semibold mb-2">プロンプトを見て自分でも試す</h3>
+                    <p class="text-muted">使用されたプロンプトを確認し、実際に自分で試してみましょう。</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container text-center py-8 text-muted text-sm border-t">
+            <div>&copy; 2026 oreore-bench</div>
+            <div class="mt-2">
+                <a href="https://github.com/noricha-vr/oreore-bench" target="_blank" rel="noopener noreferrer" class="nav-link mx-2">GitHub</a>
+                <a href="#" class="nav-link mx-2">Add a model</a> <!-- Placeholder for "Add a model" link -->
+            </div>
+        </div>
+    </footer>
 
     <script>
         const THEMES = {
-          "lp-nishibi": {
-            title: "NISHIBI Landing Page",
-            desc: "「西日で焼く日焼けサロン」というネタ前提を、寡黙でプレミアムな高級ブランド LP として真顔で表現できるか。コピー力 / 配色 / 情報設計 / 細部のジョーク密度を見る。"
-          },
-          "othello": {
-            title: "Othello (Reversi)",
-            desc: "HTML/CSS/JS 1 枚で動く 8x8 オセロ。盤面の状態管理、合法手判定、CPU AI のヒューリスティック、UI ハイライト、終局・パスの正しさ。"
-          }
+            "lp-nishibi": {
+                title: "NISHIBI Landing Page",
+                short: "ネタを真顔で",
+                desc: "「西日で焼く日焼けサロン」というネタ前提を、寡黙でプレミアムな高級ブランド LP として真顔で表現できるか。",
+                color: "#E25C2C"  // テラコッタ
+            },
+            "othello": {
+                title: "Othello (Reversi)",
+                short: "ゲームロジック",
+                desc: "HTML/CSS/JS 1 枚で動く 8x8 オセロ。状態管理 / 合法手判定 / CPU AI / UI ハイライト / 終局判定。",
+                color: "#2E7D32"  // 緑
+            }
+        };
+
+        const MODELS = {
+            "gemma-4-31b":         { label: "Gemma 4 31B",          provider: "Google",    type: "local", color: "#4285F4" },
+            "claude-opus-4-8":     { label: "Claude Opus 4.8",      provider: "Anthropic", type: "api",   color: "#CC785C" },
+            "gemma-4-26b-a4b-qat": { label: "Gemma 4 26B-A4B (QAT)", provider: "Google",   type: "local", color: "#4285F4" }
         };
 
         const ENTRIES = [
-          {
-            theme: "lp-nishibi",
-            model: "gemma-4-31b",
-            model_label: "Gemma 4 31B",
-            provider: "Google (local via LM Studio)",
-            runner: "gptme (non-interactive)",
-            note: "ローカル LLM 単体での1ショット LP。418行/14KB。Cormorant Garamond + Noto Serif JP。"
-          },
-          {
-            theme: "lp-nishibi",
-            model: "claude-opus-4-8",
-            model_label: "Claude Opus 4.8",
-            provider: "Anthropic",
-            runner: "Claude Code (Agent SDK / implementer)",
-            note: "ローマ数字章番号、SVG 西日アーク、メタジョーク3つ、創設者名「中道 暁人」まで創出。1342行/40KB。"
-          },
-          {
-            theme: "othello",
-            model: "gemma-4-26b-a4b-qat",
-            model_label: "Gemma 4 26B-A4B (QAT)",
-            provider: "Google (local via LM Studio)",
-            runner: "gptme (non-interactive)",
-            note: "ライトテーマ。CPU AI はランダム黒に圧勝(53-10)。Reset が一度だけ不安定。"
-          },
-          {
-            theme: "othello",
-            model: "gemma-4-31b",
-            model_label: "Gemma 4 31B",
-            provider: "Google (local via LM Studio)",
-            runner: "gptme (non-interactive)",
-            note: "ダーク BG + 鮮緑盤 + 赤 Reset。CPU AI が強くランダム黒に勝利(34-30)。Reset 完璧。"
-          }
+            { theme: "lp-nishibi", model: "gemma-4-31b",         runner: "gptme (LM Studio)",   note: "ローカルLLM単体の1ショットLP。418行/14KB。" },
+            { theme: "lp-nishibi", model: "claude-opus-4-8",     runner: "Claude Agent SDK",    note: "ローマ数字章番号、SVG西日アーク、メタジョーク3つ。1342行/40KB。" },
+            { theme: "othello",    model: "gemma-4-26b-a4b-qat", runner: "gptme (LM Studio)",   note: "ライトテーマ。CPU AIランダムに圧勝(53-10)。Reset挙動が一度だけ不安定。" },
+            { theme: "othello",    model: "gemma-4-31b",         runner: "gptme (LM Studio)",   note: "ダークBG+鮮緑盤+赤Reset。CPU AIが強く逆転勝利(34-30)。" }
         ];
 
-        document.addEventListener('DOMContentLoaded', () => {
-            let currentTheme = 'All';
-            let currentModel = 'All';
+        let activeFilters = {
+            themes: [],
+            models: []
+        };
 
-            const themeList = ['All', ...Object.keys(THEMES)];
-            const modelList = ['All', ...new Set(ENTRIES.map(e => e.model_label))];
-            const totalEntries = ENTRIES.length;
+        // --- Filter Rendering ---
+        function renderFilters() {
+            const themeFilterContainer = document.getElementById('theme-filters');
+            themeFilterContainer.innerHTML = '';
+            for (const themeKey in THEMES) {
+                const theme = THEMES[themeKey];
+                const isActive = activeFilters.themes.includes(themeKey);
+                const button = document.createElement('button');
+                button.className = `btn btn-secondary text-sm ${isActive ? 'active' : ''}`; // Add 'active' class
+                button.textContent = theme.title;
+                button.onclick = () => toggleFilter('themes', themeKey);
+                themeFilterContainer.appendChild(button);
+            }
 
-            const headerContainer = document.getElementById('site-header');
-            const filtersContainer = document.getElementById('filters-container');
-            const counterContainer = document.getElementById('entries-counter');
-            const gridContainer = document.getElementById('entries-grid');
+            const modelFilterContainer = document.getElementById('model-filters');
+            modelFilterContainer.innerHTML = '';
+            for (const modelKey in MODELS) {
+                const model = MODELS[modelKey];
+                const isActive = activeFilters.models.includes(modelKey);
+                const button = document.createElement('button');
+                button.className = `btn btn-secondary text-sm ${isActive ? 'active' : ''}`; // Add 'active' class
+                button.textContent = model.label;
+                button.onclick = () => toggleFilter('models', modelKey);
+                modelFilterContainer.appendChild(button);
+            }
+        }
 
-            function renderHeader() {
-                const themeCount = Object.keys(THEMES).length;
-                const modelCount = new Set(ENTRIES.map(e => e.model)).size;
-                const entryCount = ENTRIES.length;
+        function toggleFilter(type, key) {
+            const filters = activeFilters[type];
+            const index = filters.indexOf(key);
+            if (index > -1) {
+                filters.splice(index, 1);
+            } else {
+                filters.push(key);
+            }
+            renderFilters();
+            renderEntries();
+        }
 
-                headerContainer.innerHTML = `
-                    <h1 class="title font-serif">oreore-bench</h1>
-                    <p class="tagline">「同じプロンプトを違うモデルに投げて、何が出てくるかを残す」ベンチマーク作品集。指標は tokens/sec でも MMLU でもなく、「これは仕事で使えるか」の一点。</p>
-                    <div class="stats">
-                        <div class="stat-item">Themes: <span class="font-serif accent-text">${themeCount}</span></div>
-                        <div class="stat-item">Models: <span class="font-serif accent-text">${modelCount}</span></div>
-                        <div class="stat-item">Entries: <span class="font-serif accent-text">${entryCount}</span></div>
-                        <a href="https://github.com/noricha-vr/oreore-bench" class="github-link" target="_blank" rel="noopener noreferrer">GitHub</a>
+        // --- Entry List Rendering ---
+        function renderEntries() {
+            const entryListContainer = document.getElementById('entry-list');
+            entryListContainer.innerHTML = '';
+
+            const filteredEntries = ENTRIES.filter(entry => {
+                const themeMatch = activeFilters.themes.length === 0 || activeFilters.themes.includes(entry.theme);
+                const modelMatch = activeFilters.models.length === 0 || activeFilters.models.includes(entry.model);
+                return themeMatch && modelMatch;
+            });
+
+            filteredEntries.forEach(entry => {
+                const theme = THEMES[entry.theme];
+                const model = MODELS[entry.model];
+
+                const card = document.createElement('div');
+                card.className = 'theme-card shadow-sm';
+                card.style.borderLeftColor = theme.color; // Apply theme color to left border
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="badge" style="background-color: ${theme.color};">${theme.title}</span>
+                        <div class="flex items-center">
+                            <span class="model-dot" style="background-color: ${model.color};"></span>
+                            <span class="text-sm font-semibold">${model.label}</span>
+                        </div>
+                    </div>
+                    <p class="text-muted text-sm mb-4">${entry.note}</p>
+                    <div class="flex gap-2">
+                        <a href="./${entry.theme}/${entry.model}/index.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm flex-1">実物を見る</a>
+                        <a href="./${entry.theme}/PROMPT.md" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">プロンプト</a>
+                        <a href="https://github.com/noricha-vr/oreore-bench/tree/main/public/${entry.theme}/${entry.model}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">ソース</a>
                     </div>
                 `;
-            }
+                entryListContainer.appendChild(card);
+            });
+        }
 
-            function renderFilters() {
-                const themeFiltersHTML = `
-                    <div class="filter-group">
-                        <span class="label">Theme</span>
-                        ${themeList.map(theme => `
-                            <a class="filter-link theme-filter ${theme === currentTheme ? 'active' : ''}" data-theme="${theme}">
-                                ${THEMES[theme]?.title || 'All'}
-                            </a>
-                        `).join('')}
-                    </div>`;
-
-                const modelFiltersHTML = `
-                    <div class="filter-group">
-                        <span class="label">Model</span>
-                        ${modelList.map(model => `
-                            <a class="filter-link model-filter ${model === currentModel ? 'active' : ''}" data-model="${model}">
-                                ${model}
-                            </a>
-                        `).join('')}
-                    </div>`;
-
-                filtersContainer.innerHTML = themeFiltersHTML + modelFiltersHTML;
-                addFilterListeners();
-            }
-
-            function addFilterListeners() {
-                document.querySelectorAll('.theme-filter').forEach(el => {
-                    el.addEventListener('click', (e) => {
-                        currentTheme = e.target.dataset.theme;
-                        renderFilters();
-                        renderEntries();
-                    });
-                });
-
-                document.querySelectorAll('.model-filter').forEach(el => {
-                    el.addEventListener('click', (e) => {
-                        currentModel = e.target.dataset.model;
-                        renderFilters();
-                        renderEntries();
-                    });
-                });
-            }
-
-            function renderEntries() {
-                const filteredEntries = ENTRIES.filter(entry => {
-                    const themeMatch = currentTheme === 'All' || entry.theme === currentTheme;
-                    const modelMatch = currentModel === 'All' || entry.model_label === currentModel;
-                    return themeMatch && modelMatch;
-                });
-
-                counterContainer.innerHTML = `
-                    Showing <span class="font-serif accent-text">${filteredEntries.length}</span> of ${totalEntries}
+        // --- Theme Description Rendering ---
+        function renderThemeDescriptions() {
+            const themesGridContainer = document.getElementById('themes-grid');
+            themesGridContainer.innerHTML = '';
+            for (const themeKey in THEMES) {
+                const theme = THEMES[themeKey];
+                const themeDiv = document.createElement('div');
+                themeDiv.className = 'p-6 bg-white rounded-lg shadow-sm border';
+                themeDiv.innerHTML = `
+                    <div class="flex items-center gap-4 mb-2">
+                        <!-- Icon Placeholder - Using a simple colored square for now -->
+                        <div style="width: 24px; height: 24px; background-color: ${theme.color}; border-radius: 4px;"></div>
+                        <h3 class="text-base font-semibold">${theme.title}</h3>
+                    </div>
+                    <p class="text-muted text-sm">${theme.desc}</p>
                 `;
-
-                if (filteredEntries.length === 0) {
-                    gridContainer.innerHTML = '<p>No matching entries found.</p>';
-                    return;
-                }
-                
-                gridContainer.innerHTML = filteredEntries.map(entry => {
-                    const viewUrl = `./${entry.theme}/${entry.model}/index.html`;
-                    const promptUrl = `./${entry.theme}/PROMPT.md`;
-                    const sourceUrl = `https://github.com/noricha-vr/oreore-bench/tree/main/public/${entry.theme}/${entry.model}`;
-                    
-                    return `
-                        <div class="entry-card">
-                            <h3 class="theme-title">${THEMES[entry.theme].title}</h3>
-                            <h2 class="model-label">${entry.model_label}</h2>
-                            <p class="note">${entry.note}</p>
-                            <div class="links">
-                                <a href="${viewUrl}" class="card-link primary" target="_blank" rel="noopener noreferrer">VIEW</a>
-                                <a href="${promptUrl}" class="card-link secondary" target="_blank" rel="noopener noreferrer">PROMPT</a>
-                                <a href="${sourceUrl}" class="card-link secondary" target="_blank" rel="noopener noreferrer">SOURCE</a>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
+                themesGridContainer.appendChild(themeDiv);
             }
-            
-            function init() {
-                renderHeader();
-                renderFilters();
-                renderEntries();
-            }
+        }
 
-            init();
+        // --- Model Description Rendering ---
+        function renderModelDescriptions() {
+            const modelsListContainer = document.getElementById('models-list');
+            modelsListContainer.innerHTML = '';
+            for (const modelKey in MODELS) {
+                const model = MODELS[modelKey];
+                const modelDiv = document.createElement('div');
+                modelDiv.className = 'p-4 bg-white rounded-lg shadow-sm border flex items-center gap-4';
+                modelDiv.style.minWidth = '280px';
+                modelDiv.innerHTML = `
+                    <span class="model-dot" style="background-color: ${model.color}; width: 12px; height: 12px;"></span>
+                    <div>
+                        <h3 class="text-base font-semibold">${model.label}</h3>
+                        <p class="text-muted text-sm">${model.provider} ${model.type === 'local' ? 'ローカルLLM' : 'API LLM'}</p>
+                    </div>
+                `;
+                modelsListContainer.appendChild(modelDiv);
+            }
+        }
+
+        // Initial rendering
+        document.addEventListener('DOMContentLoaded', () => {
+            renderFilters();
+            renderEntries();
+            renderThemeDescriptions();
+            renderModelDescriptions();
         });
     </script>
 </body>
