@@ -211,6 +211,11 @@
             white-space: nowrap;
         }
 
+        /* Entry list grid — ユーザー指定 0.5em 上下左右 */
+        .cards-grid {
+            gap: 0.5em;
+        }
+
         /* Entry card */
         .theme-card {
             background-color: var(--bg);
@@ -382,48 +387,84 @@
             color: var(--primary);
         }
 
-        /* Filters — ドロップダウン構造 */
+        /* Filters — 上段: テーマタブ（単一選択） / 下段: モデルチェックボックス（複数選択） */
         .filters {
             display: flex;
-            gap: 24px;
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: 18px;
         }
-        .filter-field {
+        .filter-block {
             display: flex;
             flex-direction: column;
-            gap: 6px;
-            flex: 1 1 220px;
-            min-width: 200px;
+            gap: 8px;
         }
-        .filter-label {
-            display: inline-block;
+
+        /* テーマタブ */
+        .theme-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
         }
-        .filter-select {
-            font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+        .theme-tab {
+            font-family: inherit;
             font-size: 0.9375rem;
             font-weight: 600;
-            color: var(--fg);
+            color: var(--fg-soft);
             background-color: var(--bg);
             border: 1px solid var(--border-strong);
-            border-radius: var(--radius-sm);
-            padding: 10px 36px 10px 14px;
-            line-height: 1.4;
+            border-radius: 999px;
+            padding: 8px 18px;
             cursor: pointer;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1.5L6 6.5L11 1.5' stroke='%231a1a1a' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
-            background-repeat: no-repeat;
-            background-position: right 14px center;
-            transition: border-color 0.18s, box-shadow 0.18s;
+            transition: all 0.18s;
+            white-space: nowrap;
         }
-        .filter-select:hover {
+        .theme-tab:hover {
             border-color: var(--fg-soft);
+            color: var(--fg);
         }
-        .filter-select:focus {
-            outline: none;
+        .theme-tab.active {
+            background-color: var(--fg);
+            border-color: var(--fg);
+            color: var(--bg);
+        }
+
+        /* モデルチェックボックス */
+        .model-checks {
+            display: flex;
+            gap: 8px 14px;
+            flex-wrap: wrap;
+        }
+        .model-check {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            color: var(--fg);
+            cursor: pointer;
+            padding: 6px 12px 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background-color: var(--bg);
+            transition: border-color 0.18s, background-color 0.18s;
+            user-select: none;
+        }
+        .model-check:hover {
+            border-color: var(--border-strong);
+        }
+        .model-check input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin: 0;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+        .model-check.checked {
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+            background-color: rgba(37, 99, 235, 0.06);
+        }
+        .model-check .model-dot {
+            margin-right: 0;
         }
 
         @media (max-width: 767px) {
@@ -476,17 +517,17 @@
                 <h2 class="text-center mb-12">ベンチマーク一覧</h2>
                 <!-- Filters -->
                 <div class="filters mb-8">
-                    <label class="filter-field">
-                        <span class="text-label filter-label">テーマ</span>
-                        <select id="theme-select" class="filter-select"></select>
-                    </label>
-                    <label class="filter-field">
-                        <span class="text-label filter-label">モデル</span>
-                        <select id="model-select" class="filter-select"></select>
-                    </label>
+                    <div class="filter-block">
+                        <div class="text-label filter-label">テーマ</div>
+                        <div id="theme-tabs" class="theme-tabs" role="tablist"></div>
+                    </div>
+                    <div class="filter-block">
+                        <div class="text-label filter-label">モデル</div>
+                        <div id="model-checks" class="model-checks"></div>
+                    </div>
                 </div>
 
-                <div id="entry-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div id="entry-list" class="grid grid-cols-1 md:grid-cols-2 cards-grid">
                     <!-- Entry Cards will be populated here by JS -->
                 </div>
                 <div id="entry-empty" class="text-center text-fg-soft" style="display:none; padding: 64px 0;">
@@ -601,38 +642,48 @@
             { theme: "othello",    model: "gemma-4-31b",         runner: "gptme (LM Studio)",   note: "ダークBG+鮮緑盤+赤Reset。CPU AIが強く逆転勝利(34-30)。" }
         ];
 
-        // 'all' | 各 key（単一選択、デフォルト 'all'）
+        // theme: 'all' | キー（単一選択） / models: 'all' or Set of keys（複数選択。空 Set は全て）
         let activeFilters = {
             theme: 'all',
-            model: 'all'
+            models: new Set()  // 空 = 全モデル表示
         };
 
         // --- Filter Rendering ---
         function renderFilters() {
-            const themeSel = document.getElementById('theme-select');
-            themeSel.innerHTML = '';
-            themeSel.appendChild(makeOption('all', 'すべて'));
-            for (const themeKey in THEMES) {
-                themeSel.appendChild(makeOption(themeKey, THEMES[themeKey].title));
-            }
-            themeSel.value = activeFilters.theme;
-            themeSel.onchange = (e) => { activeFilters.theme = e.target.value; renderEntries(); };
+            // テーマタブ（単一選択）
+            const tabs = document.getElementById('theme-tabs');
+            tabs.innerHTML = '';
+            const themeKeys = ['all', ...Object.keys(THEMES)];
+            themeKeys.forEach(key => {
+                const btn = document.createElement('button');
+                btn.className = 'theme-tab' + (activeFilters.theme === key ? ' active' : '');
+                btn.textContent = key === 'all' ? 'すべて' : THEMES[key].title;
+                btn.onclick = () => { activeFilters.theme = key; renderFilters(); renderEntries(); };
+                tabs.appendChild(btn);
+            });
 
-            const modelSel = document.getElementById('model-select');
-            modelSel.innerHTML = '';
-            modelSel.appendChild(makeOption('all', 'すべて'));
+            // モデルチェックボックス（複数選択）
+            const checks = document.getElementById('model-checks');
+            checks.innerHTML = '';
             for (const modelKey in MODELS) {
-                modelSel.appendChild(makeOption(modelKey, MODELS[modelKey].label));
+                const model = MODELS[modelKey];
+                const label = document.createElement('label');
+                const isChecked = activeFilters.models.has(modelKey);
+                label.className = 'model-check' + (isChecked ? ' checked' : '');
+                label.innerHTML = `
+                    <input type="checkbox" ${isChecked ? 'checked' : ''} />
+                    <span class="model-dot" style="background-color: ${model.color};"></span>
+                    <span>${model.label}</span>
+                `;
+                const cb = label.querySelector('input');
+                cb.onchange = () => {
+                    if (cb.checked) activeFilters.models.add(modelKey);
+                    else activeFilters.models.delete(modelKey);
+                    renderFilters();
+                    renderEntries();
+                };
+                checks.appendChild(label);
             }
-            modelSel.value = activeFilters.model;
-            modelSel.onchange = (e) => { activeFilters.model = e.target.value; renderEntries(); };
-        }
-
-        function makeOption(value, label) {
-            const opt = document.createElement('option');
-            opt.value = value;
-            opt.textContent = label;
-            return opt;
         }
 
         // --- Entry List Rendering ---
@@ -642,7 +693,7 @@
 
             const filteredEntries = ENTRIES.filter(entry => {
                 const themeMatch = activeFilters.theme === 'all' || activeFilters.theme === entry.theme;
-                const modelMatch = activeFilters.model === 'all' || activeFilters.model === entry.model;
+                const modelMatch = activeFilters.models.size === 0 || activeFilters.models.has(entry.model);
                 return themeMatch && modelMatch;
             });
 
