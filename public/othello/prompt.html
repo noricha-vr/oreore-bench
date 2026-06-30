@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>othello プロンプト — oreore-bench</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-soft: #f7f8fa;
+    --fg: #1a1a1a;
+    --fg-soft: #5a5a5a;
+    --muted-fg: #6b7280;
+    --border: #e5e7eb;
+    --primary: #2563eb;
+    --accent: #2E7D32;
+    --accent-dark: #1B5E20;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+    background-color: var(--bg-soft);
+    color: var(--fg);
+    line-height: 1.8;
+    font-size: 0.9375rem;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .hero {
+    padding: 28px 24px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+    color: #ffffff;
+  }
+  .hero-inner { max-width: 760px; margin: 0 auto; }
+  .hero a.back {
+    color: #ffffff;
+    opacity: 0.85;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 12px;
+  }
+  .hero a.back:hover { opacity: 1; }
+  .hero h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: #ffffff;
+    margin-bottom: 4px;
+  }
+  .hero .sub {
+    font-size: 0.9375rem;
+    opacity: 0.9;
+  }
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+  .card {
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .card h2 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin: 28px 0 12px;
+    color: var(--fg);
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+  }
+  .card h2:first-child { margin-top: 0; }
+  .card p { margin-bottom: 14px; color: var(--fg-soft); }
+  .card ul, .card ol { margin: 0 0 16px 1.5rem; color: var(--fg-soft); }
+  .card li { margin-bottom: 4px; }
+  .card code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+    background-color: var(--bg-soft);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--fg);
+  }
+  .card strong { color: var(--fg); font-weight: 700; }
+  .meta {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 0.8125rem;
+    color: var(--muted-fg);
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .meta a { color: var(--muted-fg); font-weight: 600; }
+  .meta a:hover { color: var(--primary); }
+  hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a href="../" class="back">← oreore-bench に戻る</a>
+    <h1>othello プロンプト</h1>
+    <p class="sub">このテーマの凍結プロンプト。新しいモデルで再現する時はこのまま渡してください。</p>
+  </div>
+</header>
+
+<main class="container">
+  <article class="card">
+    <p>HTML+CSS+バニラ JavaScript で 8x8 のオセロを実装してください。ファイルは <code>index.html</code> 1 枚にまとめ、style と script はインライン化してください。</p>
+
+    <h2>要件</h2>
+    <ul>
+      <li>人間（黒） vs CPU（白）</li>
+      <li>初期配置は中央 4 マスに黒白 2 石ずつ</li>
+      <li>合法手はクリック前にハイライト表示</li>
+      <li>8 方向の挟み込み判定で石を反転</li>
+      <li>CPU は角優先・辺加点・反転数加点のヒューリスティック</li>
+      <li>合法手がなければ自動パス</li>
+      <li>両者パスまたは盤面が埋まったら終局して石数で勝敗表示</li>
+      <li>リセットボタンあり</li>
+      <li>レスポンシブ（モバイル対応）</li>
+      <li>絵文字は使わない</li>
+    </ul>
+
+    <p><code>index.html</code> 1 枚で完成させてください。</p>
+
+    <div class="meta">
+      <a href="./PROMPT.md" target="_blank">Markdown 元ファイル</a>
+      <a href="https://github.com/noricha-vr/oreore-bench/blob/main/public/othello/PROMPT.md" target="_blank">GitHub で見る</a>
+    </div>
+  </article>
+</main>
+
+</body>
+</html>
