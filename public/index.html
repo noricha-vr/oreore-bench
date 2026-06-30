@@ -1,396 +1,494 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>oreore-bench — 俺基準の LLM ベンチ</title>
-<meta name="description" content="同じプロンプトを違うモデルに投げて、何が出てくるかを残すベンチマーク。">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Noto+Serif+JP:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #faf8f3;
-    --bg-soft: #f1ede4;
-    --ink: #1a1814;
-    --ink-soft: #4a443c;
-    --muted: #8a8378;
-    --line: #d8d2c4;
-    --accent: #b85c38;
-    --paper: #fefcf7;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body {
-    font-family: "Noto Serif JP", "Cormorant Garamond", serif;
-    background: var(--bg);
-    color: var(--ink);
-    line-height: 1.7;
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-  }
-  a { color: inherit; text-decoration: none; }
-  .container { max-width: 1280px; margin: 0 auto; padding: 0 32px; }
-  @media (max-width: 720px) { .container { padding: 0 20px; } }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>oreore-bench</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a1a;
+            --fg-soft: #4a4a4a;
+            --card: #fafafa;
+            --card-hover: #f3f3f3;
+            --primary: #1a1a1a;
+            --primary-fg: #ffffff;
+            --accent: #c0392b;
+            --muted: #f5f5f5;
+            --muted-fg: #888888;
+            --border: #e8e8e8;
+            --radius: 16px;
+        }
 
-  /* Header */
-  header {
-    padding: 56px 0 32px;
-    border-bottom: 1px solid var(--line);
-  }
-  .brand {
-    font-family: "Cormorant Garamond", serif;
-    font-size: 32px;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: lowercase;
-  }
-  .brand .accent { color: var(--accent); font-style: italic; }
-  .tagline {
-    margin-top: 14px;
-    font-size: 15px;
-    color: var(--ink-soft);
-    max-width: 640px;
-  }
-  .meta-row {
-    margin-top: 24px;
-    display: flex;
-    gap: 24px;
-    flex-wrap: wrap;
-    font-family: "JetBrains Mono", monospace;
-    font-size: 12px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-  .meta-row a { border-bottom: 1px solid var(--line); padding-bottom: 2px; transition: border-color 0.2s; }
-  .meta-row a:hover { border-color: var(--accent); color: var(--accent); }
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
 
-  /* Filters */
-  .filters {
-    padding: 32px 0 24px;
-    border-bottom: 1px solid var(--line);
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 32px;
-  }
-  @media (max-width: 720px) { .filters { grid-template-columns: 1fr; gap: 20px; } }
-  .filter-group .label {
-    font-family: "JetBrains Mono", monospace;
-    font-size: 11px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    margin-bottom: 10px;
-  }
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip {
-    font-family: "JetBrains Mono", monospace;
-    font-size: 12px;
-    padding: 6px 14px;
-    border: 1px solid var(--line);
-    background: var(--paper);
-    color: var(--ink-soft);
-    cursor: pointer;
-    transition: all 0.18s ease;
-    user-select: none;
-    border-radius: 2px;
-  }
-  .chip:hover { border-color: var(--ink-soft); color: var(--ink); }
-  .chip.active {
-    background: var(--ink);
-    color: var(--bg);
-    border-color: var(--ink);
-  }
-  .chip .count {
-    display: inline-block;
-    margin-left: 6px;
-    opacity: 0.55;
-    font-size: 10px;
-  }
+        html {
+            scroll-behavior: smooth;
+        }
 
-  /* Counter */
-  .counter {
-    padding: 20px 0;
-    font-family: "JetBrains Mono", monospace;
-    font-size: 11px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-  }
+        body {
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
+            font-weight: 500;
+            line-height: 1.9;
+            letter-spacing: 0.08em;
+            margin: 0;
+            padding: 120px 0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
 
-  /* Grid */
-  .entries {
-    padding-bottom: 80px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 24px;
-  }
-  .entry {
-    background: var(--paper);
-    border: 1px solid var(--line);
-    padding: 28px 24px 22px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    transition: border-color 0.2s, transform 0.2s;
-  }
-  .entry:hover { border-color: var(--ink-soft); transform: translateY(-2px); }
-  .entry .topline {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    font-family: "JetBrains Mono", monospace;
-    font-size: 10px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-  }
-  .entry .theme { color: var(--accent); }
-  .entry .title {
-    font-family: "Cormorant Garamond", serif;
-    font-size: 26px;
-    font-weight: 500;
-    line-height: 1.3;
-  }
-  .entry .model {
-    font-family: "JetBrains Mono", monospace;
-    font-size: 12px;
-    color: var(--ink-soft);
-    padding-top: 4px;
-    border-top: 1px solid var(--line);
-  }
-  .entry .desc {
-    font-size: 13px;
-    color: var(--ink-soft);
-    flex-grow: 1;
-  }
-  .entry .actions {
-    display: flex;
-    gap: 16px;
-    font-family: "JetBrains Mono", monospace;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    padding-top: 12px;
-    border-top: 1px solid var(--line);
-  }
-  .entry .actions a {
-    border-bottom: 1px solid transparent;
-    padding-bottom: 2px;
-    transition: border-color 0.18s, color 0.18s;
-  }
-  .entry .actions a:hover { border-color: var(--accent); color: var(--accent); }
-  .entry .actions a.primary { color: var(--accent); }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 48px;
+        }
 
-  .empty {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 80px 0;
-    color: var(--muted);
-    font-style: italic;
-  }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
+            font-weight: 700;
+            line-height: 1.4;
+            letter-spacing: 0.08em;
+            color: var(--fg);
+        }
 
-  /* Footer */
-  footer {
-    border-top: 1px solid var(--line);
-    padding: 32px 0 64px;
-    font-family: "JetBrains Mono", monospace;
-    font-size: 11px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 16px;
-  }
-  footer a { border-bottom: 1px solid var(--line); padding-bottom: 2px; }
-  footer a:hover { color: var(--accent); border-color: var(--accent); }
-</style>
+        a {
+            color: var(--fg);
+            text-decoration: underline;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: var(--accent);
+        }
+
+        .font-serif {
+            font-family: 'Cormorant Garamond', 'Noto Serif JP', serif;
+            letter-spacing: 0.05em;
+        }
+        
+        .accent-text {
+            color: var(--accent);
+        }
+
+        /* --- Header --- */
+        .site-header {
+            text-align: left;
+            margin-bottom: 96px;
+        }
+
+        .site-header .title {
+            font-size: 2rem;
+            margin: 0 0 8px 0;
+        }
+
+        .site-header .tagline {
+            font-size: 1rem;
+            margin: 0 0 24px 0;
+            color: var(--fg-soft);
+            max-width: 60ch;
+        }
+        
+        .site-header .stats {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            font-size: 0.875rem;
+            color: var(--fg-soft);
+        }
+
+        .site-header .stats .stat-item span {
+            font-size: 1.25rem;
+        }
+
+        .site-header .github-link {
+            margin-left: auto;
+            font-size: 0.875rem;
+            text-decoration: none;
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: var(--radius);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .site-header .github-link:hover {
+            background-color: var(--card);
+            border-color: var(--card-hover);
+            color: var(--fg);
+        }
+
+        /* --- Filters --- */
+        .filters {
+            margin-bottom: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px 24px;
+        }
+        
+        .filter-group .label {
+            font-size: 0.875rem;
+            color: var(--muted-fg);
+            width: 80px;
+        }
+
+        .filter-link {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--fg-soft);
+            text-decoration: none;
+            padding-bottom: 4px;
+            border-bottom: 2px solid transparent;
+            transition: color 0.3s ease, border-color 0.3s ease;
+            cursor: pointer;
+        }
+
+        .filter-link:hover {
+            color: var(--fg);
+        }
+        
+        .filter-link.active {
+            color: var(--fg);
+            border-bottom-color: var(--accent);
+        }
+
+        /* --- Counter --- */
+        .counter {
+            margin-bottom: 96px;
+            font-size: 1.125rem;
+            color: var(--muted-fg);
+        }
+
+        .counter span {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* --- Entries Grid --- */
+        .entries-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 120px 48px;
+        }
+
+        .entry-card {
+            background-color: var(--card);
+            border-radius: var(--radius);
+            padding: 32px;
+            transition: background-color 0.3s ease;
+        }
+
+        .entry-card:hover {
+            background-color: var(--card-hover);
+        }
+        
+        .entry-card .theme-title {
+            font-size: 0.875rem;
+            color: var(--muted-fg);
+            margin: 0;
+        }
+        
+        .entry-card .model-label {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 4px 0 16px 0;
+        }
+        
+        .entry-card .note {
+            font-size: 0.95rem;
+            color: var(--fg-soft);
+            margin: 0 0 32px 0;
+            min-height: 5em;
+        }
+        
+        .entry-card .links {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .entry-card .card-link {
+            display: inline-block;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 99px; /* pill shape */
+            transition: background-color 0.3s ease, color 0.3s ease;
+            border: 1px solid transparent;
+        }
+        
+        .entry-card .card-link.primary {
+            background-color: var(--primary);
+            color: var(--primary-fg);
+        }
+
+        .entry-card .card-link.primary:hover {
+            background-color: var(--fg-soft);
+            color: var(--primary-fg);
+        }
+        
+        .entry-card .card-link.secondary {
+            background-color: transparent;
+            color: var(--fg-soft);
+            border-color: var(--border);
+        }
+
+        .entry-card .card-link.secondary:hover {
+            background-color: var(--bg);
+            border-color: var(--fg-soft);
+        }
+
+        /* --- Footer --- */
+        .site-footer {
+            margin-top: 120px;
+            padding-top: 48px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+            color: var(--muted-fg);
+        }
+        
+        /* --- Responsive --- */
+        @media (max-width: 900px) {
+            .entries-grid {
+                grid-template-columns: 1fr;
+                gap: 96px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 48px 0;
+                letter-spacing: 0.06em;
+            }
+            .container {
+                padding: 0 24px;
+            }
+            .site-header {
+                margin-bottom: 64px;
+            }
+            .site-header .stats {
+                flex-wrap: wrap;
+            }
+            .site-header .github-link {
+                display: none;
+            }
+             .counter {
+                margin-bottom: 64px;
+            }
+            .site-footer {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <header class="site-header" id="site-header">
+            <!-- Header content will be generated by JS -->
+        </header>
 
-<div class="container">
-  <header>
-    <div class="brand">oreore<span class="accent">·</span>bench</div>
-    <p class="tagline">
-      俺基準のベンチマーク。同じプロンプトを違うモデルに投げて、何が出てくるかを残す。
-      指標は tokens/sec でも MMLU でもなく、「これは仕事で使えるか」の一点。
-    </p>
-    <div class="meta-row">
-      <a href="https://github.com/noricha-vr/oreore-bench" target="_blank" rel="noopener">GitHub</a>
-      <span id="stat-themes">— themes</span>
-      <span id="stat-models">— models</span>
-      <span id="stat-entries">— entries</span>
+        <main>
+            <section class="filters" id="filters-container">
+                <!-- Filters will be generated by JS -->
+            </section>
+            
+            <div class="counter font-serif" id="entries-counter">
+                <!-- Counter will be generated by JS -->
+            </div>
+
+            <section class="entries-grid" id="entries-grid">
+                <!-- Entry cards will be generated by JS -->
+            </section>
+        </main>
+
+        <footer class="site-footer">
+            <div class="copyright">&copy; 2024 oreore-bench</div>
+            <a href="https://github.com/noricha-vr/oreore-bench/issues/new?template=add-model.md" target="_blank" rel="noopener noreferrer">Add a model</a>
+        </footer>
     </div>
-  </header>
 
-  <section class="filters" aria-label="Filters">
-    <div class="filter-group">
-      <div class="label">Theme</div>
-      <div class="chips" id="theme-chips"></div>
-    </div>
-    <div class="filter-group">
-      <div class="label">Model</div>
-      <div class="chips" id="model-chips"></div>
-    </div>
-  </section>
+    <script>
+        const THEMES = {
+          "lp-nishibi": {
+            title: "NISHIBI Landing Page",
+            desc: "「西日で焼く日焼けサロン」というネタ前提を、寡黙でプレミアムな高級ブランド LP として真顔で表現できるか。コピー力 / 配色 / 情報設計 / 細部のジョーク密度を見る。"
+          },
+          "othello": {
+            title: "Othello (Reversi)",
+            desc: "HTML/CSS/JS 1 枚で動く 8x8 オセロ。盤面の状態管理、合法手判定、CPU AI のヒューリスティック、UI ハイライト、終局・パスの正しさ。"
+          }
+        };
 
-  <div class="counter" id="counter">— showing</div>
+        const ENTRIES = [
+          {
+            theme: "lp-nishibi",
+            model: "gemma-4-31b",
+            model_label: "Gemma 4 31B",
+            provider: "Google (local via LM Studio)",
+            runner: "gptme (non-interactive)",
+            note: "ローカル LLM 単体での1ショット LP。418行/14KB。Cormorant Garamond + Noto Serif JP。"
+          },
+          {
+            theme: "lp-nishibi",
+            model: "claude-opus-4-8",
+            model_label: "Claude Opus 4.8",
+            provider: "Anthropic",
+            runner: "Claude Code (Agent SDK / implementer)",
+            note: "ローマ数字章番号、SVG 西日アーク、メタジョーク3つ、創設者名「中道 暁人」まで創出。1342行/40KB。"
+          },
+          {
+            theme: "othello",
+            model: "gemma-4-26b-a4b-qat",
+            model_label: "Gemma 4 26B-A4B (QAT)",
+            provider: "Google (local via LM Studio)",
+            runner: "gptme (non-interactive)",
+            note: "ライトテーマ。CPU AI はランダム黒に圧勝(53-10)。Reset が一度だけ不安定。"
+          },
+          {
+            theme: "othello",
+            model: "gemma-4-31b",
+            model_label: "Gemma 4 31B",
+            provider: "Google (local via LM Studio)",
+            runner: "gptme (non-interactive)",
+            note: "ダーク BG + 鮮緑盤 + 赤 Reset。CPU AI が強くランダム黒に勝利(34-30)。Reset 完璧。"
+          }
+        ];
 
-  <main class="entries" id="entries"></main>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentTheme = 'All';
+            let currentModel = 'All';
 
-  <footer>
-    <div>© 2026 noricha-vr · oreore-bench</div>
-    <div>
-      <a href="https://github.com/noricha-vr/oreore-bench#new-model" target="_blank" rel="noopener">Add a model →</a>
-    </div>
-  </footer>
-</div>
+            const themeList = ['All', ...Object.keys(THEMES)];
+            const modelList = ['All', ...new Set(ENTRIES.map(e => e.model_label))];
+            const totalEntries = ENTRIES.length;
 
-<script>
-  // === Data ===
-  // 新しい作品を追加する時はここに entry を1つ追加するだけでよい。
-  // PROMPT.md / index.html のパスはディレクトリ構造から自動で組み立てる。
-  const THEMES = {
-    "lp-nishibi": {
-      title: "NISHIBI Landing Page",
-      desc: "「西日で焼く日焼けサロン」というネタ前提を、寡黙でプレミアムな高級ブランド LP として真顔で表現できるか。コピー力 / 配色 / 情報設計 / 細部のジョーク密度を見る。"
-    },
-    "othello": {
-      title: "Othello (Reversi)",
-      desc: "HTML/CSS/JS 1 枚で動く 8x8 オセロ。盤面の状態管理、合法手判定、CPU AI のヒューリスティック、UI ハイライト、終局・パスの正しさ。"
-    }
-  };
+            const headerContainer = document.getElementById('site-header');
+            const filtersContainer = document.getElementById('filters-container');
+            const counterContainer = document.getElementById('entries-counter');
+            const gridContainer = document.getElementById('entries-grid');
 
-  const ENTRIES = [
-    {
-      theme: "lp-nishibi",
-      model: "gemma-4-31b",
-      model_label: "Gemma 4 31B",
-      provider: "Google (local via LM Studio)",
-      runner: "gptme (non-interactive)",
-      note: "ローカル LLM 単体での1ショット LP。418行/14KB。Cormorant Garamond + Noto Serif JP。"
-    },
-    {
-      theme: "lp-nishibi",
-      model: "claude-opus-4-8",
-      model_label: "Claude Opus 4.8",
-      provider: "Anthropic",
-      runner: "Claude Code (Agent SDK / implementer)",
-      note: "ローマ数字章番号、SVG 西日アーク、メタジョーク3つ、創設者名「中道 暁人」まで創出。1342行/40KB。"
-    },
-    {
-      theme: "othello",
-      model: "gemma-4-26b-a4b-qat",
-      model_label: "Gemma 4 26B-A4B (QAT)",
-      provider: "Google (local via LM Studio)",
-      runner: "gptme (non-interactive)",
-      note: "ライトテーマ。CPU AI はランダム黒に圧勝(53-10)。Reset が一度だけ不安定。"
-    },
-    {
-      theme: "othello",
-      model: "gemma-4-31b",
-      model_label: "Gemma 4 31B",
-      provider: "Google (local via LM Studio)",
-      runner: "gptme (non-interactive)",
-      note: "ダーク BG + 鮮緑盤 + 赤 Reset。CPU AI が強くランダム黒に勝利(34-30)。Reset 完璧。"
-    }
-  ];
+            function renderHeader() {
+                const themeCount = Object.keys(THEMES).length;
+                const modelCount = new Set(ENTRIES.map(e => e.model)).size;
+                const entryCount = ENTRIES.length;
 
-  // === Render ===
-  const state = { theme: "all", model: "all" };
+                headerContainer.innerHTML = `
+                    <h1 class="title font-serif">oreore-bench</h1>
+                    <p class="tagline">「同じプロンプトを違うモデルに投げて、何が出てくるかを残す」ベンチマーク作品集。指標は tokens/sec でも MMLU でもなく、「これは仕事で使えるか」の一点。</p>
+                    <div class="stats">
+                        <div class="stat-item">Themes: <span class="font-serif accent-text">${themeCount}</span></div>
+                        <div class="stat-item">Models: <span class="font-serif accent-text">${modelCount}</span></div>
+                        <div class="stat-item">Entries: <span class="font-serif accent-text">${entryCount}</span></div>
+                        <a href="https://github.com/noricha-vr/oreore-bench" class="github-link" target="_blank" rel="noopener noreferrer">GitHub</a>
+                    </div>
+                `;
+            }
 
-  const countBy = (key, value) => ENTRIES.filter(e => value === "all" || e[key] === value).length;
+            function renderFilters() {
+                const themeFiltersHTML = `
+                    <div class="filter-group">
+                        <span class="label">Theme</span>
+                        ${themeList.map(theme => `
+                            <a class="filter-link theme-filter ${theme === currentTheme ? 'active' : ''}" data-theme="${theme}">
+                                ${THEMES[theme]?.title || 'All'}
+                            </a>
+                        `).join('')}
+                    </div>`;
 
-  function renderChips(containerId, items, current, onChange) {
-    const el = document.getElementById(containerId);
-    el.innerHTML = "";
-    items.forEach(it => {
-      const chip = document.createElement("button");
-      chip.className = "chip" + (it.key === current ? " active" : "");
-      chip.innerHTML = `${it.label}<span class="count">${it.count}</span>`;
-      chip.onclick = () => { onChange(it.key); };
-      el.appendChild(chip);
-    });
-  }
+                const modelFiltersHTML = `
+                    <div class="filter-group">
+                        <span class="label">Model</span>
+                        ${modelList.map(model => `
+                            <a class="filter-link model-filter ${model === currentModel ? 'active' : ''}" data-model="${model}">
+                                ${model}
+                            </a>
+                        `).join('')}
+                    </div>`;
 
-  function renderFilters() {
-    const themeKeys = Object.keys(THEMES);
-    const modelKeys = [...new Set(ENTRIES.map(e => e.model))];
+                filtersContainer.innerHTML = themeFiltersHTML + modelFiltersHTML;
+                addFilterListeners();
+            }
 
-    const themeItems = [
-      { key: "all", label: "All", count: ENTRIES.length },
-      ...themeKeys.map(k => ({
-        key: k,
-        label: THEMES[k].title.split(" ")[0],
-        count: countBy("theme", k)
-      }))
-    ];
-    const modelItems = [
-      { key: "all", label: "All", count: ENTRIES.length },
-      ...modelKeys.map(k => ({
-        key: k,
-        label: ENTRIES.find(e => e.model === k).model_label,
-        count: countBy("model", k)
-      }))
-    ];
+            function addFilterListeners() {
+                document.querySelectorAll('.theme-filter').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        currentTheme = e.target.dataset.theme;
+                        renderFilters();
+                        renderEntries();
+                    });
+                });
 
-    renderChips("theme-chips", themeItems, state.theme, k => { state.theme = k; renderAll(); });
-    renderChips("model-chips", modelItems, state.model, k => { state.model = k; renderAll(); });
+                document.querySelectorAll('.model-filter').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        currentModel = e.target.dataset.model;
+                        renderFilters();
+                        renderEntries();
+                    });
+                });
+            }
 
-    document.getElementById("stat-themes").textContent = `${themeKeys.length} themes`;
-    document.getElementById("stat-models").textContent = `${modelKeys.length} models`;
-    document.getElementById("stat-entries").textContent = `${ENTRIES.length} entries`;
-  }
+            function renderEntries() {
+                const filteredEntries = ENTRIES.filter(entry => {
+                    const themeMatch = currentTheme === 'All' || entry.theme === currentTheme;
+                    const modelMatch = currentModel === 'All' || entry.model_label === currentModel;
+                    return themeMatch && modelMatch;
+                });
 
-  function renderEntries() {
-    const filtered = ENTRIES.filter(e =>
-      (state.theme === "all" || e.theme === state.theme) &&
-      (state.model === "all" || e.model === state.model)
-    );
+                counterContainer.innerHTML = `
+                    Showing <span class="font-serif accent-text">${filteredEntries.length}</span> of ${totalEntries}
+                `;
 
-    document.getElementById("counter").textContent =
-      `Showing ${filtered.length} of ${ENTRIES.length}`;
+                if (filteredEntries.length === 0) {
+                    gridContainer.innerHTML = '<p>No matching entries found.</p>';
+                    return;
+                }
+                
+                gridContainer.innerHTML = filteredEntries.map(entry => {
+                    const viewUrl = `./${entry.theme}/${entry.model}/index.html`;
+                    const promptUrl = `./${entry.theme}/PROMPT.md`;
+                    const sourceUrl = `https://github.com/noricha-vr/oreore-bench/tree/main/public/${entry.theme}/${entry.model}`;
+                    
+                    return `
+                        <div class="entry-card">
+                            <h3 class="theme-title">${THEMES[entry.theme].title}</h3>
+                            <h2 class="model-label">${entry.model_label}</h2>
+                            <p class="note">${entry.note}</p>
+                            <div class="links">
+                                <a href="${viewUrl}" class="card-link primary" target="_blank" rel="noopener noreferrer">VIEW</a>
+                                <a href="${promptUrl}" class="card-link secondary" target="_blank" rel="noopener noreferrer">PROMPT</a>
+                                <a href="${sourceUrl}" class="card-link secondary" target="_blank" rel="noopener noreferrer">SOURCE</a>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            function init() {
+                renderHeader();
+                renderFilters();
+                renderEntries();
+            }
 
-    const el = document.getElementById("entries");
-    el.innerHTML = "";
-
-    if (filtered.length === 0) {
-      el.innerHTML = `<div class="empty">No entries match this combination — try widening the filter.</div>`;
-      return;
-    }
-
-    filtered.forEach(e => {
-      const theme = THEMES[e.theme];
-      const liveUrl = `./${e.theme}/${e.model}/index.html`;
-      const promptUrl = `./${e.theme}/PROMPT.md`;
-      const ghUrl = `https://github.com/noricha-vr/oreore-bench/tree/main/public/${e.theme}/${e.model}`;
-
-      const card = document.createElement("article");
-      card.className = "entry";
-      card.innerHTML = `
-        <div class="topline">
-          <span class="theme">${e.theme}</span>
-          <span>${e.runner}</span>
-        </div>
-        <h2 class="title">${theme.title}</h2>
-        <div class="model">${e.model_label}<br><span style="opacity:.6">${e.provider}</span></div>
-        <p class="desc">${e.note}</p>
-        <div class="actions">
-          <a href="${liveUrl}" class="primary" target="_blank">View →</a>
-          <a href="${promptUrl}" target="_blank">Prompt</a>
-          <a href="${ghUrl}" target="_blank">Source</a>
-        </div>
-      `;
-      el.appendChild(card);
-    });
-  }
-
-  function renderAll() { renderFilters(); renderEntries(); }
-  renderAll();
-</script>
-
+            init();
+        });
+    </script>
 </body>
 </html>
