@@ -1,0 +1,20 @@
+{
+  "valid_json": true,
+  "generated_at": "2026-06-30T13:41:00.915Z",
+  "raw_length": 8348,
+  "count_ok": true,
+  "schema_pass": true,
+  "question_count": 21,
+  "expected_min": 15,
+  "expected_target": 20,
+  "has_id_pct": 100,
+  "has_originalText_pct": 100,
+  "has_question_pct": 100,
+  "has_options_pct": 100,
+  "has_confidence_pct": 100,
+  "free_option_present_pct": 100,
+  "exceed_options_cap": 0,
+  "duplicate_ids": 0,
+  "duplicate_questions": 0,
+  "issues": []
+}

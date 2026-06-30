@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>extract-questions プロンプト — OreOre-Bench</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff; --bg-soft: #f7f8fa;
+    --fg: #1a1a1a; --fg-soft: #5a5a5a; --muted-fg: #6b7280;
+    --border: #e5e7eb; --primary: #2563eb;
+    --accent: #0d9488; --accent-dark: #0f766e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+         background: var(--bg-soft); color: var(--fg);
+         line-height: 1.8; font-size: 0.9375rem; -webkit-font-smoothing: antialiased; }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .hero { padding: 28px 24px; color: #fff;
+          background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); }
+  .hero-inner { max-width: 760px; margin: 0 auto; }
+  .hero a.back { color: #fff; opacity: 0.85; font-size: 0.875rem;
+                 font-weight: 600; display: inline-block; margin-bottom: 12px; }
+  .hero a.back:hover { opacity: 1; text-decoration: underline; }
+  .hero h1 { font-size: 1.75rem; font-weight: 800;
+             letter-spacing: -0.01em; color: #fff; margin-bottom: 4px; }
+  .hero .sub { font-size: 0.9rem; opacity: 0.9; }
+  .container { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
+  .card { background: var(--bg); border: 1px solid var(--border);
+          border-radius: 14px; padding: 32px;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+  .card h2 { font-size: 1.125rem; font-weight: 700; margin: 28px 0 12px;
+             color: var(--fg); border-left: 3px solid var(--accent); padding-left: 10px; }
+  .card h2:first-of-type { margin-top: 0; }
+  .card p { margin-bottom: 14px; color: var(--fg-soft); }
+  .card ul, .card ol { margin: 0 0 16px 1.5rem; color: var(--fg-soft); }
+  .card li { margin-bottom: 4px; }
+  .card code { font-family: 'JetBrains Mono', monospace; font-size: 0.875rem;
+               background: var(--bg-soft); padding: 2px 6px; border-radius: 4px; color: var(--fg); }
+  .card pre { background: #1a1a1a; color: #e5e7eb;
+              padding: 16px; border-radius: 8px; overflow-x: auto;
+              font-family: 'JetBrains Mono', monospace; font-size: 0.8125rem;
+              line-height: 1.6; margin-bottom: 16px; }
+  .card pre code { background: transparent; color: inherit; padding: 0; }
+  .card strong { color: var(--fg); font-weight: 700; }
+  .meta { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);
+          font-size: 0.8125rem; color: var(--muted-fg);
+          display: flex; gap: 20px; flex-wrap: wrap; }
+  .meta a { color: var(--muted-fg); font-weight: 600; }
+  .meta a:hover { color: var(--primary); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a href="../" class="back">← OreOre-Bench に戻る</a>
+    <h1>extract-questions プロンプト</h1>
+    <p class="sub">AI 出力からユーザーが返答すべき質問を抽出する。本番運用の本番運用スキーマと同等。</p>
+  </div>
+</header>
+
+<main class="container">
+  <article class="card">
+    <p>あなたは、AI アシスタントやコーディングエージェントの出力から<strong>「ユーザーが返答すべき質問」</strong>だけを抽出する UI 変換係です。JSON のみを返してください。説明文・コードフェンス・前置きは禁止。</p>
+
+    <h2>出力スキーマ</h2>
+    <pre><code>{
+  questions: [
+    {
+      id: string,             // "q1" のような一意 ID
+      originalText: string,   // 原文の短い引用
+      question: string,       // ユーザーがそのまま答えられる短い質問文
+      options: [
+        { label: string }     // 0 個以上 12 個まで
+      ],
+      confidence: number      // 0.0〜1.0
+    }
+  ]
+}</code></pre>
+
+    <h2>抽出ルール</h2>
+    <ul>
+      <li><strong>説明・提案・注意事項・単なる見出しは質問にしない</strong></li>
+      <li>ユーザーの返答が必要なもの「だけ」を抽出</li>
+      <li>原文に選択肢が明示されていれば options に入れる</li>
+      <li>はい/いいえ質問には <code>{ label: "はい" }</code> <code>{ label: "いいえ" }</code> を補ってよい</li>
+      <li>「おすすめは〜」のような提案質問には <code>{ label: "承認します" }</code> <code>{ label: "別案で進めたい" }</code> を補ってよい</li>
+      <li><strong>自由記述が想定される質問でも、必ず最後に <code>{ label: "自由に記述する" }</code> を追加</strong></li>
+      <li>options が思いつかない質問は <code>[{ label: "自由に記述する" }]</code> のみ</li>
+      <li>confidence は 0.0〜1.0、原文順で並べる</li>
+      <li>JSON 以外の出力は禁止</li>
+    </ul>
+
+    <h2>入力（AI アシスタントの出力）</h2>
+    <p>本文は <a href="./input.html">入力本文ビュー</a> または <a href="./input.md">input.md</a> を参照。</p>
+
+    <div class="meta">
+      <a href="./PROMPT.md" target="_blank">Markdown 元ファイル</a>
+      <a href="https://github.com/noricha-vr/oreore-bench/blob/main/public/extract-questions/PROMPT.md" target="_blank">GitHub で見る</a>
+    </div>
+  </article>
+</main>
+
+</body>
+</html>

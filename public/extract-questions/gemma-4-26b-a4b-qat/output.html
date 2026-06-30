@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gemma 4 26B-A4B (QAT) — extract-questions / OreOre-Bench</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+<style>
+  :root {
+    --bg: #ffffff; --bg-soft: #f7f8fa;
+    --fg: #1a1a1a; --fg-soft: #4a4a4a; --muted-fg: #6b7280;
+    --border: #e5e7eb; --primary: #2563eb;
+    --accent: #4285F4; --accent-dark: #1A56DB;
+    --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+          background: var(--bg-soft); color: var(--fg);
+          line-height: 1.7; font-size: 0.9375rem; -webkit-font-smoothing: antialiased; }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .hero { padding: 28px 24px 32px; color: #fff;
+           background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); }
+  .hero-inner { max-width: 1200px; margin: 0 auto; }
+  .hero a.back { color: #fff; opacity: 0.85; font-size: 0.875rem;
+                  font-weight: 600; display: inline-block; margin-bottom: 12px; }
+  .hero a.back:hover { opacity: 1; text-decoration: underline; }
+  .hero .tag { display: inline-block; font-size: 0.75rem; font-weight: 800;
+                letter-spacing: 0.06em; text-transform: uppercase;
+                background: rgba(255,255,255,0.22); padding: 5px 12px;
+                border-radius: 999px; margin-bottom: 12px; }
+  .hero h1 { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.01em;
+              color: #fff; margin-bottom: 4px; }
+  .hero .sub { font-size: 0.9rem; opacity: 0.9; }
+
+  .verify-bar { background: var(--bg); border-bottom: 1px solid var(--border);
+                 padding: 14px 24px; font-size: 0.875rem; }
+  .verify-bar-inner { max-width: 1200px; margin: 0 auto;
+                       display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; }
+  .vb-status { display: inline-flex; align-items: center; gap: 6px;
+                font-weight: 800; padding: 4px 12px; border-radius: 999px;
+                font-size: 0.875rem; }
+  .vb-status.pass { background: rgba(16,185,129,0.12); color: #047857; }
+  .vb-status.fail { background: rgba(239,68,68,0.12); color: #b91c1c; }
+  .vb-stat { display: inline-flex; align-items: center; gap: 6px;
+              color: var(--fg-soft); }
+  .vb-stat strong { color: var(--fg); font-weight: 800; }
+  .vb-stat.ng strong { color: var(--danger); }
+  .vb-stat.ok strong { color: var(--success); }
+
+  .panes { max-width: 1200px; margin: 0 auto; padding: 24px;
+            display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 24px; }
+  @media (max-width: 900px) { .panes { grid-template-columns: 1fr; } }
+
+  .pane { background: var(--bg); border: 1px solid var(--border);
+           border-radius: 14px; overflow: hidden; }
+  .pane-header { padding: 16px 20px; border-bottom: 1px solid var(--border);
+                  display: flex; align-items: center; justify-content: space-between;
+                  background: var(--bg-soft); }
+  .pane-header h2 { font-size: 0.875rem; font-weight: 800; letter-spacing: 0.06em;
+                     text-transform: uppercase; color: var(--fg); }
+  .pane-header .pane-meta { font-size: 0.75rem; color: var(--muted-fg); font-weight: 600; }
+  .pane-body { padding: 20px; }
+
+  .input-text { white-space: pre-wrap; font-family: 'Noto Sans JP', sans-serif;
+                 font-size: 0.875rem; line-height: 1.9; color: var(--fg);
+                 max-height: 1400px; overflow-y: auto; }
+  .input-text::-webkit-scrollbar { width: 8px; }
+  .input-text::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* Question card (フォーム UI) */
+  .q-card { border: 1px solid var(--border); border-radius: 10px;
+             padding: 14px 16px; margin-bottom: 10px;
+             background: var(--bg); }
+  .q-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+  .q-num { flex-shrink: 0; width: 24px; height: 24px;
+            background: var(--accent); color: #fff; border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 0.75rem; }
+  .q-text { font-weight: 700; font-size: 0.9375rem; line-height: 1.5;
+             color: var(--fg); flex-grow: 1; }
+  .q-conf { flex-shrink: 0; font-size: 0.6875rem; font-weight: 700;
+             padding: 2px 6px; border-radius: 4px;
+             background: var(--bg-soft); color: var(--muted-fg);
+             font-family: 'JetBrains Mono', monospace; }
+  .q-conf.high { color: #047857; background: rgba(16,185,129,0.12); }
+  .q-conf.low { color: #b45309; background: rgba(245,158,11,0.12); }
+  .q-original { font-size: 0.75rem; color: var(--muted-fg);
+                 padding: 6px 10px; background: var(--bg-soft);
+                 border-radius: 6px; margin-bottom: 8px;
+                 border-left: 2px solid var(--border);
+                 font-style: italic; line-height: 1.5; }
+  .q-original::before { content: "原文: "; font-weight: 700; font-style: normal;
+                         color: var(--fg-soft); }
+  .q-options { list-style: none; padding: 0; margin: 0;
+                display: flex; flex-wrap: wrap; gap: 6px; }
+  .q-option { padding: 5px 10px; border: 1px solid var(--border);
+               border-radius: 6px; font-size: 0.8125rem;
+               color: var(--fg-soft); background: var(--bg-soft); }
+  .q-option.free { color: var(--accent); border-color: var(--accent);
+                    background: var(--bg); font-weight: 600; }
+
+  .error-card { border: 1px solid #fecaca; background: #fef2f2;
+                 color: #991b1b; padding: 16px 20px; border-radius: 10px; }
+  .error-card h3 { font-size: 0.9375rem; font-weight: 800; margin-bottom: 6px; }
+  .raw-output { margin-top: 12px; background: #1a1a1a; color: #e5e7eb;
+                 padding: 12px; border-radius: 6px;
+                 font-family: 'JetBrains Mono', monospace;
+                 font-size: 0.75rem; line-height: 1.6;
+                 overflow-x: auto; max-height: 400px; overflow-y: auto;
+                 white-space: pre-wrap; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a href="../../" class="back">← OreOre-Bench に戻る</a>
+    <span class="tag">extract-questions ・ Google ・ ローカル LLM</span>
+    <h1>Gemma 4 26B-A4B (QAT)</h1>
+    <p class="sub">AI アシスタントの出力からユーザーが答えるべき質問を抽出し、フォーム UI 用 JSON に変換。本番運用と同じスキーマ。</p>
+  </div>
+</header>
+
+<div class="verify-bar">
+  <div class="verify-bar-inner">
+    <span class="vb-status pass">
+      <i class="fa-solid fa-circle-check"></i>
+      スキーマ準拠 PASS
+    </span>
+    <span class="vb-stat ok">questions <strong>20</strong></span>
+    <span class="vb-stat ok">options OK <strong>100%</strong></span>
+    <span class="vb-stat ok">confidence OK <strong>100%</strong></span>
+    <span class="vb-stat ok">free 補完 <strong>100%</strong></span>
+    <span class="vb-stat">出力 <strong>6,157</strong> chars</span>
+  </div>
+</div>
+
+<main class="panes">
+  <section class="pane">
+    <div class="pane-header">
+      <h2>入力（AI アシスタントの出力）</h2>
+      <span class="pane-meta"><a href="../input.html" target="_blank">全文 →</a></span>
+    </div>
+    <div class="pane-body">
+      <pre class="input-text" id="input-text">読み込み中...</pre>
+    </div>
+  </section>
+
+  <section class="pane">
+    <div class="pane-header">
+      <h2>抽出された質問フォーム</h2>
+      <span class="pane-meta"><a href="./output.json" target="_blank">JSON →</a></span>
+    </div>
+    <div class="pane-body" id="q-body"></div>
+  </section>
+</main>
+
+<script>
+  fetch('../input.md').then(r => r.text()).then(t => {
+    document.getElementById('input-text').textContent = t;
+  }).catch(() => {
+    document.getElementById('input-text').textContent = '読み込み失敗';
+  });
+
+  const meta = {"valid_json": true, "generated_at": "2026-06-30T13:41:00.915Z", "raw_length": 6157, "count_ok": true, "schema_pass": true, "question_count": 20, "expected_min": 15, "expected_target": 20, "has_id_pct": 100, "has_originalText_pct": 100, "has_question_pct": 100, "has_options_pct": 100, "has_confidence_pct": 100, "free_option_present_pct": 100, "exceed_options_cap": 0, "duplicate_ids": 0, "duplicate_questions": 0, "issues": []};
+  const FREE_LABEL = '自由に記述する';
+
+  function escape(s) {
+    return (s ?? '').replace(/[<>&]/g, ch => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[ch]));
+  }
+
+  function renderQuestions(data) {
+    const body = document.getElementById('q-body');
+    if (!Array.isArray(data?.questions)) { body.innerHTML = ''; return; }
+    body.innerHTML = data.questions.map((q, i) => {
+      const num = i + 1;
+      const question = q.question || '(question 欠落)';
+      const original = q.originalText || '';
+      const confidence = typeof q.confidence === 'number' ? q.confidence : null;
+      const confClass = confidence === null ? '' : (confidence >= 0.8 ? 'high' : (confidence < 0.6 ? 'low' : ''));
+      const confLabel = confidence === null ? '—' : confidence.toFixed(2);
+      const options = Array.isArray(q.options) ? q.options : [];
+      const optionsHtml = options.map(o => {
+        const label = o?.label ?? '?';
+        const isFree = label === FREE_LABEL;
+        return `<li class="q-option ${isFree ? 'free' : ''}">${escape(label)}</li>`;
+      }).join('');
+      return `
+        <article class="q-card">
+          <div class="q-head">
+            <span class="q-num">${num}</span>
+            <span class="q-text">${escape(question)}</span>
+            <span class="q-conf ${confClass}">${confLabel}</span>
+          </div>
+          ${original ? `<div class="q-original">${escape(original)}</div>` : ''}
+          <ul class="q-options">${optionsHtml}</ul>
+        </article>
+      `;
+    }).join('');
+  }
+
+  function renderError(reason, raw) {
+    const body = document.getElementById('q-body');
+    body.innerHTML = `
+      <div class="error-card">
+        <h3><i class="fa-solid fa-triangle-exclamation"></i> JSON として解析できませんでした</h3>
+        <p>このモデルは長文 JSON 出力の途中で構造が崩れています。</p>
+        <details style="margin-top:12px;">
+          <summary style="cursor:pointer; font-weight:700;">生出力を見る</summary>
+          <pre class="raw-output">${escape(raw || '')}</pre>
+        </details>
+      </div>
+    `;
+  }
+
+  fetch('./output.json').then(r => r.text()).then(raw => {
+    if (!meta.valid_json) { renderError('parse failed', raw); return; }
+    try {
+      let s = raw.trim();
+      s = s.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
+      const idx = s.indexOf('{');
+      if (idx > 0) s = s.slice(idx);
+      const data = JSON.parse(s);
+      renderQuestions(data);
+    } catch (e) {
+      renderError(e.message, raw);
+    }
+  }).catch(e => renderError(e.message, ''));
+</script>
+
+</body>
+</html>

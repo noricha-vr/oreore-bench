@@ -1021,72 +1021,31 @@
                     "コード品質: グローバル変数の少なさ・関数分離・モジュール化"
                 ]
             },
-            "json-quiz-easy": {
-                title: "JSON クイズ (Easy)",
-                short: "JSON / 最小スキーマ",
-                desc: "Wikipedia 記事から 5 問の三択クイズを JSON で抽出。シンプルなスキーマで誰もが通る基準ライン。",
-                color: "#7C3AED",
-                colorDark: "#5B21B6",
+            "extract-questions": {
+                title: "質問抽出 → フォーム化",
+                short: "JSON / 質問抽出",
+                desc: "AI アシスタントの長文出力からユーザーが返答すべき質問だけを抽出し、フォーム UI 用 JSON にする。本番運用の実運用シナリオと同じスキーマ。",
+                color: "#0d9488",
+                colorDark: "#0f766e",
                 icon: "fa-solid fa-list-check",
-                difficulty: "低（短文 JSON 出力、フィールド 4 個）",
-                deliverable: "output.json（左右 2 カラム HTML で表示）",
+                difficulty: "中〜高（長文構造化 + 抽出判断 + 補完オプション）",
+                deliverable: "output.json（左右 2 カラム HTML で入力本文と抽出フォームを並列表示）",
                 criteria: [
                     "出力が有効な JSON である",
-                    "quiz 配列に 5 件",
-                    "各 question に choices が 3 つ（A/B/C）",
-                    "answer が A/B/C のいずれか",
+                    "questions 配列に 15〜25 件（入力 20 問に対する取りこぼし許容範囲）",
+                    "各 question に id / originalText / question / options / confidence が揃う",
+                    "options が配列で、各要素が { label: string }",
+                    "自由記述質問にも「自由に記述する」オプションが必ず補完されている",
+                    "confidence が 0.0〜1.0 の小数",
                     "JSON 以外の出力（説明文・コードフェンス）が混入していない"
                 ],
                 highlights: [
-                    "JSON 出力タスクの最低ライン",
-                    "全モデルが通過することを期待する基準テスト",
-                    "ここで失敗するモデルはチャット用途以外には不向き"
-                ]
-            },
-            "json-quiz-medium": {
-                title: "JSON クイズ (Medium)",
-                short: "JSON / 基本スキーマ",
-                desc: "Wikipedia 記事から 10 問の四択クイズを JSON で抽出。explanation 付きで現実的な実運用サイズ。",
-                color: "#7C3AED",
-                colorDark: "#5B21B6",
-                icon: "fa-solid fa-list-check",
-                difficulty: "中（中文 JSON 出力、フィールド 5 個）",
-                deliverable: "output.json（左右 2 カラム HTML で表示）",
-                criteria: [
-                    "出力が有効な JSON である",
-                    "quiz 配列に 10 件",
-                    "各 question に choices が 4 つ（A/B/C/D）",
-                    "answer が A/B/C/D のいずれか",
-                    "explanation が空文字でない",
-                    "出力長 4〜10K tokens を破綻なく書き切れる"
-                ],
-                highlights: [
-                    "実運用で最もよく使うサイズ",
-                    "出力長が伸びると小型モデルが構造を保てなくなる典型例",
-                    "MoE モデルが dense モデルより不安定になる現象がここで現れる"
-                ]
-            },
-            "json-quiz-hard": {
-                title: "JSON クイズ (Hard)",
-                short: "JSON / 複雑スキーマ",
-                desc: "10 問の四択 + enum (difficulty) + 配列 (related_topics) + ネスト (source_excerpt)。多次元スキーマ準拠を要求。",
-                color: "#7C3AED",
-                colorDark: "#5B21B6",
-                icon: "fa-solid fa-list-check",
-                difficulty: "高（長文 JSON + enum + 配列 + ネストオブジェクト）",
-                deliverable: "output.json（左右 2 カラム HTML で表示）",
-                criteria: [
-                    "出力が有効な JSON である",
-                    "quiz 配列に 10 件、各 choices 4 つ",
-                    "difficulty が easy/medium/hard の enum",
-                    "related_topics が 1〜4 個の文字列配列",
-                    "source_excerpt.section と quote が空文字でない",
-                    "出力長 10K tokens 超を破綻なく書き切れる"
-                ],
-                highlights: [
-                    "enum / 配列 / ネストオブジェクトを同時に保てるか",
-                    "長文 JSON の終盤でフィールドが脱落しないか",
-                    "本文の引用 (quote) を正確に持ってこられるか"
+                    "説明・見出し・提案を質問と誤抽出しないか",
+                    "原文に選択肢がない質問にも自然な補完オプション（はい/いいえ・承認/別案）を入れられるか",
+                    "全質問に「自由に記述する」を欠かさず追加できるか",
+                    "originalText に原文の正確な引用を入れられるか",
+                    "confidence が問題の確実さに沿った妥当な値か",
+                    "20 件相当の出力長で構造が破綻しないか"
                 ]
             }
         };
@@ -1159,7 +1118,7 @@
                     { value: "8K", label: "最大出力", note: "公式未公表" }
                 ],
                 strengths: "最軽量クラスでも 12B あり日本語が崩れにくい。M1/M2 16GB で快適に動く（QAT 版は約 7GB）。Text + Image + Audio のマルチモーダル対応。",
-                weaknesses: "長文 JSON 構造化や複雑スキーマでは 31B / 26B-A4B に劣る場面あり（今回 json-quiz ベンチで観測）。",
+                weaknesses: "長文 JSON 構造化や複雑スキーマでは 31B / 26B-A4B に劣る場面あり。",
                 links: [
                     { label: "Google AI 公式", href: "https://ai.google.dev/gemma" }
                 ]
@@ -1196,23 +1155,11 @@
             { theme: "othello",    model: "gemma-4-26b-a4b-qat", runner: "gptme (LM Studio)",   note: "ライトテーマ。CPU AIランダムに圧勝(53-10)。Reset挙動が一度だけ不安定。", kind: "html" },
             { theme: "othello",    model: "gemma-4-31b",         runner: "gptme (LM Studio)",   note: "ダークBG+鮮緑盤+赤Reset。CPU AIが強く逆転勝利(34-30)。", kind: "html" },
 
-            // json-quiz-easy（5 問三択、最小スキーマ）
-            { theme: "json-quiz-easy",   model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。5/5 問、各 choices 3、answer OK。", kind: "json" },
-            { theme: "json-quiz-easy",   model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。MoE モデルでも easy は崩さず通過。", kind: "json" },
-            { theme: "json-quiz-easy",   model: "gemma-4-31b",         runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。最も出力長は短く完璧。", kind: "json" },
-            { theme: "json-quiz-easy",   model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "✅ スキーマ準拠 PASS。フロンティアモデルとして余裕。", kind: "json" },
-
-            // json-quiz-medium（10 問四択 + explanation）
-            { theme: "json-quiz-medium", model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。12B でも基本スキーマは安定。", kind: "json" },
-            { theme: "json-quiz-medium", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",  note: "❌ JSON parse 失敗。choices フィールドが途中で脱落する典型例。MoE が中規模 JSON で破綻。", kind: "json" },
-            { theme: "json-quiz-medium", model: "gemma-4-31b",         runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。dense 31B は安定。", kind: "json" },
-            { theme: "json-quiz-medium", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "✅ スキーマ準拠 PASS。", kind: "json" },
-
-            // json-quiz-hard（10 問四択 + enum + 配列 + ネスト）
-            { theme: "json-quiz-hard",   model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "✅ 全フィールド準拠（出力長 10K 級でも 12B が踏ん張った）。", kind: "json" },
-            { theme: "json-quiz-hard",   model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。Medium で失敗した MoE が Hard では復活する不思議。", kind: "json" },
-            { theme: "json-quiz-hard",   model: "gemma-4-31b",         runner: "LM Studio API",  note: "✅ enum / 配列 / ネスト全て準拠。", kind: "json" },
-            { theme: "json-quiz-hard",   model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "✅ スキーマ準拠 PASS。", kind: "json" }
+            // extract-questions（AI 出力からユーザー向け質問を抽出して JSON 化、本番運用と同じシナリオ）
+            { theme: "extract-questions", model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。20 件抽出、最軽量でも 本番運用スキーマを完全に満たす。", kind: "json" },
+            { theme: "extract-questions", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。MoE モデルも 20 件抽出して構造を保持。", kind: "json" },
+            { theme: "extract-questions", model: "gemma-4-31b",         runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。21 件と若干過剰だが取りこぼしなし。", kind: "json" },
+            { theme: "extract-questions", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "✅ スキーマ準拠 PASS。フロンティアモデルらしい安定。", kind: "json" }
         ];
 
         // theme: 'all' | キー（単一選択） / models: 'all' or Set of keys（複数選択。空 Set は全て）
