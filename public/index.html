@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>oreore-bench トップページ</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     <style>
         :root {
             --bg: #ffffff;
@@ -247,7 +247,8 @@
             margin: 0;
         }
         .theme-card .card-subtitle {
-            font-size: 0.8125rem;
+            font-size: 0.875rem;
+            line-height: 1.6;
             color: var(--muted-fg);
             margin: 0;
         }
@@ -380,33 +381,48 @@
             color: var(--primary);
         }
 
-        /* Filter button specific styles */
-        #theme-filters .btn-secondary.active,
-        #model-filters .btn-secondary.active {
-            background-color: var(--primary);
-            color: var(--primary-fg);
-            border-color: var(--primary);
-        }
-
-        /* Filters layout — 2行ペア、ラベルとボタン群を明確に分離 */
+        /* Filters — ドロップダウン構造 */
         .filters {
             display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .filter-row {
-            display: flex;
-            align-items: center;
-            gap: 16px;
+            gap: 24px;
             flex-wrap: wrap;
+        }
+        .filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1 1 220px;
+            min-width: 200px;
         }
         .filter-label {
-            min-width: 64px;
+            display: inline-block;
         }
-        .filter-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
+        .filter-select {
+            font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--fg);
+            background-color: var(--bg);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-sm);
+            padding: 10px 36px 10px 14px;
+            line-height: 1.4;
+            cursor: pointer;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1.5L6 6.5L11 1.5' stroke='%231a1a1a' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            transition: border-color 0.18s, box-shadow 0.18s;
+        }
+        .filter-select:hover {
+            border-color: var(--fg-soft);
+        }
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
         }
 
         @media (max-width: 767px) {
@@ -417,12 +433,8 @@
             .md\:grid-cols-2 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
             .md\:grid-cols-3 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
             .lg\:grid-cols-3 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-            /* Filter はラベル上、ボタン群下に積む */
-            .filter-row {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
+            .filters { flex-direction: column; gap: 16px; }
+            .filter-field { min-width: 0; width: 100%; }
         }
 
         @media (min-width: 768px) and (max-width: 1023px) {
@@ -463,14 +475,14 @@
                 <h2 class="text-center mb-12">ベンチマーク一覧</h2>
                 <!-- Filters -->
                 <div class="filters mb-8">
-                    <div class="filter-row">
-                        <div class="text-label filter-label">テーマ</div>
-                        <div id="theme-filters" class="filter-buttons"></div>
-                    </div>
-                    <div class="filter-row">
-                        <div class="text-label filter-label">モデル</div>
-                        <div id="model-filters" class="filter-buttons"></div>
-                    </div>
+                    <label class="filter-field">
+                        <span class="text-label filter-label">テーマ</span>
+                        <select id="theme-select" class="filter-select"></select>
+                    </label>
+                    <label class="filter-field">
+                        <span class="text-label filter-label">モデル</span>
+                        <select id="model-select" class="filter-select"></select>
+                    </label>
                 </div>
 
                 <div id="entry-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -588,48 +600,38 @@
             { theme: "othello",    model: "gemma-4-31b",         runner: "gptme (LM Studio)",   note: "ダークBG+鮮緑盤+赤Reset。CPU AIが強く逆転勝利(34-30)。" }
         ];
 
+        // 'all' | 各 key（単一選択、デフォルト 'all'）
         let activeFilters = {
-            themes: [],
-            models: []
+            theme: 'all',
+            model: 'all'
         };
 
         // --- Filter Rendering ---
         function renderFilters() {
-            const themeFilterContainer = document.getElementById('theme-filters');
-            themeFilterContainer.innerHTML = '';
+            const themeSel = document.getElementById('theme-select');
+            themeSel.innerHTML = '';
+            themeSel.appendChild(makeOption('all', 'すべて'));
             for (const themeKey in THEMES) {
-                const theme = THEMES[themeKey];
-                const isActive = activeFilters.themes.includes(themeKey);
-                const button = document.createElement('button');
-                button.className = `btn btn-secondary text-sm ${isActive ? 'active' : ''}`; // Add 'active' class
-                button.textContent = theme.title;
-                button.onclick = () => toggleFilter('themes', themeKey);
-                themeFilterContainer.appendChild(button);
+                themeSel.appendChild(makeOption(themeKey, THEMES[themeKey].title));
             }
+            themeSel.value = activeFilters.theme;
+            themeSel.onchange = (e) => { activeFilters.theme = e.target.value; renderEntries(); };
 
-            const modelFilterContainer = document.getElementById('model-filters');
-            modelFilterContainer.innerHTML = '';
+            const modelSel = document.getElementById('model-select');
+            modelSel.innerHTML = '';
+            modelSel.appendChild(makeOption('all', 'すべて'));
             for (const modelKey in MODELS) {
-                const model = MODELS[modelKey];
-                const isActive = activeFilters.models.includes(modelKey);
-                const button = document.createElement('button');
-                button.className = `btn btn-secondary text-sm ${isActive ? 'active' : ''}`; // Add 'active' class
-                button.textContent = model.label;
-                button.onclick = () => toggleFilter('models', modelKey);
-                modelFilterContainer.appendChild(button);
+                modelSel.appendChild(makeOption(modelKey, MODELS[modelKey].label));
             }
+            modelSel.value = activeFilters.model;
+            modelSel.onchange = (e) => { activeFilters.model = e.target.value; renderEntries(); };
         }
 
-        function toggleFilter(type, key) {
-            const filters = activeFilters[type];
-            const index = filters.indexOf(key);
-            if (index > -1) {
-                filters.splice(index, 1);
-            } else {
-                filters.push(key);
-            }
-            renderFilters();
-            renderEntries();
+        function makeOption(value, label) {
+            const opt = document.createElement('option');
+            opt.value = value;
+            opt.textContent = label;
+            return opt;
         }
 
         // --- Entry List Rendering ---
@@ -638,8 +640,8 @@
             entryListContainer.innerHTML = '';
 
             const filteredEntries = ENTRIES.filter(entry => {
-                const themeMatch = activeFilters.themes.length === 0 || activeFilters.themes.includes(entry.theme);
-                const modelMatch = activeFilters.models.length === 0 || activeFilters.models.includes(entry.model);
+                const themeMatch = activeFilters.theme === 'all' || activeFilters.theme === entry.theme;
+                const modelMatch = activeFilters.model === 'all' || activeFilters.model === entry.model;
                 return themeMatch && modelMatch;
             });
 
