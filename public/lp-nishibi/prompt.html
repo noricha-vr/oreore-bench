@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lp-nishibi プロンプト — oreore-bench</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-soft: #f7f8fa;
+    --fg: #1a1a1a;
+    --fg-soft: #5a5a5a;
+    --muted-fg: #6b7280;
+    --border: #e5e7eb;
+    --primary: #2563eb;
+    --accent: #E25C2C;
+    --accent-dark: #B0481E;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+    background-color: var(--bg-soft);
+    color: var(--fg);
+    line-height: 1.8;
+    font-size: 0.9375rem;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .hero {
+    padding: 28px 24px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+    color: #ffffff;
+  }
+  .hero-inner { max-width: 760px; margin: 0 auto; }
+  .hero a.back {
+    color: #ffffff;
+    opacity: 0.85;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 12px;
+  }
+  .hero a.back:hover { opacity: 1; }
+  .hero h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: #ffffff;
+    margin-bottom: 4px;
+  }
+  .hero .sub {
+    font-size: 0.9375rem;
+    opacity: 0.9;
+  }
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+  .card {
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .card h2 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin: 28px 0 12px;
+    color: var(--fg);
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+  }
+  .card h2:first-of-type { margin-top: 0; }
+  .card p { margin-bottom: 14px; color: var(--fg-soft); }
+  .card ul, .card ol { margin: 0 0 16px 1.5rem; color: var(--fg-soft); }
+  .card li { margin-bottom: 4px; }
+  .card code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+    background-color: var(--bg-soft);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--fg);
+  }
+  .card strong { color: var(--fg); font-weight: 700; }
+  .meta {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 0.8125rem;
+    color: var(--muted-fg);
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .meta a { color: var(--muted-fg); font-weight: 600; }
+  .meta a:hover { color: var(--primary); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a href="../" class="back">← oreore-bench に戻る</a>
+    <h1>lp-nishibi プロンプト</h1>
+    <p class="sub">このテーマの凍結プロンプト。新しいモデルで再現する時はこのまま渡してください。</p>
+  </div>
+</header>
+
+<main class="container">
+  <article class="card">
+    <p>架空サービスのランディングページを作ってください。これは <strong>「ネタなのに本気で作る」</strong> ことが最重要のプロジェクトです。</p>
+
+    <h2>サービス概要</h2>
+    <ul>
+      <li>名称: NISHIBI（西日）</li>
+      <li>業態: 日焼けサロン</li>
+      <li>特徴: 「日焼けマシン」ではなく「西日」で焼く。窓から差し込む夕方の西日だけを使った天然日焼けスタジオ。</li>
+      <li>ターゲット: ナチュラル志向の都市生活者、UV ライト不使用、サステナブル</li>
+    </ul>
+
+    <h2>重要なトーン指示</h2>
+    <p><strong>ネタを真顔でやる</strong>のがコア。冗談っぽさを一切出さず、超高級ブランド・コンセプチュアル建築事務所・スカンジナビアデザインスタジオが作ったような、洗練・寡黙・余白の多いプレミアム LP にしてください。</p>
+    <ul>
+      <li>絵文字禁止</li>
+      <li>カジュアル文体禁止（「〜だよ」「〜しよう」NG）</li>
+      <li>抽象的・詩的なコピーで「西日を浴びる行為」を芸術として語る</li>
+      <li>「西日で焼く」ことの真面目すぎる正当化（時間帯による紫外線量の差、東洋的時間美学、夕陽がもたらす生体リズム調整など、もっともらしい疑似科学を堂々と書く）</li>
+    </ul>
+
+    <h2>構成（必須セクション）</h2>
+    <ol>
+      <li><strong>Hero</strong>: 大きな見出し 1 行 + サブコピー 1〜2 行 + CTA ボタン</li>
+      <li><strong>Philosophy（哲学）</strong>: なぜ西日なのか、3〜4 行の散文</li>
+      <li><strong>Service / Plan</strong>: 3 プラン（時間帯別「黄金時間」「茜時間」「残光時間」など命名は自由）を価格・特典付きで表示</li>
+      <li><strong>Science（科学）</strong>: もっともらしいデータや数値を 3〜4 項目</li>
+      <li><strong>Studio</strong>: スタジオの特徴を箇条書きか 3 カラム（南西向き全面窓・無垢材・無音空間など）</li>
+      <li><strong>Testimonial</strong>: 顧客の声 2〜3 件（職業と短いコメント）</li>
+      <li><strong>Footer</strong>: ブランド名・架空の住所・架空 SNS リンク</li>
+    </ol>
+
+    <h2>デザイン要件</h2>
+    <ul>
+      <li>単一 <code>index.html</code>、CSS と JS インライン化</li>
+      <li>配色: 西日をモチーフに、黄昏のオレンジ・テラコッタ・暖かいベージュ・濃いダークブラウンを基調にした抑制的なパレット</li>
+      <li>タイポグラフィ: 見出しは細身のセリフ（Cormorant Garamond / Playfair Display など Google Fonts CDN）、本文は明朝系または上品なサンセリフ</li>
+      <li>余白を大胆に取る。1 セクション 1 メッセージ</li>
+      <li>スクロールアニメーション歓迎（IntersectionObserver でフェードイン）</li>
+      <li>レスポンシブ必須</li>
+    </ul>
+
+    <p><code>index.html</code> 1 枚で完成させてください。</p>
+
+    <div class="meta">
+      <a href="./PROMPT.md" target="_blank">Markdown 元ファイル</a>
+      <a href="https://github.com/noricha-vr/oreore-bench/blob/main/public/lp-nishibi/PROMPT.md" target="_blank">GitHub で見る</a>
+    </div>
+  </article>
+</main>
+
+</body>
+</html>
