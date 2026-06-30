@@ -289,104 +289,226 @@
         .modal {
             background-color: var(--bg);
             border-radius: 16px;
-            max-width: 560px;
+            max-width: 640px;
             width: 100%;
-            padding: 28px;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.18);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.22);
             position: relative;
-            animation: modal-pop 0.18s ease-out;
+            animation: modal-pop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
         }
         @keyframes modal-pop {
-            from { transform: translateY(8px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+            from { transform: translateY(12px) scale(0.98); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
         }
         .modal-close {
             position: absolute;
             top: 14px;
             right: 14px;
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             border: none;
-            background-color: var(--bg-soft);
-            color: var(--fg);
+            background-color: rgba(255, 255, 255, 0.18);
+            color: #ffffff;
             font-size: 1rem;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: background-color 0.18s;
+            backdrop-filter: blur(8px);
+            z-index: 2;
         }
         .modal-close:hover {
-            background-color: var(--border);
+            background-color: rgba(255, 255, 255, 0.32);
         }
-        .modal-header {
+
+        /* Hero band (上部のカラーバンド) */
+        .modal-hero {
+            padding: 36px 32px 28px;
+            color: #ffffff;
+            position: relative;
+            background: linear-gradient(135deg, var(--accent-from, #2563eb) 0%, var(--accent-to, #1d4ed8) 100%);
+        }
+        .modal-hero-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 14px;
+            background-color: rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(8px);
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 6px;
-            padding-right: 36px; /* 閉じるボタンとの重なり回避 */
+            justify-content: center;
+            color: #ffffff;
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
         }
-        .modal-dot {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            flex-shrink: 0;
+        .modal-hero-title {
+            font-size: 1.875rem;
+            font-weight: 800;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            margin: 0 0 6px 0;
+            color: #ffffff;
         }
-        .modal-title {
-            font-size: 1.375rem;
-            font-weight: 700;
+        .modal-hero-subtitle {
+            font-size: 0.9375rem;
+            opacity: 0.88;
             margin: 0;
+            color: #ffffff;
+            line-height: 1.6;
         }
-        .modal-subtitle {
-            font-size: 0.875rem;
+        .modal-hero-tag {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            background: rgba(255, 255, 255, 0.18);
+            padding: 4px 10px;
+            border-radius: 999px;
+            margin-bottom: 14px;
+        }
+
+        .modal-body-inner {
+            padding: 24px 32px 32px;
+        }
+
+        /* Stat grid (モデルモーダルの数値) */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background-color: var(--bg-soft);
+            border-radius: 10px;
+            padding: 14px 12px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        .stat-value {
+            display: block;
+            font-size: 1.375rem;
+            font-weight: 800;
+            color: var(--fg);
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .stat-label {
+            display: block;
+            font-size: 0.75rem;
             color: var(--muted-fg);
-            margin: 0 0 18px 0;
+            margin-top: 6px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
         }
+        .stat-note {
+            display: block;
+            font-size: 0.6875rem;
+            color: var(--muted-fg);
+            margin-top: 4px;
+            opacity: 0.85;
+        }
+
+        /* Inline spec (モデルモーダルの2行目以降の詳細) */
         .modal-spec {
             display: grid;
             grid-template-columns: max-content 1fr;
-            gap: 8px 16px;
+            gap: 10px 16px;
             font-size: 0.9375rem;
-            padding: 16px 0;
-            border-top: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
+            padding: 14px 0 4px;
         }
         .modal-spec dt {
             color: var(--muted-fg);
-            font-weight: 600;
-            font-size: 0.8125rem;
+            font-weight: 700;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
-            padding-top: 2px;
+            letter-spacing: 0.06em;
+            padding-top: 3px;
         }
         .modal-spec dd {
             margin: 0;
             color: var(--fg);
             line-height: 1.6;
         }
+
         .modal-section {
-            margin-top: 16px;
+            margin-top: 20px;
         }
         .modal-section h4 {
-            font-size: 0.8125rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.06em;
             color: var(--muted-fg);
-            margin: 0 0 6px 0;
+            margin: 0 0 8px 0;
             font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .modal-section h4::before {
+            content: '';
+            width: 14px;
+            height: 2px;
+            background-color: currentColor;
+            display: inline-block;
+            border-radius: 1px;
+            opacity: 0.5;
         }
         .modal-section p {
             font-size: 0.9375rem;
-            line-height: 1.7;
+            line-height: 1.75;
             color: var(--fg-soft);
             margin: 0;
         }
+
+        /* Modal list (テーマモーダル) — ナンバリングバッジ */
+        .modal-list {
+            margin: 4px 0 0 0;
+            padding: 0;
+            list-style: none;
+            counter-reset: modal-list;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .modal-list li {
+            counter-increment: modal-list;
+            position: relative;
+            padding-left: 32px;
+            color: var(--fg-soft);
+            font-size: 0.9375rem;
+            line-height: 1.7;
+        }
+        .modal-list li::before {
+            content: counter(modal-list);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background-color: var(--accent-from, var(--bg-soft));
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
         .modal-links {
             display: flex;
             gap: 16px;
-            margin-top: 18px;
+            margin-top: 20px;
             flex-wrap: wrap;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
         }
         .modal-links a {
             font-size: 0.875rem;
@@ -398,6 +520,13 @@
         }
         .modal-links a:hover {
             border-bottom-color: var(--primary);
+        }
+
+        @media (max-width: 600px) {
+            .modal-hero { padding: 28px 24px 22px; }
+            .modal-hero-title { font-size: 1.5rem; }
+            .modal-body-inner { padding: 20px 24px 28px; }
+            .stat-grid { grid-template-columns: repeat(2, 1fr); }
         }
 
         /* Entry card */
@@ -839,6 +968,7 @@
                 short: "ネタを真顔で",
                 desc: "「西日で焼く日焼けサロン」というネタ前提を、寡黙でプレミアムな高級ブランド LP として真顔で表現できるか。",
                 color: "#E25C2C",  // テラコッタ
+                colorDark: "#B0481E",
                 icon: "fa-solid fa-pen-ruler",
                 difficulty: "中（コピーライティング + 配色 + 情報設計）",
                 deliverable: "単一 index.html（CSS/JS インライン化）",
@@ -862,6 +992,7 @@
                 short: "ゲームロジック",
                 desc: "HTML/CSS/JS 1 枚で動く 8x8 オセロ。状態管理 / 合法手判定 / CPU AI / UI ハイライト / 終局判定。",
                 color: "#2E7D32",  // 緑
+                colorDark: "#1B5E20",
                 icon: "fa-solid fa-chess-board",
                 difficulty: "中（ゲームロジック + UI 状態管理）",
                 deliverable: "単一 index.html（CSS/JS インライン化）",
@@ -889,12 +1020,18 @@
                 provider: "Google",
                 type: "local",
                 color: "#4285F4",
+                colorDark: "#1A56DB",
                 release: "2026-04-02",
                 size: "31B パラメータ（dense）",
                 context: "256K tokens（実用 128K 目安）",
                 output: "8K tokens（実運用目安）",
                 quantization: "MLX 4-bit / GGUF Q4_K_M 等",
                 runtime: "LM Studio / llama.cpp / Ollama",
+                stats: [
+                    { value: "31B", label: "パラメータ", note: "dense" },
+                    { value: "256K", label: "コンテキスト", note: "実用 128K 目安" },
+                    { value: "8K", label: "最大出力", note: "実運用目安" }
+                ],
                 strengths: "オープンウェイト最上位クラス。コード生成と日本語ライティング両方が強い。HTML/CSS/JS の 1 ショット実装で破綻が少ない。",
                 weaknesses: "31B 級のため M2 16GB では量子化必須。推論速度はクラウド API より明確に遅い。",
                 links: [
@@ -906,12 +1043,18 @@
                 provider: "Anthropic",
                 type: "api",
                 color: "#CC785C",
+                colorDark: "#A8553D",
                 release: "2026-05-28",
                 size: "非公開",
                 context: "1M tokens（Microsoft Foundry 経由は 200K）",
                 output: "128K tokens（Batches API は 300K）",
                 quantization: "—（API モデル）",
                 runtime: "Anthropic API / Claude Code / Agent SDK",
+                stats: [
+                    { value: "—", label: "パラメータ", note: "非公開" },
+                    { value: "1M", label: "コンテキスト", note: "Foundry は 200K" },
+                    { value: "128K", label: "最大出力", note: "Batches は 300K" }
+                ],
                 strengths: "フロンティアモデル。コンセプト理解とコピーライティングが圧倒的。同じプロンプトから架空人物名・メタジョーク・SVG 可視化まで自発的に補完する情報密度。",
                 weaknesses: "API 課金（サブスク枠もあり）。ローカル不可。レスポンスがやや長くなりがちで、簡潔さを指示するプロンプト工夫が要る。",
                 links: [
@@ -923,12 +1066,18 @@
                 provider: "Google",
                 type: "local",
                 color: "#4285F4",
+                colorDark: "#1A56DB",
                 release: "2026-04-02",
                 size: "26B 総パラメータ / 4B アクティブ（MoE / QAT）",
                 context: "256K tokens（実用 128K 目安）",
                 output: "8K tokens（実運用目安）",
                 quantization: "Quantization Aware Training (QAT) 済み 4-bit",
                 runtime: "LM Studio / llama.cpp / Ollama",
+                stats: [
+                    { value: "26B/4B", label: "総 / アクティブ", note: "MoE QAT" },
+                    { value: "256K", label: "コンテキスト", note: "実用 128K 目安" },
+                    { value: "8K", label: "最大出力", note: "実運用目安" }
+                ],
                 strengths: "MoE + QAT で 4B アクティブ相当の速度なのに精度は 26B 級。ローカル LLM の現実解として推論速度と品質のバランスが良い。",
                 weaknesses: "31B 単体モデルと比べると UI センス / 細部のジョーク密度はやや劣る。Reset 等の状態管理ロジックで稀に不安定。",
                 links: [
@@ -1068,28 +1217,34 @@
         function openThemeModal(themeKey) {
             const theme = THEMES[themeKey];
             const overlay = document.getElementById('modal-overlay');
+            const modal = overlay.querySelector('.modal');
             const body = overlay.querySelector('.modal-body');
             const criteriaHtml = theme.criteria.map(c => `<li>${c}</li>`).join('');
             const highlightsHtml = theme.highlights.map(h => `<li>${h}</li>`).join('');
+            modal.style.setProperty('--accent-from', theme.color);
+            modal.style.setProperty('--accent-to', theme.colorDark);
             body.innerHTML = `
-                <div class="modal-header">
-                    <div class="theme-info-icon" style="background-color: ${theme.color}; width: 32px; height: 32px; border-radius: 8px; font-size: 0.9rem;">
+                <div class="modal-hero">
+                    <div class="modal-hero-icon">
                         <i class="${theme.icon}" aria-hidden="true"></i>
                     </div>
-                    <h3 class="modal-title" id="modal-title">${theme.title}</h3>
+                    <span class="modal-hero-tag">テーマ・${theme.short}</span>
+                    <h3 class="modal-hero-title" id="modal-title">${theme.title}</h3>
+                    <p class="modal-hero-subtitle">${theme.desc}</p>
                 </div>
-                <p class="modal-subtitle">${theme.desc}</p>
-                <dl class="modal-spec">
-                    <dt>難易度</dt><dd>${theme.difficulty}</dd>
-                    <dt>成果物</dt><dd>${theme.deliverable}</dd>
-                </dl>
-                <div class="modal-section">
-                    <h4>評価基準</h4>
-                    <ul class="modal-list">${criteriaHtml}</ul>
-                </div>
-                <div class="modal-section">
-                    <h4>見どころ</h4>
-                    <ul class="modal-list">${highlightsHtml}</ul>
+                <div class="modal-body-inner">
+                    <dl class="modal-spec">
+                        <dt>難易度</dt><dd>${theme.difficulty}</dd>
+                        <dt>成果物</dt><dd>${theme.deliverable}</dd>
+                    </dl>
+                    <div class="modal-section">
+                        <h4>評価基準</h4>
+                        <ol class="modal-list">${criteriaHtml}</ol>
+                    </div>
+                    <div class="modal-section">
+                        <h4>見どころ</h4>
+                        <ol class="modal-list">${highlightsHtml}</ol>
+                    </div>
                 </div>
             `;
             overlay.classList.add('open');
@@ -1123,34 +1278,48 @@
         function openModelModal(modelKey) {
             const model = MODELS[modelKey];
             const overlay = document.getElementById('modal-overlay');
+            const modal = overlay.querySelector('.modal');
             const body = overlay.querySelector('.modal-body');
             const typeLabel = model.type === 'local' ? 'ローカル LLM' : 'API LLM';
+            const iconClass = model.type === 'local' ? 'fa-solid fa-microchip' : 'fa-solid fa-cloud';
+            modal.style.setProperty('--accent-from', model.color);
+            modal.style.setProperty('--accent-to', model.colorDark);
+            const statsHtml = (model.stats || []).map(s => `
+                <div class="stat-card">
+                    <span class="stat-value">${s.value}</span>
+                    <span class="stat-label">${s.label}</span>
+                    ${s.note ? `<span class="stat-note">${s.note}</span>` : ''}
+                </div>
+            `).join('');
             const linksHtml = (model.links || []).map(l =>
                 `<a href="${l.href}" target="_blank" rel="noopener noreferrer">${l.label} <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:.75rem;"></i></a>`
             ).join('');
             body.innerHTML = `
-                <div class="modal-header">
-                    <span class="modal-dot" style="background-color: ${model.color};"></span>
-                    <h3 class="modal-title" id="modal-title">${model.label}</h3>
+                <div class="modal-hero">
+                    <div class="modal-hero-icon">
+                        <i class="${iconClass}" aria-hidden="true"></i>
+                    </div>
+                    <span class="modal-hero-tag">${model.provider} ・ ${typeLabel}</span>
+                    <h3 class="modal-hero-title" id="modal-title">${model.label}</h3>
+                    <p class="modal-hero-subtitle">リリース ${model.release}</p>
                 </div>
-                <p class="modal-subtitle">${model.provider} ・ ${typeLabel}</p>
-                <dl class="modal-spec">
-                    <dt>リリース</dt><dd>${model.release}</dd>
-                    <dt>モデルサイズ</dt><dd>${model.size}</dd>
-                    <dt>コンテキスト長</dt><dd>${model.context}</dd>
-                    <dt>最大出力</dt><dd>${model.output}</dd>
-                    <dt>量子化</dt><dd>${model.quantization}</dd>
-                    <dt>ランタイム</dt><dd>${model.runtime}</dd>
-                </dl>
-                <div class="modal-section">
-                    <h4>強み</h4>
-                    <p>${model.strengths}</p>
+                <div class="modal-body-inner">
+                    <div class="stat-grid">${statsHtml}</div>
+                    <dl class="modal-spec">
+                        <dt>モデルサイズ</dt><dd>${model.size}</dd>
+                        <dt>量子化</dt><dd>${model.quantization}</dd>
+                        <dt>ランタイム</dt><dd>${model.runtime}</dd>
+                    </dl>
+                    <div class="modal-section">
+                        <h4>強み</h4>
+                        <p>${model.strengths}</p>
+                    </div>
+                    <div class="modal-section">
+                        <h4>弱み</h4>
+                        <p>${model.weaknesses}</p>
+                    </div>
+                    ${linksHtml ? `<div class="modal-links">${linksHtml}</div>` : ''}
                 </div>
-                <div class="modal-section">
-                    <h4>弱み</h4>
-                    <p>${model.weaknesses}</p>
-                </div>
-                ${linksHtml ? `<div class="modal-links">${linksHtml}</div>` : ''}
             `;
             overlay.classList.add('open');
             document.body.style.overflow = 'hidden';
