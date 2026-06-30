@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Othello - Human vs CPU</title>
+    <style>
+        :root {
+            --bg-color: #2c3e50;
+            --board-color: #27ae60;
+            --cell-border: #1e8449;
+            --black-piece: #000;
+            --white-piece: #fff;
+            --highlight-color: rgba(0, 0, 0, 0.2);
+            --text-color: #ecf0f1;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .status-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .score-board {
+            display: flex;
+            gap: 20px;
+        }
+
+        .score-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .piece-mini {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .piece-black { background-color: var(--black-piece); }
+        .piece-white { background-color: var(--white-piece); }
+
+        #board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            background-color: var(--cell-border);
+            border: 4px solid var(--cell-border);
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            user-select: none;
+        }
+
+        .cell {
+            background-color: var(--board-color);
+            border: 1px solid var(--cell-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .piece {
+            width: 85%;
+            height: 85%;
+            border-radius: 50%;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .piece.black { background-color: var(--black-piece); }
+        .piece.white { background-color: var(--white-piece); }
+
+        .highlight::after {
+            content: '';
+            width: 25%;
+            height: 25%;
+            background-color: var(--highlight-color);
+            border-radius: 50%;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #c0392b;
+        }
+
+        #message {
+            font-size: 1.1rem;
+            text-align: center;
+            min-height: 1.5em;
+        }
+
+        @media (max-width: 400px) {
+            .status-panel { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="status-panel">
+        <div class="score-board">
+            <div class="score-item"><span class="piece-mini piece-black"></span> Black: <span id="score-black">2</span></div>
+            <div class="score-item"><span class="piece-mini piece-white"></span> White: <span id="score-white">2</span></div>
+        </div>
+        <div id="turn-display">Black's Turn</div>
+    </div>
+
+    <div id="message">Welcome to Othello!</div>
+
+    <div id="board"></div>
+
+    <div class="controls">
+        <button id="reset-btn">Reset Game</button>
+    </div>
+</div>
+
+<script>
+    const BOARD_SIZE = 8;
+    const EMPTY = 0;
+    const BLACK = 1; // Human
+    const WHITE = 2; // CPU
+
+    let board = [];
+    let currentPlayer = BLACK;
+    let gameOver = false;
+
+    const boardEl = document.getElementById('board');
+    const scoreBlackEl = document.getElementById('score-black');
+    const scoreWhiteEl = document.getElementById('score-white');
+    const turnDisplayEl = document.getElementById('turn-display');
+    const messageEl = document.getElementById('message');
+    const resetBtn = document.getElementById('reset-btn');
+
+    // CPU Heuristic Weights
+    const WEIGHTS = [
+        [100, -20, 10,  5,  5, 10, -20, 100],
+        [-20, -50, -2, -2, -2, -2, -50, -20],
+        [ 10,  -2,  5,  1,  1,  5,  -2,   10],
+        [  5,  -2,  1,  0,  0,  1,  -2,    5],
+        [  5,  -2,  1,  0,  0,  1,  -2,    5],
+        [ 10,  -2,  5,  1,  1,  5,  -2,   10],
+        [-20, -50, -2, -2, -2, -2, -50, -20],
+        [100, -20, 10,  5,  5, 10, -20, 100],
+    ];
+
+    function initGame() {
+        board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(EMPTY));
+        board[3][3] = WHITE;
+        board[4][4] = WHITE;
+        board[3][4] = BLACK;
+        board[4][3] = BLACK;
+        currentPlayer = BLACK;
+        gameOver = false;
+        render();
+        updateStatus("Your turn (Black)");
+    }
+
+    function render() {
+        boardEl.innerHTML = '';
+        const legalMoves = getLegalMoves(currentPlayer);
+
+        for (let r = 0; r < BOARD_SIZE; r++) {
+            for (let c = 0; c < BOARD_SIZE; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                
+                if (board[r][c] !== EMPTY) {
+                    const piece = document.createElement('div');
+                    piece.className = `piece ${board[r][c] === BLACK ? 'black' : 'white'}`;
+                    cell.appendChild(piece);
+                } else if (!gameOver && currentPlayer === BLACK && legalMoves.some(m => m.r === r && m.c === c)) {
+                    cell.classList.add('highlight');
+                }
+
+                cell.onclick = () => handleCellClick(r, c);
+                boardEl.appendChild(cell);
+            }
+        }
+
+        const scores = countPieces();
+        scoreBlackEl.textContent = scores.black;
+        scoreWhiteEl.textContent = scores.white;
+        turnDisplayEl.textContent = currentPlayer === BLACK ? "Black's Turn" : "White's Turn";
+    }
+
+    function handleCellClick(r, c) {
+        if (gameOver || currentPlayer !== BLACK) return;
+
+        const flips = getFlips(r, c, BLACK);
+        if (flips.length === 0) return;
+
+        executeMove(r, c, BLACK, flips);
+    }
+
+    function executeMove(r, c, color, flips) {
+        board[r][c] = color;
+        flips.forEach(f => board[f.r][f.c] = color);
+
+        currentPlayer = (color === BLACK) ? WHITE : BLACK;
+        
+        render();
+
+        if (!checkGameOver()) {
+            const nextMoves = getLegalMoves(currentPlayer);
+            if (nextMoves.length === 0) {
+                updateStatus(`${currentPlayer === BLACK ? 'Black' : 'White'} has no moves. Passing...`);
+                setTimeout(() => {
+                    currentPlayer = (currentPlayer === BLACK) ? WHITE : BLACK;
+                    if (currentPlayer === WHITE) {
+                        cpuTurn();
+                    } else {
+                        render();
+                        updateStatus("Your turn (Black)");
+                    }
+                }, 1000);
+            } else if (currentPlayer === WHITE) {
+                cpuTurn();
+            }
+        } else {
+            endGame();
+        }
+    }
+
+    function cpuTurn() {
+        updateStatus("CPU is thinking...");
+        setTimeout(() => {
+            const legalMoves = getLegalMoves(WHITE);
+            if (legalMoves.length === 0) {
+                // This case is handled by the pass logic in executeMove, but for safety:
+                currentPlayer = BLACK;
+                render();
+                updateStatus("CPU passed. Your turn!");
+                return;
+            }
+
+            // Heuristic: Corner > Weight + Flips
+            let bestMove = null;
+            let maxScore = -Infinity;
+
+            legalMoves.forEach(move => {
+                const flips = getFlips(move.r, move.c, WHITE);
+                // Score = Position Weight + (Number of flips * small factor)
+                const score = WEIGHTS[move.r][move.c] + (flips.length * 1);
+                if (score > maxScore) {
+                    maxScore = score;
+                    bestMove = move;
+                }
+            });
+
+            const flips = getFlips(bestMove.r, bestMove.c, WHITE);
+            executeMove(bestMove.r, bestMove.c, WHITE, flips);
+        }, 600);
+    }
+
+    function getFlips(r, c, color) {
+        if (board[r][c] !== EMPTY) return [];
+
+        const opponent = (color === BLACK) ? WHITE : BLACK;
+        const directions = [
+            [-1, -1], [-1, 0], [-1, 1],
+            [0, -1],           [0, 1],
+            [1, -1],  [1, 0],  [1, 1]
+        ];
+
+        let allFlips = [];
+
+        directions.forEach(([dr, dc]) => {
+            let currentR = r + dr;
+            let currentC = c + dc;
+            let potentialFlips = [];
+
+            while (currentR >= 0 && currentR < BOARD_SIZE && currentC >= 0 && currentC < BOARD_SIZE) {
+                if (board[currentR][currentC] === EMPTY) break;
+                if (board[currentR][currentC] === color) {
+                    allFlips = allFlips.concat(potentialFlips);
+                    break;
+                } else {
+                    potentialFlips.push({ r: currentR, c: currentC });
+                }
+                currentR += dr;
+                currentC += dc;
+            }
+        });
+
+        // We only return flips for the specific move if it's actually a legal move
+        // The logic above already handles this by only adding potentialFlips if it ends with the player's color.
+        // However, we need to filter allFlips because a move is only legal if at least one direction results in flips.
+        // The current logic: for each direction, if it ends with 'color', those are flips.
+        // But wait, the logic above is slightly flawed because it adds allFlips inside the loop.
+        // Let's refine:
+        
+        let totalFlips = [];
+        directions.forEach(([dr, dc]) => {
+            let tempR = r + dr;
+            let tempC = c + dc;
+            let path = [];
+            while (tempR >= 0 && tempR < BOARD_SIZE && tempC >= 0 && tempC < BOARD_SIZE) {
+                if (board[tempR][tempC] === EMPTY) break;
+                if (board[tempR][tempC] === color) {
+                    totalFlips = totalFlips.concat(path);
+                    break;
+                }
+                path.push({ r: tempR, c: tempC });
+                tempR += dr;
+                tempC += dc;
+            }
+        });
+
+        return totalFlips;
+    }
+
+    function getLegalMoves(color) {
+        const moves = [];
+        for (let r = 0; r < BOARD_SIZE; r++) {
+            for (let c = 0; c < BOARD_SIZE; c++) {
+                if (getFlips(r, c, color).length > 0) {
+                    moves.push({ r, c });
+                }
+            }
+        }
+        return moves;
+    }
+
+    function countPieces() {
+        let black = 0, white = 0;
+        for (let r = 0; r < BOARD_SIZE; r++) {
+            for (let c = 0; c < BOARD_SIZE; c++) {
+                if (board[r][c] === BLACK) black++;
+                if (board[r][c] === WHITE) white++;
+            }
+        }
+        return { black, white };
+    }
+
+    function checkGameOver() {
+        const blackMoves = getLegalMoves(BLACK);
+        const whiteMoves = getLegalMoves(WHITE);
+        const isFull = board.every(row => row.every(cell => cell !== EMPTY));
+        return (blackMoves.length === 0 && whiteMoves.length === 0) || isFull;
+    }
+
+    function endGame() {
+        gameOver = true;
+        const scores = countPieces();
+        let resultMsg = "";
+        if (scores.black > scores.white) {
+            resultMsg = "Black Wins!";
+        } else if (scores.white > scores.black) {
+            resultMsg = "White Wins!";
+        } else {
+            resultMsg = "It's a Draw!";
+        }
+        updateStatus(`Game Over! ${resultMsg}`);
+        render();
+    }
+
+    function updateStatus(msg) {
+        messageEl.textContent = msg;
+    }
+
+    resetBtn.onclick = initGame;
+
+    initGame();
+</script>
+
+</body>
+</html>

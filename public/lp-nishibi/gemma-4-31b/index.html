@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NISHIBI | 西日</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Noto+Serif+JP:wght@200;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #fdfaf6;
+            --text-color: #2d241e;
+            --accent-color: #c05a3e;
+            --sub-accent-color: #e8c39e;
+            --dark-brown: #1a1410;
+            --transition-slow: all 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Noto Serif JP', serif;
+            line-height: 1.8;
+            letter-spacing: 0.05em;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3, .en {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 300;
+        }
+
+        /* Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+
+        section {
+            padding: 160px 0;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: var(--transition-slow);
+        }
+
+        section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Hero */
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: clamp(3rem, 8vw, 6rem);
+            line-height: 1.1;
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+            font-weight: 200;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 1rem 3rem;
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        .cta-button:hover {
+            background-color: var(--text-color);
+            color: var(--bg-color);
+        }
+
+        /* Philosophy */
+        .philosophy {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .philosophy h2 {
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .philosophy p {
+            font-size: 1.2rem;
+            line-height: 2.2;
+        }
+
+        /* Service / Plan */
+        .plans {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            margin-top: 60px;
+        }
+
+        .plan-card {
+            padding: 40px;
+            border-top: 1px solid var(--text-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .plan-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .plan-card .price {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .plan-card .details {
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            flex-grow: 1;
+        }
+
+        /* Science */
+        .science {
+            background-color: var(--dark-brown);
+            color: var(--bg-color);
+        }
+
+        .science h2 {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .science-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 80px;
+        }
+
+        .science-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .science-item .label {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            color: var(--sub-accent-color);
+            margin-bottom: 1rem;
+        }
+
+        .science-item .value {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .science-item .desc {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Studio */
+        .studio-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 60px;
+            margin-top: 60px;
+        }
+
+        .studio-item h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .studio-item p {
+            font-size: 0.9rem;
+        }
+
+        /* Testimonial */
+        .testimonials {
+            text-align: center;
+        }
+
+        .testimonial-item {
+            max-width: 600px;
+            margin: 0 auto 80px;
+        }
+
+        .testimonial-text {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+        }
+
+        /* Footer */
+        footer {
+            padding: 80px 0;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        .footer-links {
+            margin-bottom: 20px;
+        }
+
+        .footer-links a {
+            color: var(--text-color);
+            text-decoration: none;
+            margin: 0 15px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .plans, .science-grid, .studio-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero h1 {
+                font-size: 3rem;
+            }
+        }
+
+        /* Background Gradient Animation */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 80% 20%, var(--sub-accent-color) 0%, var(--bg-color) 50%);
+            z-index: -1;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-gradient"></div>
+
+    <main class="container">
+        <!-- Hero -->
+        <section class="hero visible" style="opacity: 1; transform: none;">
+            <div class="hero-content">
+                <h1>NISHIBI</h1>
+                <p>光の終焉に、真なる美しさを。<br>西日だけを享受する、静寂のサンクタム。</p>
+                <a href="#plans" class="cta-button">予約を検討する</a>
+            </div>
+        </section>
+
+        <!-- Philosophy -->
+        <section class="philosophy">
+            <h2>Philosophy</h2>
+            <p>
+                光は単なる照射ではなく、時間との対話である。<br>
+                私たちは人工的な波長を一切排除し、地球が最も深く呼吸する時間帯の光だけを選択しました。<br>
+                西日に身を委ねることは、都市の喧騒から離れ、生体リズムを宇宙の周期へと回帰させる儀式に他なりません。
+            </p>
+        </section>
+
+        <!-- Service / Plan -->
+        <section id="plans">
+            <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 60px;">Offerings</h2>
+            <div class="plans">
+                <div class="plan-card">
+                    <h3>黄金時間 <span class="en">Golden Hour</span></h3>
+                    <div class="price">¥12,000 / session</div>
+                    <div class="details">
+                        16:00 — 17:00<br>
+                        最も純度の高い黄金色の光が降り注ぐ時間。深い色調の肌へと導く、至高の体験。
+                    </div>
+                </div>
+                <div class="plan-card">
+                    <h3>茜時間 <span class="en">Madder Hour</span></h3>
+                    <div class="price">¥10,000 / session</div>
+                    <div class="details">
+                        17:00 — 18:00<br>
+                        空が茜色に染まり、光の粒子が柔らかさを増す時間。肌の質感を整え、内面からの輝きを追求します。
+                    </div>
+                </div>
+                <div class="plan-card">
+                    <h3>残光時間 <span class="en">Afterglow Hour</span></h3>
+                    <div class="price">¥8,000 / session</div>
+                    <div class="details">
+                        18:00 — 日没まで<br>
+                        光が消えゆく瞬間の静寂を纏う時間。精神的な調和と、微細な光の余韻による心身の浄化。
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Science -->
+        <section class="science">
+            <h2>The Science of Light</h2>
+            <div class="science-grid">
+                <div class="science-item">
+                    <span class="label">UVA Wavelength Optimization</span>
+                    <span class="value">16:45 PM</span>
+                    <span class="desc">大気層による自然なフィルタリングを経て、皮膚深層へ緩やかに浸透する最適波長が最大化される時間帯。</span>
+                </div>
+                <div class="science-item">
+                    <span class="label">Circadian Rhythm Sync</span>
+                    <span class="value">Low-Angle Light</span>
+                    <span class="desc">低角度から差し込む光が、松果体におけるメラトニン分泌を緩やかに調整し、深い充足感をもたらします。</span>
+                </div>
+                <div class="science-item">
+                    <span class="label">Atmospheric Filtering</span>
+                    <span class="value">Natural Diffusion</span>
+                    <span class="desc">人工UVライトでは再現不可能な、大気中の微粒子による自然拡散光が、均一で奥行きのある色調を実現。</span>
+                </div>
+                <div class="science-item">
+                    <span class="label">Thermal Equilibrium</span>
+                    <span class="value">24.5°C — 26.0°C</span>
+                    <span class="desc">西日の熱量と室温の完璧な均衡を維持し、発汗を抑制しながら効率的に光を吸収させる環境設計。</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Studio -->
+        <section class="studio">
+            <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 60px;">Studio</h2>
+            <div class="studio-grid">
+                <div class="studio-item">
+                    <h3>South-West Vista</h3>
+                    <p>南西向きに設計された全面開口窓。遮るもののない地平線から、純粋な西日をダイレクトに迎え入れます。</p>
+                </div>
+                <div class="studio-item">
+                    <h3>Solid Wood Sanctuary</h3>
+                    <p>厳選された無垢材を使用した床と壁。光を柔らかく反射し、空間全体に温かみのある静寂を醸成します。</p>
+                </div>
+                <div class="studio-item">
+                    <h3>Absolute Silence</h3>
+                    <p>音響設計を徹底した無音空間。視覚と触覚、そして光の感覚だけを研ぎ澄ませるための究極の環境です。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Testimonial -->
+        <section class="testimonials">
+            <div class="testimonial-item">
+                <p class="testimonial-text">「光を浴びるという行為が、これほどまでに瞑想的な体験になるとは思いませんでした。時間の流れそのものを肌で感じることができます。」</p>
+                <p class="testimonial-author">建築家 / K. S.</p>
+            </div>
+            <div class="testimonial-item">
+                <p class="testimonial-text">「人工的な光に疲れた現代人にとって、ここにあるのは真の意味での贅沢です。西日の色調が心まで染め上げていく感覚に浸っています。」</p>
+                <p class="testimonial-author">ギャラリーキュレーター / M. T.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; margin-bottom: 20px;">NISHIBI</div>
+            <div class="footer-links">
+                <a href="#">Instagram</a>
+                <a href="#">Pinterest</a>
+                <a href="#">Contact</a>
+            </div>
+            <p>東京都港区南青山 0-0-0</p>
+            <p style="margin-top: 20px; opacity: 0.5;">&copy; NISHIBI Studio. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('section').forEach(section => {
+            observer.observe(section);
+        });
+    </script>
+</body>
+</html>

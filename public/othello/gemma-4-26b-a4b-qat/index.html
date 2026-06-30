@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Othello - Human vs CPU</title>
+    <style>
+        :root {
+            --board-color: #2e7d32;
+            --cell-border: #1b5e20;
+            --bg-color: #f5f5f5;
+            --black-piece: #222;
+            --white-piece: #fff;
+            --highlight-color: rgba(255, 255, 255, 0.3);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            touch-action: manipulation;
+        }
+
+        h1 { color: #333; margin-bottom: 10px; }
+
+        .status-container {
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .score-board {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .score {
+            padding: 5px 15px;
+            border-radius: 5px;
+            color: white;
+        }
+
+        .score.black { background-color: var(--black-piece); }
+        .score.white { background-color: var(--white-piece); color: #333; border: 1px solid #ccc; }
+
+        #board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            width: 90vw;
+            height: 90vw;
+            max-width: 500px;
+            max-height: 500px;
+            background-color: var(--board-color);
+            border: 5px solid var(--cell-border);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .cell {
+            border: 1px solid var(--cell-border);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .piece {
+            width: 85%;
+            height: 85%;
+            border-radius: 50%;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .piece.black {
+            background-color: var(--black-piece);
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+        }
+
+        .piece.white {
+            background-color: var(--white-piece);
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .highlight {
+            width: 30%;
+            height: 30%;
+            border-radius: 50%;
+            background-color: var(--highlight-color);
+        }
+
+        .controls {
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 10px 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+
+        button:hover { background-color: #555; }
+
+        @media (max-width: 400px) {
+            h1 { font-size: 1.5rem; }
+            .status-container { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Othello</h1>
+
+    <div class="status-container">
+        <div id="turn-display">Your Turn (Black)</div>
+        <div class="score-board">
+            <div class="score black">Black: <span id="black-score">2</span></div>
+            <div class="score white">White: <span id="white-score">2</span></div>
+        </div>
+    </div>
+
+    <div id="board"></div>
+
+    <div class="controls">
+        <button onclick="initGame()">Reset Game</button>
+    </div>
+
+    <script>
+        const BOARD_SIZE = 8;
+        const BLACK = 1;
+        const WHITE = 2;
+        const EMPTY = 0;
+
+        let board = [];
+        let currentPlayer = BLACK;
+        let gameOver = false;
+
+        const boardElement = document.getElementById('board');
+        const blackScoreElement = document.getElementById('black-score');
+        const whiteScoreElement = document.getElementById('white-score');
+        const turnDisplay = document.getElementById('turn-display');
+
+        // Directions for checking flips: [row_delta, col_delta]
+        const directions = [
+            [-1, -1], [-1, 0], [-1, 1],
+            [0, -1],           [0, 1],
+            [1, -1],  [1, 0],  [1, 1]
+        ];
+
+        function initGame() {
+            board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(EMPTY));
+            currentPlayer = BLACK;
+            gameOver = false;
+            
+            // Initial setup
+            const mid = BOARD_SIZE / 2;
+            board[mid-1][mid-1] = WHITE;
+            board[mid-1][mid] = BLACK;
+            board[mid][mid-1] = BLACK;
+            board[mid][mid] = WHITE;
+
+            renderBoard();
+            updateUI();
+            
+            if (currentPlayer === WHITE) {
+                setTimeout(cpuMove, 600);
+            }
+        }
+
+        function renderBoard() {
+            boardElement.innerHTML = '';
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.addEventListener('click', () => handleCellClick(r, c));
+                    boardElement.appendChild(cell);
+                }
+            }
+            updateBoardDisplay();
+        }
+
+        function updateBoardDisplay() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                const r = parseInt(cell.dataset.row);
+                const c = parseInt(cell.dataset.col);
+                cell.innerHTML = '';
+
+                if (board[r][c] !== EMPTY) {
+                    const piece = document.createElement('div');
+                    piece.className = `piece ${board[r][c] === BLACK ? 'black' : 'white'}`;
+                    cell.appendChild(piece);
+                } else if (!gameOver && currentPlayer === BLACK) {
+                    // Show valid moves for human
+                    if (getValidMoves(BLACK).some(m => m.r === r && m.c === c)) {
+                        const highlight = document.createElement('div');
+                        highlight.className = 'highlight';
+                        cell.appendChild(highlight);
+                    }
+                }
+            });
+        }
+
+        function updateUI() {
+            let blackCount = 0;
+            let whiteCount = 0;
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (board[r][c] === BLACK) blackCount++;
+                    if (board[r][c] === WHITE) whiteCount++;
+                }
+            }
+
+            blackScoreElement.textContent = blackCount;
+            whiteScoreElement.textContent = whiteCount;
+
+            if (gameOver) {
+                if (blackCount > whiteCount) turnDisplay.textContent = "You Win!";
+                else if (whiteCount > blackCount) turnDisplay.textContent = "CPU Wins!";
+                else turnDisplay.textContent = "Draw!";
+            } else {
+                turnDisplay.textContent = currentPlayer === BLACK ? "Your Turn (Black)" : "CPU is thinking...";
+            }
+        }
+
+        function getValidMoves(player) {
+            const moves = [];
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (board[r][c] === EMPTY) {
+                        const flips = getFlips(r, c, player);
+                        if (flips.length > 0) {
+                            moves.push({ r, c, flips });
+                        }
+                    }
+                }
+            }
+            return moves;
+        }
+
+        function getFlips(r, c, player) {
+            const opponent = player === BLACK ? WHITE : BLACK;
+            const flips = [];
+
+            for (const [dr, dc] of directions) {
+                let tempFlips = [];
+                let currR = r + dr;
+                let currC = c + dc;
+
+                while (currR >= 0 && currR < BOARD_SIZE && currC >= 0 && currC < BOARD_SIZE && board[currR][currC] === opponent) {
+                    tempFlips.push({ r: currR, c: currC });
+                    currR += dr;
+                    currC += dc;
+                }
+
+                if (currR >= 0 && currR < BOARD_SIZE && currC >= 0 && currC < BOARD_SIZE && board[currR][currC] === player) {
+                    flips.push(...tempFlips);
+                }
+            }
+            return flips;
+        }
+
+        function handleCellClick(r, c) {
+            if (currentPlayer !== BLACK || gameOver) return;
+
+            const moves = getValidMoves(BLACK);
+            const move = moves.find(m => m.r === r && m.c === c);
+
+            if (move) {
+                executeMove(move);
+                if (!checkGameOver()) {
+                    currentPlayer = WHITE;
+                    updateUI();
+                    updateBoardDisplay();
+                    setTimeout(cpuMove, 600);
+                }
+            }
+        }
+
+        function executeMove(move) {
+            board[move.r][move.c] = currentPlayer;
+            move.flips.forEach(f => {
+                board[f.r][f.c] = currentPlayer;
+            });
+            updateBoardDisplay();
+        }
+
+        function checkGameOver() {
+            const blackMoves = getValidMoves(BLACK);
+            const whiteMoves = getValidMoves(WHITE);
+
+            const boardFull = board.every(row => row.every(cell => cell !== EMPTY));
+            const blackPass = blackMoves.length === 0;
+            const whitePass = whiteMoves.length === 0;
+
+            if (boardFull || (blackPass && whitePass)) {
+                gameOver = true;
+                updateUI();
+                return true;
+            }
+
+            // If current player has no moves, they pass
+            if (currentPlayer === BLACK && blackMoves.length === 0) {
+                currentPlayer = WHITE;
+                updateUI();
+                setTimeout(cpuMove, 600);
+                return false;
+            }
+            if (currentPlayer === WHITE && whiteMoves.length === 0) {
+                currentPlayer = BLACK;
+                updateUI();
+                return false;
+            }
+
+            return false;
+        }
+
+        function cpuMove() {
+            if (gameOver) return;
+
+            const moves = getValidMoves(WHITE);
+
+            if (moves.length === 0) {
+                // CPU passes
+                currentPlayer = BLACK;
+                updateUI();
+                updateBoardDisplay();
+                if (checkGameOver()) return;
+                setTimeout(cpuMove, 600);
+                return;
+            }
+
+            // Heuristic: Corner > Edge > Most Flips
+            const scoredMoves = moves.map(move => {
+                let score = move.flips.length; // Base score: number of flips
+                
+                // Corner weight
+                const corners = [[0,0], [0,7], [7,0], [7,7]];
+                if (corners.some(pos => pos[0] === move.r && pos[1] === move.c)) {
+                    score += 100;
+                } else {
+                    // Edge weight
+                    const isEdge = (move.r === 0 || move.r === 7 || move.c === 0 || move.c === 7);
+                    if (isEdge) score += 10;
+                }
+                
+                return { ...move, score };
+            });
+
+            scoredMoves.sort((a, b) => b.score - a.score);
+            const bestMove = scoredMoves[0];
+
+            executeMove(bestMove);
+            
+            if (!checkGameOver()) {
+                currentPlayer = BLACK;
+                updateUI();
+                updateBoardDisplay();
+                setTimeout(cpuMove, 600);
+            }
+        }
+
+        // Start the game on load
+        initGame();
+    </script>
+</body>
+</html>
