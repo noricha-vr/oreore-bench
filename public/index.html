@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>oreore-bench トップページ</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <style>
         :root {
             --bg: #ffffff;
@@ -102,13 +103,9 @@
             padding-bottom: 96px;
         }
 
-        /* bg-gray-50 を section に直付けすると container 幅に収まってしまうので、フルブリード化する */
+        /* セクションの背景色は section 自身に当てる（内側に .container を入れる構造） */
         section.bg-gray-50 {
             background-color: var(--bg-soft);
-            margin-left: calc(50% - 50vw);
-            margin-right: calc(50% - 50vw);
-            padding-left: calc(50vw - 50%);
-            padding-right: calc(50vw - 50%);
         }
 
         /* Utility classes */
@@ -152,7 +149,6 @@
         .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
         .text-base { font-size: 1rem; line-height: 1.5rem; }
         .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
-        .text-xs { font-size: 0.75rem; line-height: 1rem; }
         .text-primary { color: var(--primary); }
         .text-fg-soft { color: var(--fg-soft); }
         .text-muted { color: var(--muted-fg); }
@@ -239,10 +235,20 @@
             gap: 0.75rem;
             flex-wrap: wrap;
         }
+        .theme-card .card-title-block {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
         .theme-card .card-title {
-            font-size: 1.0625rem;
+            font-size: 1.125rem;
             font-weight: 700;
             line-height: 1.4;
+            margin: 0;
+        }
+        .theme-card .card-subtitle {
+            font-size: 0.8125rem;
+            color: var(--muted-fg);
             margin: 0;
         }
         .theme-card .card-meta {
@@ -281,24 +287,69 @@
 
         .step-num {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 3rem;
+            font-size: 2.75rem;
             font-weight: 700;
-            color: var(--primary);
+            color: var(--fg);
             line-height: 1;
             margin-bottom: 0.75rem;
             letter-spacing: -0.04em;
+            opacity: 0.85;
+        }
+
+        /* Theme info card (テーマについて セクション) */
+        .theme-info-card {
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            transition: box-shadow 0.18s, transform 0.18s;
+        }
+        .theme-info-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        .theme-info-head {
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+        }
+        .theme-info-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 1.125rem;
+            flex-shrink: 0;
+        }
+        .theme-info-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--fg);
+        }
+        .theme-info-desc {
+            color: var(--fg-soft);
+            font-size: 0.9375rem;
+            line-height: 1.8;
+            margin: 0;
         }
 
         /* Header Navigation */
         header {
             padding: 18px 0;
             border-bottom: 1px solid var(--border);
-            background-color: var(--bg);
+            background-color: rgba(255, 255, 255, 0.92);
+            backdrop-filter: saturate(180%) blur(8px);
+            -webkit-backdrop-filter: saturate(180%) blur(8px);
             position: sticky;
             top: 0;
             z-index: 100;
-            backdrop-filter: saturate(180%) blur(8px);
-            background-color: rgba(255,255,255,0.92);
         }
         .brand-link {
             font-size: 1.0625rem;
@@ -314,7 +365,9 @@
         }
         @media (max-width: 600px) {
             .header-nav { gap: 14px; }
-            .header-nav .nav-link:not(:last-child) { display: none; }
+            /* モバイルでも「ベンチ一覧」と「GitHub」は残す（中央 2 件のみ非表示） */
+            .header-nav .nav-link:nth-child(2),
+            .header-nav .nav-link:nth-child(3) { display: none; }
         }
         .nav-link {
             color: var(--fg-soft);
@@ -405,63 +458,71 @@
         </section>
 
         <!-- Bench List Section -->
-        <section id="bench-list" class="container">
-            <h2 class="text-center mb-12">ベンチマーク一覧</h2>
-            <!-- Filters -->
-            <div class="filters mb-8">
-                <div class="filter-row">
-                    <div class="text-label filter-label">テーマ</div>
-                    <div id="theme-filters" class="filter-buttons"></div>
+        <section id="bench-list">
+            <div class="container">
+                <h2 class="text-center mb-12">ベンチマーク一覧</h2>
+                <!-- Filters -->
+                <div class="filters mb-8">
+                    <div class="filter-row">
+                        <div class="text-label filter-label">テーマ</div>
+                        <div id="theme-filters" class="filter-buttons"></div>
+                    </div>
+                    <div class="filter-row">
+                        <div class="text-label filter-label">モデル</div>
+                        <div id="model-filters" class="filter-buttons"></div>
+                    </div>
                 </div>
-                <div class="filter-row">
-                    <div class="text-label filter-label">モデル</div>
-                    <div id="model-filters" class="filter-buttons"></div>
-                </div>
-            </div>
 
-            <div id="entry-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Entry Cards will be populated here by JS -->
-            </div>
-            <div id="entry-empty" class="text-center text-fg-soft" style="display:none; padding: 64px 0;">
-                <p class="text-base">該当するエントリがありません。</p>
-                <p class="text-sm text-muted mt-2">フィルターを絞りすぎているかもしれません。</p>
+                <div id="entry-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Entry Cards will be populated here by JS -->
+                </div>
+                <div id="entry-empty" class="text-center text-fg-soft" style="display:none; padding: 64px 0;">
+                    <p class="text-base">該当するエントリがありません。</p>
+                    <p class="text-sm text-muted mt-2">フィルターを絞りすぎているかもしれません。</p>
+                </div>
             </div>
         </section>
 
         <!-- Theme Description Section -->
-        <section id="theme-description" class="container bg-gray-50">
-            <h2 class="text-center mb-12">テーマについて</h2>
-            <div id="themes-grid" class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- Theme details will be populated here by JS -->
+        <section id="theme-description" class="bg-gray-50">
+            <div class="container">
+                <h2 class="text-center mb-12">テーマについて</h2>
+                <div id="themes-grid" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Theme details will be populated here by JS -->
+                </div>
             </div>
         </section>
 
         <!-- Model Description Section -->
-        <section id="model-description" class="container">
-            <h2 class="text-center mb-12">モデルについて</h2>
-            <div id="models-list" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Model details will be populated here by JS -->
+        <section id="model-description">
+            <div class="container">
+                <h2 class="text-center mb-12">モデルについて</h2>
+                <div id="models-list" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Model details will be populated here by JS -->
+                </div>
             </div>
         </section>
 
         <!-- How to Use Section -->
-        <section id="how-to-use" class="container bg-gray-50">
-            <h2 class="text-center mb-12">使い方</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-                <div class="flex flex-col items-center">
-                    <div class="step-num">1</div>
-                    <h3 class="text-lg font-semibold mb-2">テーマを選ぶ</h3>
-                    <p class="text-fg-soft">気になるベンチマークテーマを選びます。</p>
-                </div>
-                <div class="flex flex-col items-center">
-                    <div class="step-num">2</div>
-                    <h3 class="text-lg font-semibold mb-2">各モデルの結果を比べる</h3>
-                    <p class="text-fg-soft">同じプロンプトに対する LLM ごとの出力を比較します。</p>
-                </div>
-                <div class="flex flex-col items-center">
-                    <div class="step-num">3</div>
-                    <h3 class="text-lg font-semibold mb-2">プロンプトを見て自分でも試す</h3>
-                    <p class="text-fg-soft">同じプロンプトをコピーして手元の環境で再現します。</p>
+        <section id="how-to-use" class="bg-gray-50">
+            <div class="container">
+                <h2 class="text-center mb-12">使い方</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                    <div class="flex flex-col items-center">
+                        <div class="step-num">1</div>
+                        <h3 class="text-lg font-semibold mb-2">テーマを選ぶ</h3>
+                        <p class="text-fg-soft">気になるベンチマークテーマを選びます。</p>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="step-num">2</div>
+                        <h3 class="text-lg font-semibold mb-2">各モデルの結果を比べる</h3>
+                        <p class="text-fg-soft">同じプロンプトに対する LLM ごとの出力を比較します。</p>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="step-num">3</div>
+                        <h3 class="text-lg font-semibold mb-2">プロンプトを見て自分でも試す</h3>
+                        <p class="text-fg-soft">同じプロンプトをコピーして手元の環境で再現します。</p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -502,13 +563,15 @@
                 title: "NISHIBI Landing Page",
                 short: "ネタを真顔で",
                 desc: "「西日で焼く日焼けサロン」というネタ前提を、寡黙でプレミアムな高級ブランド LP として真顔で表現できるか。",
-                color: "#E25C2C"  // テラコッタ
+                color: "#E25C2C",  // テラコッタ
+                icon: "fa-solid fa-pen-ruler"
             },
             "othello": {
                 title: "Othello (Reversi)",
                 short: "ゲームロジック",
                 desc: "HTML/CSS/JS 1 枚で動く 8x8 オセロ。状態管理 / 合法手判定 / CPU AI / UI ハイライト / 終局判定。",
-                color: "#2E7D32"  // 緑
+                color: "#2E7D32",  // 緑
+                icon: "fa-solid fa-chess-board"
             }
         };
 
@@ -603,10 +666,13 @@
                         <span class="badge" style="background-color: ${theme.color};">${theme.short}</span>
                         <div class="card-meta">
                             <span class="model-dot" style="background-color: ${model.color};"></span>
-                            <span>${model.label}</span>
+                            <span>${model.provider}</span>
                         </div>
                     </div>
-                    <h3 class="card-title">${theme.title}</h3>
+                    <div class="card-title-block">
+                        <h3 class="card-title">${model.label}</h3>
+                        <p class="card-subtitle">${theme.title} ・ ${entry.runner}</p>
+                    </div>
                     <p class="card-note">${entry.note}</p>
                     <div class="card-actions">
                         <a href="./${entry.theme}/${entry.model}/index.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">実物を見る</a>
@@ -625,14 +691,15 @@
             for (const themeKey in THEMES) {
                 const theme = THEMES[themeKey];
                 const themeDiv = document.createElement('div');
-                themeDiv.className = 'p-6 bg-white rounded-lg shadow-sm border';
+                themeDiv.className = 'theme-info-card';
                 themeDiv.innerHTML = `
-                    <div class="flex items-center gap-4 mb-2">
-                        <!-- Icon Placeholder - Using a simple colored square for now -->
-                        <div style="width: 24px; height: 24px; background-color: ${theme.color}; border-radius: 4px;"></div>
-                        <h3 class="text-base font-semibold">${theme.title}</h3>
+                    <div class="theme-info-head">
+                        <div class="theme-info-icon" style="background-color: ${theme.color};">
+                            <i class="${theme.icon}" aria-hidden="true"></i>
+                        </div>
+                        <h3 class="theme-info-title">${theme.title}</h3>
                     </div>
-                    <p class="text-muted text-sm">${theme.desc}</p>
+                    <p class="theme-info-desc">${theme.desc}</p>
                 `;
                 themesGridContainer.appendChild(themeDiv);
             }
