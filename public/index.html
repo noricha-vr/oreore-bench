@@ -376,12 +376,17 @@
             padding: 24px 32px 32px;
         }
 
-        /* Stat grid (モデルモーダルの数値) */
+        /* Stat grid (モデルモーダルの数値) — 4 件運用 (パラメータ / 量子化 / コンテキスト / 最大出力) */
         .stat-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 8px;
             margin-bottom: 20px;
+        }
+        @media (min-width: 540px) {
+            .stat-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
         }
         .stat-card {
             background-color: var(--bg-soft);
@@ -527,9 +532,8 @@
             .modal-hero { padding: 28px 24px 22px; }
             .modal-hero-title { font-size: 1.5rem; }
             .modal-body-inner { padding: 20px 24px 28px; }
-            /* stat-grid は 3 件固定運用なのでモバイルでも 3 カラム維持。
-               min-width: 0 でセル幅オーバーフローを許容、stat-value を縮小 */
-            .stat-grid > .stat-card { min-width: 0; padding: 12px 8px; }
+            /* 4 件運用なのでモバイルは 2 カラム × 2 行 */
+            .stat-grid > .stat-card { min-width: 0; padding: 12px 10px; }
             .stat-card .stat-value { font-size: 1.125rem; }
             .stat-card .stat-label { font-size: 0.6875rem; }
         }
@@ -704,7 +708,7 @@
             z-index: 100;
         }
         .brand-link {
-            font-size: 1.0625rem;
+            font-size: 1.275rem; /* 1.0625rem × 1.2 */
             font-weight: 700;
             color: var(--fg);
             text-decoration: none;
@@ -832,7 +836,7 @@
 <body>
     <header>
         <div class="container flex justify-between items-center">
-            <a href="#" class="brand-link">oreore-bench</a>
+            <a href="#" class="brand-link">オレオレBench</a>
             <nav class="header-nav">
                 <a href="#bench-list" class="nav-link">ベンチ一覧</a>
                 <a href="#theme-description" class="nav-link">テーマ</a>
@@ -1033,7 +1037,8 @@
                 quantization: "MLX 4-bit / GGUF Q4_K_M 等",
                 runtime: "LM Studio / llama.cpp / Ollama",
                 stats: [
-                    { value: "31B", label: "パラメータ", note: "dense" },
+                    { value: "31B", label: "パラメータ", note: "dense（フル活性）" },
+                    { value: "4-bit", label: "量子化", note: "MLX / GGUF Q4_K_M" },
                     { value: "256K", label: "コンテキスト", note: "実用 128K 目安" },
                     { value: "8K", label: "最大出力", note: "実運用目安" }
                 ],
@@ -1057,6 +1062,7 @@
                 runtime: "Anthropic API / Claude Code / Agent SDK",
                 stats: [
                     { value: "—", label: "パラメータ", note: "非公開" },
+                    { value: "FP", label: "量子化", note: "API モデル" },
                     { value: "1M", label: "コンテキスト", note: "Foundry は 200K" },
                     { value: "128K", label: "最大出力", note: "Batches は 300K" }
                 ],
@@ -1079,7 +1085,8 @@
                 quantization: "Quantization Aware Training (QAT) 済み 4-bit",
                 runtime: "LM Studio / llama.cpp / Ollama",
                 stats: [
-                    { value: "26B/4B", label: "総 / アクティブ", note: "MoE QAT" },
+                    { value: "26B / 4B", label: "総 / アクティブ", note: "MoE 構造" },
+                    { value: "QAT 4-bit", label: "量子化", note: "学習時量子化済み" },
                     { value: "256K", label: "コンテキスト", note: "実用 128K 目安" },
                     { value: "8K", label: "最大出力", note: "実運用目安" }
                 ],
@@ -1311,8 +1318,8 @@
                 <div class="modal-body-inner">
                     <div class="stat-grid">${statsHtml}</div>
                     <dl class="modal-spec">
-                        <dt>モデルサイズ</dt><dd>${model.size}</dd>
-                        <dt>量子化</dt><dd>${model.quantization}</dd>
+                        <dt>パラメータ詳細</dt><dd>${model.size}</dd>
+                        <dt>量子化詳細</dt><dd>${model.quantization}</dd>
                         <dt>ランタイム</dt><dd>${model.runtime}</dd>
                     </dl>
                     <div class="modal-section">
