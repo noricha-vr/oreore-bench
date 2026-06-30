@@ -408,10 +408,10 @@
         }
         .stat-note {
             display: block;
-            font-size: 0.6875rem;
+            font-size: 0.75rem;
             color: var(--muted-fg);
             margin-top: 4px;
-            opacity: 0.85;
+            line-height: 1.4;
         }
 
         /* Inline spec (モデルモーダルの2行目以降の詳細) */
@@ -526,7 +526,11 @@
             .modal-hero { padding: 28px 24px 22px; }
             .modal-hero-title { font-size: 1.5rem; }
             .modal-body-inner { padding: 20px 24px 28px; }
-            .stat-grid { grid-template-columns: repeat(2, 1fr); }
+            /* stat-grid は 3 件固定運用なのでモバイルでも 3 カラム維持。
+               min-width: 0 でセル幅オーバーフローを許容、stat-value を縮小 */
+            .stat-grid > .stat-card { min-width: 0; padding: 12px 8px; }
+            .stat-card .stat-value { font-size: 1.125rem; }
+            .stat-card .stat-label { font-size: 0.6875rem; }
         }
 
         /* Entry card */
