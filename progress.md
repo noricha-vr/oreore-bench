@@ -22,13 +22,9 @@ sleep-mode / morning-briefing で参照されるエントリーポイント。
 
 ### 短期（次セッションで進められる）
 
-- [ ] extract-questions の入力を 30〜50 問規模に拡張して、モデル間の差を顕在化させる
-  - 現状 20 問では 4 モデル全て PASS してグラデーションが出ない
-  - 拡張時は過去 4 モデルの再生成が必要（プロンプト凍結ルール継承で `extract-questions-v2` テーマとして追加？要相談）
-- [ ] `lp-nishibi` / `othello` テーマも Gemma 4 12B QAT で生成して 4 モデル × 3 テーマ揃える
-  - 既に 12B はモデル定数に入っているのに lp-nishibi / othello エントリは未生成
-- [ ] `wrangler.toml` を作って Cloudflare Pages デプロイ設定をリポに固定化
-  - 現状 CLI 経由のオプション指定だけで明示設定なし
+- [x] extract-questions-v2 (40問) 追加でグラデーション顕在化（12B のみ ❌）
+- [x] `lp-nishibi` / `othello` テーマも Gemma 4 12B QAT で生成
+- [x] `wrangler.toml` を作って Cloudflare Pages デプロイ設定を固定化
 
 ### 中期
 
