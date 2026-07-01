@@ -8,10 +8,27 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const THEME_DIR = path.join(ROOT, 'public', 'extract-questions');
+// --theme <name> 引数（デフォルト extract-questions）。node 標準の parseArgs で
+// 依存追加せずに済ませる。
+const themeArg = (() => {
+  const args = process.argv.slice(2);
+  const i = args.indexOf('--theme');
+  if (i >= 0 && args[i + 1]) return args[i + 1];
+  const eq = args.find(a => a.startsWith('--theme='));
+  if (eq) return eq.slice('--theme='.length);
+  return 'extract-questions';
+})();
+const THEME_DIR = path.join(ROOT, 'public', themeArg);
 
-const EXPECTED_QUESTIONS_MIN = 15;  // 20 問入力に対して 15 件は出して欲しい
-const EXPECTED_QUESTIONS_TARGET = 20;
+// テーマごとの期待件数レンジ
+const THEME_EXPECTS = {
+  'extract-questions':    { min: 15, target: 20, max: 25 },
+  'extract-questions-v2': { min: 30, target: 40, max: 45 },
+};
+const EXPECT = THEME_EXPECTS[themeArg] || { min: 15, target: 20, max: 25 };
+const EXPECTED_QUESTIONS_MIN = EXPECT.min;
+const EXPECTED_QUESTIONS_TARGET = EXPECT.target;
+const EXPECTED_QUESTIONS_MAX = EXPECT.max;
 const MAX_OPTIONS = 12;
 const FREE_LABEL = '自由に記述する';
 
@@ -115,8 +132,7 @@ async function processModel(modelDir) {
     return { model: path.basename(modelDir), ok: false, reason: 'invalid JSON' };
   }
   const v = validate(parsed);
-  // 件数は 15〜25 を許容（20 ± 5）。スキーマ準拠は他の基準で
-  const countOk = v.question_count >= v.expected_min && v.question_count <= 25;
+  const countOk = v.question_count >= v.expected_min && v.question_count <= EXPECTED_QUESTIONS_MAX;
   const meta = {
     valid_json: true,
     generated_at: new Date().toISOString(),
@@ -145,7 +161,7 @@ async function main() {
   const results = [];
   for (const d of modelDirs) results.push(await processModel(d));
 
-  console.log('=== extract-questions validation ===');
+  console.log(`=== ${themeArg} validation ===`);
   for (const r of results) {
     const status = r.ok ? '✅ PASS' : '❌ FAIL';
     const detail = r.ok

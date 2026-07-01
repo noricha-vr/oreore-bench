@@ -7,8 +7,10 @@ import json
 import sys
 from pathlib import Path
 
+import argparse
+
 ROOT = Path(__file__).resolve().parent.parent
-THEME_DIR = ROOT / "public" / "extract-questions"
+PUBLIC = ROOT / "public"
 
 MODEL_INFO = {
     "claude-opus-4-8": {
@@ -149,7 +151,7 @@ TEMPLATE = """<!DOCTYPE html>
 <header class="hero">
   <div class="hero-inner">
     <a href="../../" class="back">← OreOre-Bench に戻る</a>
-    <span class="tag">extract-questions ・ {provider} ・ {type_label}</span>
+    <span class="tag">{theme_name} ・ {provider} ・ {type_label}</span>
     <h1>{model_label}</h1>
     <p class="sub">AI アシスタントの出力からユーザーが答えるべき質問を抽出し、フォーム UI 用 JSON に変換。本番運用と同じスキーマ。</p>
   </div>
@@ -267,14 +269,14 @@ TEMPLATE = """<!DOCTYPE html>
 """
 
 
-def render(model_dir: Path) -> None:
+def render(theme_name: str, model_dir: Path) -> None:
     name = model_dir.name
     info = MODEL_INFO.get(name)
     if not info:
-        print(f"skip {name}", file=sys.stderr); return
+        print(f"skip {theme_name}/{name}", file=sys.stderr); return
     meta_path = model_dir / "meta.json"
     if not meta_path.exists():
-        print(f"skip {name}: meta.json", file=sys.stderr); return
+        print(f"skip {theme_name}/{name}: meta.json", file=sys.stderr); return
     meta = json.loads(meta_path.read_text(encoding="utf-8"))
 
     schema_pass = meta.get("schema_pass", False)
@@ -295,7 +297,8 @@ def render(model_dir: Path) -> None:
     free_class = "ok" if free == 100 else ("ng" if free < 80 else "")
 
     html = TEMPLATE.format(
-        title=f"{info['label']} — extract-questions / OreOre-Bench",
+        title=f"{info['label']} — {theme_name} / OreOre-Bench",
+        theme_name=theme_name,
         color=info["color"], color_dark=info["color_dark"],
         provider=info["provider"], type_label=info["type"],
         model_label=info["label"],
@@ -312,9 +315,16 @@ def render(model_dir: Path) -> None:
 
 
 def main() -> int:
-    for d in sorted(THEME_DIR.iterdir()):
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--theme", default="extract-questions")
+    args = ap.parse_args()
+    theme_dir = PUBLIC / args.theme
+    if not theme_dir.exists():
+        print(f"theme not found: {theme_dir}", file=sys.stderr)
+        return 1
+    for d in sorted(theme_dir.iterdir()):
         if d.is_dir():
-            render(d)
+            render(args.theme, d)
     return 0
 
 

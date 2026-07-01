@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>extract-questions-v2 入力本文 — OreOre-Bench</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff; --bg-soft: #f7f8fa;
+    --fg: #1a1a1a; --fg-soft: #5a5a5a; --muted-fg: #6b7280;
+    --border: #e5e7eb; --primary: #2563eb;
+    --accent: #7C3AED; --accent-dark: #5B21B6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+         background: var(--bg-soft); color: var(--fg);
+         line-height: 1.9; font-size: 0.9375rem; -webkit-font-smoothing: antialiased; }
+  .hero { padding: 28px 24px; color: #fff;
+          background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); }
+  .hero-inner { max-width: 760px; margin: 0 auto; }
+  .hero a.back { color: #fff; opacity: 0.85; font-size: 0.875rem;
+                 font-weight: 600; display: inline-block; margin-bottom: 12px; }
+  .hero a.back:hover { opacity: 1; text-decoration: underline; }
+  .hero h1 { font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
+  .hero .sub { font-size: 0.9rem; opacity: 0.9; }
+  .container { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
+  .card { background: var(--bg); border: 1px solid var(--border);
+          border-radius: 14px; padding: 36px;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+  .body-text { white-space: pre-wrap; color: var(--fg);
+               font-family: 'Noto Sans JP', sans-serif;
+               font-size: 0.9375rem; line-height: 2.0; }
+  .meta { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);
+          font-size: 0.8125rem; color: var(--muted-fg);
+          display: flex; gap: 20px; flex-wrap: wrap; }
+  .meta a { color: var(--muted-fg); font-weight: 600; text-decoration: none; }
+  .meta a:hover { color: var(--primary); }
+  .stat-line { font-size: 0.875rem; color: var(--muted-fg);
+               margin-bottom: 16px; padding-bottom: 12px;
+               border-bottom: 1px dashed var(--border); }
+  .stat-line strong { color: var(--fg); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a href="../" class="back">← OreOre-Bench に戻る</a>
+    <h1>入力本文</h1>
+    <p class="sub">extract-questions-v2 テーマで各モデルに渡している共通入力（AI アシスタントの出力例）。</p>
+  </div>
+</header>
+
+<main class="container">
+  <article class="card">
+    <div class="stat-line">
+      想定シナリオ: <strong>AI アシスタントがアプリ設計のヒアリングを行った出力</strong>
+      ・ 約 <strong id="charcount">…</strong> 文字
+      ・ 想定質問数 <strong>40 件</strong>
+    </div>
+    <pre class="body-text" id="body"></pre>
+    <div class="meta">
+      <a href="./input.md" target="_blank">input.md（元データ）</a>
+      <a href="./prompt.html">プロンプトに戻る</a>
+    </div>
+  </article>
+</main>
+
+<script>
+  fetch('./input.md').then(r => r.text()).then(text => {
+    document.getElementById('body').textContent = text;
+    document.getElementById('charcount').textContent = text.length.toLocaleString();
+  }).catch(() => {
+    document.getElementById('body').textContent = 'input.md を読み込めませんでした。';
+  });
+</script>
+
+</body>
+</html>

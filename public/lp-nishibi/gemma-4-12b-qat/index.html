@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NISHIBI | 西日を浴びるための聖域</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300&family=Noto+Serif+JP:wght@200;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #F9F5F0;
+            --text-color: #3D2B1F;
+            --accent-color: #B35A38;
+            --muted-color: #8C7363;
+            --gold-gradient: linear-gradient(135deg, #D4A373 0%, #B35A38 100%);
+            --transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Noto Serif JP', serif;
+            line-height: 1.8;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+
+        section {
+            padding: 160px 0;
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: var(--transition);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: radial-gradient(circle at center, #F9F5F0 0%, #E8D5C5 100%);
+        }
+
+        .hero h1 {
+            font-size: clamp(3rem, 10vw, 8rem);
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            letter-spacing: 0.3em;
+            margin-bottom: 40px;
+            color: var(--muted-color);
+        }
+
+        .cta-btn {
+            display: inline-block;
+            padding: 20px 60px;
+            border: 1px solid var(--text-color);
+            text-decoration: none;
+            color: var(--text-color);
+            letter-spacing: 0.2em;
+            transition: all 0.5s ease;
+            background: transparent;
+        }
+
+        .cta-btn:hover {
+            background: var(--text-color);
+            color: var(--bg-color);
+        }
+
+        /* Philosophy */
+        .philosophy {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .philosophy h2 {
+            font-size: 3rem;
+            margin-bottom: 60px;
+        }
+
+        .philosophy p {
+            font-size: 1.2rem;
+            text-align: justify;
+            color: var(--muted-color);
+        }
+
+        /* Service / Plan */
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-top: 80px;
+        }
+
+        .plan-card {
+            padding: 60px 40px;
+            border: 1px solid rgba(61, 43, 31, 0.1);
+            background: rgba(255, 255, 255, 0.3);
+            transition: var(--transition);
+        }
+
+        .plan-card:hover {
+            border-color: var(--accent-color);
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .plan-card h3 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .plan-card .price {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            color: var(--accent-color);
+        }
+
+        .plan-card ul {
+            list-style: none;
+            font-size: 0.9rem;
+            color: var(--muted-color);
+        }
+
+        .plan-card li {
+            margin-bottom: 10px;
+        }
+
+        /* Science */
+        .science {
+            background-color: #F2EBE6;
+        }
+
+        .science-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 60px;
+            margin-top: 80px;
+        }
+
+        .science-item h4 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .science-item p {
+            font-size: 0.9rem;
+            color: var(--muted-color);
+        }
+
+        /* Studio */
+        .studio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-top: 80px;
+        }
+
+        .studio-item h4 {
+            font-weight: 400;
+            margin-bottom: 15px;
+        }
+
+        /* Testimonial */
+        .testimonial-item {
+            margin-bottom: 60px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .testimonial-item blockquote {
+            font-size: 1.4rem;
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+
+        .testimonial-item cite {
+            font-size: 0.9rem;
+            color: var(--muted-color);
+        }
+
+        /* Footer */
+        footer {
+            padding: 100px 0 50px;
+            text-align: center;
+            border-top: 1px solid rgba(61, 43, 31, 0.1);
+            font-size: 0.8rem;
+            color: var(--muted-color);
+        }
+
+        .footer-links {
+            margin-bottom: 30px;
+        }
+
+        .footer-links a {
+            color: var(--muted-color);
+            text-decoration: none;
+            margin: 0 15px;
+        }
+
+        @media (max-width: 768px) {
+            section { padding: 80px 0; }
+            .hero h1 { font-size: 4rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <section class="hero">
+        <div class="container">
+            <h1 class="reveal">刻を、肌に刻む。</h1>
+            <p class="reveal">NISHIBI — THE ART OF RECEDING LIGHT</p>
+            <a href="#service" class="cta-btn reveal">RESERVATION</a>
+        </div>
+    </section>
+
+    <section class="philosophy">
+        <div class="container">
+            <h2 class="reveal">西日は、一日の終焉を告げる最も贅沢な光である。</h2>
+            <p class="reveal">
+                私たちは、人工的な光を拒絶する。日焼けマシンが提供する均一な熱量は、自然の摂理に対する冒涜に他ならない。
+                NISHIBIが提供するのは、単なる色素の沈着ではない。それは、西から差し込む斜光が描く軌跡を肌に受け入れ、
+                一日の終わりを皮膚で享受する、静謐な儀式である。
+                都市の喧騒を離れ、沈みゆく太陽の残滓を纏う。それは、自己の境界を再定義するための、最も原始的で洗練された行為。
+            </p>
+        </div>
+    </section>
+
+    <section id="service" class="service">
+        <div class="container">
+            <h2 class="reveal" style="text-align: center; font-size: 3rem;">Rituals</h2>
+            <div class="service-grid">
+                <div class="plan-card reveal">
+                    <h3>黄金時間</h3>
+                    <p class="price">¥12,000 / 60min</p>
+                    <ul>
+                        <li>15:00 - 16:00</li>
+                        <li>最も純度の高い琥珀色の光</li>
+                        <li>初期導入のための静かな導入</li>
+                        <li>アロマテラピー（沈香）</li>
+                    </ul>
+                </div>
+                <div class="plan-card reveal">
+                    <h3>茜時間</h3>
+                    <p class="price">¥15,000 / 60min</p>
+                    <ul>
+                        <li>16:00 - 17:00</li>
+                        <li>最も色彩豊かな赤橙の光</li>
+                        <li>皮膚への深い浸透を促す角度</li>
+                        <li>特製リネンによる遮光調整</li>
+                    </ul>
+                </div>
+                <div class="plan-card reveal">
+                    <h3>残光時間</h3>
+                    <p class="price">¥18,000 / 60min</p>
+                    <ul>
+                        <li>17:00 - 18:00</li>
+                        <li>一日の終焉を告げる最後の光</li>
+                        <li>生体リズムの調整を目的とした照射</li>
+                        <li>事後の瞑想セッションを含む</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="science">
+        <div class="container">
+            <h2 class="reveal" style="text-align: center; font-size: 3rem;">The Science of Twilight</h2>
+            <div class="science-grid">
+                <div class="science-item reveal">
+                    <h4>Circadian Alignment</h4>
+                    <p>夕刻の特定の波長は、メラトニンの分泌を抑制し、夜間の深い休息への移行をスムーズにする生体リズムの調整を促します。</p>
+                </div>
+                <div class="science-item reveal">
+                    <h4>Amber Spectrum</h4>
+                    <p>西日は大気層を通過する距離が長いため、高エネルギーな短波長が減衰し、肌に優しい長波長の琥珀色へと変質します。</p>
+                </div>
+                <div class="science-item reveal">
+                    <h4>Low-Frequency UV</h4>
+                    <p>人工的なUV照射とは異なり、自然な散乱を伴う紫外線は、皮膚の細胞に緩やかな覚醒と再生のシグナルを送ります。</p>
+                </div>
+                <div class="science-item reveal">
+                    <h4>Photobiomodulation</h4>
+                    <p>光による生物学的調整。西日の角度は、皮膚の層に対して最適な角度で光子を届けるための幾何学的最適解です。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="studio">
+        <div class="container">
+            <h2 class="reveal" style="text-align: center; font-size: 3rem;">The Studio</h2>
+            <div class="studio-grid">
+                <div class="studio-item reveal">
+                    <h4>南西向き全面窓</h4>
+                    <p>西日を余すことなく受け入れるため、建築構造を光の軌跡に合わせて設計。</p>
+                </div>
+                <div class="studio-item reveal">
+                    <h4>無垢材の空間</h4>
+                    <p>光の反射を抑え、質感を強調する国産の無垢材を空間全体に使用。</p>
+                </div>
+                <div class="studio-item reveal">
+                    <h4>無音空間</h4>
+                    <p>外部の音を遮断し、光と肌の対話にのみ集中できる完全な静寂。</p>
+                </div>
+                <div class="studio-item reveal">
+                    <h4>遮光の美学</h4>
+                    <p>光の入り方をミリ単位で調整する、手織りのリネンカーテンによる空間演出。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="testimonial">
+        <div class="container">
+            <h2 class="reveal" style="text-align: center; font-size: 3rem; margin-bottom: 80px;">Voices</h2>
+            <div class="testimonial-item reveal">
+                <blockquote>「人工的な日焼けでは決して得られない、肌の温度の変化と光の重みが、私の内面を静かに変えていく。」</blockquote>
+                <cite>建築家 / K.S.</cite>
+            </div>
+            <div class="testimonial-item reveal">
+                <blockquote>「西日を浴びることは、都市の中で失われた『時間』を取り戻す儀式のようなもの。」</blockquote>
+                <cite>ギャラリーオーナー / M.T.</cite>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <h2 style="margin-bottom: 20px;">NISHIBI</h2>
+            <div class="footer-links">
+                <a href="#">Instagram</a>
+                <a href="#">Twitter</a>
+                <a href="#">Contact</a>
+            </div>
+            <p>〒107-0001 東京都港区六本木 1-2-3 概念的建築ビル 4F</p>
+            <p style="margin-top: 20px;">© 2024 NISHIBI. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>

@@ -10,5 +10,3 @@ build/
 .cache/
 _response.json
 
-# sleep-mode で作成、本番デプロイの動作確認後にコミット判断
-wrangler.toml

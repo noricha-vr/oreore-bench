@@ -1,0 +1,461 @@
+```json
+{
+  "questions": [
+    {
+      "id": "q1",
+      "originalText": "どんな業界・領域のプロダクトですか？",
+      "question": "どんな業界・領域のプロダクトですか？",
+      "options": [
+        { "label": "ヘルスケア" },
+        { "label": "フィンテック" },
+        { "label": "教育" },
+        { "label": "B2B SaaS" },
+        { "label": "コンシューマー" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q2",
+      "originalText": "メインユーザーは誰ですか？",
+      "question": "メインユーザーは誰ですか？",
+      "options": [
+        { "label": "一般消費者" },
+        { "label": "中小企業の担当者" },
+        { "label": "エンタープライズの意思決定者" },
+        { "label": "フリーランス" },
+        { "label": "開発者・エンジニア" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q3",
+      "originalText": "ユーザーが日常的に抱えている一番の課題は何ですか？",
+      "question": "ユーザーが日常的に抱えている一番の課題は何ですか？",
+      "options": [
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q4",
+      "originalText": "その課題は、毎日起きていますか？週数回？月数回？",
+      "question": "その課題は、どのくらいの頻度で起きていますか？",
+      "options": [
+        { "label": "毎日" },
+        { "label": "週に数回" },
+        { "label": "月に数回" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q5",
+      "originalText": "今、その課題をどう解決していますか？（既存の代替手段）",
+      "question": "現在はその課題をどのように解決していますか？",
+      "options": [
+        { "label": "Excel / スプレッドシート" },
+        { "label": "別の SaaS" },
+        { "label": "手作業・紙" },
+        { "label": "何もしていない" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q6",
+      "originalText": "競合プロダクトを 1〜3 社挙げてください。",
+      "question": "競合プロダクトを1〜3社挙げてください。",
+      "options": [
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q7",
+      "originalText": "競合と比べて、あなたのプロダクトの差別化ポイントは何ですか？",
+      "question": "競合と比べて、あなたのプロダクトの差別化ポイントは何ですか？",
+      "options": [
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q8",
+      "originalText": "ターゲットユーザーの年齢層は？",
+      "question": "ターゲットユーザーの年齢層は？",
+      "options": [
+        { "label": "10 代" },
+        { "label": "20-30 代" },
+        { "label": "40-50 代" },
+        { "label": "60 代以上" },
+        { "label": "幅広く" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q9",
+      "originalText": "プロダクトを一言で説明すると？（15 文字以内）",
+      "question": "プロダクトを一言で説明すると？（15 文字以内）",
+      "options": [
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q10",
+      "originalText": "一番価値のある機能は何ですか？（1 つだけ）",
+      "question": "一番価値のある機能は何ですか？（1 つだけ）",
+      "options": [
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q11",
+      "originalText": "ユーザーが最初のセッションでやることは何ですか？",
+      "question": "ユーザーが最初のセッションでやることは何ですか？",
+      "options": [
+        { "label": "サインアップして情報入力" },
+        { "label": "サンプルデータで試す" },
+        { "label": "他ユーザーに招待される" },
+        { "label": "即座に主機能を触る" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q12",
+      "originalText": "コア機能のおすすめ実装は『AI アシスタントを埋め込んだダッシュボード』です。この方針で進めますか？",
+      "question": "コア機能のおすすめ実装は『AI アシスタントを埋め込んだダッシュボード』ですが、この方針で進めますか？",
+      "options": [
+        { "label": "承認します" },
+        { "label": "検討したい" },
+        { "label": "別案で進めたい" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q13",
+      "originalText": "ユーザーの利用頻度は？",
+      "question": "ユーザーの利用頻度は？",
+      "options": [
+        { "label": "毎日使う" },
+        { "label": "週に数回" },
+        { "label": "月に 1 回程度" },
+        { "label": "必要時のみ" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q14",
+      "originalText": "1 セッションあたりの想定滞在時間は？",
+      "question": "1 セッションあたりの想定滞在時間は？",
+      "options": [
+        { "label": "30 秒以内" },
+        { "label": "1-5 分" },
+        { "label": "10-30 分" },
+        { "label": "1 時間以上" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q15",
+      "originalText": "提供形態は？",
+      "question": "提供形態は？",
+      "options": [
+        { "label": "Web" },
+        { "label": "スマホネイティブアプリ" },
+        { "label": "デスクトップアプリ" },
+        { "label": "CLI ツール" },
+        { "label": "複数併用" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q16",
+      "originalText": "スマホアプリを含める場合、iOS / Android どちらを優先？",
+      "question": "スマホアプリを含める場合、iOS / Android どちらを優先しますか？",
+      "options": [
+        { "label": "iOS 優先" },
+        { "label": "Android 優先" },
+        { "label": "両方同時" },
+        { "label": "PWA でよい" },
+        { "label": "スマホは含めない" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q17",
+      "originalText": "AI/LLM をコア機能に組み込みますか？",
+      "question": "AI/LLM をコア機能に組み込みますか？",
+      "options": [
+        { "label": "はい、コアに組み込む" },
+        { "label": "補助的に使う" },
+        { "label": "使わない" },
+        { "label": "後日検討" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q18",
+      "originalText": "AI を使う場合、どのモデルを想定？",
+      "question": "AI を使う場合、どのモデルを想定しますか？",
+      "options": [
+        { "label": "Claude" },
+        { "label": "GPT" },
+        { "label": "Gemini" },
+        { "label": "ローカル LLM（Ollama 等）" },
+        { "label": "複数プロバイダー切替" },
+        { "label": "未定" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q19",
+      "originalText": "おすすめの技術スタックは『Next.js + Vercel + Supabase + Anthropic API』です。これで進めますか？",
+      "question": "おすすめの技術スタックは『Next.js + Vercel + Supabase + Anthropic API』ですが、これで進めますか？",
+      "options": [
+        { "label": "承認します" },
+        { "label": "別スタックを希望" },
+        { "label": "未定" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q20",
+      "originalText": "既存の技術資産や好みのスタックはありますか？",
+      "question": "既存の技術資産や好みのスタックはありますか？",
+      "options": [
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q21",
+      "originalText": "扱うデータの機密性は？",
+      "question": "扱うデータの機密性は？",
+      "options": [
+        { "label": "低（公開情報のみ）" },
+        { "label": "中（個人設定・履歴）" },
+        { "label": "高（氏名・メール）" },
+        { "label": "非常に高い（金融・医療・個人情報）" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q22",
+      "originalText": "データの保存場所に規制はありますか？",
+      "question": "データの保存場所に規制はありますか？",
+      "options": [
+        { "label": "日本国内必須" },
+        { "label": "US OK" },
+        { "label": "EU OK" },
+        { "label": "規制なし" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q23",
+      "originalText": "GDPR / 個人情報保護法などの遵守義務はありますか？",
+      "question": "GDPR / 個人情報保護法などの遵守義務はありますか？",
+      "options": [
+        { "label": "はい、両方" },
+        { "label": "日本の個人情報保護法のみ" },
+        { "label": "GDPR のみ" },
+        { "label": "対象外" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q24",
+      "originalText": "バックアップ方針は？",
+      "question": "バックアップ方針は？",
+      "options": [
+        { "label": "日次" },
+        { "label": "時間ごと" },
+        { "label": "未定" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q25",
+      "originalText": "収益モデルは？",
+      "question": "収益モデルは？",
+      "options": [
+        { "label": "無料 + 広告" },
+        { "label": "フリーミアム（無料 + 有料プラン）" },
+        { "label": "サブスク一本" },
+        { "label": "買い切り" },
+        { "label": "従量課金" },
+        { "label": "未定" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q26",
+      "originalText": "想定価格帯は？（月額）",
+      "question": "想定価格帯は？（月額）",
+      "options": [
+        { "label": "無料のみ" },
+        { "label": "¥500 未満" },
+        { "label": "¥500-¥2,000" },
+        { "label": "¥2,000-¥10,000" },
+        { "label": "¥10,000 以上" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q27",
+      "originalText": "想定初期ユーザー数は？（ローンチ 3 か月後）",
+      "question": "想定初期ユーザー数は？（ローンチ 3 か月後）",
+      "options": [
+        { "label": "10 人未満" },
+        { "label": "10-100 人" },
+        { "label": "100-1,000 人" },
+        { "label": "1,000 人以上" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q28",
+      "originalText": "想定 ARR（年間経常収益）目標は？（1 年後）",
+      "question": "想定 ARR（年間経常収益）目標は？（1 年後）",
+      "options": [
+        { "label": "¥0（趣味）" },
+        { "label": "¥100 万未満" },
+        { "label": "¥100-500 万" },
+        { "label": "¥500 万以上" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q29",
+      "originalText": "有料転換率の目安は？",
+      "question": "有料転換率の目安は？",
+      "options": [
+        { "label": "5% 未満" },
+        { "label": "5-10%" },
+        { "label": "10% 以上" },
+        { "label": "未定" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q30",
+      "originalText": "開発体制は？",
+      "question": "開発体制は？",
+      "options": [
+        { "label": "自分ひとり" },
+        { "label": "共同開発者 1-2 人" },
+        { "label": "小規模チーム（3-5 人）" },
+        { "label": "業務委託" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q31",
+      "originalText": "MVP のローンチ希望時期は？",
+      "question": "MVP のローンチ希望時期は？",
+      "options": [
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q32",
+      "originalText": "開発予算の上限は？",
+      "question": "開発予算の上限は？",
+      "options": [
+        { "label": "予算なし（自作）" },
+        { "label": "〜10 万円" },
+        { "label": "10-100 万円" },
+        { "label": "100 万円以上" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q33",
+      "originalText": "既にアーリーアクセスユーザーはいますか？",
+      "question": "既にアーリーアクセスユーザーはいますか？",
+      "options": [
+        { "label": "はい、10 人以上いる" },
+        { "label": "はい、数人いる" },
+        { "label": "いない" },
+        { "label": "未募集" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q34",
+      "originalText": "デザインの方向性は？",
+      "question": "デザインの方向性は？",
+      "options": [
+        { "label": "ミニマル・洗練" },
+        { "label": "親しみやすい・カジュアル" },
+        { "label": "プロフェッショナル・堅牢" },
+        { "label": "遊び心・ポップ" },
+        { "label": "お任せ" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q35",
+      "originalText": "アクセントカラーの好みはありますか？",
+      "question": "アクセントカラーの好みはありますか？",
+      "options": [
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q36",
+      "originalText": "ブランド名の候補は決まっていますか？",
+      "question": "ブランド名の候補は決まっていますか？",
+      "options": [
+        { "label": "決まっている" },
+        { "label": "候補あり、未確定" },
+        { "label": "未定" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q37",
+      "originalText": "ドメインは取得済みですか？",
+      "question": "ドメインは取得済みですか？",
+      "options": [
+        { "label": "取得済み" },
+        { "label": "候補あり" },
+        { "label": "未検討" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q38",
+      "originalText": "1 年後に目指したい状態は？",
+      "question": "1 年後に目指したい状態は？",
+      "options": [
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q39",
+      "originalText": "将来的に追加したい機能を 3 つ挙げてください。",
+      "question": "将来的に追加したい機能を 3 つ挙げてください。",
+      "options": [
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 1.0
+    },
+    {
+      "id": "q40",
+      "originalText": "プロダクトを最終的にどうしたいですか？",
+      "question": "プロダクトを最終的にどうしたいですか？",
+      "options": [
+        { "label": "持続的に運営して育てる" },
+        { "label": "他社にバイアウトする" },
+        { "label": "オープンソース化する" },
+        { "label": "未定" }
+      ],
+      "confidence": 1.0
+    }
+  ]
+}
+```

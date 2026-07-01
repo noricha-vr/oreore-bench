@@ -1024,11 +1024,11 @@
             "extract-questions": {
                 title: "質問抽出 → フォーム化",
                 short: "JSON / 質問抽出",
-                desc: "AI アシスタントの長文出力からユーザーが返答すべき質問だけを抽出し、フォーム UI 用 JSON にする。本番運用の実運用シナリオと同じスキーマ。",
+                desc: "AI アシスタントの長文出力からユーザーが返答すべき質問だけを抽出し、フォーム UI 用 JSON にする。本番運用の実運用シナリオと同じスキーマ。20 問入力の基本サイズ。",
                 color: "#0d9488",
                 colorDark: "#0f766e",
                 icon: "fa-solid fa-list-check",
-                difficulty: "中〜高（長文構造化 + 抽出判断 + 補完オプション）",
+                difficulty: "中（20 問入力、実運用サイズ）",
                 deliverable: "output.json（左右 2 カラム HTML で入力本文と抽出フォームを並列表示）",
                 criteria: [
                     "出力が有効な JSON である",
@@ -1046,6 +1046,30 @@
                     "originalText に原文の正確な引用を入れられるか",
                     "confidence が問題の確実さに沿った妥当な値か",
                     "20 件相当の出力長で構造が破綻しないか"
+                ]
+            },
+            "extract-questions-v2": {
+                title: "質問抽出 → フォーム化（長文）",
+                short: "JSON / 質問抽出 v2",
+                desc: "extract-questions と同じ抽出ルール・同じスキーマだが、入力が 40 問規模の長文に拡張されている。出力長が伸びると小型モデルが指示の細部を保てなくなる現象を可視化。",
+                color: "#7C3AED",
+                colorDark: "#5B21B6",
+                icon: "fa-solid fa-list-check",
+                difficulty: "高（40 問入力、長文構造化 + 補完オプション維持）",
+                deliverable: "output.json（左右 2 カラム HTML で入力本文と抽出フォームを並列表示）",
+                criteria: [
+                    "出力が有効な JSON である",
+                    "questions 配列に 30〜45 件（40 問入力の取りこぼし許容）",
+                    "各 question に id / originalText / question / options / confidence が揃う",
+                    "自由記述質問にも「自由に記述する」オプションが全問補完されている",
+                    "long-context 中盤〜終盤でも指示の細部を保つ",
+                    "JSON 以外の出力が混入していない"
+                ],
+                highlights: [
+                    "出力トークンが 12K を超えても構造を維持できるか",
+                    "「自由に記述する」補完ルールを最後まで守れるか（見失いやすい）",
+                    "40 問全てに正しく id を振れるか",
+                    "抽出漏れなく 40 件近くを列挙できるか"
                 ]
             }
         };
@@ -1150,16 +1174,24 @@
         };
 
         const ENTRIES = [
+            { theme: "lp-nishibi", model: "gemma-4-12b-qat",     runner: "LM Studio API",       note: "最軽量 12B での 1 ショット LP。約 13KB。31B と比較して選択肢。", kind: "html" },
             { theme: "lp-nishibi", model: "gemma-4-31b",         runner: "gptme (LM Studio)",   note: "ローカルLLM単体の1ショットLP。418行/14KB。", kind: "html" },
             { theme: "lp-nishibi", model: "claude-opus-4-8",     runner: "Claude Agent SDK",    note: "ローマ数字章番号、SVG西日アーク、メタジョーク3つ。1342行/40KB。", kind: "html" },
+            { theme: "othello",    model: "gemma-4-12b-qat",     runner: "LM Studio API",       note: "最軽量 12B での 1 ショットオセロ。約 10KB。", kind: "html" },
             { theme: "othello",    model: "gemma-4-26b-a4b-qat", runner: "gptme (LM Studio)",   note: "ライトテーマ。CPU AIランダムに圧勝(53-10)。Reset挙動が一度だけ不安定。", kind: "html" },
             { theme: "othello",    model: "gemma-4-31b",         runner: "gptme (LM Studio)",   note: "ダークBG+鮮緑盤+赤Reset。CPU AIが強く逆転勝利(34-30)。", kind: "html" },
 
-            // extract-questions（AI 出力からユーザー向け質問を抽出して JSON 化、本番運用と同じシナリオ）
+            // extract-questions（20 問入力、基本サイズ、全モデル PASS = 実運用サイズは全モデル対応可の証拠）
             { theme: "extract-questions", model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。20 件抽出、最軽量でも 本番運用スキーマを完全に満たす。", kind: "json" },
             { theme: "extract-questions", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。MoE モデルも 20 件抽出して構造を保持。", kind: "json" },
             { theme: "extract-questions", model: "gemma-4-31b",         runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。21 件と若干過剰だが取りこぼしなし。", kind: "json" },
-            { theme: "extract-questions", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "✅ スキーマ準拠 PASS。フロンティアモデルらしい安定。", kind: "json" }
+            { theme: "extract-questions", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "✅ スキーマ準拠 PASS。フロンティアモデルらしい安定。", kind: "json" },
+
+            // extract-questions-v2（40 問入力、長文で小型モデルが指示の細部を見失う現象を可視化）
+            { theme: "extract-questions-v2", model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "❌ スキーマ準拠 FAIL。40 件抽出はできたが「自由に記述する」補完が 25% のみ。長文で指示の細部を見失う典型例。", kind: "json" },
+            { theme: "extract-questions-v2", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。40 件抽出、MoE でも 12K トークン級の出力を破綻なく完走。", kind: "json" },
+            { theme: "extract-questions-v2", model: "gemma-4-31b",         runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。40 件抽出、dense 31B は長文でも安定。", kind: "json" },
+            { theme: "extract-questions-v2", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "✅ スキーマ準拠 PASS。40 件抽出、指示の細部を最後まで維持。", kind: "json" }
         ];
 
         // theme: 'all' | キー（単一選択） / models: 'all' or Set of keys（複数選択。空 Set は全て）

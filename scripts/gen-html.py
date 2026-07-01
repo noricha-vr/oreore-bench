@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""LM Studio に 3 Gemma モデルで extract-questions 系テーマの生成を投げる。
-Claude Opus は別途 Agent ツール経由。
+"""LM Studio に Gemma モデルで HTML 系テーマの生成を投げる。
+lp-nishibi / othello など、index.html を 1 枚出力するテーマ用。
 
 使い方:
-  python3 scripts/gen-questions.py                              # extract-questions
-  python3 scripts/gen-questions.py --theme extract-questions-v2 # v2
-  python3 scripts/gen-questions.py --model 12b --overwrite
+  python3 scripts/gen-html.py --theme lp-nishibi
+  python3 scripts/gen-html.py --theme othello --model 12b
 """
 from __future__ import annotations
 import argparse, json, sys, urllib.request
@@ -23,24 +22,34 @@ MODELS = [
 
 
 def build_prompt(theme_dir: Path) -> str:
+    """テーマ PROMPT.md を読み込む。HTML テーマは PROMPT.md がそのまま指示書。"""
     prompt_md = (theme_dir / "PROMPT.md").read_text(encoding="utf-8")
-    prompt_md = prompt_md.replace(
-        "[input.md の本文をここに展開してプロンプトに含める]", ""
-    )
-    input_md = (theme_dir / "input.md").read_text(encoding="utf-8")
-    return f"{prompt_md.strip()}\n\n{input_md.strip()}\n\n---\n\nJSON 単体で出力してください。"
+    return f"{prompt_md.strip()}\n\n---\n\n完成した index.html 単体を出力してください。説明・前置き・コードフェンスは一切不要です。"
+
+
+def strip_fence(text: str) -> str:
+    """コードフェンスを剥がす。```html ... ``` / ``` ... ```"""
+    s = text.strip()
+    if s.startswith("```"):
+        # 最初のフェンス行を落として、末尾フェンスも落とす
+        lines = s.split("\n", 1)
+        if len(lines) > 1:
+            s = lines[1]
+        if s.rstrip().endswith("```"):
+            s = s.rstrip()[:-3].rstrip()
+    return s
 
 
 def gen_one(theme_dir: Path, model_id: str, dir_name: str, prompt: str, max_tokens: int, overwrite: bool = False) -> str:
     out_dir = theme_dir / dir_name
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_file = out_dir / "output.json"
+    out_file = out_dir / "index.html"
     if out_file.exists() and not overwrite:
         return f"{dir_name}: skip (exists)"
     payload = {
         "model": model_id,
         "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.2,
+        "temperature": 0.3,
         "max_tokens": max_tokens,
     }
     req = urllib.request.Request(
@@ -48,27 +57,26 @@ def gen_one(theme_dir: Path, model_id: str, dir_name: str, prompt: str, max_toke
         data=json.dumps(payload).encode("utf-8"),
         headers={"Content-Type": "application/json"},
     )
-    print(f"[{dir_name}] sending (max_tokens={max_tokens})...", file=sys.stderr, flush=True)
+    print(f"[{theme_dir.name}/{dir_name}] sending (max_tokens={max_tokens})...", file=sys.stderr, flush=True)
     with urllib.request.urlopen(req, timeout=1800) as resp:
         body = json.loads(resp.read().decode("utf-8"))
     content = body["choices"][0]["message"]["content"]
+    content = strip_fence(content)
     out_file.write_text(content, encoding="utf-8")
-    return f"{dir_name}: saved {len(content)} chars"
+    return f"{theme_dir.name}/{dir_name}: saved {len(content)} chars"
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--theme", default="extract-questions",
-                    help="テーマ名（デフォルト extract-questions）")
+    ap.add_argument("--theme", required=True, help="lp-nishibi / othello など")
     ap.add_argument("--model", help="モデル名の部分一致で絞る")
     ap.add_argument("--overwrite", action="store_true")
-    ap.add_argument("--max-tokens", type=int, default=16000,
-                    help="LM Studio に投げる max_tokens (デフォルト 16000)")
+    ap.add_argument("--max-tokens", type=int, default=24000)
     args = ap.parse_args()
 
     theme_dir = PUBLIC / args.theme
     if not (theme_dir / "PROMPT.md").exists():
-        print(f"[ERROR] theme not found: {theme_dir}", file=sys.stderr)
+        print(f"[ERROR] {theme_dir}/PROMPT.md not found", file=sys.stderr)
         return 1
 
     prompt = build_prompt(theme_dir)
