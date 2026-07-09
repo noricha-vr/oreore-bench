@@ -1,0 +1,73 @@
+{
+  "valid_json": true,
+  "generated_at": "2026-07-09T16:16:30.710Z",
+  "raw_length": 3559,
+  "schema_pass": true,
+  "triage_count": 10,
+  "primary_match": 9,
+  "acceptable_match": 1,
+  "agreement_pct": 95,
+  "verdicts": [
+    {
+      "pr": 101,
+      "verdict": "merge",
+      "expected": "merge",
+      "match": "primary"
+    },
+    {
+      "pr": 102,
+      "verdict": "fix",
+      "expected": "fix",
+      "match": "primary"
+    },
+    {
+      "pr": 103,
+      "verdict": "fix",
+      "expected": "close",
+      "match": "acceptable"
+    },
+    {
+      "pr": 104,
+      "verdict": "close",
+      "expected": "close",
+      "match": "primary"
+    },
+    {
+      "pr": 105,
+      "verdict": "merge",
+      "expected": "merge",
+      "match": "primary"
+    },
+    {
+      "pr": 106,
+      "verdict": "fix",
+      "expected": "fix",
+      "match": "primary"
+    },
+    {
+      "pr": 107,
+      "verdict": "fix",
+      "expected": "fix",
+      "match": "primary"
+    },
+    {
+      "pr": 108,
+      "verdict": "hold",
+      "expected": "hold",
+      "match": "primary"
+    },
+    {
+      "pr": 109,
+      "verdict": "close",
+      "expected": "close",
+      "match": "primary"
+    },
+    {
+      "pr": 110,
+      "verdict": "merge",
+      "expected": "merge",
+      "match": "primary"
+    }
+  ],
+  "issues": []
+}

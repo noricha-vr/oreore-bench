@@ -1,0 +1,135 @@
+```json
+{
+  "triage": [
+    {
+      "pr": 101,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": [
+        "Issue #90（メールの洪水）に対する適切な修正である",
+        "テストが含まれており、レビューでも承認されている"
+      ],
+      "actions": [
+        "マージを実行する"
+      ],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 102,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": [
+        "テストが未実装である",
+        "レビューで指摘されたIDOR（他人のタスク操作）の脆弱性が修正されていない"
+      ],
+      "actions": [
+        "テストの追加を要求する",
+        "所有者権限のチェックを実装するよう修正を求める"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 103,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": [
+        "broad except / silent failure の禁止方針に反する"
+      ],
+      "actions": [
+        "特定の例外をキャッチし、適切なエラーハンドリングを行うよう修正を求める"
+      ],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 104,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": [
+        "依存パッケージのバージョンを固定する方針に反する（サプライチェーン攻撃のリスク）"
+      ],
+      "actions": [
+        "方針違反としてクローズする"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 105,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": [
+        "セキュリティに関する最優先事項（Issue #92）への対応である",
+        "テストが含まれており、レビューでも承認されている"
+      ],
+      "actions": [
+        "マージを実行する"
+      ],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 106,
+      "verdict": "hold",
+      "confidence": "medium",
+      "reasons": [
+        "変更範囲が広すぎてレビューが不可能である",
+        "作者が分割を拒否しているため、リスクを評価できない"
+      ],
+      "actions": [
+        "作者に対し、レビューを可能にするためのPR分割を再度依頼する"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 107,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": [
+        "CIが失敗しているため、このままマージできない"
+      ],
+      "actions": [
+        "CIの失敗原因の特定と修正を求める"
+      ],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 108,
+      "verdict": "hold",
+      "confidence": "medium",
+      "reasons": [
+        "Issue #94で議論中の内容であり、パフォーマンス懸念への回答がない",
+        "大規模なリファクタリングであり、合意形成が必要"
+      ],
+      "actions": [
+        "Issue #94の議論の進捗を確認し、合意を得てから進めるよう指示する"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 109,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": [
+        "Issue #93で既に解決済みであり、内容が重複している",
+        "READMEには既に docs/setup.md へのリンクがある"
+      ],
+      "actions": [
+        "クローズする"
+      ],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 110,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": [
+        "テストが含まれており、レビューで承認されている（nitのみ）"
+      ],
+      "actions": [
+        "マージを実行する"
+      ],
+      "risk_if_merged": "low"
+    }
+  ],
+  "priority_order": [105, 101, 102, 103, 107, 106, 108, 110, 104, 109],
+  "summary": "セキュリティ修正（#105）と緊急度の高いバグ修正（#101）を最優先でマージします。方針違反やレビュー不能なPRについては、修正要求またはクローズの対応を行います。"
+}
+```

@@ -1,0 +1,159 @@
+{
+  "triage": [
+    {
+      "pr": 101,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": [
+        "Issue #90（P1・本番で通知洪水）への妥当な対応で、テスト追加・CI成功・approve済み",
+        "未認証連打時の管理者メールを抑制し超過分をWARNINGに集約する方針が明確",
+        "変更範囲が小さくコンフリクトもない"
+      ],
+      "actions": [
+        "そのまま main にマージする",
+        "マージ後に本番で1時間あたりの通知件数が上限内に収まるか確認する"
+      ],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 102,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": [
+        "テストがなく、方針上マージ不可",
+        "レビュー指摘どおり owner 絞り込みがなく、他人タスクをアーカイブできる IDOR の疑い",
+        "指摘から9日作者未返信で危険なまま放置されている"
+      ],
+      "actions": [
+        "Task の取得に request.user（owner）条件を必須化する",
+        "権限境界・一括件数・存在しないIDのテストを追加して再提出させる",
+        "未対応が続く場合はセキュリティリスクとしてクローズを検討する"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 103,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": [
+        "except Exception: pass は方針で禁止のエラー握りつぶし・サイレント失敗そのもの",
+        "Issue #91 の本質（タイムアウト多発の可観測性）を潰し、障害検知を悪化させる",
+        "ログ抑制なら特定例外・WARNING化・サンプリング等の別設計が必要"
+      ],
+      "actions": [
+        "この PR はクローズする",
+        "ConnectionError 等を限定捕捉し、レベル下げや集約ログで #91 を再設計する Issue/PR を切る"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 104,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": [
+        "依存のバージョン固定方針・サプライチェーン対策に真っ向から反する",
+        "requirements.lock 削除は再現可能なビルドを壊す",
+        "「更新PRが面倒」は Dependabot 等で解決すべきで、ピン解除は不可"
+      ],
+      "actions": [
+        "方針違反として即クローズする",
+        "必要なら自動依存更新ボットの導入を別 Issue にする"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 105,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": [
+        "Issue #92 [security] のトークン漏えい対策で最優先",
+        "テスト充実・CI成功・approve・互換24時間の設計もレビューで評価済み",
+        "本番稼働中の認証まわりだがリスク低減方向の変更"
+      ],
+      "actions": [
+        "最優先でマージする",
+        "互換ウィンドウ終了後にクエリ受け取りコードを削除する Issue を残す"
+      ],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 106,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": [
+        "42ファイル・3000行超で複数機能が混在しレビュー不能",
+        "レビュアーの分割要求を作者が拒否しており、現状では品質判断できない",
+        "推測でマージもクローズもせず、分割を条件に差し戻すのが妥当"
+      ],
+      "actions": [
+        "ダークモード / 通知設定 / LP に PR を分割して再提出させる",
+        "各 PR に必要なテストとレビュー観点を明記させる",
+        "分割拒否が続くならクローズする"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 107,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": [
+        "CI 失敗中のため方針上マージ不可",
+        "DST境界テスト失敗は flaky 断定よりロジック/環境差の可能性が高い",
+        "バグ修正意図とテスト追加は良いが、赤のままでは受け入れられない"
+      ],
+      "actions": [
+        "test_deadline_dst_boundary の失敗原因を CI ログで特定し修正する",
+        "CI 緑化後にレビューを回す",
+        "TZ 固定の fixtures や freezegun 等で境界を再現可能にする"
+      ],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 108,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": [
+        "Issue #94 が未決着のままの大規模モデル移動で、結論なき先行実装",
+        "パフォーマンス懸念（JOIN増加）への回答がなく、本番マイグレーションリスクが高い",
+        "「将来のため」だけで価値が不明確"
+      ],
+      "actions": [
+        "設計結論が出るまでクローズする",
+        "#94 で分離の是非・移行手順・計測計画を先に決める"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 109,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": [
+        "セットアップ手順は docs/setup.md 改訂で main 解決済み（#93）",
+        "README は既に setup.md リンクあり、本 PR は重複・陳腐化",
+        "30日経過かつ README コンフリクトあり"
+      ],
+      "actions": [
+        "重複としてクローズする",
+        "不足点があれば setup.md 側の小さな追記 PR にする"
+      ],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 110,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": [
+        "機能追加にテストあり・CI成功・approve済み",
+        "残指摘は StreamingHttpResponse の nit のみでブロック理由にしない",
+        "コンフリクトなしで変更範囲も妥当"
+      ],
+      "actions": [
+        "nit は無視してマージする",
+        "将来の件数増加時に Streaming 化を別 Issue にしてもよい"
+      ],
+      "risk_if_merged": "low"
+    }
+  ],
+  "priority_order": [105, 101, 110, 102, 107, 103, 104, 108, 109, 106],
+  "summary": "セキュリティ修正 #105 と本番障害対応 #101、承認済みの #110 は即マージ可能。#102 は IDOR 疑いとテスト欠如で差し戻し最優先の修正対象。#103/#104/#108/#109 は方針違反・設計未決・解決済みでクローズし、#107 は CI 修正、#106 は分割必須。"
+}

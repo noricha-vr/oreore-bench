@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gemma 4 26B-A4B (QAT) — pr-triage / OreOre-Bench</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff; --bg-soft: #f7f8fa;
+    --fg: #1a1a1a; --fg-soft: #4a4a4a; --muted-fg: #6b7280;
+    --border: #e5e7eb; --primary: #2563eb;
+    --accent: #4285F4; --accent-dark: #1A56DB;
+    --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+          background: var(--bg-soft); color: var(--fg);
+          line-height: 1.7; font-size: 0.9375rem; -webkit-font-smoothing: antialiased; }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .hero { padding: 28px 24px 32px; color: #fff;
+           background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); }
+  .hero-inner { max-width: 1200px; margin: 0 auto; }
+  .hero a.back { color: #fff; opacity: 0.85; font-size: 0.875rem;
+                  font-weight: 600; display: inline-block; margin-bottom: 12px; }
+  .hero h1 { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.01em;
+              color: #fff; margin-bottom: 4px; }
+  .hero .tag { display: inline-block; font-size: 0.75rem; font-weight: 800;
+                letter-spacing: 0.06em; text-transform: uppercase;
+                background: rgba(255,255,255,0.22); padding: 5px 12px;
+                border-radius: 999px; margin-bottom: 12px; }
+  .hero .sub { font-size: 0.9rem; opacity: 0.9; }
+  .verify-bar { background: var(--bg); border-bottom: 1px solid var(--border);
+                 padding: 14px 24px; font-size: 0.875rem; }
+  .verify-bar-inner { max-width: 1200px; margin: 0 auto;
+                       display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; }
+  .badge { display: inline-flex; align-items: center; gap: 6px;
+            font-weight: 800; padding: 4px 12px; border-radius: 999px;
+            font-size: 0.875rem; }
+  .badge.pass { background: rgba(16,185,129,0.12); color: #047857; }
+  .badge.fail { background: rgba(239,68,68,0.12); color: #b91c1c; }
+  .badge.score { background: rgba(37,99,235,0.10); color: #1d4ed8; }
+  .stat { color: var(--fg-soft); }
+  .stat strong { color: var(--fg); font-weight: 800; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 24px; }
+  .panel { background: var(--bg); border: 1px solid var(--border);
+            border-radius: 14px; overflow: hidden; margin-bottom: 20px; }
+  .panel-head { padding: 16px 20px; border-bottom: 1px solid var(--border);
+                 display: flex; align-items: center; justify-content: space-between;
+                 gap: 12px; background: var(--bg-soft); }
+  .panel-head h2 { font-size: 0.875rem; font-weight: 800; letter-spacing: 0.06em;
+                    text-transform: uppercase; color: var(--fg); }
+  .panel-body { padding: 20px; }
+  .table-scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 980px; }
+  th, td { padding: 10px 12px; border-bottom: 1px solid var(--border);
+            text-align: left; vertical-align: top; }
+  th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+        color: var(--muted-fg); background: var(--bg-soft); white-space: nowrap; }
+  td { font-size: 0.875rem; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .verdict { display: inline-block; padding: 2px 8px; border-radius: 999px;
+              font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700;
+              background: var(--bg-soft); border: 1px solid var(--border); }
+  .match-primary { color: #047857; font-weight: 800; }
+  .match-acceptable { color: #b45309; font-weight: 800; }
+  .match-miss { color: #b91c1c; font-weight: 800; }
+  ul { margin: 0; padding-left: 1.15rem; }
+  li { margin-bottom: 3px; }
+  .summary { white-space: pre-wrap; color: var(--fg-soft); }
+  .priority { display: flex; flex-wrap: wrap; gap: 6px; }
+  .priority span { font-family: 'JetBrains Mono', monospace; font-size: 0.8125rem;
+                    padding: 4px 8px; border-radius: 6px;
+                    background: var(--bg-soft); border: 1px solid var(--border); }
+  .error { border: 1px solid #fecaca; background: #fef2f2; color: #991b1b;
+            padding: 16px 20px; border-radius: 10px; }
+  .raw { margin-top: 12px; background: #1a1a1a; color: #e5e7eb;
+          padding: 12px; border-radius: 6px; font-family: 'JetBrains Mono', monospace;
+          font-size: 0.75rem; line-height: 1.6; overflow-x: auto;
+          max-height: 420px; overflow-y: auto; white-space: pre-wrap; }
+  @media (max-width: 700px) {
+    .hero h1 { font-size: 1.45rem; }
+    .wrap { padding: 16px; }
+    .panel-body { padding: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a href="../../" class="back">← OreOre-Bench に戻る</a>
+    <span class="tag">pr-triage ・ Google ・ ローカル LLM</span>
+    <h1>Gemma 4 26B-A4B (QAT)</h1>
+    <p class="sub">架空リポジトリの Open PR 10 件を、マージ可否・リスク・次アクション込みでトリアージ。</p>
+  </div>
+</header>
+
+<div class="verify-bar">
+  <div class="verify-bar-inner">
+    <span class="badge pass">スキーマ準拠 PASS</span>
+    <span class="badge score">agreement 85%</span>
+    <span class="stat">primary <strong>8</strong> / acceptable <strong>1</strong></span>
+    <span class="stat">出力 <strong>3,119</strong> chars</span>
+  </div>
+</div>
+
+<main class="wrap">
+  
+  <section class="panel">
+    <div class="panel-head">
+      <h2>PR verdicts</h2>
+      <a href="./output.json" target="_blank">JSON →</a>
+    </div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>PR</th>
+              <th>model verdict</th>
+              <th>primary</th>
+              <th>match</th>
+              <th>reasons</th>
+              <th>actions</th>
+              <th>risk</th>
+            </tr>
+          </thead>
+          <tbody>
+        <tr>
+          <td class="mono">101</td>
+          <td><span class="verdict">merge</span></td>
+          <td><span class="verdict">merge</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>Issue #90 の重要課題（メール洪水）への対応</li><li>テストが実装されており、CI もパスしている</li><li>レートリミットの実装が適切</li></ul></td>
+          <td><ul><li>マージを実行する</li></ul></td>
+          <td><span class="verdict">low</span></td>
+        </tr>
+        <tr>
+          <td class="mono">102</td>
+          <td><span class="verdict">fix</span></td>
+          <td><span class="verdict">fix</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>テストが実装されていない</li><li>他人のタスクを操作できてしまう重大なセキュリティ脆弱性の指摘がある</li></ul></td>
+          <td><ul><li>所有者チェック（owner 絞り込み）の追加とテストの実装を要求する</li></ul></td>
+          <td><span class="verdict">high</span></td>
+        </tr>
+        <tr>
+          <td class="mono">103</td>
+          <td><span class="verdict">fix</span></td>
+          <td><span class="verdict">close</span></td>
+          <td><span class="match-acceptable">△ acceptable</span></td>
+          <td><ul><li>broad except (except Exception) によるエラーの握りつぶしが行われている</li><li>エラーログの抑制は必要だが、例外の種類を特定して適切に処理すべき</li></ul></td>
+          <td><ul><li>特定の例外（ConnectionError等）のみをキャッチするように修正を要求する</li></ul></td>
+          <td><span class="verdict">medium</span></td>
+        </tr>
+        <tr>
+          <td class="mono">104</td>
+          <td><span class="verdict">close</span></td>
+          <td><span class="verdict">close</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>依存パッケージのバージョン固定は、サプライチェーン攻撃防止の方針に反する</li><li>利便性のためにセキュリティリスクを許容することはできない</li></ul></td>
+          <td><ul><li>方針（バージョン固定）に基づきクローズする</li></ul></td>
+          <td><span class="verdict">high</span></td>
+        </tr>
+        <tr>
+          <td class="mono">105</td>
+          <td><span class="verdict">merge</span></td>
+          <td><span class="verdict">merge</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>セキュリティ上の重要課題（Issue #92）への対応</li><li>テストが適切に実装されている</li><li>レビューで設計の妥当性が承認されている</li></ul></td>
+          <td><ul><li>マージを実行する</li></ul></td>
+          <td><span class="verdict">low</span></td>
+        </tr>
+        <tr>
+          <td class="mono">106</td>
+          <td><span class="verdict">hold</span></td>
+          <td><span class="verdict">fix</span></td>
+          <td><span class="match-miss">✗ miss</span></td>
+          <td><ul><li>変更範囲が極めて大きく、レビューが困難な状態にある</li><li>作者が分割を拒否しており、品質担保が難しい</li></ul></td>
+          <td><ul><li>機能ごとに PR を分割して再提出するよう強く推奨する</li></ul></td>
+          <td><span class="verdict">high</span></td>
+        </tr>
+        <tr>
+          <td class="mono">107</td>
+          <td><span class="verdict">fix</span></td>
+          <td><span class="verdict">fix</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>CI が失敗しており、バグ修正として不完全</li><li>作者が flaky と主張しているが、CI が失敗している以上マージはできない</li></ul></td>
+          <td><ul><li>CI の失敗原因（タイムゾーン境界のテスト失敗）の特定と修正を要求する</li></ul></td>
+          <td><span class="verdict">medium</span></td>
+        </tr>
+        <tr>
+          <td class="mono">108</td>
+          <td><span class="verdict">hold</span></td>
+          <td><span class="verdict">hold</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>Issue #94 で議論中の未決着な設計変更である</li><li>パフォーマンスへの懸念に対する回答がない</li></ul></td>
+          <td><ul><li>Issue #94 の議論結果との整合性と、パフォーマンスへの影響について回答を求める</li></ul></td>
+          <td><span class="verdict">medium</span></td>
+        </tr>
+        <tr>
+          <td class="mono">109</td>
+          <td><span class="verdict">close</span></td>
+          <td><span class="verdict">close</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>既に main で解決済みの内容（Issue #93）である</li><li>コンフリクトが発生しており、修正しても重複する可能性がある</li></ul></td>
+          <td><ul><li>クローズする</li></ul></td>
+          <td><span class="verdict">low</span></td>
+        </tr>
+        <tr>
+          <td class="mono">110</td>
+          <td><span class="verdict">merge</span></td>
+          <td><span class="verdict">merge</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>テストが実装されており、CI もパスしている</li><li>レビューでの指摘は nit（軽微な提案）であり、現状の規模では許容範囲</li></ul></td>
+          <td><ul><li>マージを実行する</li></ul></td>
+          <td><span class="verdict">low</span></td>
+        </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Priority Order</h2></div>
+    <div class="panel-body"><div class="priority"><span>105</span><span>101</span><span>110</span><span>107</span><span>102</span><span>103</span><span>108</span><span>106</span><span>104</span><span>109</span></div></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Summary</h2></div>
+    <div class="panel-body"><p class="summary">セキュリティ修正（#105）と重要バグ修正（#101）を最優先でマージし、脆弱性を含む PR や方針に反する PR は厳格に処理します。大規模な変更や未決着の設計変更については、品質と安全性の観点から保留または分割を求めます。</p></div>
+  </section>
+
+
+</main>
+
+</body>
+</html>
