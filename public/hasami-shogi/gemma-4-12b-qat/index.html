@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>はさみ将棋</title>
+    <style>
+        :root {
+            --bg-color: #f0f0f0;
+            --board-color: #e0c097;
+            --cell-border: #b08d5d;
+            --sente-color: #2c3e50;
+            --gote-color: #c0392b;
+            --highlight-color: rgba(46, 204, 113, 0.6);
+            --selected-color: rgba(52, 152, 219, 0.8);
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .game-container {
+            max-width: 100%;
+            width: min(90vw, 500px);
+            text-align: center;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .score-board {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .turn-indicator {
+            font-size: 1rem;
+            color: #666;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            grid-template-rows: repeat(9, 1fr);
+            border: 4px solid var(--cell-border);
+            background-color: var(--board-color);
+            aspect-ratio: 1 / 1;
+            user-select: none;
+        }
+
+        .cell {
+            border: 1px solid var(--cell-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: min(5vw, 2rem);
+            font-weight: bold;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .cell.highlight {
+            background-color: var(--highlight-color);
+        }
+
+        .cell.selected {
+            background-color: var(--selected-color);
+        }
+
+        .piece {
+            width: 80%;
+            height: 80%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .piece.sente {
+            color: white;
+            background-color: var(--sente-color);
+        }
+
+        .piece.gote {
+            color: white;
+            background-color: var(--gote-color);
+        }
+
+        .controls {
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .message {
+            margin-top: 15px;
+            font-weight: bold;
+            min-height: 1.5em;
+        }
+
+        @media (max-width: 400px) {
+            .cell {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="status-bar">
+        <div class="score-board">先手: <span id="sente-score">0</span> / 後手: <span id="gote-score">0</span></div>
+        <div class="turn-indicator" id="turn-text">あなたの番</div>
+    </div>
+    <div class="board" id="board"></div>
+    <div class="message" id="message"></div>
+    <div class="controls">
+        <button onclick="resetGame()">リセット</button>
+    </div>
+</div>
+
+<script>
+    const BOARD_SIZE = 9;
+    const boardElement = document.getElementById('board');
+    const senteScoreElement = document.getElementById('sente-score');
+    const goteScoreElement = document.getElementById('gote-score');
+    const turnTextElement = document.getElementById('turn-text');
+    const messageElement = document.getElementById('message');
+
+    let board = [];
+    let senteScore = 0;
+    let goteScore = 0;
+    let turn = 'sente'; // 'sente' or 'gote'
+    let selectedCell = null;
+    let gameOver = false;
+
+    function initBoard() {
+        board = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(null));
+        
+        // 先手: 歩 (bottom row)
+        for (let c = 0; c < BOARD_SIZE; c++) {
+            board[8][c] = { type: '歩', owner: 'sente' };
+        }
+        // 後手: と (top row)
+        for (let c = 0; c < BOARD_SIZE; c++) {
+            board[0][c] = { type: 'と', owner: 'gote' };
+        }
+
+        senteScore = 0;
+        goteScore = 0;
+        turn = 'sente';
+        gameOver = false;
+        updateUI();
+        render();
+    }
+
+    function render() {
+        boardElement.innerHTML = '';
+        for (let r = 0; r < BOARD_SIZE; r++) {
+            for (let c = 0; c < BOARD_SIZE; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.r = r;
+                cell.dataset.c = c;
+
+                const piece = board[r][c];
+                if (piece) {
+                    const pieceEl = document.createElement('div');
+                    pieceEl.className = `piece ${piece.owner}`;
+                    pieceEl.textContent = piece.type;
+                    cell.appendChild(pieceEl);
+                }
+
+                if (selectedCell && selectedCell.r === r && selectedCell.c === c) {
+                    cell.classList.add('selected');
+                }
+
+                const moves = selectedCell ? getLegalMoves(selectedCell.r, selectedCell.c) : [];
+                if (moves.some(m => m.r === r && m.c === c)) {
+                    cell.classList.add('highlight');
+                }
+
+                cell.onclick = () => handleCellClick(r, c);
+                boardElement.appendChild(cell);
+            }
+        }
+    }
+
+    function handleCellClick(r, c) {
+        if (gameOver || turn === 'gote') return;
+
+        const piece = board[r][c];
+
+        if (selectedCell) {
+            const moves = getLegalMoves(selectedCell.r, selectedCell.c);
+            const move = moves.find(m => m.r === r && m.c === c);
+
+            if (move) {
+                executeMove(selectedCell.r, selectedCell.c, r, c);
+                selectedCell = null;
+                if (!gameOver) {
+                    turn = 'gote';
+                    updateUI();
+                    render();
+                    setTimeout(cpuTurn, 600);
+                }
+                return;
+            }
+        }
+
+        if (piece && piece.owner === 'sente') {
+            selectedCell = { r, c };
+        } else {
+            selectedCell = null;
+        }
+        render();
+    }
+
+    function getLegalMoves(r, c) {
+        const piece = board[r][c];
+        if (!piece) return [];
+        const moves = [];
+        const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+
+        dirs.forEach(([dr, dc]) => {
+            for (let dist = 1; dist < BOARD_SIZE; dist++) {
+                const nr = r + dr * dist;
+                const nc = c + dc * dist;
+                if (nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) break;
+                
+                const target = board[nr][nc];
+                if (!target) {
+                    moves.push({ r: nr, c: nc });
+                } else {
+                    break;
+                }
+            }
+        });
+        return moves;
+    }
+
+    function executeMove(r1, c1, r2, c2) {
+        const piece = board[r1][c1];
+        board[r2][c2] = piece;
+        board[r1][c1] = null;
+
+        const captures = checkCaptures(r2, c2, piece.owner);
+        captures.forEach(([cr, cc]) => {
+            if (board[cr][cc]) {
+                if (piece.owner === 'sente') senteScore++;
+                else goteScore++;
+                board[cr][cc] = null;
+            }
+        });
+
+        updateUI();
+        checkGameOver();
+    }
+
+    function checkCaptures(r, c, owner) {
+        const opponent = owner === 'sente' ? 'gote' : 'sente';
+        const captures = [];
+
+        // Horizontal
+        const checkLine = (dr, dc) => {
+            let count = 0;
+            for (let i = 1; i < BOARD_SIZE; i++) {
+                const nr = r + dr * i;
+                const nc = c + dc * i;
+                if (nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) break;
+                const target = board[nr][nc];
+                if (target && target.owner === opponent) {
+                    count++;
+                } else if (target && target.owner === owner) {
+                    if (count > 0) {
+                        for (let j = 1; j <= count; j++) {
+                            captures.push([r + dr * (i - j), c + dc * (i - j)]);
+                        }
+                    }
+                    break;
+                } else break;
+            }
+        };
+
+        checkLine(0, 1);  // Right
+        checkLine(0, -1); // Left
+        checkLine(1, 0);  // Down
+        checkLine(-1, 0); // Up
+
+        // Corners
+        const corners = [[0, 0], [0, 8], [8, 0], [8, 8]];
+        corners.forEach(([cr, cc]) => {
+            const target = board[cr][cc];
+            if (target && target.owner === opponent) {
+                let neighbors = [];
+                if (cr === 0 && cc === 0) neighbors = [[0, 1], [1, 0]];
+                else if (cr === 0 && cc === 8) neighbors = [[0, 7], [1, 8]];
+                else if (cr === 8 && cc === 0) neighbors = [[8, 1], [7, 0]];
+                else if (cr === 8 && cc === 8) neighbors = [[8, 7], [7, 8]];
+
+                if (neighbors.length === 2) {
+                    const n1 = neighbors[0];
+                    const n2 = neighbors[1];
+                    if (board[n1[0]][n1[1]] && board[n1[0]][n1[1]].owner === owner &&
+                        board[n2[0]][n2[1]] && board[n2[0]][n2[1]].owner === owner) {
+                        captures.push([cr, cc]);
+                    }
+                }
+            }
+        });
+
+        return captures;
+    }
+
+    function checkGameOver() {
+        if (senteScore >= 5) {
+            messageElement.textContent = "先手の勝ち！";
+            gameOver = true;
+        } else if (goteScore >= 5) {
+            messageElement.textContent = "後手の勝ち！";
+            gameOver = true;
+        } else {
+            const moves = [];
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (board[r][c] && board[r][c].owner === turn) {
+                        moves.push(...getLegalMoves(r, c));
+                    }
+                }
+            }
+            if (moves.length === 0) {
+                messageElement.textContent = (turn === 'sente' ? "先手" : "後手") + "の負け！";
+                gameOver = true;
+            }
+        }
+    }
+
+    function updateUI() {
+        senteScoreElement.textContent = senteScore;
+        goteScoreElement.textContent = goteScore;
+        turnTextElement.textContent = turn === 'sente' ? "あなたの番" : "CPU 思考中...";
+    }
+
+    function cpuTurn() {
+        if (gameOver) return;
+
+        let bestMove = null;
+        let maxScore = -Infinity;
+
+        const allMoves = [];
+        for (let r = 0; r < BOARD_SIZE; r++) {
+            for (let c = 0; c < BOARD_SIZE; c++) {
+                if (board[r][c] && board[r][c].owner === 'gote') {
+                    const moves = getLegalMoves(r, c);
+                    moves.forEach(m => allMoves.push({ r1: r, c1: c, r2: m.r, c2: m.c }));
+                }
+            }
+        }
+
+        allMoves.forEach(m => {
+            let score = 0;
+            // Simulate move
+            const oldPiece = board[m.r1][m.c1];
+            board[m.r1][m.c1] = null;
+            board[m.r2][m.c2] = oldPiece;
+
+            const captures = checkCaptures(m.r2, m.c2, 'gote');
+            score += captures.length * 1000;
+
+            // Avoid moving into a sandwich (heuristic)
+            const opponentCaptures = checkCaptures(m.r2, m.c2, 'sente');
+            if (opponentCaptures.length > 0) {
+                score -= 500;
+            }
+
+            // Add slight randomness to break ties
+            score += Math.random() * 10;
+
+            if (score > maxScore) {
+                maxScore = score;
+                bestMove = m;
+            }
+
+            // Undo simulation
+            board[m.r1][m.c1] = oldPiece;
+            board[m.r2][m.c2] = null;
+        });
+
+        if (bestMove) {
+            executeMove(bestMove.r1, bestMove.c1, bestMove.r2, bestMove.c2);
+            if (!gameOver) {
+                turn = 'sente';
+                updateUI();
+                render();
+            }
+        } else {
+            checkGameOver();
+            updateUI();
+            render();
+        }
+    }
+
+    function resetGame() {
+        initBoard();
+    }
+
+    initBoard();
+</script>
+
+</body>
+</html>

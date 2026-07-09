@@ -1021,6 +1021,31 @@
                     "コード品質: グローバル変数の少なさ・関数分離・モジュール化"
                 ]
             },
+            "hasami-shogi": {
+                title: "はさみ将棋",
+                short: "学習データ耐性",
+                desc: "HTML/CSS/JS 1 枚で動く 9x9 はさみ将棋。オセロと違い公開実装が極めて少なく、学習データのコード記憶に頼れない。凍結プロンプトのルール完全記述への追従力を測る。",
+                color: "#8D6E3F",  // 将棋盤の木色
+                colorDark: "#5D4527",
+                icon: "fa-solid fa-chess",
+                difficulty: "中〜高（挟み取り判定の細部 + CPU AI + UI 状態管理）",
+                deliverable: "単一 index.html（CSS/JS インライン化）",
+                criteria: [
+                    "9x9 盤に歩9枚（最下段）/ と9枚（最上段）の初期配置",
+                    "飛車動き（縦横スライド・飛び越え不可）の合法手判定とハイライト",
+                    "挟み取り: 連続列の両端挟み・縦横複数方向の同時取り",
+                    "角取り: 四隅の駒を縦横隣接2マスで塞ぐと取れる",
+                    "自分から挟まれた位置に入った駒は取られない（仕様追従の最重要ディテール）",
+                    "5枚先取で勝ち・合法手なしで負けの終局判定、リセット、レスポンシブ"
+                ],
+                highlights: [
+                    "公開クローンがほぼ無いため、コード記憶ではなく仕様読解の素の実力が出る",
+                    "「自入は安全」「角取り」など地域差ルールを凍結仕様どおり実装できるか",
+                    "盤・駒のビジュアル（将棋盤らしさ）と選択/ハイライトの分かりやすさ",
+                    "CPU が取れる手優先・自滅回避のヒューリスティックとして機能しているか",
+                    "終局判定・リセットの状態管理が安定しているか"
+                ]
+            },
             "extract-questions": {
                 title: "質問抽出 → フォーム化",
                 short: "JSON / 質問抽出",
@@ -1206,6 +1231,13 @@
             { theme: "othello",    model: "gemma-4-26b-a4b-qat", runner: "gptme (LM Studio)",   note: "ライトテーマ。CPU AIランダムに圧勝(53-10)。Reset挙動が一度だけ不安定。", kind: "html" },
             { theme: "othello",    model: "gemma-4-31b",         runner: "gptme (LM Studio)",   note: "ダークBG+鮮緑盤+赤Reset。CPU AIが強く逆転勝利(34-30)。", kind: "html" },
             { theme: "othello",    model: "grok-4-5",            runner: "grok CLI (single-turn)", note: "ダークUI+石数バッジ。合法手ハイライト・反転・CPU応答をJSエラーなしで確認。520行/13KB。", kind: "html" },
+
+            // hasami-shogi（公開実装が極めて少ない題材。スモーク検証: 初期配置/選択ハイライト/移動/CPU応答/JSエラー0 を全モデルで機械確認）
+            { theme: "hasami-shogi", model: "gemma-4-12b-qat",     runner: "LM Studio API", note: "スモーク検証PASS。赤/紺バッジ駒の明瞭UI。初回生成は空応答で1回リトライ。438行/13KB。", kind: "html" },
+            { theme: "hasami-shogi", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API", note: "スモーク検証PASS。クリーム地のミニマル盤面。415行/13KB。", kind: "html" },
+            { theme: "hasami-shogi", model: "gemma-4-31b",         runner: "LM Studio API", note: "スモーク検証PASS。木枠将棋盤+取得数表示。467行/16KB。", kind: "html" },
+            { theme: "hasami-shogi", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "スモーク検証PASS。木目盤+ステータスバッジ+ルール折りたたみ付き。467行/14KB。", kind: "html" },
+            { theme: "hasami-shogi", model: "grok-4-5",            runner: "grok CLI (single-turn)", note: "スモーク検証PASS。ダーク×市松模様のエレガント盤面+ルール要約footer。541行/14KB。", kind: "html" },
 
             // extract-questions（20 問入力、基本サイズ、全モデル PASS = 実運用サイズは全モデル対応可の証拠）
             { theme: "extract-questions", model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。20 件抽出、最軽量でも 本番運用スキーマを完全に満たす。", kind: "json" },

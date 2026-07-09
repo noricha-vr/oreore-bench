@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>はさみ将棋</title>
+    <style>
+        :root {
+            --bg-color: #f0d9b5;
+            --board-color: #deb887;
+            --cell-border: #8b4513;
+            --highlight-select: #ffeb3b;
+            --highlight-move: #81d4fa;
+            --text-sente: #333;
+            --text-gote: #d32f2f;
+        }
+        body {
+            font-family: "Sawarabi Mincho", "Hiragino Mincho ProN", "MS PMincho", serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #fafafa;
+            margin: 0;
+            padding: 20px;
+            touch-action: manipulation;
+        }
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 600px;
+            width: 100%;
+        }
+        #status-panel {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        #turn-display {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.4rem;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            background-color: var(--board-color);
+            border: 3px solid var(--cell-border);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            user-select: none;
+        }
+        .cell {
+            width: min(10vw, 55px);
+            height: min(10vw, 55px);
+            border: 1px solid var(--cell-border);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            font-weight: bold;
+            position: relative;
+        }
+        .cell.selected {
+            background-color: var(--highlight-select);
+        }
+        .cell.movable {
+            background-color: var(--highlight-move);
+        }
+        .piece-sente { color: var(--text-sente); }
+        .piece-gote { color: var(--text-gote); }
+
+        #controls {
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: #8b4513;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover { background-color: #a0522d; }
+
+        #message-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        #message-box {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="status-panel">
+        <div>先手(歩) 取った数: <span id="score-sente">0</span></div>
+        <div>後手(と) 取った数: <span id="score-gote">0</span></div>
+    </div>
+    <div id="turn-display">あなたの番です</div>
+    <div id="board"></div>
+    <div id="controls">
+        <button onclick="initGame()">リセット</button>
+    </div>
+</div>
+
+<div id="message-overlay">
+    <div id="message-box"></div>
+</div>
+
+<script>
+    const SIZE = 9;
+    const WIN_COUNT = 5;
+    let board = [];
+    let turn = 1; // 1: Sente (Human), -1: Gote (CPU)
+    let selectedCell = null;
+    let scoreSente = 0;
+    let scoreGote = 0;
+    let isGameOver = false;
+
+    const boardEl = document.getElementById('board');
+    const turnEl = document.getElementById('turn-display');
+    const scoreSenteEl = document.getElementById('score-sente');
+    const scoreGoteEl = document.getElementById('score-gote');
+    const overlay = document.getElementById('message-overlay');
+    const messageBox = document.getElementById('message-box');
+
+    function initGame() {
+        board = Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
+        for (let i = 0; i < SIZE; i++) {
+            board[8][i] = 1;  // Sente: Bottom row
+            board[0][i] = -1; // Gote: Top row
+        }
+        turn = 1;
+        selectedCell = null;
+        scoreSente = 0;
+        scoreGote = 0;
+        isGameOver = false;
+        overlay.style.display = 'none';
+        updateUI();
+        renderBoard();
+    }
+
+    function renderBoard() {
+        boardEl.innerHTML = '';
+        for (let r = 0; r < SIZE; r++) {
+            for (let c = 0; c < SIZE; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                if (selectedCell && selectedCell.r === r && selectedCell.c === c) {
+                    cell.classList.add('selected');
+                }
+                if (selectedCell && isMovable(selectedCell.r, selectedCell.c, r, c)) {
+                    cell.classList.add('movable');
+                }
+
+                const piece = board[r][c];
+                if (piece === 1) {
+                    cell.textContent = '歩';
+                    cell.classList.add('piece-sente');
+                } else if (piece === -1) {
+                    cell.textContent = 'と';
+                    cell.classList.add('piece-gote');
+                }
+
+                cell.onclick = () => handleCellClick(r, c);
+                boardEl.appendChild(cell);
+            }
+        }
+    }
+
+    function handleCellClick(r, c) {
+        if (isGameOver || turn !== 1) return;
+
+        const piece = board[r][c];
+        if (piece === 1) {
+            if (selectedCell && selectedCell.r === r && selectedCell.c === c) {
+                selectedCell = null;
+            } else {
+                selectedCell = { r, c };
+            }
+        } else if (piece === 0 && selectedCell) {
+            if (isMovable(selectedCell.r, selectedCell.c, r, c)) {
+                executeMove(selectedCell.r, selectedCell.c, r, c);
+                selectedCell = null;
+            }
+        } else {
+            selectedCell = null;
+        }
+        renderBoard();
+    }
+
+    function isMovable(fr, fc, tr, tc) {
+        if (board[tr][tc] !== 0) return false;
+        if (fr === tr) {
+            const min = Math.min(fc, tc);
+            const max = Math.max(fc, tc);
+            for (let i = min + 1; i < max; i++) {
+                if (board[fr][i] !== 0) return false;
+            }
+            return true;
+        } else if (fc === tc) {
+            const min = Math.min(fr, tr);
+            const max = Math.max(fr, tr);
+            for (let i = min + 1; i < max; i++) {
+                if (board[i][fc] !== 0) return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    function executeMove(fr, fc, tr, tc) {
+        const activePlayer = turn;
+        board[tr][tc] = activePlayer;
+        board[fr][fc] = 0;
+
+        const captured = checkCaptures(activePlayer);
+        captured.forEach(p => {
+            board[p.r][p.c] = 0;
+        });
+
+        if (activePlayer === 1) scoreSente += captured.length;
+        else scoreGote += captured.length;
+
+        updateUI();
+
+        if (scoreSente >= WIN_COUNT) {
+            endGame("先手の勝ちです！");
+        } else if (scoreGote >= WIN_COUNT) {
+            endGame("後手の勝ちです！");
+        } else {
+            turn *= -1;
+            if (turn === -1) {
+                turnEl.textContent = "CPU 思考中...";
+                setTimeout(cpuTurn, 600);
+            } else {
+                if (getLegalMoves(1).length === 0) {
+                    endGame("合法手がないため、後手の勝ちです！");
+                } else {
+                    turnEl.textContent = "あなたの番です";
+                }
+            }
+        }
+        renderBoard();
+    }
+
+    function checkCaptures(activePlayer) {
+        const enemy = -activePlayer;
+        const captured = [];
+
+        // Horizontal check
+        for (let r = 0; r < SIZE; r++) {
+            let i = 0;
+            while (i < SIZE) {
+                if (board[r][i] === enemy) {
+                    let start = i;
+                    while (i < SIZE && board[r][i] === enemy) i++;
+                    let end = i - 1;
+                    if (i < SIZE && board[r][i] === activePlayer && start > 0 && board[r][start - 1] === activePlayer) {
+                        for (let k = start; k <= end; k++) captured.push({ r, c: k });
+                    }
+                } else {
+                    i++;
+                }
+            }
+        }
+
+        // Vertical check
+        for (let c = 0; c < SIZE; c++) {
+            let i = 0;
+            while (i < SIZE) {
+                if (board[i][c] === enemy) {
+                    let start = i;
+                    while (i < SIZE && board[i][c] === enemy) i++;
+                    let end = i - 1;
+                    if (i < SIZE && board[i][c] === activePlayer && start > 0 && board[start - 1][c] === activePlayer) {
+                        for (let k = start; k <= end; k++) captured.push({ r: k, c });
+                    }
+                } else {
+                    i++;
+                }
+            }
+        }
+
+        // Corner check
+        const corners = [
+            { r: 0, c: 0, adj: [{ r: 0, c: 1 }, { r: 1, c: 0 }] },
+            { r: 0, c: SIZE - 1, adj: [{ r: 0, c: SIZE - 2 }, { r: 1, c: SIZE - 1 }] },
+            { r: SIZE - 1, c: 0, adj: [{ r: SIZE - 2, c: 0 }, { r: SIZE - 1, c: 1 }] },
+            { r: SIZE - 1, c: SIZE - 1, adj: [{ r: SIZE - 2, c: SIZE - 1 }, { r: SIZE - 1, c: SIZE - 2 }] },
+        ];
+        corners.forEach(corner => {
+            if (board[corner.r][corner.c] === enemy) {
+                if (corner.adj.every(adj => board[adj.r][adj.c] === activePlayer)) {
+                    captured.push({ r: corner.r, c: corner.c });
+                }
+            }
+        });
+
+        return captured;
+    }
+
+    function getLegalMoves(player) {
+        const moves = [];
+        for (let r = 0; r < SIZE; r++) {
+            for (let c = 0; c < SIZE; c++) {
+                if (board[r][c] === player) {
+                    const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+                    dirs.forEach(([dr, dc]) => {
+                        let nr = r + dr;
+                        let nc = c + dc;
+                        while (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE && board[nr][nc] === 0) {
+                            moves.push({ fr: r, fc: c, tr: nr, tc: nc });
+                            nr += dr;
+                            nc += dc;
+                        }
+                    });
+                }
+            }
+        }
+        return moves;
+    }
+
+    function cpuTurn() {
+        if (isGameOver) return;
+        const moves = getLegalMoves(-1);
+        if (moves.length === 0) {
+            endGame("合法手がないため、先手の勝ちです！");
+            return;
+        }
+
+        let bestMoves = [];
+        let maxCaptures = -1;
+
+        moves.forEach(move => {
+            const tempBoard = JSON.parse(JSON.stringify(board));
+            tempBoard[move.tr][move.tc] = -1;
+            tempBoard[move.fr][move.fc] = 0;
+            const captures = checkCapturesForBoard(tempBoard, -1).length;
+
+            if (captures > maxCaptures) {
+                maxCaptures = captures;
+                bestMoves = [move];
+            } else if (captures === maxCaptures) {
+                bestMoves.push(move);
+            }
+        });
+
+        // Avoid moving into a sandwich if no captures are possible
+        if (maxCaptures === 0) {
+            const safeMoves = moves.filter(move => {
+                const tempBoard = JSON.parse(JSON.stringify(board));
+                tempBoard[move.tr][move.tc] = -1;
+                tempBoard[move.fr][move.fc] = 0;
+                return !isPieceSurrounded(tempBoard, move.tr, move.tc, 1);
+            });
+            if (safeMoves.length > 0) bestMoves = safeMoves;
+        }
+
+        const finalMove = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+        executeMove(finalMove.fr, finalMove.fc, finalMove.tr, finalMove.tc);
+        if (!isGameOver) {
+            if (getLegalMoves(1).length === 0) {
+                endGame("合法手がないため、後手の勝ちです！");
+            } else {
+                turnEl.textContent = "あなたの番です";
+            }
+        }
+        renderBoard();
+    }
+
+    function checkCapturesForBoard(b, activePlayer) {
+        const enemy = -activePlayer;
+        const captured = [];
+        for (let r = 0; r < SIZE; r++) {
+            let i = 0;
+            while (i < SIZE) {
+                if (b[r][i] === enemy) {
+                    let start = i;
+                    while (i < SIZE && b[r][i] === enemy) i++;
+                    let end = i - 1;
+                    if (i < SIZE && b[r][i] === activePlayer && start > 0 && b[r][start - 1] === activePlayer) {
+                        for (let k = start; k <= end; k++) captured.push({ r, c: k });
+                    }
+                } else i++;
+            }
+        }
+        for (let c = 0; c < SIZE; c++) {
+            let i = 0;
+            while (i < SIZE) {
+                if (b[i][c] === enemy) {
+                    let start = i;
+                    while (i < SIZE && b[i][c] === enemy) i++;
+                    let end = i - 1;
+                    if (i < SIZE && b[i][c] === activePlayer && start > 0 && b[start - 1][c] === activePlayer) {
+                        for (let k = start; k <= end; k++) captured.push({ r: k, c });
+                    }
+                } else i++;
+            }
+        }
+        const corners = [
+            { r: 0, c: 0, adj: [{ r: 0, c: 1 }, { r: 1, c: 0 }] },
+            { r: 0, c: SIZE - 1, adj: [{ r: 0, c: SIZE - 2 }, { r: 1, c: SIZE - 1 }] },
+            { r: SIZE - 1, c: 0, adj: [{ r: SIZE - 2, c: 0 }, { r: SIZE - 1, c: 1 }] },
+            { r: SIZE - 1, c: SIZE - 1, adj: [{ r: SIZE - 2, c: SIZE - 1 }, { r: SIZE - 1, c: SIZE - 2 }] },
+        ];
+        corners.forEach(corner => {
+            if (b[corner.r][corner.c] === enemy && corner.adj.every(adj => b[adj.r][adj.c] === activePlayer)) {
+                captured.push({ r: corner.r, c: corner.c });
+            }
+        });
+        return captured;
+    }
+
+    function isPieceSurrounded(b, r, c, player) {
+        let left = c - 1, right = c + 1;
+        while (left >= 0 && b[r][left] === 0) left--;
+        while (right < SIZE && b[r][right] === 0) right++;
+        if (left >= 0 && right < SIZE && b[r][left] === player && b[r][right] === player) return true;
+
+        let top = r - 1, bottom = r + 1;
+        while (top >= 0 && b[top][c] === 0) top--;
+        while (bottom < SIZE && b[bottom][c] === 0) bottom++;
+        if (top >= 0 && bottom < SIZE && b[top][c] === player && b[bottom][c] === player) return true;
+
+        const corners = {
+            '0,0': [{ r: 0, c: 1 }, { r: 1, c: 0 }],
+            '0,8': [{ r: 0, c: 7 }, { r: 1, c: 8 }],
+            '8,0': [{ r: 7, c: 0 }, { r: 8, c: 1 }],
+            '8,8': [{ r: 7, c: 8 }, { r: 8, c: 7 }],
+        };
+        const key = `${r},${c}`;
+        if (corners[key] && corners[key].every(adj => b[adj.r][adj.c] === player)) return true;
+        return false;
+    }
+
+    function updateUI() {
+        scoreSenteEl.textContent = scoreSente;
+        scoreGoteEl.textContent = scoreGote;
+    }
+
+    function endGame(msg) {
+        isGameOver = true;
+        messageBox.textContent = msg;
+        overlay.style.display = 'flex';
+    }
+
+    initGame();
+</script>
+</body>
+</html>
