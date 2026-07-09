@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>はさみ将棋</title>
+<style>
+  :root {
+    --board-bg: #d9a566;
+    --line: #3b2610;
+    --cell-size: min(9vw, 52px);
+    --hl: rgba(80, 180, 90, 0.45);
+    --sel: rgba(255, 200, 0, 0.55);
+    --text-piece: #1a1a1a;
+    --text-cpu: #7a1a1a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 16px;
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    background: #f4efe6;
+    color: #222;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
+  h1 {
+    font-size: 1.4rem;
+    margin: 8px 0 12px;
+    letter-spacing: 0.08em;
+  }
+  .status-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px 20px;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+  }
+  .status-bar .box {
+    background: #fff;
+    border: 1px solid #cbb99a;
+    padding: 6px 12px;
+    border-radius: 6px;
+    min-width: 120px;
+    text-align: center;
+  }
+  .status-bar .turn {
+    font-weight: bold;
+    color: #2a5f2a;
+  }
+  .status-bar .turn.cpu { color: #7a1a1a; }
+  .status-bar .turn.over { color: #444; }
+  .board {
+    display: grid;
+    grid-template-columns: repeat(9, var(--cell-size));
+    grid-template-rows: repeat(9, var(--cell-size));
+    background: var(--board-bg);
+    border: 3px solid var(--line);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+  }
+  .cell {
+    border: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(var(--cell-size) * 0.55);
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    transition: background 0.15s;
+  }
+  .cell.piece-human { color: var(--text-piece); }
+  .cell.piece-cpu { color: var(--text-cpu); }
+  .cell.selected { background: var(--sel); }
+  .cell.movable { background: var(--hl); }
+  .cell.movable::after {
+    content: "";
+    position: absolute;
+    width: 30%;
+    height: 30%;
+    border-radius: 50%;
+    background: rgba(30,90,30,0.4);
+  }
+  .cell.movable.piece-human::after,
+  .cell.movable.piece-cpu::after { display: none; }
+  .controls {
+    margin-top: 14px;
+    display: flex;
+    gap: 10px;
+  }
+  button {
+    background: #3b2610;
+    color: #fff;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  button:hover { background: #57381a; }
+  .result {
+    margin-top: 12px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    min-height: 1.4em;
+    text-align: center;
+  }
+  .result.win { color: #2a5f2a; }
+  .result.lose { color: #7a1a1a; }
+  .rules {
+    margin-top: 20px;
+    max-width: 540px;
+    font-size: 0.82rem;
+    color: #555;
+    line-height: 1.6;
+    background: #fff;
+    border: 1px solid #e0d5bd;
+    padding: 10px 14px;
+    border-radius: 6px;
+  }
+  .rules summary { cursor: pointer; font-weight: bold; color: #333; }
+  @media (max-width: 480px) {
+    :root { --cell-size: 9.5vw; }
+    body { padding: 8px; }
+    h1 { font-size: 1.1rem; }
+    .status-bar { font-size: 0.85rem; }
+    .status-bar .box { min-width: 90px; padding: 4px 8px; }
+  }
+</style>
+</head>
+<body>
+  <h1>はさみ将棋 (9×9)</h1>
+  <div class="status-bar">
+    <div class="box">あなた 取: <span id="humanCaptured">0</span> / 5</div>
+    <div class="box turn" id="turnLabel">あなたの番</div>
+    <div class="box">CPU 取: <span id="cpuCaptured">0</span> / 5</div>
+  </div>
+  <div class="board" id="board"></div>
+  <div class="result" id="result"></div>
+  <div class="controls">
+    <button id="resetBtn">リセット</button>
+  </div>
+  <details class="rules">
+    <summary>ルール</summary>
+    <ul>
+      <li>すべての駒は縦横に何マスでも移動可（飛車と同じ、飛び越え不可）</li>
+      <li>相手の駒（連続1枚以上）を自駒2枚で挟むと取れる</li>
+      <li>四隅の駒は縦横に隣接する2マスを塞ぐと取れる</li>
+      <li>自分から挟まれる位置に入っても取られない</li>
+      <li>先に5枚取った方の勝ち。合法手ゼロで負け</li>
+    </ul>
+  </details>
+
+<script>
+(() => {
+  const SIZE = 9;
+  const EMPTY = 0, HUMAN = 1, CPU = 2;
+  const WIN_CAPTURE = 5;
+
+  let board = [];
+  let turn = HUMAN;
+  let selected = null;
+  let humanCaptured = 0;
+  let cpuCaptured = 0;
+  let gameOver = false;
+
+  const boardEl = document.getElementById('board');
+  const humanCapEl = document.getElementById('humanCaptured');
+  const cpuCapEl = document.getElementById('cpuCaptured');
+  const turnEl = document.getElementById('turnLabel');
+  const resultEl = document.getElementById('result');
+  const resetBtn = document.getElementById('resetBtn');
+
+  function init() {
+    board = Array.from({length: SIZE}, () => Array(SIZE).fill(EMPTY));
+    for (let c = 0; c < SIZE; c++) {
+      board[0][c] = CPU;
+      board[SIZE - 1][c] = HUMAN;
+    }
+    turn = HUMAN;
+    selected = null;
+    humanCaptured = 0;
+    cpuCaptured = 0;
+    gameOver = false;
+    resultEl.textContent = '';
+    resultEl.className = 'result';
+    render();
+    updateStatus();
+  }
+
+  function render() {
+    boardEl.innerHTML = '';
+    const movable = selected ? getMoves(board, selected.r, selected.c) : [];
+    const movableSet = new Set(movable.map(m => m.r * SIZE + m.c));
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.r = r;
+        cell.dataset.c = c;
+        const v = board[r][c];
+        if (v === HUMAN) {
+          cell.classList.add('piece-human');
+          cell.textContent = '歩';
+        } else if (v === CPU) {
+          cell.classList.add('piece-cpu');
+          cell.textContent = 'と';
+        }
+        if (selected && selected.r === r && selected.c === c) {
+          cell.classList.add('selected');
+        }
+        if (movableSet.has(r * SIZE + c)) {
+          cell.classList.add('movable');
+        }
+        cell.addEventListener('click', onCellClick);
+        boardEl.appendChild(cell);
+      }
+    }
+  }
+
+  function updateStatus() {
+    humanCapEl.textContent = humanCaptured;
+    cpuCapEl.textContent = cpuCaptured;
+    if (gameOver) {
+      turnEl.textContent = '対局終了';
+      turnEl.className = 'box turn over';
+    } else if (turn === HUMAN) {
+      turnEl.textContent = 'あなたの番';
+      turnEl.className = 'box turn';
+    } else {
+      turnEl.textContent = 'CPU 思考中...';
+      turnEl.className = 'box turn cpu';
+    }
+  }
+
+  function onCellClick(e) {
+    if (gameOver || turn !== HUMAN) return;
+    const r = parseInt(e.currentTarget.dataset.r, 10);
+    const c = parseInt(e.currentTarget.dataset.c, 10);
+    const v = board[r][c];
+
+    if (selected) {
+      if (selected.r === r && selected.c === c) {
+        selected = null;
+        render();
+        return;
+      }
+      if (v === HUMAN) {
+        selected = { r, c };
+        render();
+        return;
+      }
+      const moves = getMoves(board, selected.r, selected.c);
+      if (moves.some(m => m.r === r && m.c === c)) {
+        doMove(selected.r, selected.c, r, c, HUMAN);
+        selected = null;
+        return;
+      }
+    } else {
+      if (v === HUMAN) {
+        selected = { r, c };
+        render();
+      }
+    }
+  }
+
+  function getMoves(bd, r, c) {
+    const moves = [];
+    const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+    for (const [dr, dc] of dirs) {
+      let nr = r + dr, nc = c + dc;
+      while (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
+        if (bd[nr][nc] !== EMPTY) break;
+        moves.push({ r: nr, c: nc });
+        nr += dr;
+        nc += dc;
+      }
+    }
+    return moves;
+  }
+
+  // 挟み取り判定: player が (r,c) に着地した後、取られる相手駒の座標配列を返す
+  function computeCaptures(bd, r, c, player) {
+    const opp = player === HUMAN ? CPU : HUMAN;
+    const captured = [];
+    const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+
+    // 通常挟み: 各方向に相手駒が1枚以上連続し、その先が自駒
+    for (const [dr, dc] of dirs) {
+      const line = [];
+      let nr = r + dr, nc = c + dc;
+      while (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE && bd[nr][nc] === opp) {
+        line.push({ r: nr, c: nc });
+        nr += dr;
+        nc += dc;
+      }
+      if (line.length > 0 && nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE && bd[nr][nc] === player) {
+        for (const p of line) captured.push(p);
+      }
+    }
+
+    // 角の取り方: 四隅にある相手駒に対し、
+    // 「その隅の相手駒に縦横で隣接する2マス」を両方自駒が塞いだ場合に取る。
+    // 今回の移動で自駒が (r,c) にあり、隅の隣接マスを埋めた場合をチェック。
+    const corners = [[0,0],[0,SIZE-1],[SIZE-1,0],[SIZE-1,SIZE-1]];
+    for (const [cr, cc] of corners) {
+      if (bd[cr][cc] !== opp) continue;
+      // 隅の隣接マス (盤内2マス)
+      const neighbors = [];
+      if (cr === 0) neighbors.push([cr+1, cc]);
+      else neighbors.push([cr-1, cc]);
+      if (cc === 0) neighbors.push([cr, cc+1]);
+      else neighbors.push([cr, cc-1]);
+      const bothBlocked = neighbors.every(([nr2, nc2]) => bd[nr2][nc2] === player);
+      if (bothBlocked) {
+        // 重複回避
+        if (!captured.some(p => p.r === cr && p.c === cc)) {
+          captured.push({ r: cr, c: cc });
+        }
+      }
+    }
+    return captured;
+  }
+
+  function applyMoveOnBoard(bd, sr, sc, tr, tc, player) {
+    const nb = bd.map(row => row.slice());
+    nb[tr][tc] = player;
+    nb[sr][sc] = EMPTY;
+    const caps = computeCaptures(nb, tr, tc, player);
+    for (const p of caps) nb[p.r][p.c] = EMPTY;
+    return { board: nb, captures: caps.length };
+  }
+
+  function doMove(sr, sc, tr, tc, player) {
+    const res = applyMoveOnBoard(board, sr, sc, tr, tc, player);
+    board = res.board;
+    if (player === HUMAN) humanCaptured += res.captures;
+    else cpuCaptured += res.captures;
+
+    render();
+    updateStatus();
+
+    if (checkGameEnd()) return;
+
+    turn = (player === HUMAN) ? CPU : HUMAN;
+    updateStatus();
+
+    if (turn === CPU && !gameOver) {
+      setTimeout(cpuTurn, 400);
+    }
+  }
+
+  function checkGameEnd() {
+    if (humanCaptured >= WIN_CAPTURE) {
+      gameOver = true;
+      resultEl.textContent = 'あなたの勝ち！';
+      resultEl.className = 'result win';
+      updateStatus();
+      return true;
+    }
+    if (cpuCaptured >= WIN_CAPTURE) {
+      gameOver = true;
+      resultEl.textContent = 'CPU の勝ち';
+      resultEl.className = 'result lose';
+      updateStatus();
+      return true;
+    }
+    // 次の手番のプレイヤーに合法手があるか
+    const nextPlayer = (turn === HUMAN) ? CPU : HUMAN;
+    if (!hasAnyMove(board, nextPlayer)) {
+      gameOver = true;
+      if (nextPlayer === HUMAN) {
+        resultEl.textContent = 'あなたの負け（合法手なし）';
+        resultEl.className = 'result lose';
+      } else {
+        resultEl.textContent = 'あなたの勝ち（CPU 合法手なし）';
+        resultEl.className = 'result win';
+      }
+      updateStatus();
+      return true;
+    }
+    return false;
+  }
+
+  function hasAnyMove(bd, player) {
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        if (bd[r][c] !== player) continue;
+        if (getMoves(bd, r, c).length > 0) return true;
+      }
+    }
+    return false;
+  }
+
+  function getAllMoves(bd, player) {
+    const list = [];
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        if (bd[r][c] !== player) continue;
+        const moves = getMoves(bd, r, c);
+        for (const m of moves) list.push({ sr: r, sc: c, tr: m.r, tc: m.c });
+      }
+    }
+    return list;
+  }
+
+  // 「移動後、相手が次の1手で自分の駒を何枚取れるか」の最大値
+  function maxOpponentCaptureNextTurn(bd, opponent) {
+    let maxCap = 0;
+    const moves = getAllMoves(bd, opponent);
+    for (const mv of moves) {
+      const res = applyMoveOnBoard(bd, mv.sr, mv.sc, mv.tr, mv.tc, opponent);
+      if (res.captures > maxCap) maxCap = res.captures;
+    }
+    return maxCap;
+  }
+
+  function cpuTurn() {
+    if (gameOver) return;
+    const moves = getAllMoves(board, CPU);
+    if (moves.length === 0) {
+      // 合法手なし → 負け判定は checkGameEnd で扱う
+      turn = HUMAN;
+      checkGameEnd();
+      return;
+    }
+
+    // 各手を評価: (自分の獲得駒数) - (相手が次に取れる最大駒数) + 微小な位置補正
+    let bestScore = -Infinity;
+    let bestMoves = [];
+    for (const mv of moves) {
+      const res = applyMoveOnBoard(board, mv.sr, mv.sc, mv.tr, mv.tc, CPU);
+      const gain = res.captures;
+      // 勝利手は最優先
+      if (cpuCaptured + gain >= WIN_CAPTURE) {
+        bestScore = 1e9;
+        bestMoves = [mv];
+        break;
+      }
+      const risk = maxOpponentCaptureNextTurn(res.board, HUMAN);
+      // 位置補正: 前進(下→上ではなくCPUは上→下)、中央寄り
+      const advance = mv.tr - mv.sr; // CPUは下方向に進みたい
+      const centerBias = -Math.abs(mv.tc - 4) * 0.05;
+      const score = gain * 10 - risk * 8 + advance * 0.2 + centerBias;
+      if (score > bestScore) {
+        bestScore = score;
+        bestMoves = [mv];
+      } else if (score === bestScore) {
+        bestMoves.push(mv);
+      }
+    }
+
+    const chosen = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+    doMove(chosen.sr, chosen.sc, chosen.tr, chosen.tc, CPU);
+  }
+
+  resetBtn.addEventListener('click', init);
+  init();
+})();
+</script>
+</body>
+</html>

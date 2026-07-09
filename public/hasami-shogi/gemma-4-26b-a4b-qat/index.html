@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>はさみ将棋</title>
+    <style>
+        :root {
+            --bg-color: #f0e6d2;
+            --board-color: #dcb359;
+            --line-color: #444;
+            --player-color: #fff;
+            --cpu-color: #fff;
+            --highlight-color: rgba(255, 255, 0, 0.4);
+            --selected-color: rgba(255, 0, 0, 0.3);
+        }
+        body {
+            font-family: "Sawarabi Mincho", serif;
+            background-color: #fdf6e3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            user-select: none;
+        }
+        .info-panel {
+            margin-bottom: 15px;
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+        .score-board {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .status {
+            font-size: 1.1rem;
+            height: 1.5em;
+            color: #333;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            grid-template-rows: repeat(9, 1fr);
+            width: 95vw;
+            max-width: 450px;
+            height: 95vw;
+            max-height: 450px;
+            background-color: var(--board-color);
+            border: 2px solid var(--line-color);
+            position: relative;
+        }
+        .cell {
+            border: 1px solid var(--line-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            cursor: pointer;
+        }
+        .piece {
+            width: 80%;
+            height: 80%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 4px;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .piece.player { color: #000; }
+        .piece.cpu { color: #d00; }
+        .cell.selected { background-color: var(--selected-color); }
+        .cell.highlight { background-color: var(--highlight-color); }
+        .controls { margin-top: 20px; }
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: #8b4513;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover { background-color: #a0522d; }
+    </style>
+</head>
+<body>
+
+<div class="info-panel">
+    <div class="score-board">
+        <span>あなた: <span id="p-score">0</span>/5</span>
+        <span>CPU: <span id="c-score">0</span>/5</span>
+    </div>
+    <div class="status" id="status">あなたの番</div>
+</div>
+
+<div id="board"></div>
+
+<div class="controls">
+    <button onclick="initGame()">リセット</button>
+</div>
+
+<script>
+    const SIZE = 9;
+    const WIN_SCORE = 5;
+    let board = [];
+    let turn = 'player'; // 'player' or 'cpu'
+    let selectedCell = null;
+    let scores = { player: 0, cpu: 0 };
+    let gameOver = false;
+
+    const boardEl = document.getElementById('board');
+    const statusEl = document.getElementById('status');
+    const pScoreEl = document.getElementById('p-score');
+    const cScoreEl = document.getElementById('c-score');
+
+    function initGame() {
+        board = Array(SIZE).fill(null).map(() => Array(SIZE).fill(null));
+        scores = { player: 0, cpu: 0 };
+        turn = 'player';
+        gameOver = false;
+        selectedCell = null;
+        updateUI();
+
+        // Initial setup
+        for (let i = 0; i < SIZE; i++) {
+            board[8][i] = 'player'; // 歩
+            board[0][i] = 'cpu';    // と
+        }
+        renderBoard();
+    }
+
+    function renderBoard() {
+        boardEl.innerHTML = '';
+        for (let r = 0; r < SIZE; r++) {
+            for (let c = 0; c < SIZE; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.r = r;
+                cell.dataset.c = c;
+                cell.onclick = () => handleCellClick(r, c);
+
+                if (board[r][c]) {
+                    const piece = document.createElement('div');
+                    piece.className = `piece ${board[r][c] === 'player' ? 'player' : 'cpu'}`;
+                    piece.textContent = board[r][c] === 'player' ? '歩' : 'と';
+                    cell.appendChild(piece);
+                }
+                boardEl.appendChild(cell);
+            }
+        }
+    }
+
+    function handleCellClick(r, c) {
+        if (gameOver || turn !== 'player') return;
+
+        if (board[r][c] === 'player') {
+            if (selectedCell && selectedCell.r === r && selectedCell.c === c) {
+                selectedCell = null;
+            } else {
+                selectedCell = { r, c };
+            }
+        } else if (selectedCell) {
+            if (isValidMove(selectedCell.r, selectedCell.c, r, c)) {
+                executeMove(selectedCell.r, selectedCell.c, r, c);
+                selectedCell = null;
+            } else {
+                selectedCell = null;
+            }
+        }
+        updateUI();
+    }
+
+    function isValidMove(fr, fc, tr, tc) {
+        if (board[tr][tc] !== null) return false;
+        if (fr !== tr && fc !== tc) return false;
+        
+        // Check if path is clear
+        const dr = Math.sign(tr - fr);
+        const dc = Math.sign(tc - fc);
+        let currR = fr + dr;
+        let currC = fc + dc;
+        while (currR !== tr || currC !== tc) {
+            if (board[currR][currC] !== null) return false;
+            currR += dr;
+            currC += dc;
+        }
+        return true;
+    }
+
+    function executeMove(fr, fc, tr, tc) {
+        const player = board[fr][fc];
+        board[tr][tc] = player;
+        board[fr][fc] = null;
+
+        const captured = checkCaptures(tr, tc, player);
+        
+        // Update scores
+        if (player === 'player') {
+            scores.player += captured.player;
+            turn = 'cpu';
+        } else {
+            scores.cpu += captured.cpu;
+            turn = 'player';
+        }
+
+        updateUI();
+        checkGameOver();
+
+        if (!gameOver && turn === 'cpu') {
+            setTimeout(cpuMove, 600);
+        }
+    }
+
+    function checkCaptures(r, c, mover) {
+        let captured = { player: 0, cpu: 0 };
+        const opponent = mover === 'player' ? 'cpu' : 'player';
+        const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+
+        // Standard capture (sandwich)
+        directions.forEach(([dr, dc]) => {
+            let count = 0;
+            let lastR = r;
+            let lastC = c;
+
+            // Look in direction
+            let nr = r + dr;
+            let nc = c + dc;
+            let tempCount = 0;
+            while (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE && board[nr][nc] === opponent) {
+                tempCount++;
+                nr += dr;
+                nc += dc;
+            }
+
+            // If we found a sequence of opponent pieces and the next cell is our piece
+            if (tempCount > 0) {
+                let endR = r + tempCount * dr;
+                let endC = c + tempCount * dc;
+                if (endR >= 0 && endR < SIZE && endC >= 0 && endC < SIZE && board[endR][endC] === mover) {
+                    for (let i = 1; i <= tempCount; i++) {
+                        board[r + i * dr][c + i * dc] = null;
+                        captured[mover]++;
+                    }
+                }
+            }
+        });
+
+        // Corner capture
+        const corners = [[0,0], [0, SIZE-1], [SIZE-1, 0], [SIZE-1, SIZE-1]];
+        corners.forEach(([cr, cc]) => {
+            if (board[cr][cc] === opponent) {
+                // Check if the mover just completed the enclosure
+                // A corner piece is captured if its two neighbors are now occupied by the opponent
+                const neighbors = [[0,1], [1,0], [0,-1], [-1,0]];
+                let enclosed = 0;
+                neighbors.forEach(([dr, dc]) => {
+                    const nr = cr + dr;
+                    const nc = cc + dc;
+                    if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE && board[nr][nc] === mover) {
+                        enclosed++;
+                    }
+                });
+                if (enclosed === 2) {
+                    board[cr][cc] = null;
+                    captured[mover]++;
+                }
+            }
+        });
+
+        return captured;
+    }
+
+    function cpuMove() {
+        if (gameOver) return;
+
+        let bestMove = null;
+        let maxScore = -Infinity;
+
+        const moves = getAllLegalMoves('cpu');
+        
+        if (moves.length === 0) {
+            gameOver = true;
+            statusEl.textContent = "あなたの勝ち！ (CPUは詰みました)";
+            updateUI();
+            return;
+        }
+
+        // Heuristic: 1. Capture pieces, 2. Don't get captured (simplified)
+        for (const move of moves) {
+            let score = 0;
+            // Simulate move
+            const originalBoard = board.map(row => [...row]);
+            const originalScores = {...scores};
+            
+            // Simulate
+            const fr = move.fr, fc = move.fc, tr = move.tr, tc = move.tc;
+            const mover = board[fr][fc];
+            board[tr][tc] = mover;
+            board[fr][fc] = null;
+            const cap = checkCaptures(tr, tc, mover);
+            
+            score += (cap.player + cap.cpu); // Prioritize capturing
+            
+            // Penalty for being captured (very simple)
+            // This is hard to simulate perfectly without deep lookahead, 
+            // so we just prioritize moves that don't leave pieces vulnerable
+            
+            board = originalBoard.map(row => [...row]);
+            scores = originalScores;
+
+            if (score > maxScore) {
+                maxScore = score;
+                bestMove = move;
+            }
+        }
+
+        if (bestMove) {
+            executeMove(bestMove.fr, bestMove.fc, bestMove.tr, bestMove.tc);
+        }
+    }
+
+    function getAllLegalMoves(player) {
+        const moves = [];
+        for (let r = 0; r < SIZE; r++) {
+            for (let c = 0; c < SIZE; c++) {
+                if (board[r][c] === player) {
+                    const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+                    directions.forEach(([dr, dc]) => {
+                        let nr = r + dr;
+                        let nc = c + dc;
+                        while (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
+                            if (board[nr][nc] === null) {
+                                moves.push({ fr: r, fc: c, tr: nr, tc: nc });
+                            } else if (board[nr][nc] !== player) {
+                                // Can't jump over, but can't move to opponent's square either
+                                // The rule says "cannot jump over", "cannot move to opponent's square"
+                                // So we stop here.
+                                break;
+                            } else {
+                                // Same color, stop
+                                break;
+                            }
+                            nr += dr;
+                            nc += dc;
+                        }
+                        // Check if we can move to an opponent's square? 
+                        // Rule: "移動先は空きマスのみ" -> So we don't add it.
+                    });
+                }
+            }
+        }
+        // Re-filter to ensure move is strictly to empty cell (already handled by while loop logic)
+        return moves.filter(m => board[m.tr][m.tc] === null);
+    }
+
+    function updateUI() {
+        renderBoard();
+        pScoreEl.textContent = scores.player;
+        cScoreEl.textContent = scores.cpu;
+
+        if (gameOver) {
+            statusEl.textContent = "ゲーム終了";
+            return;
+        }
+
+        if (turn === 'player') {
+            statusEl.textContent = "あなたの番";
+        } else {
+            statusEl.textContent = "CPU 思考中...";
+        }
+
+        if (selectedCell) {
+            const idx = selectedCell.r * SIZE + selectedCell.c;
+            const cells = document.querySelectorAll('.cell');
+            cells[idx].classList.add('selected');
+            
+            // Highlight valid moves
+            const moves = getAllLegalMoves('player');
+            moves.forEach(m => {
+                if (m.fr === selectedCell.r && m.fc === selectedCell.c) {
+                    const targetIdx = m.tr * SIZE + m.tc;
+                    cells[targetIdx].classList.add('highlight');
+                }
+            });
+        }
+    }
+
+    function checkGameOver() {
+        if (scores.player >= WIN_SCORE) {
+            gameOver = true;
+            statusEl.textContent = "あなたの勝利！";
+        } else if (scores.cpu >= WIN_SCORE) {
+            gameOver = true;
+            statusEl.textContent = "CPUの勝利！";
+        } else {
+            // Check if player has no moves
+            if (turn === 'player' && getAllLegalMoves('player').length === 0) {
+                gameOver = true;
+                statusEl.textContent = "あなたの負け！ (詰み)";
+            }
+        }
+    }
+
+    initGame();
+</script>
+
+</body>
+</html>

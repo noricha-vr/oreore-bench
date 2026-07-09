@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>はさみ将棋</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1a1510;
+  --surface:#2a2218;
+  --board:#c4a574;
+  --line:#5c4030;
+  --cell:#d4b896;
+  --cell-alt:#c9a97a;
+  --human:#2c1810;
+  --cpu:#f5f0e6;
+  --select:rgba(255,200,50,.45);
+  --legal:rgba(60,140,80,.4);
+  --text:#f0e6d3;
+  --muted:#a89070;
+  --accent:#c45c26;
+  --danger:#c0392b;
+  --ok:#2e7d32;
+}
+html,body{height:100%}
+body{
+  font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;
+  background:radial-gradient(ellipse at top,#2a2015 0%,var(--bg) 70%);
+  color:var(--text);
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:10px;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
+}
+.wrap{
+  width:min(100%,480px);
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+h1{
+  font-size:clamp(1.1rem,4vw,1.4rem);
+  font-weight:700;
+  letter-spacing:.08em;
+}
+.btn{
+  font-family:inherit;
+  font-size:.9rem;
+  padding:8px 16px;
+  border:1px solid var(--muted);
+  border-radius:6px;
+  background:var(--surface);
+  color:var(--text);
+  cursor:pointer;
+}
+.btn:hover{border-color:var(--accent);color:#fff}
+.btn:active{transform:scale(.97)}
+.info{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.card{
+  background:var(--surface);
+  border:1px solid rgba(168,144,112,.3);
+  border-radius:8px;
+  padding:10px 12px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.card .label{font-size:.75rem;color:var(--muted);letter-spacing:.05em}
+.card .val{font-size:1.15rem;font-weight:700}
+.card.you .val{color:#e8c48a}
+.card.cpu .val{color:#d4d0c8}
+.status{
+  text-align:center;
+  font-size:clamp(.95rem,3.5vw,1.1rem);
+  padding:8px 12px;
+  background:var(--surface);
+  border-radius:8px;
+  border:1px solid rgba(168,144,112,.25);
+  min-height:2.6em;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.status.win{color:#8fdf8f;border-color:var(--ok)}
+.status.lose{color:#f0a0a0;border-color:var(--danger)}
+.status.thinking{color:#e8c48a}
+.board-wrap{
+  width:100%;
+  aspect-ratio:1;
+  background:var(--board);
+  border:3px solid var(--line);
+  border-radius:4px;
+  box-shadow:0 10px 40px rgba(0,0,0,.5),inset 0 0 0 2px rgba(92,64,48,.3);
+  padding:4px;
+}
+.board{
+  width:100%;
+  height:100%;
+  display:grid;
+  grid-template-columns:repeat(9,1fr);
+  grid-template-rows:repeat(9,1fr);
+  gap:0;
+  background:var(--line);
+  border:1px solid var(--line);
+}
+.cell{
+  background:var(--cell);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:default;
+  position:relative;
+  font-size:clamp(1.1rem,5.5vw,1.85rem);
+  font-weight:700;
+  line-height:1;
+  transition:background .12s;
+}
+.cell:nth-child(odd){background:var(--cell-alt)}
+.cell.selected{background:var(--select)!important;box-shadow:inset 0 0 0 2px #e0a020}
+.cell.legal{background:var(--legal)!important;cursor:pointer}
+.cell.legal::after{
+  content:"";
+  position:absolute;
+  width:22%;
+  height:22%;
+  border-radius:50%;
+  background:rgba(30,100,50,.55);
+}
+.cell.piece-human,.cell.piece-cpu{cursor:pointer}
+.piece{
+  pointer-events:none;
+  text-shadow:0 1px 1px rgba(0,0,0,.2);
+}
+.piece.human{color:var(--human)}
+.piece.cpu{color:var(--cpu);text-shadow:0 1px 2px rgba(0,0,0,.45),0 0 1px #333}
+.rules{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:.72rem;
+  color:var(--muted);
+  line-height:1.5;
+  text-align:center;
+}
+@media (max-width:360px){
+  body{padding:6px}
+  .card{padding:8px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>はさみ将棋</h1>
+    <button type="button" class="btn" id="resetBtn">リセット</button>
+  </header>
+  <div class="info">
+    <div class="card you">
+      <span class="label">あなた（歩）の取った駒</span>
+      <span class="val" id="humanScore">0 / 5</span>
+    </div>
+    <div class="card cpu">
+      <span class="label">CPU（と）の取った駒</span>
+      <span class="val" id="cpuScore">0 / 5</span>
+    </div>
+  </div>
+  <div class="status" id="status">あなたの番</div>
+  <div class="board-wrap">
+    <div class="board" id="board" role="grid" aria-label="はさみ将棋盤"></div>
+  </div>
+  <p class="rules">飛車と同じ動き。縦横で挟むと取る。角は隣接2マスで取る。先に5枚取った方の勝ち。</p>
+</div>
+<script>
+(function () {
+  "use strict";
+
+  var SIZE = 9;
+  var HUMAN = 1;
+  var CPU = 2;
+  var EMPTY = 0;
+  var WIN_COUNT = 5;
+  var DIRS = [[-1,0],[1,0],[0,-1],[0,1]];
+  var CORNERS = [[0,0],[0,8],[8,0],[8,8]];
+
+  var board = [];
+  var scores = {1: 0, 2: 0};
+  var turn = HUMAN;
+  var selected = null;
+  var legalMoves = [];
+  var gameOver = false;
+  var cells = [];
+
+  var boardEl = document.getElementById("board");
+  var statusEl = document.getElementById("status");
+  var humanScoreEl = document.getElementById("humanScore");
+  var cpuScoreEl = document.getElementById("cpuScore");
+  var resetBtn = document.getElementById("resetBtn");
+
+  function inBounds(r, c) {
+    return r >= 0 && r < SIZE && c >= 0 && c < SIZE;
+  }
+
+  function cloneBoard(b) {
+    var n = [];
+    for (var i = 0; i < SIZE; i++) n[i] = b[i].slice();
+    return n;
+  }
+
+  function initBoard() {
+    board = [];
+    for (var r = 0; r < SIZE; r++) {
+      board[r] = [];
+      for (var c = 0; c < SIZE; c++) {
+        if (r === 0) board[r][c] = CPU;
+        else if (r === SIZE - 1) board[r][c] = HUMAN;
+        else board[r][c] = EMPTY;
+      }
+    }
+  }
+
+  function getRookMoves(b, r, c) {
+    var moves = [];
+    for (var d = 0; d < 4; d++) {
+      var dr = DIRS[d][0], dc = DIRS[d][1];
+      var nr = r + dr, nc = c + dc;
+      while (inBounds(nr, nc)) {
+        if (b[nr][nc] !== EMPTY) break;
+        moves.push([nr, nc]);
+        nr += dr;
+        nc += dc;
+      }
+    }
+    return moves;
+  }
+
+  function findCaptures(b, mover, mr, mc) {
+    var opp = mover === HUMAN ? CPU : HUMAN;
+    var taken = {};
+    var key, i, dr, dc, line, nr, nc, cr, cc, a1, a2;
+
+    for (i = 0; i < 4; i++) {
+      dr = DIRS[i][0];
+      dc = DIRS[i][1];
+      line = [];
+      nr = mr + dr;
+      nc = mc + dc;
+      while (inBounds(nr, nc) && b[nr][nc] === opp) {
+        line.push([nr, nc]);
+        nr += dr;
+        nc += dc;
+      }
+      if (line.length > 0 && inBounds(nr, nc) && b[nr][nc] === mover) {
+        for (var j = 0; j < line.length; j++) {
+          key = line[j][0] + "," + line[j][1];
+          taken[key] = line[j];
+        }
+      }
+    }
+
+    for (i = 0; i < CORNERS.length; i++) {
+      cr = CORNERS[i][0];
+      cc = CORNERS[i][1];
+      if (b[cr][cc] !== opp) continue;
+      if (cr === 0 && cc === 0) { a1 = [0, 1]; a2 = [1, 0]; }
+      else if (cr === 0 && cc === 8) { a1 = [0, 7]; a2 = [1, 8]; }
+      else if (cr === 8 && cc === 0) { a1 = [8, 1]; a2 = [7, 0]; }
+      else { a1 = [8, 7]; a2 = [7, 8]; }
+      if (b[a1[0]][a1[1]] === mover && b[a2[0]][a2[1]] === mover) {
+        key = cr + "," + cc;
+        taken[key] = [cr, cc];
+      }
+    }
+
+    var result = [];
+    for (key in taken) {
+      if (Object.prototype.hasOwnProperty.call(taken, key)) {
+        result.push(taken[key]);
+      }
+    }
+    return result;
+  }
+
+  function applyMove(b, fr, fc, tr, tc) {
+    var mover = b[fr][fc];
+    var nb = cloneBoard(b);
+    nb[tr][tc] = mover;
+    nb[fr][fc] = EMPTY;
+    var caps = findCaptures(nb, mover, tr, tc);
+    for (var i = 0; i < caps.length; i++) {
+      nb[caps[i][0]][caps[i][1]] = EMPTY;
+    }
+    return { board: nb, captures: caps.length, mover: mover };
+  }
+
+  function allLegalMoves(b, player) {
+    var moves = [];
+    for (var r = 0; r < SIZE; r++) {
+      for (var c = 0; c < SIZE; c++) {
+        if (b[r][c] !== player) continue;
+        var dests = getRookMoves(b, r, c);
+        for (var i = 0; i < dests.length; i++) {
+          moves.push({ fr: r, fc: c, tr: dests[i][0], tc: dests[i][1] });
+        }
+      }
+    }
+    return moves;
+  }
+
+  function maxOpponentCapture(b, player) {
+    var opp = player === HUMAN ? CPU : HUMAN;
+    var moves = allLegalMoves(b, opp);
+    var max = 0;
+    for (var i = 0; i < moves.length; i++) {
+      var m = moves[i];
+      var res = applyMove(b, m.fr, m.fc, m.tr, m.tc);
+      if (res.captures > max) max = res.captures;
+    }
+    return max;
+  }
+
+  function chooseCpuMove() {
+    var moves = allLegalMoves(board, CPU);
+    if (moves.length === 0) return null;
+
+    var best = null;
+    var bestScore = -Infinity;
+
+    for (var i = 0; i < moves.length; i++) {
+      var m = moves[i];
+      var res = applyMove(board, m.fr, m.fc, m.tr, m.tc);
+      var score = res.captures * 100;
+
+      if (scores[CPU] + res.captures >= WIN_COUNT) {
+        score += 10000;
+      }
+
+      var threat = maxOpponentCapture(res.board, CPU);
+      score -= threat * 80;
+
+      if (scores[HUMAN] + threat >= WIN_COUNT) {
+        score -= 5000;
+      }
+
+      var mobility = allLegalMoves(res.board, CPU).length;
+      score += mobility * 0.1;
+
+      var centerBonus = (4 - Math.abs(m.tr - 4)) + (4 - Math.abs(m.tc - 4));
+      score += centerBonus * 0.05;
+
+      score += Math.random() * 0.01;
+
+      if (score > bestScore) {
+        bestScore = score;
+        best = m;
+      }
+    }
+    return best;
+  }
+
+  function buildCells() {
+    boardEl.innerHTML = "";
+    cells = [];
+    for (var r = 0; r < SIZE; r++) {
+      cells[r] = [];
+      for (var c = 0; c < SIZE; c++) {
+        var el = document.createElement("div");
+        el.className = "cell";
+        el.setAttribute("role", "gridcell");
+        el.dataset.r = String(r);
+        el.dataset.c = String(c);
+        el.addEventListener("click", onCellClick);
+        boardEl.appendChild(el);
+        cells[r][c] = el;
+      }
+    }
+  }
+
+  function render() {
+    for (var r = 0; r < SIZE; r++) {
+      for (var c = 0; c < SIZE; c++) {
+        var el = cells[r][c];
+        var v = board[r][c];
+        el.className = "cell";
+        el.innerHTML = "";
+
+        if (v === HUMAN) {
+          el.classList.add("piece-human");
+          el.innerHTML = '<span class="piece human">歩</span>';
+        } else if (v === CPU) {
+          el.classList.add("piece-cpu");
+          el.innerHTML = '<span class="piece cpu">と</span>';
+        }
+
+        if (selected && selected.r === r && selected.c === c) {
+          el.classList.add("selected");
+        }
+
+        for (var i = 0; i < legalMoves.length; i++) {
+          if (legalMoves[i][0] === r && legalMoves[i][1] === c) {
+            el.classList.add("legal");
+            break;
+          }
+        }
+      }
+    }
+
+    humanScoreEl.textContent = scores[HUMAN] + " / " + WIN_COUNT;
+    cpuScoreEl.textContent = scores[CPU] + " / " + WIN_COUNT;
+  }
+
+  function setStatus(text, cls) {
+    statusEl.textContent = text;
+    statusEl.className = "status" + (cls ? " " + cls : "");
+  }
+
+  function clearSelection() {
+    selected = null;
+    legalMoves = [];
+  }
+
+  function checkEndAfterMove(player) {
+    if (scores[player] >= WIN_COUNT) {
+      gameOver = true;
+      if (player === HUMAN) setStatus("あなたの勝ち", "win");
+      else setStatus("CPUの勝ち", "lose");
+      clearSelection();
+      render();
+      return true;
+    }
+
+    var next = player === HUMAN ? CPU : HUMAN;
+    var nextMoves = allLegalMoves(board, next);
+    if (nextMoves.length === 0) {
+      gameOver = true;
+      if (next === HUMAN) setStatus("合法手なし。CPUの勝ち", "lose");
+      else setStatus("合法手なし。あなたの勝ち", "win");
+      clearSelection();
+      render();
+      return true;
+    }
+    return false;
+  }
+
+  function doMove(fr, fc, tr, tc) {
+    var res = applyMove(board, fr, fc, tr, tc);
+    board = res.board;
+    scores[res.mover] += res.captures;
+    clearSelection();
+    render();
+    return res;
+  }
+
+  function onCellClick(e) {
+    if (gameOver || turn !== HUMAN) return;
+
+    var el = e.currentTarget;
+    var r = parseInt(el.dataset.r, 10);
+    var c = parseInt(el.dataset.c, 10);
+    var v = board[r][c];
+
+    if (selected) {
+      for (var i = 0; i < legalMoves.length; i++) {
+        if (legalMoves[i][0] === r && legalMoves[i][1] === c) {
+          doMove(selected.r, selected.c, r, c);
+          if (checkEndAfterMove(HUMAN)) return;
+          turn = CPU;
+          setStatus("CPU思考中", "thinking");
+          render();
+          setTimeout(cpuTurn, 350);
+          return;
+        }
+      }
+    }
+
+    if (v === HUMAN) {
+      if (selected && selected.r === r && selected.c === c) {
+        clearSelection();
+      } else {
+        selected = { r: r, c: c };
+        legalMoves = getRookMoves(board, r, c);
+      }
+      render();
+      return;
+    }
+
+    if (selected) {
+      clearSelection();
+      render();
+    }
+  }
+
+  function cpuTurn() {
+    if (gameOver || turn !== CPU) return;
+
+    var m = chooseCpuMove();
+    if (!m) {
+      gameOver = true;
+      setStatus("合法手なし。あなたの勝ち", "win");
+      render();
+      return;
+    }
+
+    doMove(m.fr, m.fc, m.tr, m.tc);
+    if (checkEndAfterMove(CPU)) return;
+
+    turn = HUMAN;
+    setStatus("あなたの番");
+    render();
+  }
+
+  function reset() {
+    initBoard();
+    scores = {1: 0, 2: 0};
+    turn = HUMAN;
+    gameOver = false;
+    clearSelection();
+    setStatus("あなたの番");
+    render();
+  }
+
+  buildCells();
+  reset();
+  resetBtn.addEventListener("click", reset);
+})();
+</script>
+</body>
+</html>
