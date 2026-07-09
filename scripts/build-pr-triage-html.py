@@ -158,16 +158,23 @@ def escape(value: object) -> str:
 
 
 def parse_json(raw: str) -> object | None:
-    text = raw.strip()
-    text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.I)
-    text = re.sub(r"```\s*$", "", text).strip()
-    first = text.find("{")
-    last = text.rfind("}")
-    if first >= 0 and last > first:
-        text = text[first:last + 1]
+    trimmed = raw.strip()
+    # Prefer fenced JSON so braces in preamble examples do not become parse anchors.
+    fence = re.search(r"```(?:json)?\s*([\s\S]*?)```", trimmed, flags=re.I)
+    text = fence.group(1).strip() if fence else trimmed
+    if not fence:
+        first = text.find("{")
+        last = text.rfind("}")
+        if first >= 0 and last > first:
+            text = text[first:last + 1]
     try:
         return json.loads(text)
     except json.JSONDecodeError:
+        if not fence:
+            try:
+                return json.loads(raw)
+            except json.JSONDecodeError:
+                pass
         return None
 
 
