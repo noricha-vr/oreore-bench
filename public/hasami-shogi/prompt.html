@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>hasami-shogi プロンプト — oreore-bench</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-soft: #f7f8fa;
+    --fg: #1a1a1a;
+    --fg-soft: #5a5a5a;
+    --muted-fg: #6b7280;
+    --border: #e5e7eb;
+    --primary: #2563eb;
+    --accent: #8D6E3F;
+    --accent-dark: #5D4527;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+    background-color: var(--bg-soft);
+    color: var(--fg);
+    line-height: 1.8;
+    font-size: 0.9375rem;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .hero {
+    padding: 28px 24px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+    color: #ffffff;
+  }
+  .hero-inner { max-width: 760px; margin: 0 auto; }
+  .hero a.back {
+    color: #ffffff;
+    opacity: 0.85;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 12px;
+  }
+  .hero a.back:hover { opacity: 1; }
+  .hero h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: #ffffff;
+    margin-bottom: 4px;
+  }
+  .hero .sub {
+    font-size: 0.9375rem;
+    opacity: 0.9;
+  }
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+  .card {
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .card h2 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin: 28px 0 12px;
+    color: var(--fg);
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+  }
+  .card h2:first-child { margin-top: 0; }
+  .card p { margin-bottom: 14px; color: var(--fg-soft); }
+  .card ul, .card ol { margin: 0 0 16px 1.5rem; color: var(--fg-soft); }
+  .card li { margin-bottom: 4px; }
+  .card code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+    background-color: var(--bg-soft);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--fg);
+  }
+  .card strong { color: var(--fg); font-weight: 700; }
+  .meta {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 0.8125rem;
+    color: var(--muted-fg);
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .meta a { color: var(--muted-fg); font-weight: 600; }
+  .meta a:hover { color: var(--primary); }
+  hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a href="../" class="back">← oreore-bench に戻る</a>
+    <h1>hasami-shogi プロンプト</h1>
+    <p class="sub">このテーマの凍結プロンプト。新しいモデルで再現する時はこのまま渡してください。</p>
+  </div>
+</header>
+
+<main class="container">
+  <article class="card">
+    <p>HTML+CSS+バニラ JavaScript で 9x9 の「はさみ将棋」を実装してください。ファイルは <code>index.html</code> 1 枚にまとめ、style と script はインライン化してください。</p>
+    <p>はさみ将棋はルールに地域差があるため、<strong>必ず以下のルールセットに厳密に従って</strong>実装してください。</p>
+
+    <h2>盤面と初期配置</h2>
+    <ul>
+      <li>9x9 の将棋盤風の盤面</li>
+      <li>人間（先手）は「歩」9 枚を最下段（自分から見て一番手前の行）に横一列に配置</li>
+      <li>CPU（後手）は「と」9 枚を最上段に横一列に配置</li>
+      <li>駒はテキスト（「歩」「と」）で表示し、画像や絵文字は使わない</li>
+    </ul>
+
+    <h2>駒の動き</h2>
+    <ul>
+      <li>すべての駒は将棋の飛車と同じ動き: 縦または横に何マスでも移動できる</li>
+      <li>他の駒（敵味方問わず）を飛び越えることはできない</li>
+      <li>移動先は空きマスのみ（相手の駒があるマスには移動できない）</li>
+    </ul>
+
+    <h2>挟み取りのルール</h2>
+    <ul>
+      <li><strong>通常の挟み取り</strong>: 自分の駒を動かした結果、縦または横の直線上で、相手の駒（1 枚以上連続した列）の両端を自分の駒 2 枚で挟んだ場合、挟まれた相手の駒をすべて取る</li>
+      <li>1 回の移動で縦と横、複数方向の挟みが同時に成立した場合は、成立したすべての駒を取る</li>
+      <li><strong>角の取り方</strong>: 盤の四隅にある相手の駒は、その駒に縦横で隣接する 2 マスの両方を自分の駒で塞ぐと取れる</li>
+      <li><strong>自分から挟まれた場合は取られない</strong>: 相手の駒 2 枚の間や、角で塞がれる位置に自分から移動しても、その駒は取られない。駒が取られるのは、相手の移動によって挟み・角塞ぎが成立した瞬間のみ</li>
+    </ul>
+
+    <h2>勝敗</h2>
+    <ul>
+      <li>先に相手の駒を 5 枚取った側の勝ち</li>
+      <li>自分の手番で合法手が 1 つもない場合は負け</li>
+      <li>勝敗が決まったら結果を表示し、以降の操作を無効化する</li>
+    </ul>
+
+    <h2>UI 要件</h2>
+    <ul>
+      <li>自分の駒をクリックすると選択状態になり、移動可能なマスをハイライト表示する</li>
+      <li>選択中に別の自駒をクリックすると選択を切り替え、同じ駒をクリックすると選択解除</li>
+      <li>双方の取った駒数を常時表示する</li>
+      <li>手番表示（あなたの番 / CPU 思考中）</li>
+      <li>CPU は「取れる手を優先し、取られる手を避ける」ヒューリスティックで指す（強さは問わないが、無意味な自滅はしないこと）</li>
+      <li>リセットボタンあり</li>
+      <li>レスポンシブ（モバイル対応）</li>
+      <li>絵文字は使わない</li>
+    </ul>
+
+    <p><code>index.html</code> 1 枚で完成させてください。</p>
+
+    <div class="meta">
+      <a href="./PROMPT.md" target="_blank">Markdown 元ファイル</a>
+      <a href="https://github.com/noricha-vr/oreore-bench/blob/main/public/hasami-shogi/PROMPT.md" target="_blank">GitHub で見る</a>
+    </div>
+  </article>
+</main>
+
+</body>
+</html>
