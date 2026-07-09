@@ -1,0 +1,254 @@
+{
+  "questions": [
+    {
+      "id": "q1",
+      "originalText": "何に困っている人向けのアプリですか？",
+      "question": "何に困っている人向けのアプリですか？",
+      "options": [
+        { "label": "子育て" },
+        { "label": "勉強" },
+        { "label": "仕事" },
+        { "label": "健康" },
+        { "label": "旅行" },
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 0.95
+    },
+    {
+      "id": "q2",
+      "originalText": "その困りごとは、毎日起きていますか？週に数回？月に数回？",
+      "question": "その困りごとはどのくらいの頻度で起きますか？",
+      "options": [
+        { "label": "毎日" },
+        { "label": "週に数回" },
+        { "label": "月に数回" },
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 0.98
+    },
+    {
+      "id": "q3",
+      "originalText": "競合アプリは既に使っていますか？",
+      "question": "競合アプリは既に使っていますか？",
+      "options": [
+        { "label": "はい、使っている" },
+        { "label": "いいえ、使っていない" },
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 0.99
+    },
+    {
+      "id": "q4",
+      "originalText": "競合に満足していますか？（使っている場合）",
+      "question": "競合に満足していますか？（使っている場合）",
+      "options": [
+        { "label": "満足" },
+        { "label": "不満" },
+        { "label": "使っていない" },
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 0.97
+    },
+    {
+      "id": "q5",
+      "originalText": "誰が使いますか？",
+      "question": "誰が使いますか？",
+      "options": [
+        { "label": "自分だけ" },
+        { "label": "一般ユーザー" },
+        { "label": "企業" },
+        { "label": "子ども" },
+        { "label": "高齢者" },
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 0.98
+    },
+    {
+      "id": "q6",
+      "originalText": "ユーザーが最初の 30 秒でやることは何ですか？",
+      "question": "ユーザーが最初の30秒でやることは何ですか？",
+      "options": [
+        { "label": "写真を撮る" },
+        { "label": "質問に答える" },
+        { "label": "地図を見る" },
+        { "label": "録音する" },
+        { "label": "テキスト入力する" },
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 0.98
+    },
+    {
+      "id": "q7",
+      "originalText": "一番価値のある機能は何ですか？（1つだけ）",
+      "question": "一番価値のある機能は何ですか？（1つだけ）",
+      "options": [
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 0.96
+    },
+    {
+      "id": "q8",
+      "originalText": "コア機能のおすすめは『ワンタップで完了する記録系』です。これで進めますか？",
+      "question": "コア機能を『ワンタップで完了する記録系』で進めますか？",
+      "options": [
+        { "label": "承認します" },
+        { "label": "もう少し検討したい" },
+        { "label": "別案で進めたい" },
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 0.99
+    },
+    {
+      "id": "q9",
+      "originalText": "ユーザーは毎日使いますか？週に1回ですか？月に1回ですか？",
+      "question": "ユーザーはどのくらいの頻度で使いますか？",
+      "options": [
+        { "label": "毎日使う" },
+        { "label": "週に 1 回程度" },
+        { "label": "月に 1 回程度" },
+        { "label": "使いたい時だけ" },
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 0.98
+    },
+    {
+      "id": "q10",
+      "originalText": "オフラインで使える必要はありますか？",
+      "question": "オフラインで使える必要はありますか？",
+      "options": [
+        { "label": "必要" },
+        { "label": "不要" },
+        { "label": "あれば嬉しい" },
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 0.99
+    },
+    {
+      "id": "q11",
+      "originalText": "スマホアプリである必要はありますか？",
+      "question": "スマホアプリである必要がある理由はどれですか？",
+      "options": [
+        { "label": "カメラを使う" },
+        { "label": "GPS を使う" },
+        { "label": "通知を送る" },
+        { "label": "オフライン動作が必須" },
+        { "label": "マイクを使う" },
+        { "label": "ウィジェットを置く" },
+        { "label": "常時持ち歩くことが前提" },
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 0.9
+    },
+    {
+      "id": "q12",
+      "originalText": "iOS / Android / 両方、どれを優先しますか？",
+      "question": "iOS / Android / 両方、どれを優先しますか？",
+      "options": [
+        { "label": "iOS 優先" },
+        { "label": "Android 優先" },
+        { "label": "両方同時" },
+        { "label": "PWA（Web）でいい" },
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 0.99
+    },
+    {
+      "id": "q13",
+      "originalText": "おすすめは『PWA で軽く立ち上げ、必要になったらネイティブ化』です。これで進めますか？",
+      "question": "『PWA で軽く立ち上げ、必要になったらネイティブ化』で進めますか？",
+      "options": [
+        { "label": "承認します" },
+        { "label": "最初からネイティブで作りたい" },
+        { "label": "Web のみで進めたい" },
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 0.99
+    },
+    {
+      "id": "q14",
+      "originalText": "収益化の方針はありますか？",
+      "question": "収益化の方針はありますか？",
+      "options": [
+        { "label": "無料で公開（広告なし）" },
+        { "label": "無料 + 広告" },
+        { "label": "サブスク課金" },
+        { "label": "買い切り課金" },
+        { "label": "決めていない" },
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 0.98
+    },
+    {
+      "id": "q15",
+      "originalText": "想定する初期ユーザー数は？",
+      "question": "想定する初期ユーザー数は？",
+      "options": [
+        { "label": "自分一人" },
+        { "label": "数十人" },
+        { "label": "数百〜数千人" },
+        { "label": "数万人以上" },
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 0.98
+    },
+    {
+      "id": "q16",
+      "originalText": "ローンチ希望時期はありますか？",
+      "question": "ローンチ希望時期はありますか？",
+      "options": [
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 0.95
+    },
+    {
+      "id": "q17",
+      "originalText": "開発予算の上限はありますか？",
+      "question": "開発予算の上限はありますか？",
+      "options": [
+        { "label": "予算なし（自作）" },
+        { "label": "数万円まで" },
+        { "label": "数十万円まで" },
+        { "label": "それ以上" },
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 0.98
+    },
+    {
+      "id": "q18",
+      "originalText": "個人情報やセンシティブなデータを扱いますか？",
+      "question": "個人情報やセンシティブなデータを扱いますか？",
+      "options": [
+        { "label": "扱わない" },
+        { "label": "氏名・メールのみ" },
+        { "label": "位置情報・カメラ" },
+        { "label": "健康・医療データ" },
+        { "label": "金融情報" },
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 0.98
+    },
+    {
+      "id": "q19",
+      "originalText": "デザインのトーンはありますか？",
+      "question": "デザインのトーンはありますか？",
+      "options": [
+        { "label": "ミニマル・洗練" },
+        { "label": "親しみやすい・カジュアル" },
+        { "label": "プロフェッショナル" },
+        { "label": "子ども向け" },
+        { "label": "お任せ" },
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 0.98
+    },
+    {
+      "id": "q20",
+      "originalText": "将来的に拡張したい機能はありますか？",
+      "question": "将来的に拡張したい機能はありますか？",
+      "options": [
+        { "label": "自由に記述する" }
+      ],
+      "confidence": 0.96
+    }
+  ]
+}

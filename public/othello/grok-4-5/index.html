@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Othello</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1419;
+  --surface:#1a2332;
+  --board:#1b5e20;
+  --line:rgba(255,255,255,.12);
+  --black:#111;
+  --white:#f5f5f5;
+  --hint:rgba(255,255,255,.22);
+  --accent:#4caf50;
+  --text:#e8eef4;
+  --muted:#8a9bb0;
+  --danger:#ef5350;
+  --radius:12px;
+  --shadow:0 8px 32px rgba(0,0,0,.4);
+}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP",sans-serif;
+  background:radial-gradient(ellipse at top,#1a2a3a 0%,var(--bg) 70%);
+  color:var(--text);
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:12px;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
+}
+.wrap{
+  width:min(100%,520px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+h1{
+  font-size:1.35rem;
+  font-weight:700;
+  letter-spacing:.04em;
+}
+.scores{
+  display:flex;
+  gap:10px;
+  flex:1;
+  justify-content:center;
+}
+.score{
+  background:var(--surface);
+  border-radius:999px;
+  padding:6px 14px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:.95rem;
+  font-weight:600;
+  border:2px solid transparent;
+  transition:border-color .2s,box-shadow .2s;
+}
+.score.active{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(76,175,80,.2);
+}
+.dot{
+  width:14px;height:14px;border-radius:50%;
+  box-shadow:inset 0 -2px 4px rgba(0,0,0,.35);
+}
+.dot.black{background:var(--black);border:1px solid #333}
+.dot.white{background:var(--white);border:1px solid #ccc}
+.board-shell{
+  background:linear-gradient(145deg,#2e7d32,#1b5e20 60%,#145a1a);
+  border-radius:var(--radius);
+  padding:clamp(6px,2vw,12px);
+  box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.1);
+}
+#board{
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  gap:clamp(2px,0.6vw,4px);
+  aspect-ratio:1;
+  width:100%;
+}
+.cell{
+  position:relative;
+  background:rgba(0,0,0,.18);
+  border-radius:3px;
+  cursor:default;
+  aspect-ratio:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:background .15s;
+}
+.cell.legal{
+  cursor:pointer;
+  background:rgba(255,255,255,.08);
+}
+.cell.legal::after{
+  content:"";
+  width:28%;height:28%;
+  border-radius:50%;
+  background:var(--hint);
+  pointer-events:none;
+}
+.cell.legal:hover::after,
+.cell.legal:focus-visible::after{
+  background:rgba(255,255,255,.4);
+  transform:scale(1.15);
+}
+.stone{
+  width:82%;height:82%;
+  border-radius:50%;
+  transition:transform .25s cubic-bezier(.34,1.4,.64,1),background .2s;
+  box-shadow:0 3px 6px rgba(0,0,0,.35),inset 0 -3px 6px rgba(0,0,0,.25),inset 0 2px 3px rgba(255,255,255,.15);
+}
+.stone.black{
+  background:radial-gradient(circle at 35% 30%,#444,var(--black) 55%);
+}
+.stone.white{
+  background:radial-gradient(circle at 35% 30%,#fff,var(--white) 55%);
+  box-shadow:0 3px 6px rgba(0,0,0,.25),inset 0 -2px 4px rgba(0,0,0,.08),inset 0 2px 3px rgba(255,255,255,.9);
+}
+.stone.flip{animation:flip .35s ease}
+@keyframes flip{
+  0%{transform:scaleX(1)}
+  50%{transform:scaleX(0)}
+  100%{transform:scaleX(1)}
+}
+.status{
+  text-align:center;
+  min-height:1.5em;
+  font-size:.95rem;
+  color:var(--muted);
+  font-weight:500;
+}
+.status.over{color:var(--accent);font-weight:700;font-size:1.05rem}
+.status.warn{color:var(--danger)}
+.actions{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+}
+button{
+  appearance:none;
+  border:none;
+  background:var(--surface);
+  color:var(--text);
+  font:inherit;
+  font-weight:600;
+  font-size:.95rem;
+  padding:10px 22px;
+  border-radius:999px;
+  cursor:pointer;
+  border:1px solid rgba(255,255,255,.08);
+  transition:background .15s,transform .1s;
+}
+button:hover{background:#243044}
+button:active{transform:scale(.97)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+footer{
+  text-align:center;
+  font-size:.75rem;
+  color:var(--muted);
+  opacity:.7;
+}
+@media (max-width:380px){
+  h1{font-size:1.1rem}
+  .score{padding:5px 10px;font-size:.85rem}
+  .dot{width:12px;height:12px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Othello</h1>
+    <div class="scores">
+      <div class="score" id="scoreB" aria-label="黒の石数">
+        <span class="dot black"></span>
+        <span id="countB">2</span>
+      </div>
+      <div class="score" id="scoreW" aria-label="白の石数">
+        <span class="dot white"></span>
+        <span id="countW">2</span>
+      </div>
+    </div>
+    <div class="actions">
+      <button type="button" id="resetBtn">リセット</button>
+    </div>
+  </header>
+  <div class="board-shell">
+    <div id="board" role="grid" aria-label="オセロ盤"></div>
+  </div>
+  <p class="status" id="status" role="status" aria-live="polite">あなたの番（黒）</p>
+  <footer>黒: あなた / 白: CPU</footer>
+</div>
+<script>
+(function () {
+  "use strict";
+
+  const SIZE = 8;
+  const EMPTY = 0;
+  const BLACK = 1;
+  const WHITE = 2;
+  const DIRS = [
+    [-1, -1], [-1, 0], [-1, 1],
+    [0, -1],           [0, 1],
+    [1, -1],  [1, 0],  [1, 1]
+  ];
+  const CORNERS = new Set(["0,0", "0,7", "7,0", "7,7"]);
+
+  const boardEl = document.getElementById("board");
+  const statusEl = document.getElementById("status");
+  const countBEl = document.getElementById("countB");
+  const countWEl = document.getElementById("countW");
+  const scoreBEl = document.getElementById("scoreB");
+  const scoreWEl = document.getElementById("scoreW");
+  const resetBtn = document.getElementById("resetBtn");
+
+  let board = [];
+  let current = BLACK;
+  let gameOver = false;
+  let inputLocked = false;
+  let cells = [];
+
+  function inBounds(r, c) {
+    return r >= 0 && r < SIZE && c >= 0 && c < SIZE;
+  }
+
+  function opponent(p) {
+    return p === BLACK ? WHITE : BLACK;
+  }
+
+  function createEmptyBoard() {
+    const b = [];
+    for (let r = 0; r < SIZE; r++) {
+      b[r] = [];
+      for (let c = 0; c < SIZE; c++) b[r][c] = EMPTY;
+    }
+    return b;
+  }
+
+  function initialBoard() {
+    const b = createEmptyBoard();
+    b[3][3] = WHITE;
+    b[3][4] = BLACK;
+    b[4][3] = BLACK;
+    b[4][4] = WHITE;
+    return b;
+  }
+
+  function flipsAt(b, r, c, player) {
+    if (b[r][c] !== EMPTY) return [];
+    const opp = opponent(player);
+    const all = [];
+    for (const [dr, dc] of DIRS) {
+      let nr = r + dr;
+      let nc = c + dc;
+      const line = [];
+      while (inBounds(nr, nc) && b[nr][nc] === opp) {
+        line.push([nr, nc]);
+        nr += dr;
+        nc += dc;
+      }
+      if (line.length && inBounds(nr, nc) && b[nr][nc] === player) {
+        for (const p of line) all.push(p);
+      }
+    }
+    return all;
+  }
+
+  function legalMoves(b, player) {
+    const moves = [];
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        const flips = flipsAt(b, r, c, player);
+        if (flips.length) moves.push({ r, c, flips });
+      }
+    }
+    return moves;
+  }
+
+  function applyMove(b, r, c, player, flips) {
+    const next = b.map((row) => row.slice());
+    next[r][c] = player;
+    for (const [fr, fc] of flips) next[fr][fc] = player;
+    return next;
+  }
+
+  function countStones(b) {
+    let black = 0;
+    let white = 0;
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        if (b[r][c] === BLACK) black++;
+        else if (b[r][c] === WHITE) white++;
+      }
+    }
+    return { black, white };
+  }
+
+  function isBoardFull(b) {
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        if (b[r][c] === EMPTY) return false;
+      }
+    }
+    return true;
+  }
+
+  function isEdge(r, c) {
+    return r === 0 || r === SIZE - 1 || c === 0 || c === SIZE - 1;
+  }
+
+  function scoreMove(move) {
+    const key = move.r + "," + move.c;
+    let score = move.flips.length;
+    if (CORNERS.has(key)) score += 100;
+    else if (isEdge(move.r, move.c)) score += 10;
+    return score;
+  }
+
+  function chooseCpuMove(moves) {
+    let best = moves[0];
+    let bestScore = -Infinity;
+    for (const m of moves) {
+      const s = scoreMove(m);
+      if (s > bestScore) {
+        bestScore = s;
+        best = m;
+      }
+    }
+    return best;
+  }
+
+  function buildCells() {
+    boardEl.innerHTML = "";
+    cells = [];
+    for (let r = 0; r < SIZE; r++) {
+      cells[r] = [];
+      for (let c = 0; c < SIZE; c++) {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.setAttribute("role", "gridcell");
+        cell.dataset.r = String(r);
+        cell.dataset.c = String(c);
+        cell.tabIndex = -1;
+        cell.addEventListener("click", onCellClick);
+        cell.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onCellClick.call(cell, e);
+          }
+        });
+        boardEl.appendChild(cell);
+        cells[r][c] = cell;
+      }
+    }
+  }
+
+  function render(highlightMoves, flipSet) {
+    const moves = highlightMoves || [];
+    const moveKeys = new Set(moves.map((m) => m.r + "," + m.c));
+    const flipKeys = flipSet || new Set();
+
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        const cell = cells[r][c];
+        const v = board[r][c];
+        cell.classList.remove("legal");
+        cell.innerHTML = "";
+        cell.tabIndex = -1;
+        cell.removeAttribute("aria-label");
+
+        if (v === BLACK || v === WHITE) {
+          const stone = document.createElement("div");
+          stone.className = "stone " + (v === BLACK ? "black" : "white");
+          if (flipKeys.has(r + "," + c)) stone.classList.add("flip");
+          cell.appendChild(stone);
+        } else if (moveKeys.has(r + "," + c) && !gameOver && current === BLACK && !inputLocked) {
+          cell.classList.add("legal");
+          cell.tabIndex = 0;
+          cell.setAttribute("aria-label", "行" + (r + 1) + " 列" + (c + 1) + " に置く");
+        }
+      }
+    }
+
+    const { black, white } = countStones(board);
+    countBEl.textContent = String(black);
+    countWEl.textContent = String(white);
+
+    scoreBEl.classList.toggle("active", !gameOver && current === BLACK);
+    scoreWEl.classList.toggle("active", !gameOver && current === WHITE);
+  }
+
+  function setStatus(text, kind) {
+    statusEl.textContent = text;
+    statusEl.className = "status" + (kind ? " " + kind : "");
+  }
+
+  function endGame() {
+    gameOver = true;
+    inputLocked = false;
+    const { black, white } = countStones(board);
+    render([]);
+    if (black > white) setStatus("終局 — あなたの勝ち（黒 " + black + " : 白 " + white + "）", "over");
+    else if (white > black) setStatus("終局 — CPUの勝ち（黒 " + black + " : 白 " + white + "）", "over");
+    else setStatus("終局 — 引き分け（黒 " + black + " : 白 " + white + "）", "over");
+  }
+
+  function afterMove(nextPlayer) {
+    if (isBoardFull(board)) {
+      endGame();
+      return;
+    }
+
+    const moves = legalMoves(board, nextPlayer);
+    if (moves.length) {
+      current = nextPlayer;
+      if (current === BLACK) {
+        inputLocked = false;
+        render(moves);
+        setStatus("あなたの番（黒）");
+      } else {
+        inputLocked = true;
+        render([]);
+        setStatus("CPUの番（白）…");
+        window.setTimeout(cpuTurn, 450);
+      }
+      return;
+    }
+
+    const other = opponent(nextPlayer);
+    const otherMoves = legalMoves(board, other);
+    if (!otherMoves.length) {
+      endGame();
+      return;
+    }
+
+    current = other;
+    if (nextPlayer === BLACK) {
+      setStatus("あなたは打てる手がありません — パス", "warn");
+    } else {
+      setStatus("CPUは打てる手がありません — パス", "warn");
+    }
+
+    window.setTimeout(function () {
+      if (gameOver) return;
+      if (current === BLACK) {
+        inputLocked = false;
+        render(legalMoves(board, BLACK));
+        setStatus("あなたの番（黒）");
+      } else {
+        inputLocked = true;
+        render([]);
+        setStatus("CPUの番（白）…");
+        window.setTimeout(cpuTurn, 450);
+      }
+    }, 700);
+  }
+
+  function playMove(r, c, player, flips) {
+    board = applyMove(board, r, c, player, flips);
+    const flipKeys = new Set(flips.map(function (p) { return p[0] + "," + p[1]; }));
+    flipKeys.add(r + "," + c);
+    render([], flipKeys);
+    afterMove(opponent(player));
+  }
+
+  function onCellClick(e) {
+    if (gameOver || inputLocked || current !== BLACK) return;
+    const r = Number(this.dataset.r);
+    const c = Number(this.dataset.c);
+    const flips = flipsAt(board, r, c, BLACK);
+    if (!flips.length) return;
+    inputLocked = true;
+    playMove(r, c, BLACK, flips);
+  }
+
+  function cpuTurn() {
+    if (gameOver) return;
+    const moves = legalMoves(board, WHITE);
+    if (!moves.length) {
+      afterMove(BLACK);
+      return;
+    }
+    const pick = chooseCpuMove(moves);
+    playMove(pick.r, pick.c, WHITE, pick.flips);
+  }
+
+  function reset() {
+    board = initialBoard();
+    current = BLACK;
+    gameOver = false;
+    inputLocked = false;
+    render(legalMoves(board, BLACK));
+    setStatus("あなたの番（黒）");
+  }
+
+  resetBtn.addEventListener("click", reset);
+  buildCells();
+  reset();
+})();
+</script>
+</body>
+</html>
