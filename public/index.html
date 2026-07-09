@@ -1096,6 +1096,33 @@
                     "40 問全てに正しく id を振れるか",
                     "抽出漏れなく 40 件近くを列挙できるか"
                 ]
+            },
+            "pr-triage": {
+                title: "PR トリアージ",
+                short: "JSON / 判断",
+                desc: "架空リポジトリの Open PR 10件をトリアージ。マージ可否の判断力・グレーケースの慎重さ・理由の具体性を見る",
+                color: "#475569",
+                colorDark: "#1f2937",
+                icon: "fa-solid fa-code-pull-request",
+                difficulty: "中（10 PR 入力、判断 + リスク評価 + 優先順位付け）",
+                deliverable: "output.json（判定表 HTML で正解キーとの一致率を表示）",
+                criteria: [
+                    "出力が有効な JSON である",
+                    "triage 配列に PR 101〜110 の全 10 件が過不足なく含まれる",
+                    "verdict が merge / fix / close / hold のいずれかである",
+                    "confidence と risk_if_merged が high / medium / low のいずれかである",
+                    "reasons が空でない string 配列で、判断根拠が具体的に書かれている",
+                    "actions が string 配列で、次に取るべき対応が明確である",
+                    "priority_order が PR 101〜110 の順列になっている",
+                    "summary が空でない string である"
+                ],
+                highlights: [
+                    "セキュリティ修正と本番障害を最優先にできるか",
+                    "CI 失敗・テスト不足・方針違反を merge しない慎重さ",
+                    "close と fix の境界、hold と fix の境界を雑に処理しないか",
+                    "approve 済み nit のみの PR を過剰にブロックしないか",
+                    "answer-key の primary / also_acceptable との agreement"
+                ]
             }
         };
 
@@ -1250,7 +1277,14 @@
             { theme: "extract-questions-v2", model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "❌ スキーマ準拠 FAIL。40 件抽出はできたが「自由に記述する」補完が 25% のみ。長文で指示の細部を見失う典型例。", kind: "json" },
             { theme: "extract-questions-v2", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。40 件抽出、MoE でも 12K トークン級の出力を破綻なく完走。", kind: "json" },
             { theme: "extract-questions-v2", model: "gemma-4-31b",         runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。40 件抽出、dense 31B は長文でも安定。", kind: "json" },
-            { theme: "extract-questions-v2", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "✅ スキーマ準拠 PASS。40 件抽出、指示の細部を最後まで維持。", kind: "json" }
+            { theme: "extract-questions-v2", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "✅ スキーマ準拠 PASS。40 件抽出、指示の細部を最後まで維持。", kind: "json" },
+
+            // pr-triage（PR 10件のトリアージ判断を answer-key と突合。一致率は meta.json 参照）
+            { theme: "pr-triage", model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。正解キー一致 85%。スコープ肥大 PR の分割要求(fix)を hold と判断。", kind: "json" },
+            { theme: "pr-triage", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。正解キー一致 85%。外しどころが 12B と完全に同じで、判断傾向はサイズ非依存。", kind: "json" },
+            { theme: "pr-triage", model: "gemma-4-31b",         runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。正解キー一致 85%。dense 31B でもグレーケースの判断は 12B と同傾向。", kind: "json" },
+            { theme: "pr-triage", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "✅ スキーマ準拠 PASS。正解キー一致 95%（唯一の非一致も許容解）。ただし出力は前置き文+コードフェンス付きで「JSON 単体」指示を破った。", kind: "json" },
+            { theme: "pr-triage", model: "grok-4-5",            runner: "grok CLI (single-turn)", note: "✅ スキーマ準拠 PASS。正解キー一致 90%。設計議論が未決着の PR を hold でなく close と断定したのが唯一の非一致。", kind: "json" }
         ];
 
         // theme: 'all' | キー（単一選択） / models: 'all' or Set of keys（複数選択。空 Set は全て）
