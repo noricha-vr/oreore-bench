@@ -25,12 +25,17 @@ const VERDICTS = new Set(['merge', 'fix', 'close', 'hold']);
 const LEVELS = new Set(['high', 'medium', 'low']);
 
 function tryParseJson(raw) {
-  let s = raw.trim();
-  s = s.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
-  const first = s.indexOf('{');
-  const last = s.lastIndexOf('}');
-  if (first >= 0 && last > first) s = s.slice(first, last + 1);
+  const trimmed = raw.trim();
+  // Prefer fenced JSON so braces in preamble examples do not become parse anchors.
+  const fence = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  let s = fence ? fence[1].trim() : trimmed;
+  if (!fence) {
+    const first = s.indexOf('{');
+    const last = s.lastIndexOf('}');
+    if (first >= 0 && last > first) s = s.slice(first, last + 1);
+  }
   try { return JSON.parse(s); } catch {
+    if (fence) return null;
     try { return JSON.parse(raw); } catch { return null; }
   }
 }
@@ -133,10 +138,10 @@ function validate(data, answerKey) {
     const verdict = verdictByPr.get(pr) ?? null;
     const expected = answerKey.get(pr) ?? { primary: null, also: new Set() };
     let match = 'miss';
-    if (verdict === expected.primary) {
+    if (verdict !== null && expected.primary != null && verdict === expected.primary) {
       match = 'primary';
       primaryMatch++;
-    } else if (expected.also.has(verdict)) {
+    } else if (verdict !== null && expected.also.has(verdict)) {
       match = 'acceptable';
       acceptableMatch++;
     }
