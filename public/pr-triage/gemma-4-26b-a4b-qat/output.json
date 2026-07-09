@@ -1,0 +1,140 @@
+```json
+{
+  "triage": [
+    {
+      "pr": 105,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": [
+        "セキュリティ上の重要課題（Issue #92）への対応",
+        "テストが適切に実装されている",
+        "レビューで設計の妥当性が承認されている"
+      ],
+      "actions": [
+        "マージを実行する"
+      ],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 101,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": [
+        "Issue #90 の重要課題（メール洪水）への対応",
+        "テストが実装されており、CI もパスしている",
+        "レートリミットの実装が適切"
+      ],
+      "actions": [
+        "マージを実行する"
+      ],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 110,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": [
+        "テストが実装されており、CI もパスしている",
+        "レビューでの指摘は nit（軽微な提案）であり、現状の規模では許容範囲"
+      ],
+      "actions": [
+        "マージを実行する"
+      ],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 107,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": [
+        "CI が失敗しており、バグ修正として不完全",
+        "作者が flaky と主張しているが、CI が失敗している以上マージはできない"
+      ],
+      "actions": [
+        "CI の失敗原因（タイムゾーン境界のテスト失敗）の特定と修正を要求する"
+      ],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 102,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": [
+        "テストが実装されていない",
+        "他人のタスクを操作できてしまう重大なセキュリティ脆弱性の指摘がある"
+      ],
+      "actions": [
+        "所有者チェック（owner 絞り込み）の追加とテストの実装を要求する"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 103,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": [
+        "broad except (except Exception) によるエラーの握りつぶしが行われている",
+        "エラーログの抑制は必要だが、例外の種類を特定して適切に処理すべき"
+      ],
+      "actions": [
+        "特定の例外（ConnectionError等）のみをキャッチするように修正を要求する"
+      ],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 108,
+      "verdict": "hold",
+      "confidence": "medium",
+      "reasons": [
+        "Issue #94 で議論中の未決着な設計変更である",
+        "パフォーマンスへの懸念に対する回答がない"
+      ],
+      "actions": [
+        "Issue #94 の議論結果との整合性と、パフォーマンスへの影響について回答を求める"
+      ],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 106,
+      "verdict": "hold",
+      "confidence": "medium",
+      "reasons": [
+        "変更範囲が極めて大きく、レビューが困難な状態にある",
+        "作者が分割を拒否しており、品質担保が難しい"
+      ],
+      "actions": [
+        "機能ごとに PR を分割して再提出するよう強く推奨する"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 104,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": [
+        "依存パッケージのバージョン固定は、サプライチェーン攻撃防止の方針に反する",
+        "利便性のためにセキュリティリスクを許容することはできない"
+      ],
+      "actions": [
+        "方針（バージョン固定）に基づきクローズする"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 109,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": [
+        "既に main で解決済みの内容（Issue #93）である",
+        "コンフリクトが発生しており、修正しても重複する可能性がある"
+      ],
+      "actions": [
+        "クローズする"
+      ],
+      "risk_if_merged": "low"
+    }
+  ],
+  "priority_order": [105, 101, 110, 107, 102, 103, 108, 106, 104, 109],
+  "summary": "セキュリティ修正（#105）と重要バグ修正（#101）を最優先でマージし、脆弱性を含む PR や方針に反する PR は厳格に処理します。大規模な変更や未決着の設計変更については、品質と安全性の観点から保留または分割を求めます。"
+}
+```

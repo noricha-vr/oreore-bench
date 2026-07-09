@@ -1,0 +1,91 @@
+結論: PR 全10件のトリアージJSONを出力します。
+
+```json
+{
+  "triage": [
+    {
+      "pr": 105,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": ["Issue #92（トークンURL漏えい）のセキュリティ修正で最優先", "テスト118行付き・CI pass・approve済み", "旧リンク24時間の互換ウィンドウ設計も妥当"],
+      "actions": ["即マージ", "マージ後 Issue #92 をクローズ"],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 101,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": ["Issue #90（通知メール洪水・実害400通）対応", "テスト92行付き・CI pass・approve指摘なし", "超過分はWARNINGログに集約しており握りつぶしではない"],
+      "actions": ["即マージ", "マージ後 Issue #90 をクローズ"],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 110,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": ["approve済み・CI pass・テスト66行付き", "残指摘はStreamingHttpResponse化のnitのみで現規模では問題なしと明記", "nitを理由にブロックしない方針に該当"],
+      "actions": ["そのままマージ", "将来の大規模化に備えStreaming化をIssue化して記録（任意）"],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 102,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": ["owner絞り込み欠如で他人のタスクをアーカイブできる認可バグの指摘が未解決", "新機能なのにテストなし", "レビュー指摘に作者未返信"],
+      "actions": ["filterに owner=request.user を追加要求", "認可の正常系・異常系テストを必須で追加要求", "作者へ返信を促す"],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 107,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": ["CIがfail（test_deadline_dst_boundary）状態でマージ不可", "作者は『flakyなだけ』と主張するが根拠なし・DST境界はまさにこの修正の核心", "TZ依存のロジック変更で境界テストの失敗を軽視できない"],
+      "actions": ["flaky主張ではなくDST境界の失敗原因を特定して修正要求", "CIをgreenにしてから再依頼", "テストがローカルでのみ通る差異（TZ設定）を調査"],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 103,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": ["except Exception: pass で全例外を握りつぶしており方針違反（Fail Loud）", "Issue #91はConnectionErrorのノイズ削減が目的で、全例外の無音化は過剰・バグ隠蔽になる", "テストなし・未レビュー"],
+      "actions": ["catchを想定例外（ConnectionError/Timeout）に限定し、logger.warningで記録するよう要求", "リトライ/フォールバックの意図を明確化", "テスト追加要求"],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 108,
+      "verdict": "hold",
+      "confidence": "high",
+      "reasons": ["Task独立の是非がIssue #94で未決着・停止中", "パフォーマンス懸念（JOIN増加）への回答がPRにない", "db_table変更マイグレーション3本を含む不可逆度の高い大変更"],
+      "actions": ["Issue #94の結論を出すまでマージ保留", "作者にJOIN増加の性能影響とロールバック手順の回答を要求", "設計合意なしにマージ・クローズしない"],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 106,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": ["42ファイル・3000行超に複数の無関係な関心事（ダークモード/通知アプリ/LP）が混在しレビュー不能", "分割依頼に『手間なので』と拒否しており、このままではレビュー品質を担保できない", "notifications新アプリを含むためリスク大"]
+      ,
+      "actions": ["最低でもダークモード/通知設定/LPの3PRへ分割を再要求", "各分割にテストを要求", "分割不可なら段階的レビューの合意形成"],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 104,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": ["依存バージョン固定解除＋lockファイル削除はサプライチェーン攻撃対策の方針に真っ向から反する", "『面倒だから』という理由でセキュリティ姿勢を後退させる変更", "CI passは再現性劣化を検知できていないだけ"],
+      "actions": ["クローズ推奨", "依存更新の手間はDependabot/Renovate導入で解決する旨を作者に案内", "requirements.lockの復元を確認"],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 109,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": ["Issue #93は docs/setup.md 全面改訂で解決済み・READMEに既にリンクあり", "内容が重複し陳腐化した手順を追加するだけ", "30日放置＋READMEにコンフリクトあり"],
+      "actions": ["クローズ推奨（解決済みの旨を作者に伝える）", "有用な差分があればdocs/setup.mdへの追記として拾う"],
+      "risk_if_merged": "medium"
+    }
+  ],
+  "priority_order": [105, 101, 102, 107, 103, 104, 106, 108, 109, 110],
+  "summary": "セキュリティ修正PR #105とインシデント対応PR #101はマージ即応すべき。認可バグ(#102)・CI失敗(#107)・例外握りつぶし(#103)は差し戻し、方針違反の依存固定解除(#104)と解決済みdocs(#109)はクローズ、設計未決着の大規模移動(#108)と巨大混在PR(#106)は保留・分割要求で捌く。"
+}
+```

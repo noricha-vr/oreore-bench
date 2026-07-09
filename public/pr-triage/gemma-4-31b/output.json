@@ -1,0 +1,138 @@
+```json
+{
+  "triage": [
+    {
+      "pr": 101,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": [
+        "P1 Issue #90 の解決策であり、緊急性が高い",
+        "テストが実装されており CI もパスしている",
+        "レビュー済みで承認されている"
+      ],
+      "actions": [
+        "マージして本番環境へデプロイする"
+      ],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 102,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": [
+        "新機能であるにもかかわらずテストが実装されていない",
+        "他人のタスクを操作できる重大な権限不備の指摘に回答していない"
+      ],
+      "actions": [
+        "所有者チェック（owner 絞り込み）の追加を要求する",
+        "正常系・異常系のテストコード実装を要求する"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 103,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": [
+        "broad except によるエラーの握りつぶし（silent failure）が発生しており、方針に反する"
+      ],
+      "actions": [
+        "特定の例外（ConnectionError 等）のみをキャッチし、適切にログ出力する実装への修正を要求する"
+      ],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 104,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": [
+        "依存パッケージのバージョン固定を解除する変更であり、サプライチェーン攻撃防止の方針に明確に反する"
+      ],
+      "actions": [
+        "リポジトリの方針（バージョン固定）を伝え、クローズする"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 105,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": [
+        "セキュリティ上の脆弱性（Issue #92）を修正する最優先事項である",
+        "テストが十分であり、互換性維持の設計もレビュー済みで承認されている"
+      ],
+      "actions": [
+        "最優先でマージし、本番環境へデプロイする"
+      ],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 106,
+      "verdict": "hold",
+      "confidence": "medium",
+      "reasons": [
+        "変更規模が極めて大きく、レビュー不能な状態である",
+        "作者が分割を拒否しており、品質担保が困難"
+      ],
+      "actions": [
+        "機能単位（ダークモード、通知設定、LP）での PR 分割を再度強く要求する"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 107,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": [
+        "CI が失敗しており、マージ不可である",
+        "作者が CI の不具合（flaky）と主張しているが、テスト失敗の根本原因を特定する必要がある"
+      ],
+      "actions": [
+        "CI 失敗の解消と、再現性の確認を要求する"
+      ],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 108,
+      "verdict": "hold",
+      "confidence": "medium",
+      "reasons": [
+        "Issue #94 で議論中の内容であり、結論が出ていない",
+        "パフォーマンス懸念（JOIN 増加）への回答がなく、安易なマージは危険"
+      ],
+      "actions": [
+        "Issue #94 の議論の決着を待つか、パフォーマンスへの影響評価を要求する"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 109,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": [
+        "Issue #93 により既に `docs/setup.md` が改訂されており、内容が重複している",
+        "コンフリクトが発生しており、現状の README 構成で十分である"
+      ],
+      "actions": [
+        "既に解決済みであることを伝え、クローズする"
+      ],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 110,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": [
+        "テストが実装されており CI もパスしている",
+        "レビュー済みで、残指摘は軽微な nit（最適化提案）のみであるためブロックしない"
+      ],
+      "actions": [
+        "マージする。将来的な最適化（StreamingHttpResponse）は別途 Issue 化を検討する"
+      ],
+      "risk_if_merged": "low"
+    }
+  ],
+  "priority_order": [105, 101, 110, 107, 103, 102, 106, 108, 104, 109],
+  "summary": "セキュリティ修正（#105）と P1 バグ修正（#101）を最優先でマージします。一方で、テスト不足や方針違反（バージョン固定解除・エラー握りつぶし）を含む PR は厳格に差し戻し、議論未決の大型変更は保留とします。"
+}
+```
