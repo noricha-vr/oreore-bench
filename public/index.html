@@ -1170,6 +1170,30 @@
                 links: [
                     { label: "Google AI 公式", href: "https://ai.google.dev/gemma" }
                 ]
+            },
+            "grok-4-5": {
+                label: "Grok 4.5",
+                provider: "xAI",
+                type: "api",
+                color: "#3A3A3C",
+                colorDark: "#111111",
+                release: "2026-07-08",
+                size: "非公開",
+                context: "500K tokens（200K 超は別料金レート）",
+                output: "非公開",
+                quantization: "—（API モデル）",
+                runtime: "grok CLI / xAI API / grok.com",
+                stats: [
+                    { value: "—", label: "パラメータ", note: "非公開" },
+                    { value: "FP", label: "量子化", note: "API モデル" },
+                    { value: "500K", label: "コンテキスト", note: "200K 超は別レート" },
+                    { value: "—", label: "最大出力", note: "非公開" }
+                ],
+                strengths: "コーディング・エージェントタスク特化を公式が明言（Cursor と共同トレーニング）。80 TPS の高速応答と約 2 倍のトークン効率。1 ショットでも構造の破綻がない。",
+                weaknesses: "リリース直後（2026-07-08）で実運用の知見が少ない。API 課金・ローカル不可。コピーの情報密度・メタジョークの自発性は Opus に一歩譲る。",
+                links: [
+                    { label: "xAI 公式", href: "https://x.ai/news/grok-4-5" }
+                ]
             }
         };
 
@@ -1177,15 +1201,18 @@
             { theme: "lp-nishibi", model: "gemma-4-12b-qat",     runner: "LM Studio API",       note: "最軽量 12B での 1 ショット LP。約 13KB。31B と比較して選択肢。", kind: "html" },
             { theme: "lp-nishibi", model: "gemma-4-31b",         runner: "gptme (LM Studio)",   note: "ローカルLLM単体の1ショットLP。418行/14KB。", kind: "html" },
             { theme: "lp-nishibi", model: "claude-opus-4-8",     runner: "Claude Agent SDK",    note: "ローマ数字章番号、SVG西日アーク、メタジョーク3つ。1342行/40KB。", kind: "html" },
+            { theme: "lp-nishibi", model: "grok-4-5",            runner: "grok CLI (single-turn)", note: "全7セクション準拠。生成グラデ背景+細身セリフで上品にまとまる。714行/26KB。", kind: "html" },
             { theme: "othello",    model: "gemma-4-12b-qat",     runner: "LM Studio API",       note: "最軽量 12B での 1 ショットオセロ。約 10KB。", kind: "html" },
             { theme: "othello",    model: "gemma-4-26b-a4b-qat", runner: "gptme (LM Studio)",   note: "ライトテーマ。CPU AIランダムに圧勝(53-10)。Reset挙動が一度だけ不安定。", kind: "html" },
             { theme: "othello",    model: "gemma-4-31b",         runner: "gptme (LM Studio)",   note: "ダークBG+鮮緑盤+赤Reset。CPU AIが強く逆転勝利(34-30)。", kind: "html" },
+            { theme: "othello",    model: "grok-4-5",            runner: "grok CLI (single-turn)", note: "ダークUI+石数バッジ。合法手ハイライト・反転・CPU応答をJSエラーなしで確認。520行/13KB。", kind: "html" },
 
             // extract-questions（20 問入力、基本サイズ、全モデル PASS = 実運用サイズは全モデル対応可の証拠）
             { theme: "extract-questions", model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。20 件抽出、最軽量でも 本番運用スキーマを完全に満たす。", kind: "json" },
             { theme: "extract-questions", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。MoE モデルも 20 件抽出して構造を保持。", kind: "json" },
             { theme: "extract-questions", model: "gemma-4-31b",         runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。21 件と若干過剰だが取りこぼしなし。", kind: "json" },
             { theme: "extract-questions", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "✅ スキーマ準拠 PASS。フロンティアモデルらしい安定。", kind: "json" },
+            { theme: "extract-questions", model: "grok-4-5",            runner: "grok CLI (single-turn)", note: "✅ スキーマ準拠 PASS。20 件抽出、全項目 100%。リリース翌日の初参戦で完走。", kind: "json" },
 
             // extract-questions-v2（40 問入力、長文で小型モデルが指示の細部を見失う現象を可視化）
             { theme: "extract-questions-v2", model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "❌ スキーマ準拠 FAIL。40 件抽出はできたが「自由に記述する」補完が 25% のみ。長文で指示の細部を見失う典型例。", kind: "json" },

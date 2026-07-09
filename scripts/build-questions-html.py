@@ -29,6 +29,10 @@ MODEL_INFO = {
         "label": "Gemma 4 12B (QAT)", "provider": "Google", "type": "ローカル LLM",
         "color": "#4285F4", "color_dark": "#1A56DB",
     },
+    "grok-4-5": {
+        "label": "Grok 4.5", "provider": "xAI", "type": "API LLM",
+        "color": "#3A3A3C", "color_dark": "#111111",
+    },
 }
 
 TEMPLATE = """<!DOCTYPE html>
