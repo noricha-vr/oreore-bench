@@ -1,0 +1,66 @@
+{
+  "description": "作者（人間）のトリアージ判断。primary が一致で正解、also_acceptable は部分点扱い（グレーケースのみ）。",
+  "answers": [
+    {
+      "pr": 101,
+      "primary": "merge",
+      "also_acceptable": [],
+      "rationale": "P1 障害（Issue #90）対応。テストあり・CI pass・approve 済み。即マージ。"
+    },
+    {
+      "pr": 102,
+      "primary": "fix",
+      "also_acceptable": [],
+      "rationale": "owner 絞り込み欠如の指摘（IDOR 相当）が未回答 + テストなし。修正必須。closeは過剰、機能自体は妥当。"
+    },
+    {
+      "pr": 103,
+      "primary": "close",
+      "also_acceptable": ["fix"],
+      "rationale": "except Exception: pass で握りつぶす方針違反。Issue #91 の正解はログレベル調整や特定例外の集約であり、この方向のまま直すより作り直しが速い。fix（特定例外 + logger.warning へ書き直させる）も許容。"
+    },
+    {
+      "pr": 104,
+      "primary": "close",
+      "also_acceptable": [],
+      "rationale": "バージョン固定はリポジトリの明示方針（サプライチェーン対策）。lockfile 削除も含め方針に真っ向から反するためクローズ。"
+    },
+    {
+      "pr": 105,
+      "primary": "merge",
+      "also_acceptable": [],
+      "rationale": "セキュリティ修正（Issue #92）。テスト・互換ウィンドウ・approve 済み。最優先でマージ。"
+    },
+    {
+      "pr": 106,
+      "primary": "fix",
+      "also_acceptable": ["close"],
+      "rationale": "3 つの関心事が混在した 42 ファイルのスコープ肥大 PR。分割を要求して差し戻す。作者が分割拒否を続けるなら close も妥当。"
+    },
+    {
+      "pr": 107,
+      "primary": "fix",
+      "also_acceptable": ["hold"],
+      "rationale": "CI 失敗中はマージ禁止。『flaky だと思う』は根拠がなく、DST 境界テストの失敗は実バグの可能性が高い。原因調査を要求。"
+    },
+    {
+      "pr": 108,
+      "primary": "hold",
+      "also_acceptable": [],
+      "rationale": "設計議論（Issue #94）が未決着のままの大規模モデル移動 + db_table 変更。推測でマージもクローズもせず、パフォーマンス懸念への回答を作者に求める。"
+    },
+    {
+      "pr": 109,
+      "primary": "close",
+      "also_acceptable": [],
+      "rationale": "docs/setup.md の全面改訂で main 側で解決済み（Issue #93）。コンフリクトもあり、リベースする価値がない。陳腐化クローズ。"
+    },
+    {
+      "pr": 110,
+      "primary": "merge",
+      "also_acceptable": [],
+      "rationale": "テストあり・CI pass・approve 済み。残る指摘は nit のみで、nit を理由にブロックしない基準に該当。"
+    }
+  ],
+  "priority_hint": "セキュリティ（105）と本番障害（101）が先頭に来ていれば妥当。以降の厳密な順序は採点しない。"
+}
