@@ -5,6 +5,7 @@ lp-nishibi / othello など、index.html を 1 枚出力するテーマ用。
 使い方:
   python3 scripts/gen-html.py --theme lp-nishibi
   python3 scripts/gen-html.py --theme othello --model 12b
+  python3 scripts/gen-html.py --theme mario-like-2d --model 31b
 """
 from __future__ import annotations
 import argparse, json, sys, urllib.request
@@ -68,7 +69,7 @@ def gen_one(theme_dir: Path, model_id: str, dir_name: str, prompt: str, max_toke
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--theme", required=True, help="lp-nishibi / othello など")
+    ap.add_argument("--theme", required=True, help="lp-nishibi / othello / hasami-shogi / mario-like-2d など")
     ap.add_argument("--model", help="モデル名の部分一致で絞る")
     ap.add_argument("--overwrite", action="store_true")
     ap.add_argument("--max-tokens", type=int, default=24000)
