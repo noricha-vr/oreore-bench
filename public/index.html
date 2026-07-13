@@ -1046,6 +1046,31 @@
                     "終局判定・リセットの状態管理が安定しているか"
                 ]
             },
+            "mario-like-2d": {
+                title: "マリオ風 2D プラットフォーマー",
+                short: "リアルタイム物理",
+                desc: "HTML/CSS/JS 1 枚で動く横スクロール 2D プラットフォーマー。重力・着地・敵踏み・コイン・ゴールまで。盤ゲームと違いリアルタイム物理と状態マシンの一発再現性を測る。",
+                color: "#E53935",
+                colorDark: "#B71C1C",
+                icon: "fa-solid fa-person-running",
+                difficulty: "中〜高（リアルタイム物理 + 当たり判定 + カメラ + 状態遷移）",
+                deliverable: "単一 index.html（CSS/JS インライン化・外部アセット禁止）",
+                criteria: [
+                    "左右移動（←→ / A D）とジャンプ（Space / ↑ / W）が動く",
+                    "重力と足場着地があり、すり抜けしない",
+                    "横歩き敵を上から踏むと撃破、横接触でダメージ",
+                    "コイン（収集物）取得でスコア増加、HUD にスコア表示",
+                    "横スクロールが必要な長さのステージと穴落下ミス",
+                    "ゴール到達でクリア、リスタート（R / Enter）で再開できる"
+                ],
+                highlights: [
+                    "盤面ターン制ではなく requestAnimationFrame のリアルタイムループを一発で組み立てられるか",
+                    "AABB 衝突・踏み判定・カメラ追従など「動くゲーム」特有の状態バグが出ないか",
+                    "外部ライブラリ・画像なしで見た目と操作性を成立させられるか",
+                    "タイトル / プレイ / クリア / ゲームオーバーの状態遷移が破綻しないか",
+                    "オセロ等よりコード量が膨らむため、1 ショット出力の完走力が見える"
+                ]
+            },
             "extract-questions": {
                 title: "質問抽出 → フォーム化",
                 short: "JSON / 質問抽出",
@@ -1265,6 +1290,8 @@
             { theme: "hasami-shogi", model: "gemma-4-31b",         runner: "LM Studio API", note: "スモーク検証PASS。木枠将棋盤+取得数表示。467行/16KB。", kind: "html" },
             { theme: "hasami-shogi", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "スモーク検証PASS。木目盤+ステータスバッジ+ルール折りたたみ付き。467行/14KB。", kind: "html" },
             { theme: "hasami-shogi", model: "grok-4-5",            runner: "grok CLI (single-turn)", note: "スモーク検証PASS。ダーク×市松模様のエレガント盤面+ルール要約footer。541行/14KB。", kind: "html" },
+
+            // mario-like-2d（モデル出力は scripts/gen-html.py / add-model.sh で追加。検証: node scripts/verify-mario-like-2d.mjs）
 
             // extract-questions（20 問入力、基本サイズ、全モデル PASS = 実運用サイズは全モデル対応可の証拠）
             { theme: "extract-questions", model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。20 件抽出、最軽量でも 本番運用スキーマを完全に満たす。", kind: "json" },

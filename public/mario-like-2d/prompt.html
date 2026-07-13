@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mario-like-2d プロンプト — oreore-bench</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-soft: #f7f8fa;
+    --fg: #1a1a1a;
+    --fg-soft: #5a5a5a;
+    --muted-fg: #6b7280;
+    --border: #e5e7eb;
+    --primary: #2563eb;
+    --accent: #E53935;
+    --accent-dark: #B71C1C;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+    background-color: var(--bg-soft);
+    color: var(--fg);
+    line-height: 1.8;
+    font-size: 0.9375rem;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .hero {
+    padding: 28px 24px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+    color: #ffffff;
+  }
+  .hero-inner { max-width: 760px; margin: 0 auto; }
+  .hero a.back {
+    color: #ffffff;
+    opacity: 0.85;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 12px;
+  }
+  .hero a.back:hover { opacity: 1; }
+  .hero h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: #ffffff;
+    margin-bottom: 4px;
+  }
+  .hero .sub {
+    font-size: 0.9375rem;
+    opacity: 0.9;
+  }
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+  .card {
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .card h2 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin: 28px 0 12px;
+    color: var(--fg);
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+  }
+  .card h2:first-child { margin-top: 0; }
+  .card p { margin-bottom: 14px; color: var(--fg-soft); }
+  .card ul, .card ol { margin: 0 0 16px 1.5rem; color: var(--fg-soft); }
+  .card li { margin-bottom: 4px; }
+  .card code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+    background-color: var(--bg-soft);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--fg);
+  }
+  .card strong { color: var(--fg); font-weight: 700; }
+  .meta {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 0.8125rem;
+    color: var(--muted-fg);
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .meta a { color: var(--muted-fg); font-weight: 600; }
+  .meta a:hover { color: var(--primary); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a href="../" class="back">← oreore-bench に戻る</a>
+    <h1>mario-like-2d プロンプト</h1>
+    <p class="sub">このテーマの凍結プロンプト。新しいモデルで再現する時はこのまま渡してください。</p>
+  </div>
+</header>
+
+<main class="container">
+  <article class="card">
+    <p>HTML+CSS+バニラ JavaScript で、スーパーマリオ風の <strong>2D 横スクロールプラットフォーマー</strong> を実装してください。ファイルは <code>index.html</code> 1 枚にまとめ、style と script はインライン化してください。</p>
+    <p>任天堂の公式素材・名称・音楽・スプライトは使わないこと。オリジナルの見た目（図形・色面で十分）でよい。ゲームタイトルもオリジナル名にすること。</p>
+
+    <h2>プレイ要件（必須）</h2>
+    <ul>
+      <li>横スクロールの 2D プラットフォーマー（サイドビュー）</li>
+      <li>左右移動: 矢印キー ←→ および A / D</li>
+      <li>ジャンプ: Space / 矢印キー ↑ / W</li>
+      <li>リスタート: R / 開始: Enter または Space</li>
+      <li>重力・着地・穴落下ミス</li>
+      <li>横歩き敵。上から踏むと撃破、横接触でダメージ</li>
+      <li>コイン（収集物）取得でスコア増加</li>
+      <li>ゴール到達でクリア表示</li>
+      <li>HUD にスコア常時表示、クリア/ゲームオーバー後に再開可能</li>
+    </ul>
+
+    <h2>ステージ要件</h2>
+    <ul>
+      <li>画面幅より長いステージ（横スクロールが必要）</li>
+      <li>足場の高低差が 1 段以上</li>
+      <li>穴（落下死ゾーン）が 1 箇所以上</li>
+      <li>敵 2 体以上、コイン 3 個以上</li>
+    </ul>
+
+    <h2>技術要件</h2>
+    <ul>
+      <li>外部ライブラリ・CDN・画像・音声に依存しない（完全オフライン）</li>
+      <li><code>requestAnimationFrame</code> 等でゲームループ</li>
+      <li>絵文字は使わない</li>
+      <li>モバイル対応は必須ではない</li>
+    </ul>
+
+    <p><code>index.html</code> 1 枚で、「開始 → 走って跳んで敵を踏む → コイン取得 → ゴール」まで遊べる状態にしてください。説明・前置き・コードフェンスは不要です。</p>
+
+    <div class="meta">
+      <a href="./PROMPT.md" target="_blank">Markdown 元ファイル</a>
+      <a href="https://github.com/noricha-vr/oreore-bench/blob/main/public/mario-like-2d/PROMPT.md" target="_blank">GitHub で見る</a>
+    </div>
+  </article>
+</main>
+
+</body>
+</html>
