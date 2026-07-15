@@ -216,15 +216,26 @@
     `;
   }
 
+  function parseOutputJson(raw) {
+    const trimmed = raw.trim();
+    // Prefer fenced JSON so braces in preamble examples do not become parse anchors.
+    const fence = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    let text = fence ? fence[1].trim() : trimmed;
+    if (!fence) {
+      const first = text.indexOf('{');
+      const last = text.lastIndexOf('}');
+      if (first >= 0 && last > first) text = text.slice(first, last + 1);
+    }
+    try { return JSON.parse(text); } catch (error) {
+      if (fence) throw error;
+      return JSON.parse(raw);
+    }
+  }
+
   fetch('./output.json').then(r => r.text()).then(raw => {
     if (!meta.valid_json) { renderError('parse failed', raw); return; }
     try {
-      let s = raw.trim();
-      s = s.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
-      const idx = s.indexOf('{');
-      if (idx > 0) s = s.slice(idx);
-      const data = JSON.parse(s);
-      renderQuestions(data);
+      renderQuestions(parseOutputJson(raw));
     } catch (e) {
       renderError(e.message, raw);
     }

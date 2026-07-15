@@ -8,17 +8,29 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-// --theme <name> 引数（デフォルト extract-questions）。node 標準の parseArgs で
-// 依存追加せずに済ませる。
-const themeArg = (() => {
-  const args = process.argv.slice(2);
-  const i = args.indexOf('--theme');
+const args = process.argv.slice(2);
+
+function argValue(name, fallback) {
+  const i = args.indexOf(name);
   if (i >= 0 && args[i + 1]) return args[i + 1];
-  const eq = args.find(a => a.startsWith('--theme='));
-  if (eq) return eq.slice('--theme='.length);
-  return 'extract-questions';
-})();
-const THEME_DIR = path.join(ROOT, 'public', themeArg);
+  const eq = args.find(a => a.startsWith(`${name}=`));
+  return eq ? eq.slice(name.length + 1) : fallback;
+}
+
+const themeArg = argValue('--theme', 'extract-questions');
+const THEME_DIR = path.resolve(argValue('--theme-dir', path.join(ROOT, 'public', themeArg)));
+
+async function resolveThemeDir(themeDir) {
+  const [rootDir, resolvedThemeDir] = await Promise.all([
+    fs.realpath(ROOT),
+    fs.realpath(themeDir),
+  ]);
+  const relative = path.relative(rootDir, resolvedThemeDir);
+  if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    throw new Error(`theme dir must resolve within repository root: ${resolvedThemeDir}`);
+  }
+  return resolvedThemeDir;
+}
 
 // テーマごとの期待件数レンジ
 const THEME_EXPECTS = {
@@ -32,12 +44,18 @@ const EXPECTED_QUESTIONS_MAX = EXPECT.max;
 const MAX_OPTIONS = 12;
 const FREE_LABEL = '自由に記述する';
 
-function tryParseJson(raw) {
-  let s = raw.trim();
-  s = s.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
-  const idx = s.indexOf('{');
-  if (idx > 0) s = s.slice(idx);
-  try { return JSON.parse(s); } catch {
+export function tryParseJson(raw) {
+  const trimmed = raw.trim();
+  // Prefer fenced JSON so braces in preamble examples do not become parse anchors.
+  const fence = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  let text = fence ? fence[1].trim() : trimmed;
+  if (!fence) {
+    const first = text.indexOf('{');
+    const last = text.lastIndexOf('}');
+    if (first >= 0 && last > first) text = text.slice(first, last + 1);
+  }
+  try { return JSON.parse(text); } catch {
+    if (fence) return null;
     try { return JSON.parse(raw); } catch { return null; }
   }
 }
@@ -127,7 +145,8 @@ async function processModel(modelDir) {
   const parsed = tryParseJson(raw);
   if (parsed === null) {
     const meta = { valid_json: false, generated_at: new Date().toISOString(),
-                   raw_length: raw.length, issues: ['JSON parse failed'] };
+                   raw_length: raw.length, schema_pass: false,
+                   issues: ['JSON parse failed'] };
     await fs.writeFile(metaPath, JSON.stringify(meta, null, 2));
     return { model: path.basename(modelDir), ok: false, reason: 'invalid JSON' };
   }
@@ -156,8 +175,9 @@ async function processModel(modelDir) {
 }
 
 async function main() {
-  const entries = await fs.readdir(THEME_DIR, { withFileTypes: true });
-  const modelDirs = entries.filter(e => e.isDirectory()).map(e => path.join(THEME_DIR, e.name));
+  const themeDir = await resolveThemeDir(THEME_DIR);
+  const entries = await fs.readdir(themeDir, { withFileTypes: true });
+  const modelDirs = entries.filter(e => e.isDirectory()).map(e => path.join(themeDir, e.name));
   const results = [];
   for (const d of modelDirs) results.push(await processModel(d));
 
@@ -171,4 +191,6 @@ async function main() {
   }
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch(e => { console.error(e); process.exit(1); });
+}

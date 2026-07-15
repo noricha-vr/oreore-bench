@@ -3,11 +3,11 @@
 左ペイン = 入力 AI 出力本文、右ペイン = 抽出された質問フォーム UI。
 """
 from __future__ import annotations
+import argparse
 import json
+import re
 import sys
 from pathlib import Path
-
-import argparse
 
 ROOT = Path(__file__).resolve().parent.parent
 PUBLIC = ROOT / "public"
@@ -253,15 +253,26 @@ TEMPLATE = """<!DOCTYPE html>
     `;
   }}
 
+  function parseOutputJson(raw) {{
+    const trimmed = raw.trim();
+    // Prefer fenced JSON so braces in preamble examples do not become parse anchors.
+    const fence = trimmed.match(/```(?:json)?\\s*([\\s\\S]*?)```/i);
+    let text = fence ? fence[1].trim() : trimmed;
+    if (!fence) {{
+      const first = text.indexOf('{{');
+      const last = text.lastIndexOf('}}');
+      if (first >= 0 && last > first) text = text.slice(first, last + 1);
+    }}
+    try {{ return JSON.parse(text); }} catch (error) {{
+      if (fence) throw error;
+      return JSON.parse(raw);
+    }}
+  }}
+
   fetch('./output.json').then(r => r.text()).then(raw => {{
     if (!meta.valid_json) {{ renderError('parse failed', raw); return; }}
     try {{
-      let s = raw.trim();
-      s = s.replace(/^```(?:json)?\\s*/i, '').replace(/```\\s*$/i, '').trim();
-      const idx = s.indexOf('{{');
-      if (idx > 0) s = s.slice(idx);
-      const data = JSON.parse(s);
-      renderQuestions(data);
+      renderQuestions(parseOutputJson(raw));
     }} catch (e) {{
       renderError(e.message, raw);
     }}
@@ -271,6 +282,41 @@ TEMPLATE = """<!DOCTYPE html>
 </body>
 </html>
 """
+
+
+def parse_json(raw: str) -> object | None:
+    """Parse a fenced JSON response before considering surrounding prose."""
+    trimmed = raw.strip()
+    # Keep this order aligned with the validator and generated browser script.
+    fence = re.search(r"```(?:json)?\s*([\s\S]*?)```", trimmed, flags=re.I)
+    text = fence.group(1).strip() if fence else trimmed
+    if not fence:
+        first = text.find("{")
+        last = text.rfind("}")
+        if first >= 0 and last > first:
+            text = text[first:last + 1]
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        if not fence:
+            try:
+                return json.loads(raw)
+            except json.JSONDecodeError:
+                pass
+        return None
+
+
+def resolve_theme_dir(theme_dir: Path) -> Path:
+    """Resolve a theme directory while rejecting paths outside this repository."""
+    root_dir = ROOT.resolve(strict=True)
+    resolved_theme_dir = theme_dir.resolve(strict=True)
+    try:
+        resolved_theme_dir.relative_to(root_dir)
+    except ValueError as error:
+        raise ValueError(
+            f"theme dir must resolve within repository root: {resolved_theme_dir}"
+        ) from error
+    return resolved_theme_dir
 
 
 def render(theme_name: str, model_dir: Path) -> None:
@@ -321,13 +367,21 @@ def render(theme_name: str, model_dir: Path) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--theme", default="extract-questions")
+    ap.add_argument("--theme-dir", type=Path)
     args = ap.parse_args()
-    theme_dir = PUBLIC / args.theme
-    if not theme_dir.exists():
-        print(f"theme not found: {theme_dir}", file=sys.stderr)
+    requested_theme_dir = args.theme_dir if args.theme_dir else PUBLIC / args.theme
+    try:
+        theme_dir = resolve_theme_dir(requested_theme_dir)
+    except (FileNotFoundError, ValueError) as error:
+        print(error, file=sys.stderr)
         return 1
     for d in sorted(theme_dir.iterdir()):
         if d.is_dir():
+            try:
+                resolve_theme_dir(d)
+            except (FileNotFoundError, ValueError) as error:
+                print(error, file=sys.stderr)
+                return 1
             render(args.theme, d)
     return 0
 
