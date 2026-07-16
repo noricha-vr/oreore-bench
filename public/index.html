@@ -1321,6 +1321,126 @@
                 links: [
                     { label: "xAI 公式", href: "https://x.ai/news/grok-4-5" }
                 ]
+            },
+            "claude-fable-5": {
+                label: "Claude Fable 5",
+                provider: "Anthropic",
+                type: "api",
+                color: "#C15F3C",
+                colorDark: "#8F4023",
+                release: "2026-06-09",
+                size: "非公開",
+                context: "1M tokens（Opus 4.7 系トークナイザー。旧比で約30%増トークン）",
+                output: "128K tokens",
+                quantization: "—（API モデル）",
+                runtime: "claude CLI headless（--effort high、サブスク枠）",
+                stats: [
+                    { value: "—", label: "パラメータ", note: "非公開" },
+                    { value: "FP", label: "量子化", note: "API モデル" },
+                    { value: "1M", label: "コンテキスト", note: "公式 docs" },
+                    { value: "128K", label: "最大出力", note: "公式 docs" }
+                ],
+                strengths: "Anthropic 一般提供の最上位（Mythos クラス）。長時間・複雑タスクほど他モデルとの差が開くと公式が明言。ほぼ全ベンチマークで SOTA。",
+                weaknesses: "同ファミリー最高価格（$10/$50 per MTok）。一部トピックで安全対策により Opus 4.8 へ応答が切り替わる（5%未満）。Extended thinking 非対応（Adaptive thinking 常時オン）。",
+                links: [
+                    { label: "Anthropic 公式", href: "https://platform.claude.com/docs/en/about-claude/models/overview" }
+                ]
+            },
+            "gpt-5.6-luna": {
+                label: "GPT-5.6 Luna",
+                provider: "OpenAI",
+                type: "api",
+                color: "#8E8EA0",
+                colorDark: "#5C5C6E",
+                release: "2026-07-13",
+                size: "非公開",
+                context: "1.05M tokens",
+                output: "128K tokens",
+                quantization: "—（API モデル）",
+                runtime: "OpenAI API（reasoning_effort: high）",
+                stats: [
+                    { value: "—", label: "パラメータ", note: "非公開" },
+                    { value: "FP", label: "量子化", note: "API モデル" },
+                    { value: "1.05M", label: "コンテキスト", note: "公式 docs" },
+                    { value: "128K", label: "最大出力", note: "公式 docs" }
+                ],
+                strengths: "GPT-5.6 3層（Sol/Terra/Luna）の最軽量・最速・最安価。高頻度推論・分類・要約・リアルタイム用途向け（公式ポジショニング）。",
+                weaknesses: "応答速度優先の設計で、深い推論・複雑タスクは上位2層に譲る（公式ポジショニング）。",
+                links: [
+                    { label: "OpenAI 公式", href: "https://developers.openai.com/api/docs/models" }
+                ]
+            },
+            "gpt-5.6-terra": {
+                label: "GPT-5.6 Terra",
+                provider: "OpenAI",
+                type: "api",
+                color: "#10A37F",
+                colorDark: "#0B7A5F",
+                release: "2026-07-13",
+                size: "非公開",
+                context: "1.05M tokens",
+                output: "128K tokens",
+                quantization: "—（API モデル）",
+                runtime: "OpenAI API（reasoning_effort: high）",
+                stats: [
+                    { value: "—", label: "パラメータ", note: "非公開" },
+                    { value: "FP", label: "量子化", note: "API モデル" },
+                    { value: "1.05M", label: "コンテキスト", note: "公式 docs" },
+                    { value: "128K", label: "最大出力", note: "公式 docs" }
+                ],
+                strengths: "everyday production work 向けバランス型。GPT-5.5 同等以上の性能を約2倍安価で提供（公式発表）。コード生成・構造化抽出・汎用エージェントに強い。",
+                weaknesses: "非公開（公式に明記された制限なし）。",
+                links: [
+                    { label: "OpenAI 公式", href: "https://developers.openai.com/api/docs/models" }
+                ]
+            },
+            "gpt-5.6-sol": {
+                label: "GPT-5.6 Sol",
+                provider: "OpenAI",
+                type: "api",
+                color: "#E8A33D",
+                colorDark: "#B87D22",
+                release: "2026-07-13",
+                size: "非公開",
+                context: "1.05M tokens",
+                output: "128K tokens",
+                quantization: "—（API モデル）",
+                runtime: "OpenAI API（reasoning_effort: high）",
+                stats: [
+                    { value: "—", label: "パラメータ", note: "非公開" },
+                    { value: "FP", label: "量子化", note: "API モデル" },
+                    { value: "1.05M", label: "コンテキスト", note: "公式 docs" },
+                    { value: "128K", label: "最大出力", note: "公式 docs" }
+                ],
+                strengths: "OpenAI のフラッグシップ推論モデル（公式が「最も強力」と明言）。複雑なコーディング・セキュリティリサーチ向け。Coding Agent Index 80点（二次情報）。",
+                weaknesses: "最高価格帯（$5/$30 per MTok、二次情報）。安全対策強化で高リスククエリの応答制限あり。",
+                links: [
+                    { label: "OpenAI 公式", href: "https://openai.com/index/gpt-5-6/" }
+                ]
+            },
+            "gemini-3-1-pro": {
+                label: "Gemini 3.1 Pro",
+                provider: "Google DeepMind",
+                type: "api",
+                color: "#4285F4",
+                colorDark: "#2A5DB0",
+                release: "2026-03-19",
+                size: "非公開",
+                context: "1M tokens",
+                output: "64K tokens",
+                quantization: "—（API モデル）",
+                runtime: "AntiGravity CLI（Gemini 3.1 Pro (High)）",
+                stats: [
+                    { value: "—", label: "パラメータ", note: "非公開" },
+                    { value: "FP", label: "量子化", note: "API モデル" },
+                    { value: "1M", label: "コンテキスト", note: "公式 Model Card" },
+                    { value: "64K", label: "最大出力", note: "公式 Model Card" }
+                ],
+                strengths: "Google の複雑タスク向け最上位。Gemini 3 Pro 比で推論性能2倍以上（二次情報）、ARC-AGI-2 77.1%（公式ブログ）。大規模マルチモーダル入力対応。",
+                weaknesses: "リリース日はソース間で表記揺れ（Model Card は Feb 2026、GA アナウンスは 2026-03-19）。制限事項の記載は Gemini 3 Pro Model Card 参照構成で単独記載が薄い。",
+                links: [
+                    { label: "公式 Model Card", href: "https://storage.googleapis.com/deepmind-media/Model-Cards/Gemini-3-1-Pro-Model-Card.pdf" }
+                ]
             }
         };
 
@@ -1356,6 +1476,18 @@
             { theme: "suminagashi", model: "gemma-4-31b",         runner: "LM Studio API",   note: "uniform 未定義 TypeError が毎フレーム発生（440件）。ローカル勢は全滅。500行/19KB。", kind: "html" },
             { theme: "suminagashi", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "JSエラー0で流体が動く。にじみ柔らかめ・淡い水彩調の解釈。765行/24KB。", kind: "html" },
             { theme: "suminagashi", model: "grok-4-5",            runner: "OpenRouter API",  note: "JSエラー0で流体が動く。墨の濃淡と乱流の迫力はこちらが上。747行/25KB。", kind: "html" },
+
+            // 追加5モデル（reasoning high 指定。スモーク検証: ロード + ドラッグ描画で JS エラー数 + 描画有無を機械確認）
+            { theme: "lp-fable5", model: "claude-fable-5",  runner: "claude CLI headless (effort high)", note: "JSエラー0。本家の再現元モデル。水彩の質感・構成とも高水準。813行/44KB。", kind: "html" },
+            { theme: "lp-fable5", model: "gpt-5.6-luna",    runner: "OpenAI API (reasoning high)", note: "JSエラー0。最軽量層でも構成は完全追従。958行/43KB。", kind: "html" },
+            { theme: "lp-fable5", model: "gpt-5.6-terra",   runner: "OpenAI API (reasoning high)", note: "JSエラー0。バランス型らしい破綻のない仕上がり。912行/41KB。", kind: "html" },
+            { theme: "lp-fable5", model: "gpt-5.6-sol",     runner: "OpenAI API (reasoning high)", note: "JSエラー0。最大の1390行/50KB。作り込み量はフラッグシップ級。", kind: "html" },
+            { theme: "lp-fable5", model: "gemini-3-1-pro",  runner: "AntiGravity CLI (High)", note: "JSエラー0。714行/24KBと最小構成でまとめる効率型。", kind: "html" },
+            { theme: "suminagashi", model: "claude-fable-5", runner: "claude CLI headless (effort high)", note: "流体が動く。マーブリングの渦・淡朱の混色は全モデル中最も豊か。boundingSphere NaN 警告1件。790行/25KB。", kind: "html" },
+            { theme: "suminagashi", model: "gpt-5.6-luna",   runner: "OpenAI API (reasoning high)", note: "JSエラー0だがドラッグしてもインクが描画されない（白紙のまま）。781行/22KB。", kind: "html" },
+            { theme: "suminagashi", model: "gpt-5.6-terra",  runner: "OpenAI API (reasoning high)", note: "JSエラー0で流体が動く。にじみ柔らかめの上品な発色。874行/24KB。", kind: "html" },
+            { theme: "suminagashi", model: "gpt-5.6-sol",    runner: "OpenAI API (reasoning high)", note: "JSエラー0だがドラッグしてもインクが描画されない（白紙のまま）。1348行/35KB。", kind: "html" },
+            { theme: "suminagashi", model: "gemini-3-1-pro", runner: "AntiGravity CLI (High)", note: "JSエラー0で流体が動く。藍の単色ストロークが美しいが混色は控えめ。607行/20KB。", kind: "html" },
 
             // extract-questions（20 問入力、基本サイズ、全モデル PASS = 実運用サイズは全モデル対応可の証拠）
             { theme: "extract-questions", model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。20 件抽出、最軽量でも 本番運用スキーマを完全に満たす。", kind: "json" },
