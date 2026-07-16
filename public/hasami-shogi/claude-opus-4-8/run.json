@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "theme": "hasami-shogi",
+  "model": "claude-opus-4-8",
+  "model_id": "claude-opus-4-8",
+  "harness": "claude-agent-sdk",
+  "reasoning_effort": "none",
+  "attempts": 1,
+  "generated_at": "2026-07-10T08:13:07+09:00",
+  "generated_at_source": "git-first-commit",
+  "sampling": {
+    "temperature": "default",
+    "max_tokens": "default",
+    "top_p": "default"
+  },
+  "system_prompt": "harness-default",
+  "post_processing": "none",
+  "runtime": null,
+  "usage": {
+    "estimated": true,
+    "method": "tiktoken-o200k_base-proxy",
+    "prompt_tokens": 864,
+    "completion_tokens": 4251,
+    "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+  },
+  "cost": {
+    "estimated": true,
+    "usd": 0.110595,
+    "actual_usd": null,
+    "prompt_usd_per_mtok": 5.0,
+    "completion_usd_per_mtok": 25.0,
+    "pricing_source": "openrouter",
+    "pricing_model": "anthropic/claude-opus-4.8",
+    "pricing_fetched_at": "2026-07-16"
+  }
+}

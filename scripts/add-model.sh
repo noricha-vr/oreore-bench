@@ -126,7 +126,28 @@ BYTE_COUNT="$(wc -c < "$OUT_FILE" | tr -d ' ')"
 echo
 echo "==> 生成完了: $LINE_COUNT 行 / $BYTE_COUNT bytes"
 echo
-echo "次のステップ: public/index.html の ENTRIES 配列に以下を追加してください。"
+
+# run.json スケルトン生成 + 推定コスト算出。
+# API 経由で usage が取れなかった場合の下限値を埋める。実測 usage を後で埋めたい時は
+# 手で run.json の usage.estimated=false と method="api-usage" に更新してから re-run。
+# #7 Fail Fast: 失敗を握り潰さず非ゼロ exit で停止 (CLAUDE.md「失敗したのに成功扱い」禁止)
+echo "==> run.json スケルトン生成 (uv run scripts/estimate-run-cost.py --write)..."
+if ! command -v uv >/dev/null 2>&1; then
+  echo "  [ERROR] uv not found. Install uv or run scripts/estimate-run-cost.py manually." >&2
+  exit 4
+fi
+if ! uv run "$ROOT/scripts/estimate-run-cost.py" --theme "$THEME" --model "$MODEL" --write >/dev/null; then
+  echo "  [ERROR] estimate-run-cost.py failed. run.json is not written. Fix and re-run." >&2
+  exit 5
+fi
+
+echo
+echo "次のステップ:"
+echo "  1. public/$THEME/$MODEL/run.json の harness / reasoning_effort を実際の生成条件に合わせて修正"
+echo "     (自動判定は unknown。RUNNER_MAP の一覧は scripts/backfill-runs.py を参照)"
+echo "  2. uv run scripts/build-runs-json.py で public/runs.json を更新"
+echo "  3. node scripts/validate-runs.mjs でスキーマ検証"
+echo "  4. public/index.html の ENTRIES 配列に以下を追加してください。"
 echo
 cat <<EOF
     {

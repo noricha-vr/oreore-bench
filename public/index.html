@@ -595,6 +595,15 @@
             margin: 0;
             flex-grow: 1;
         }
+        .theme-card .card-run-meta {
+            /* run.json 由来のメタ情報 (harness ・ effort ・ コスト)。
+               card-note より控えめ、text-xs 相当は避けて 0.8125rem に留める */
+            color: var(--fg-soft);
+            font-size: 0.8125rem;
+            line-height: 1.5;
+            margin: 0;
+            opacity: 0.85;
+        }
         .theme-card .card-actions {
             display: flex;
             gap: 8px;
@@ -1444,6 +1453,83 @@
             }
         };
 
+        // run.json 集約 (public/runs.json) を DOMContentLoaded 時に fetch し、キー "theme/model" で参照する。
+        // 失敗 (404 / file:// で fetch 不可) はサイレントに握って現状表示のまま。
+        // 表示できるのは run.json の構造化フィールドのみ (harness ラベル・effort・cost)。
+        // system_prompt 本文や環境情報は runs.json 側で enum ラベルに制限済み (validate-runs.mjs)。
+        let RUNS = {};
+
+        // harness slug -> 人間向け短縮ラベル (日本語)。unknown は表示スキップ。
+        const HARNESS_LABEL = {
+            'lmstudio-api': 'LM Studio API',
+            'gptme-lmstudio': 'gptme (LM Studio)',
+            'claude-agent-sdk': 'Claude Agent SDK',
+            'claude-cli-headless': 'claude CLI headless',
+            'grok-cli': 'grok CLI',
+            'openai-api': 'OpenAI API',
+            'openrouter-api': 'OpenRouter API',
+            'antigravity-cli': 'AntiGravity CLI',
+        };
+
+        // HTML エスケープ (runs.json 由来の値を innerHTML に入れる前に必ず通す)。
+        // validate-runs.mjs で runtime 値も allowlist 検査しているが、多重防御として
+        // 表示層でもエスケープする (万一 runs.json が改ざんされても XSS を防ぐ)。
+        function escapeHtml(s) {
+            if (s === null || s === undefined) return '';
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // cost.usd (数値) を表示用にフォーマット
+        function formatUsd(usd) {
+            const digits = usd >= 1 ? 2 : usd >= 0.01 ? 3 : 4;
+            return `$${usd.toFixed(digits)}`;
+        }
+
+        // run.json → カード用メタ文字列 (「ハーネス ・ effort: high ・ $0.49 (推定・下限)」形式)。
+        // 戻り値は escapeHtml 済みで innerHTML に直接埋め込める。表示できるものが 1 つもなければ ''。
+        function formatRunMeta(run) {
+            if (!run || typeof run !== 'object') return '';
+            const parts = [];
+
+            // ハーネス: 内部 allowlist に載っている slug のみ日本語ラベルに変換 (未知は非表示)
+            const harnessLabel = HARNESS_LABEL[run.harness];
+            if (harnessLabel) parts.push(escapeHtml(harnessLabel));
+
+            // effort: unknown / none は非表示
+            const effort = run.reasoning_effort;
+            if (effort && effort !== 'unknown' && effort !== 'none') {
+                parts.push(`effort: ${escapeHtml(effort)}`);
+            }
+
+            // runtime (ローカル: LM Studio + 量子化を短く表示)
+            if (run.runtime && typeof run.runtime === 'object' && run.runtime.quantization) {
+                parts.push(`LM Studio (${escapeHtml(run.runtime.quantization)})`);
+            }
+
+            // cost 表示（3分岐）:
+            //   API 実請求相当 (actual_usd=null, usd=number)   → 「$0.49 (推定・下限)」
+            //   ローカル + 参考単価あり (actual_usd=0, usd=num) → 「$0 (ローカル・参考 $0.004)」
+            //   ローカル + 参考なし (actual_usd=0, usd=null)    → 「$0 (ローカル)」
+            const cost = run.cost || {};
+            const usd = cost.usd;
+            const actual = cost.actual_usd;
+            if (actual === 0 && typeof usd === 'number') {
+                // 参考仮想コスト: 「(推定・下限)」注記はローカルに付けない
+                parts.push(`$0 (ローカル・参考 ${formatUsd(usd)})`);
+            } else if (actual === 0) {
+                parts.push('$0 (ローカル)');
+            } else if (typeof usd === 'number') {
+                const est = cost.estimated ? ' (推定・下限)' : '';
+                parts.push(`${formatUsd(usd)}${est}`);
+            }
+            return parts.join(' ・ ');
+        }
+
         const ENTRIES = [
             { theme: "lp-nishibi", model: "gemma-4-12b-qat",     runner: "LM Studio API",       note: "最軽量 12B での 1 ショット LP。約 13KB。31B と比較して選択肢。", kind: "html" },
             { theme: "lp-nishibi", model: "gemma-4-31b",         runner: "gptme (LM Studio)",   note: "ローカルLLM単体の1ショットLP。418行/14KB。", kind: "html" },
@@ -1612,6 +1698,10 @@
                 card.className = 'theme-card shadow-sm';
                 card.style.borderLeftColor = theme.color;
 
+                // run.json 由来のメタ (harness ・ effort ・ コスト)。runs.json fetch 失敗時は空文字 → 行ごと非表示
+                const runMeta = formatRunMeta(RUNS[`${entry.theme}/${entry.model}`]);
+                const runMetaHtml = runMeta ? `<p class="card-run-meta">${runMeta}</p>` : '';
+
                 card.innerHTML = `
                     <div class="card-header">
                         <span class="badge" style="background-color: ${theme.color};">${theme.short}</span>
@@ -1625,6 +1715,7 @@
                         <p class="card-subtitle">${theme.title} ・ ${entry.runner}</p>
                     </div>
                     <p class="card-note">${entry.note}</p>
+                    ${runMetaHtml}
                     <div class="card-actions">
                         <a href="${entry.kind === 'json' ? `./${entry.theme}/${entry.model}/output.html` : `./${entry.theme}/${entry.model}/index.html`}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">実物を見る</a>
                         <a href="./${entry.theme}/prompt.html" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">プロンプト</a>
@@ -1797,6 +1888,26 @@
             renderEntries();
             renderThemeDescriptions();
             renderModelDescriptions();
+
+            // runs.json 取得は非同期。失敗 (file:// / 404 / 壊れた JSON) は catch で握って現状表示のまま。
+            // データ検証は「object かつ空でない」の最小限。空 {} も無効扱い。
+            // 再描画は .then の中で try/catch し、renderEntries() 内の例外が fetch の
+            // .catch に伝播して「壊れた runs.json → 空白カード」に化けるのを塞ぐ。
+            fetch('./runs.json', { cache: 'no-cache' })
+                .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
+                .then(data => {
+                    if (!data || typeof data !== 'object' || Array.isArray(data) || Object.keys(data).length === 0) {
+                        throw new Error('runs.json shape invalid (expected non-empty object)');
+                    }
+                    RUNS = data;
+                    // 描画例外は .catch に流さず個別に握る (初回 renderEntries は済んでいるので空白化しない)
+                    try { renderEntries(); }
+                    catch (e) { console.error('[renderEntries] failed after runs.json fetch:', e); }
+                })
+                .catch(err => {
+                    // 意図的に無視: runs.json 未配信環境をサポート。RUNS は {} のまま維持
+                    if (console && console.info) console.info('[runs.json] skipped:', err.message);
+                });
         });
     </script>
 </body>

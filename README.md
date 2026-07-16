@@ -62,16 +62,97 @@ oreore-bench/
 │   │       ├── index.html               ← HTML 系テーマの 1 ショット出力
 │   │       ├── output.json              ← JSON 系テーマの 1 ショット出力
 │   │       ├── output.html              ← 上記を左右 2 カラムで描画
-│   │       └── meta.json                ← スキーマ検証結果（事前計算）
+│   │       ├── meta.json                ← スキーマ検証結果（事前計算）
+│   │       └── run.json                 ← 生成条件の正本（後述）
+│   └── runs.json                        ← run.json を集約して index.html が 1 回で fetch
 └── scripts/
     ├── add-model.sh                     ← 新モデル追加の汎用スクリプト
     ├── gen-questions.py                 ← extract-questions 用、3 Gemma 順次生成
     ├── validate-questions.mjs           ← extract-questions スキーマ検証
     ├── build-questions-html.py          ← extract-questions output.html ビルド
+    ├── model-map.json                   ← slug → OpenRouter モデル ID の単一情報源
+    ├── pricing.json                     ← per-Mtok 単価キャッシュ（fetch-pricing.py で更新）
+    ├── fetch-pricing.py                 ← OpenRouter API から単価取得
+    ├── estimate-run-cost.py             ← tiktoken 代理でトークン推定 + コスト算出
+    ├── backfill-runs.py                 ← ENTRIES から run.json スケルトン生成
+    ├── build-runs-json.py               ← run.json を public/runs.json に集約
+    ├── validate-runs.mjs                ← run.json / runs.json のスキーマ検証
     ├── gen-quiz.py                      ← (legacy) 旧 json-quiz 用
     ├── validate-quiz.mjs                ← (legacy) 旧 json-quiz 用
     └── build-output-html.py             ← (legacy) 旧 json-quiz 用
 ```
+
+## run.json（生成条件の記録）
+
+各 `<theme>/<model>/` に生成条件の正本 `run.json`（`schema_version: 1`）を置き、
+`public/runs.json` に集約してトップページのカードが 1 回の fetch でメタを引けるようにしている。
+カードには「ハーネス ・ effort ・ コスト」が表示される。
+
+### スキーマ（抜粋）
+
+```json
+{
+  "schema_version": 1,
+  "theme": "lp-fable5",
+  "model": "claude-fable-5",
+  "harness": "claude-cli-headless",
+  "reasoning_effort": "high",
+  "generated_at": "2026-07-16T14:24:21+09:00",
+  "generated_at_source": "git-first-commit",
+  "sampling": { "temperature": "default", "max_tokens": "default" },
+  "system_prompt": "harness-default",
+  "usage": {
+    "estimated": true,
+    "method": "tiktoken-o200k_base-proxy",
+    "prompt_tokens": 1122,
+    "completion_tokens": 15410,
+    "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+  },
+  "cost": {
+    "estimated": true,
+    "usd": 0.7817,
+    "prompt_usd_per_mtok": 10.0,
+    "completion_usd_per_mtok": 50.0,
+    "pricing_source": "openrouter"
+  }
+}
+```
+
+### enum / 規約
+
+- `harness`: `lmstudio-api` / `gptme-lmstudio` / `claude-agent-sdk` / `claude-cli-headless` / `grok-cli` / `openai-api` / `openrouter-api` / `antigravity-cli` / `unknown`
+- `reasoning_effort`: `none` / `low` / `medium` / `high` / `unknown`
+- `system_prompt`: `none` / `harness-default` / `custom` / `unknown` — **ラベルのみ。本文は絶対に記録しない**（公開配信されるためプライバシー保護。`validate-runs.mjs` で enum 外を必ず失敗させる）
+- `"unknown"` = 復元不能、`"default"` = 既定に任せた、`"none"` = 明示的に無し。確定値のみ数値で書く
+
+### コスト表示は「推定・下限」
+
+- `o200k_base` トークナイザは Gemma/Claude/Grok の実トークナイザと乖離するため、`estimated: true` かつ `method` を明記した上で下限値として扱う
+- 単価は OpenRouter API から取得（`fetch-pricing.py`）
+- `cost.pricing_source` の 3 値で「実請求 / 参考仮想 / 参考なし」を区別する:
+  - `openrouter`: API モデル（`type=api`）。`actual_usd: null` + `usd` に実請求相当の推定
+  - `openrouter-reference`: ローカル実行だが OpenRouter に該当モデルあり（gemma-4-31b / gemma-4-26b-a4b-qat）。`actual_usd: 0` + `usd` に参考仮想コスト
+  - `local-no-reference`: OpenRouter に存在しないローカルモデル（gemma-4-12b-qat のみ）。`actual_usd: 0` + `usd: null`
+- カードでは「$0 (ローカル・参考 $0.004)」のように参考仮想コストを併記
+- **reasoning トークン・ハーネス側 system prompt を含まない**（実測 API `usage` があるモデルのみ完全値）
+
+### 更新ワークフロー
+
+```bash
+# 単価更新（月次程度）
+uv run scripts/fetch-pricing.py
+
+# 過去エントリの run.json 再生成
+uv run scripts/backfill-runs.py
+uv run scripts/estimate-run-cost.py --write
+
+# runs.json 集約 + 検証
+uv run scripts/build-runs-json.py
+node scripts/validate-runs.mjs   # exit 0 で通過
+```
+
+新規モデル追加時は `scripts/add-model.sh` が `estimate-run-cost.py --write` を自動で呼び、
+生成完了後に「run.json の harness/effort を確認 → build-runs-json.py → validate-runs.mjs」の案内を出す。
 
 ## 新しいモデルを追加する
 

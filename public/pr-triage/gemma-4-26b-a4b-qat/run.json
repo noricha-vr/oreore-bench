@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "theme": "pr-triage",
+  "model": "gemma-4-26b-a4b-qat",
+  "model_id": "gemma-4-26b-a4b-qat",
+  "harness": "lmstudio-api",
+  "reasoning_effort": "none",
+  "attempts": 1,
+  "generated_at": "2026-07-10T08:14:31+09:00",
+  "generated_at_source": "git-first-commit",
+  "sampling": {
+    "temperature": "default",
+    "max_tokens": "default",
+    "top_p": "default"
+  },
+  "system_prompt": "harness-default",
+  "post_processing": "none",
+  "runtime": {
+    "engine": "lmstudio",
+    "quantization": "qat-4bit",
+    "api": "openai-compat"
+  },
+  "usage": {
+    "estimated": true,
+    "method": "tiktoken-o200k_base-proxy",
+    "prompt_tokens": 2600,
+    "completion_tokens": 1323,
+    "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+  },
+  "cost": {
+    "estimated": true,
+    "usd": 0.000657,
+    "actual_usd": 0,
+    "prompt_usd_per_mtok": 0.1,
+    "completion_usd_per_mtok": 0.3,
+    "pricing_source": "openrouter-reference",
+    "pricing_model": "google/gemma-4-26b-a4b-it",
+    "pricing_fetched_at": "2026-07-16"
+  }
+}
