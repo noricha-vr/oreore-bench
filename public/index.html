@@ -1471,30 +1471,57 @@
             'antigravity-cli': 'AntiGravity CLI',
         };
 
-        // run.json → カード用メタ文字列 (「ハーネス ・ effort: high ・ $0.49 (推定)」形式)。
-        // 表示できるものが 1 つもなければ空文字を返す (呼び出し側で条件付きレンダ)。
+        // HTML エスケープ (runs.json 由来の値を innerHTML に入れる前に必ず通す)。
+        // validate-runs.mjs で runtime 値も allowlist 検査しているが、多重防御として
+        // 表示層でもエスケープする (万一 runs.json が改ざんされても XSS を防ぐ)。
+        function escapeHtml(s) {
+            if (s === null || s === undefined) return '';
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // cost.usd (数値) を表示用にフォーマット
+        function formatUsd(usd) {
+            const digits = usd >= 1 ? 2 : usd >= 0.01 ? 3 : 4;
+            return `$${usd.toFixed(digits)}`;
+        }
+
+        // run.json → カード用メタ文字列 (「ハーネス ・ effort: high ・ $0.49 (推定・下限)」形式)。
+        // 戻り値は escapeHtml 済みで innerHTML に直接埋め込める。表示できるものが 1 つもなければ ''。
         function formatRunMeta(run) {
-            if (!run) return '';
+            if (!run || typeof run !== 'object') return '';
             const parts = [];
+
+            // ハーネス: 内部 allowlist に載っている slug のみ日本語ラベルに変換 (未知は非表示)
             const harnessLabel = HARNESS_LABEL[run.harness];
-            if (harnessLabel) parts.push(harnessLabel);
-            // effort: unknown / none は非表示 (前者は不明、後者はそもそも効かないハーネス)
-            if (run.reasoning_effort && run.reasoning_effort !== 'unknown' && run.reasoning_effort !== 'none') {
-                parts.push(`effort: ${run.reasoning_effort}`);
+            if (harnessLabel) parts.push(escapeHtml(harnessLabel));
+
+            // effort: unknown / none は非表示
+            const effort = run.reasoning_effort;
+            if (effort && effort !== 'unknown' && effort !== 'none') {
+                parts.push(`effort: ${escapeHtml(effort)}`);
             }
+
             // runtime (ローカル: LM Studio + 量子化を短く表示)
-            if (run.runtime && run.runtime.quantization) {
-                parts.push(`LM Studio (${run.runtime.quantization})`);
+            if (run.runtime && typeof run.runtime === 'object' && run.runtime.quantization) {
+                parts.push(`LM Studio (${escapeHtml(run.runtime.quantization)})`);
             }
+
             // cost 表示
             const cost = run.cost || {};
             const usd = cost.usd;
             const actual = cost.actual_usd;
             if (typeof usd === 'number') {
                 const est = cost.estimated ? ' (推定・下限)' : '';
-                parts.push(`$${usd.toFixed(usd >= 1 ? 2 : usd >= 0.01 ? 3 : 4)}${est}`);
+                parts.push(`${formatUsd(usd)}${est}`);
             } else if (actual === 0) {
-                // ローカル: 参考単価なし
+                // ローカルモデル: 「(推定・下限)」注記は付けない (#4)。
+                // 参考単価は cost には載せない方針 (model-map.json の type=local が意味)。
+                // pricing.json をカード表示用に fetch はしない (単一 fetch の設計方針を保つ)。
                 parts.push('$0 (ローカル)');
             }
             return parts.join(' ・ ');
@@ -1859,15 +1886,25 @@
             renderThemeDescriptions();
             renderModelDescriptions();
 
-            // runs.json 取得は非同期。失敗 (file:// / 404) は catch で握って現状表示のまま。
-            // 成功時のみ RUNS を差し替え、renderEntries() を再実行してメタ行を追加描画する。
+            // runs.json 取得は非同期。失敗 (file:// / 404 / 壊れた JSON) は catch で握って現状表示のまま。
+            // データ検証は「object かつ空でない」の最小限。空 {} も無効扱い。
+            // 再描画は .then の中で try/catch し、renderEntries() 内の例外が fetch の
+            // .catch に伝播して「壊れた runs.json → 空白カード」に化けるのを塞ぐ。
             fetch('./runs.json', { cache: 'no-cache' })
                 .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
                 .then(data => {
+                    if (!data || typeof data !== 'object' || Array.isArray(data) || Object.keys(data).length === 0) {
+                        throw new Error('runs.json shape invalid (expected non-empty object)');
+                    }
                     RUNS = data;
-                    renderEntries();
+                    // 描画例外は .catch に流さず個別に握る (初回 renderEntries は済んでいるので空白化しない)
+                    try { renderEntries(); }
+                    catch (e) { console.error('[renderEntries] failed after runs.json fetch:', e); }
                 })
-                .catch(() => { /* 意図的に無視: runs.json 未配信環境をサポート */ });
+                .catch(err => {
+                    // 意図的に無視: runs.json 未配信環境をサポート。RUNS は {} のまま維持
+                    if (console && console.info) console.info('[runs.json] skipped:', err.message);
+                });
         });
     </script>
 </body>
