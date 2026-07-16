@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fable 5 - Claude</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;700&display=swap');
+    
+    :root {
+      --bg: #faf6ee;
+      --text: #2c2925;
+      --accent: #d97757;
+      --accent-hover: #c65d3b;
+      --sand: #e8d5b5;
+      --ochre: #d1a566;
+      --sepia: #c6997f;
+      --cream: #fffceb;
+      --gray: #d0c8c0;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.8;
+      overflow-x: hidden;
+      font-weight: 400;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    /* SVG Filter Definitions */
+    .svg-defs {
+      position: absolute;
+      width: 0;
+      height: 0;
+      pointer-events: none;
+    }
+
+    /* Animation Classes */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(40px);
+      /* 未発火時のフォールバック */
+      animation: fallback-reveal 1s ease-out 2.5s forwards;
+    }
+    .fade-up.visible {
+      animation: none;
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    @keyframes fallback-reveal {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Header */
+    header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      padding: 1.5rem 4rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      background: linear-gradient(to bottom, rgba(250,246,238,0.95) 0%, rgba(250,246,238,0) 100%);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 1.3rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 3rem;
+      font-size: 1rem;
+    }
+    .nav-links a:not(.btn-primary) {
+      position: relative;
+      opacity: 0.8;
+      transition: opacity 0.3s;
+    }
+    .nav-links a:not(.btn-primary):hover {
+      opacity: 1;
+    }
+    .btn-primary {
+      background-color: var(--accent);
+      color: var(--cream);
+      padding: 0.8rem 2rem;
+      border-radius: 2rem;
+      transition: background-color 0.3s ease;
+      font-weight: 500;
+    }
+    .btn-primary:hover {
+      background-color: var(--accent-hover);
+    }
+
+    /* Section Utilities */
+    section {
+      padding: 10rem 4rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .section-label {
+      font-size: 0.9rem;
+      letter-spacing: 0.15em;
+      opacity: 0.6;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .section-label::before {
+      content: '';
+      display: inline-block;
+      width: 2rem;
+      height: 1px;
+      background-color: var(--text);
+      opacity: 0.5;
+    }
+    .section-title {
+      font-size: 3rem;
+      font-weight: 400;
+      margin-bottom: 4rem;
+      letter-spacing: -0.02em;
+    }
+
+    /* Hero Section */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 0;
+      position: relative;
+    }
+    .parallax-sun {
+      position: absolute;
+      top: 15%;
+      right: 15%;
+      width: 250px;
+      height: 250px;
+      background-color: var(--accent);
+      border-radius: 50%;
+      filter: blur(40px);
+      opacity: 0.25;
+      z-index: 0;
+    }
+    .hero-content {
+      padding: 0 4rem;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      position: relative;
+      z-index: 10;
+      margin-bottom: 2rem;
+    }
+    .hero-sub {
+      font-size: 0.9rem;
+      letter-spacing: 0.15em;
+      opacity: 0.6;
+      margin-bottom: 1.5rem;
+    }
+    .hero-title {
+      font-size: 9rem;
+      font-weight: 300;
+      line-height: 1;
+      margin-bottom: 2rem;
+      letter-spacing: -0.03em;
+    }
+    .hero-title span {
+      color: var(--accent);
+    }
+    .hero-catch {
+      font-size: 2.2rem;
+      font-weight: 400;
+      margin-bottom: 1rem;
+    }
+    .hero-desc {
+      font-size: 1.1rem;
+      opacity: 0.7;
+      max-width: 600px;
+    }
+    .hero-ill {
+      width: 100%;
+      height: 45vh;
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+    }
+    .hero-ill svg {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Family / Chart Section */
+    .chart-container {
+      display: flex;
+      align-items: flex-end;
+      gap: 3rem;
+      height: 350px;
+      margin-top: 4rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid rgba(44,41,37,0.15);
+    }
+    .bar-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    .bar {
+      width: 100%;
+      max-width: 100px;
+      background-color: var(--sand);
+      border-radius: 6px 6px 0 0;
+      height: 0;
+      transition: height 1.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+      position: relative;
+    }
+    .bar::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.2), transparent);
+      border-radius: 6px 6px 0 0;
+    }
+    .bar.mythos {
+      background-color: var(--accent);
+    }
+    .bar-label {
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+    .bar-sub {
+      font-size: 0.85rem;
+      opacity: 0.5;
+    }
+
+    /* Capabilities Section */
+    .features-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem 4rem;
+    }
+    .feature-card {
+      display: flex;
+      gap: 2.5rem;
+      align-items: flex-start;
+    }
+    .feature-ill {
+      width: 140px;
+      flex-shrink: 0;
+    }
+    .feature-text h3 {
+      font-size: 1.4rem;
+      font-weight: 500;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+    .feature-text p {
+      opacity: 0.7;
+      font-size: 1rem;
+    }
+
+    /* Performance Section */
+    .line-graph {
+      position: relative;
+      width: 100%;
+      height: 450px;
+      border-bottom: 1px solid rgba(44,41,37,0.15);
+      border-left: 1px solid rgba(44,41,37,0.15);
+      margin-top: 4rem;
+    }
+    .axis-label {
+      position: absolute;
+      bottom: -40px;
+      right: 0;
+      font-size: 1rem;
+      opacity: 0.6;
+    }
+    .line-path {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 2500;
+      stroke-dashoffset: 2500;
+    }
+    .line-chart.visible .line-path {
+      transition: stroke-dashoffset 2.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+      stroke-dashoffset: 0;
+    }
+    .line-fable { stroke: var(--accent); stroke-width: 5; }
+    .line-other { stroke: var(--gray); stroke-width: 3; }
+
+    /* Safety Section */
+    .safety-ill {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto 4rem;
+      display: block;
+    }
+    .safety-text {
+      text-align: center;
+      font-size: 1.3rem;
+      max-width: 700px;
+      margin: 0 auto;
+      opacity: 0.8;
+    }
+
+    /* How to start */
+    .steps {
+      display: flex;
+      gap: 3rem;
+      margin-top: 4rem;
+    }
+    .step {
+      flex: 1;
+    }
+    .step-num {
+      color: var(--accent);
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+      opacity: 0.8;
+    }
+    .step-ill {
+      width: 120px;
+      margin-bottom: 1.5rem;
+    }
+    .step h3 {
+      font-size: 1.3rem;
+      font-weight: 500;
+    }
+
+    /* Final CTA */
+    .final-cta {
+      text-align: center;
+      padding: 15rem 2rem;
+      position: relative;
+      margin: 0;
+      max-width: none;
+      overflow: hidden;
+    }
+    .cta-ill {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: -1;
+    }
+    .cta-ill svg {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .final-cta h2 {
+      font-size: 4rem;
+      font-weight: 300;
+      margin-bottom: 4rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 3rem;
+      background-color: var(--bg);
+      opacity: 0.6;
+      font-size: 0.9rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .hero-title { font-size: 6rem; }
+      .features-grid { grid-template-columns: 1fr; gap: 4rem; }
+      .steps { flex-direction: column; }
+    }
+    @media (max-width: 600px) {
+      header { padding: 1.5rem 2rem; }
+      .nav-links { display: none; }
+      section { padding: 6rem 2rem; }
+      .hero-content { padding: 0 2rem; }
+      .hero-title { font-size: 4.5rem; }
+      .hero-catch { font-size: 1.5rem; }
+      .section-title { font-size: 2.2rem; }
+      .chart-container { height: 250px; gap: 1rem; }
+      .bar-label { font-size: 0.9rem; }
+      .final-cta h2 { font-size: 2.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SVG Filters Definition -->
+  <svg class="svg-defs">
+    <defs>
+      <filter id="wc" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G" />
+        <feGaussianBlur stdDeviation="0.8" />
+      </filter>
+      <filter id="wc-strong" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="4" result="noise" />
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G" />
+        <feGaussianBlur stdDeviation="1.5" />
+      </filter>
+    </defs>
+  </svg>
+
+  <header>
+    <div class="logo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--accent)">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/>
+      </svg>
+      Claude
+    </div>
+    <div class="nav-links">
+      <a href="#models">モデル</a>
+      <a href="#capabilities">できること</a>
+      <a href="#safety">安全性</a>
+      <a href="#start" class="btn-primary">使ってみる</a>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="parallax-sun"></div>
+    <div class="hero-content fade-up">
+      <div class="hero-sub">MYTHOS-CLASS / 一般提供モデル</div>
+      <h1 class="hero-title">Fable 5<span>.</span></h1>
+      <h2 class="hero-catch">今、いちばん賢いClaudeが、<br>誰でも使える形に。</h2>
+      <p class="hero-desc">圧倒的な推論能力と温かさを備えた新しい知性が、<br>あなたの毎日に寄り添い、一番遠くまで共に歩みます。</p>
+    </div>
+    <div class="hero-ill fade-up">
+      <svg viewBox="0 0 1200 400" preserveAspectRatio="xMidYMax slice">
+        <!-- Hills -->
+        <path d="M-100,300 Q200,150 500,250 T1300,180 L1300,450 L-100,450 Z" fill="var(--sand)" opacity="0.6" filter="url(#wc-strong)" />
+        <path d="M-50,350 Q300,220 700,280 T1350,230 L1350,450 L-50,450 Z" fill="var(--ochre)" opacity="0.5" filter="url(#wc-strong)" />
+        <circle cx="850" cy="200" r="60" fill="var(--accent)" opacity="0.4" filter="url(#wc-strong)" />
+        <path d="M-50,400 Q400,280 800,350 T1300,320 L1300,450 L-50,450 Z" fill="var(--sepia)" opacity="0.7" filter="url(#wc-strong)" />
+        
+        <!-- Path -->
+        <path d="M850,280 Q750,300 650,350 T400,450" fill="none" stroke="var(--cream)" stroke-width="20" stroke-linecap="round" opacity="0.9" filter="url(#wc)" />
+        
+        <!-- Flora -->
+        <circle cx="200" cy="380" r="20" fill="var(--accent)" opacity="0.6" filter="url(#wc)" />
+        <circle cx="230" cy="390" r="15" fill="var(--accent-hover)" opacity="0.7" filter="url(#wc)" />
+        <circle cx="950" cy="330" r="25" fill="var(--ochre)" opacity="0.6" filter="url(#wc)" />
+        <circle cx="980" cy="340" r="18" fill="var(--sepia)" opacity="0.8" filter="url(#wc)" />
+        <circle cx="700" cy="360" r="12" fill="var(--accent)" opacity="0.5" filter="url(#wc)" />
+        
+        <!-- Characters -->
+        <g transform="translate(620, 335)">
+          <path d="M0,0 C-15,-20 10,-40 20,-10 C30,-20 40,-5 30,10 C20,20 0,20 0,0" fill="var(--cream)" opacity="0.95" filter="url(#wc)" />
+          <path d="M-20,5 C-25,-5 -15,-10 -15,0 C-10,10 -20,15 -20,5" fill="var(--accent-hover)" opacity="0.9" filter="url(#wc)" />
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <section id="models">
+    <div class="section-label fade-up">01 / CLAUDE FAMILY</div>
+    <h2 class="section-title fade-up">Claudeのいちばん上へ。</h2>
+    
+    <div class="chart-container fade-up bar-chart">
+      <div class="bar-group">
+        <div class="bar" data-height="25%"></div>
+        <div class="bar-label">Haiku</div>
+        <div class="bar-sub">軽快モデル</div>
+      </div>
+      <div class="bar-group">
+        <div class="bar" data-height="45%"></div>
+        <div class="bar-label">Sonnet</div>
+        <div class="bar-sub">標準モデル</div>
+      </div>
+      <div class="bar-group">
+        <div class="bar" data-height="65%"></div>
+        <div class="bar-label">Opus</div>
+        <div class="bar-sub">上位モデル</div>
+      </div>
+      <div class="bar-group">
+        <div class="bar mythos" data-height="100%"></div>
+        <div class="bar-label">Mythos</div>
+        <div class="bar-sub">Fable 5</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="capabilities">
+    <div class="section-label fade-up">02 / CAPABILITIES</div>
+    <h2 class="section-title fade-up">頼れる仕事のその先まで。</h2>
+    
+    <div class="features-grid">
+      <!-- 1 -->
+      <div class="feature-card fade-up">
+        <div class="feature-ill">
+          <svg viewBox="0 0 100 100">
+            <rect x="10" y="20" width="80" height="60" rx="5" fill="var(--sand)" opacity="0.6" filter="url(#wc)" />
+            <rect x="15" y="25" width="70" height="50" rx="2" fill="var(--cream)" opacity="0.9" filter="url(#wc)" />
+            <circle cx="30" cy="50" r="10" fill="var(--accent)" opacity="0.7" filter="url(#wc)" />
+            <path d="M50,60 L70,40 L80,50" fill="none" stroke="var(--sepia)" stroke-width="4" stroke-linecap="round" filter="url(#wc)" />
+          </svg>
+        </div>
+        <div class="feature-text">
+          <h3>画面を見るだけで<br>ゲームを最後までクリア</h3>
+          <p>複雑な視覚情報を瞬時に理解し、状況に応じた自律的な推論と操作を長期間にわたって完遂します。</p>
+        </div>
+      </div>
+      <!-- 2 -->
+      <div class="feature-card fade-up">
+        <div class="feature-ill">
+          <svg viewBox="0 0 100 100">
+            <path d="M20,70 L80,70 L75,60 L25,60 Z" fill="var(--sand)" opacity="0.8" filter="url(#wc)" />
+            <path d="M25,55 L75,55 L70,45 L30,45 Z" fill="var(--ochre)" opacity="0.7" filter="url(#wc)" />
+            <path d="M30,40 L70,40 L65,30 L35,30 Z" fill="var(--sepia)" opacity="0.6" filter="url(#wc)" />
+            <path d="M40,55 L60,55" fill="none" stroke="var(--accent)" stroke-width="2" filter="url(#wc)" />
+            <path d="M35,40 L55,40" fill="none" stroke="var(--cream)" stroke-width="2" filter="url(#wc)" />
+          </svg>
+        </div>
+        <div class="feature-text">
+          <h3>5,000万行のコードを<br>1日で移行</h3>
+          <p>途方もない規模のリファクタリングやアーキテクチャ移行も、文脈を維持したまま正確に処理しきります。</p>
+        </div>
+      </div>
+      <!-- 3 -->
+      <div class="feature-card fade-up">
+        <div class="feature-ill">
+          <svg viewBox="0 0 100 100">
+            <path d="M40,20 L60,20 L55,40 L70,80 L30,80 L45,40 Z" fill="var(--sepia)" opacity="0.4" filter="url(#wc)" />
+            <path d="M35,70 L65,70 L58,50 L42,50 Z" fill="var(--accent)" opacity="0.5" filter="url(#wc)" />
+            <circle cx="70" cy="30" r="8" fill="var(--ochre)" opacity="0.6" filter="url(#wc)" />
+            <circle cx="85" cy="45" r="5" fill="var(--sand)" opacity="0.8" filter="url(#wc)" />
+            <path d="M70,30 L85,45" fill="none" stroke="var(--sepia)" stroke-width="2" filter="url(#wc)" />
+          </svg>
+        </div>
+        <div class="feature-text">
+          <h3>新薬の設計を<br>約10倍のスピードで</h3>
+          <p>高度な専門知識が求められる科学的推論において、人間の専門家をしのぐ速度と精度で仮説を導き出します。</p>
+        </div>
+      </div>
+      <!-- 4 -->
+      <div class="feature-card fade-up">
+        <div class="feature-ill">
+          <svg viewBox="0 0 100 100">
+            <path d="M10,80 Q50,40 90,60" fill="none" stroke="var(--sand)" stroke-width="15" stroke-linecap="round" filter="url(#wc)" />
+            <circle cx="50" cy="30" r="20" fill="var(--cream)" opacity="0.9" filter="url(#wc)" />
+            <circle cx="50" cy="30" r="18" fill="none" stroke="var(--ochre)" stroke-width="2" filter="url(#wc)" />
+            <path d="M50,30 L50,18" fill="none" stroke="var(--accent-hover)" stroke-width="2" stroke-linecap="round" filter="url(#wc)" />
+            <path d="M50,30 L60,35" fill="none" stroke="var(--sepia)" stroke-width="2" stroke-linecap="round" filter="url(#wc)" />
+          </svg>
+        </div>
+        <div class="feature-text">
+          <h3>長い作業も<br>休まず走りきる</h3>
+          <p>数時間、数日に及ぶマルチステップのタスクでも、目的を見失わず最後までやり遂げる持続力を備えています。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label fade-up">03 / PERFORMANCE</div>
+    <h2 class="section-title fade-up">長く複雑な仕事ほど差は開いていく。</h2>
+    
+    <div class="line-graph fade-up line-chart">
+      <svg viewBox="0 0 1000 400" width="100%" height="100%" preserveAspectRatio="none">
+        <path class="line-path line-other" d="M0,350 Q200,340 400,335 T1000,330" filter="url(#wc)" />
+        <path class="line-path line-other" d="M0,350 Q300,340 600,320 T1000,300" filter="url(#wc)" />
+        <path class="line-path line-fable" d="M0,350 Q400,340 750,150 T1000,20" filter="url(#wc)" />
+      </svg>
+      <div class="axis-label">仕事の長さ・複雑さ &rarr;</div>
+    </div>
+  </section>
+
+  <section id="safety">
+    <div class="section-label fade-up">04 / SAFETY</div>
+    <h2 class="section-title fade-up">強い力にはやさしいブレーキを。</h2>
+    
+    <svg class="safety-ill fade-up" viewBox="0 0 800 300">
+      <path d="M-50,250 Q200,150 400,220 T850,200 L850,350 L-50,350 Z" fill="var(--ochre)" opacity="0.4" filter="url(#wc-strong)" />
+      <path d="M-50,300 Q300,200 600,250 T850,250 L850,350 L-50,350 Z" fill="var(--sepia)" opacity="0.6" filter="url(#wc-strong)" />
+      <circle cx="550" cy="150" r="80" fill="var(--accent)" opacity="0.3" filter="url(#wc-strong)" />
+      
+      <g transform="translate(450, 210)">
+        <path d="M0,0 C-30,-40 20,-70 50,-20 C80,-10 60,30 20,20 C-10,10 0,20 0,0" fill="var(--cream)" opacity="0.95" filter="url(#wc)" />
+        <path d="M-25,10 C-35,-10 -15,-30 -5,-10 C5,10 -15,20 -25,10" fill="var(--accent-hover)" opacity="0.9" filter="url(#wc)" />
+      </g>
+    </svg>
+    
+    <p class="safety-text fade-up">
+      Fable 5 は、これまでにない強大な能力を持つからこそ、人間社会の価値観に深く寄り添い、どんな時でも安全に動作するための厳格なブレーキシステムを根底から備えています。
+    </p>
+  </section>
+
+  <section id="start">
+    <div class="section-label fade-up">05 / HOW TO START</div>
+    <h2 class="section-title fade-up">はじめかたはかんたん。</h2>
+    
+    <div class="steps">
+      <div class="step fade-up">
+        <div class="step-num">Step 1</div>
+        <svg viewBox="0 0 100 100" class="step-ill">
+          <rect x="15" y="30" width="70" height="45" rx="4" fill="var(--sand)" opacity="0.8" filter="url(#wc)" />
+          <rect x="20" y="35" width="60" height="35" rx="2" fill="var(--cream)" opacity="0.9" filter="url(#wc)" />
+          <path d="M10,80 L90,80 L95,85 L5,85 Z" fill="var(--sepia)" opacity="0.7" filter="url(#wc)" />
+        </svg>
+        <h3>アカウントを作成</h3>
+      </div>
+      <div class="step fade-up">
+        <div class="step-num">Step 2</div>
+        <svg viewBox="0 0 100 100" class="step-ill">
+          <circle cx="50" cy="50" r="30" fill="var(--ochre)" opacity="0.5" filter="url(#wc)" />
+          <path d="M35,50 L45,60 L65,40" fill="none" stroke="var(--cream)" stroke-width="5" stroke-linecap="round" filter="url(#wc)" />
+        </svg>
+        <h3>Fable 5 を選択</h3>
+      </div>
+      <div class="step fade-up">
+        <div class="step-num">Step 3</div>
+        <svg viewBox="0 0 100 100" class="step-ill">
+          <path d="M20,30 L80,30 C85,30 90,35 90,40 L90,70 C90,75 85,80 80,80 L40,80 L20,95 L20,80 C15,80 10,75 10,70 L10,40 C10,35 15,30 20,30 Z" fill="var(--accent)" opacity="0.7" filter="url(#wc)" />
+          <circle cx="35" cy="55" r="4" fill="var(--cream)" />
+          <circle cx="50" cy="55" r="4" fill="var(--cream)" />
+          <circle cx="65" cy="55" r="4" fill="var(--cream)" />
+        </svg>
+        <h3>チャットを始める</h3>
+      </div>
+    </div>
+  </section>
+
+  <section class="final-cta">
+    <div class="cta-ill">
+      <svg viewBox="0 0 1200 600" preserveAspectRatio="xMidYMax slice">
+        <path d="M0,400 Q300,200 600,350 T1200,300 L1200,600 L0,600 Z" fill="var(--ochre)" opacity="0.3" filter="url(#wc-strong)" />
+        <path d="M0,500 Q400,350 800,450 T1200,400 L1200,600 L0,600 Z" fill="var(--sepia)" opacity="0.4" filter="url(#wc-strong)" />
+        <path d="M600,400 Q500,450 400,550 T200,650" fill="none" stroke="var(--cream)" stroke-width="20" stroke-linecap="round" opacity="0.5" filter="url(#wc-strong)" />
+        <circle cx="600" cy="250" r="120" fill="var(--accent)" opacity="0.15" filter="url(#wc-strong)" />
+      </svg>
+    </div>
+    <h2 class="fade-up">いちばん遠くまでいっしょに。</h2>
+    <div class="fade-up">
+      <a href="#" class="btn-primary" style="font-size: 1.2rem; padding: 1rem 3rem;">Claudeを使ってみる</a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="logo" style="justify-content: center; margin-bottom: 1rem; opacity: 0.5;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--text)"><circle cx="12" cy="12" r="10"/></svg>
+      Claude
+    </div>
+    <p>&copy; Anthropic PBC. Fable 5 is a conceptual model landing page.</p>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.15
+      };
+
+      const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            
+            // Bar chart logic
+            if (entry.target.classList.contains('bar-chart')) {
+              const bars = entry.target.querySelectorAll('.bar');
+              bars.forEach(bar => {
+                bar.style.height = bar.dataset.height;
+              });
+            }
+            
+            // Line chart logic
+            if (entry.target.classList.contains('line-chart')) {
+              // Triggered purely by the .visible class and CSS transition
+            }
+            
+            observer.unobserve(entry.target);
+          }
+        });
+      }, observerOptions);
+
+      document.querySelectorAll('.fade-up').forEach(el => {
+        observer.observe(el);
+      });
+
+      // Simple Parallax for Hero Sun
+      const sun = document.querySelector('.parallax-sun');
+      if (sun) {
+        window.addEventListener('scroll', () => {
+          const scrollY = window.scrollY;
+          if (scrollY < window.innerHeight) {
+            sun.style.transform = `translateY(${scrollY * 0.4}px)`;
+          }
+        }, { passive: true });
+      }
+    });
+  </script>
+</body>
+</html>

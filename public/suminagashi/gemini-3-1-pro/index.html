@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>墨流し Suminagashi</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400&family=Inter:wght@300;400&display=swap');
+
+body, html {
+    margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+    background-color: #efeae0;
+    font-family: "Noto Serif JP", "Yu Mincho", "MS PMincho", serif;
+    color: #2a2a2e;
+    user-select: none; -webkit-user-select: none;
+    touch-action: none;
+}
+
+#canvas-container {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+}
+
+#ui-layer {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;
+    pointer-events: none;
+}
+
+.title {
+    position: absolute; top: 2.5rem; left: 3rem;
+    writing-mode: vertical-rl;
+    font-size: 2.2rem; font-weight: 300;
+    letter-spacing: 0.6em; opacity: 0.85;
+}
+
+.caption {
+    position: absolute; top: 2.5rem; left: 1.2rem;
+    writing-mode: vertical-rl;
+    font-family: "Inter", sans-serif;
+    font-size: 0.75rem; font-weight: 300;
+    letter-spacing: 0.4em; opacity: 0.4;
+}
+
+.hint {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    letter-spacing: 1em; opacity: 0.6; font-size: 1.1rem;
+    transition: opacity 2s ease-out; white-space: nowrap; font-weight: 300;
+}
+
+.dock {
+    position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 1.2rem;
+    background: rgba(239, 234, 224, 0.65);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    padding: 0.6rem 1.5rem; border-radius: 3rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+    border: 1px solid rgba(0,0,0,0.04);
+    pointer-events: auto; font-size: 0.9rem;
+}
+
+.swatch {
+    width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    position: relative; border: 1px solid rgba(0,0,0,0.05);
+}
+
+.swatch:hover {
+    transform: scale(1.1);
+}
+
+.swatch.active::after {
+    content: ''; position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px;
+    border: 1px solid rgba(0,0,0,0.4); border-radius: 50%;
+}
+
+.swatch-auto {
+    font-size: 0.8rem; background: transparent; border: 1px solid rgba(0,0,0,0.4);
+    color: rgba(0,0,0,0.8);
+}
+
+.swatch-auto.active {
+    background: #2a2a2e; color: #efeae0; border-color: transparent;
+}
+
+.divider {
+    width: 1px; height: 1.8rem; background: rgba(0,0,0,0.1);
+}
+
+.toggle-btn, .action-btn {
+    cursor: pointer; display: flex; align-items: center; gap: 0.4rem;
+    opacity: 0.6; transition: opacity 0.3s; padding: 0.4rem;
+}
+
+.toggle-btn:hover, .action-btn:hover, .toggle-btn.active {
+    opacity: 1;
+}
+
+.dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: transparent; border: 1px solid #2a2a2e;
+    transition: background 0.3s;
+}
+
+.toggle-btn.active .dot {
+    background: #2a2a2e;
+}
+
+.credit {
+    position: absolute; bottom: 1.2rem; right: 1.5rem;
+    font-family: "Inter", sans-serif; font-size: 0.6rem;
+    letter-spacing: 0.15em; opacity: 0.3;
+}
+
+@media (max-width: 768px) {
+    .title { font-size: 1.8rem; top: 1.5rem; left: 2rem; }
+    .caption { font-size: 0.65rem; top: 1.5rem; left: 0.8rem; }
+    .dock { width: 85%; flex-wrap: wrap; justify-content: center; gap: 0.8rem; padding: 0.8rem; border-radius: 1.5rem; bottom: 1.5rem; }
+    .hint { font-size: 0.9rem; }
+}
+</style>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+
+<div id="ui-layer">
+    <div class="title">墨流し</div>
+    <div class="caption">SUMINAGASHI &mdash; INK DISSOLUTION</div>
+    <div class="hint" id="hint-text">画 面 を な ぞ っ て 墨 を 流 す</div>
+    
+    <div class="dock">
+        <div class="swatch swatch-auto active" id="sw-auto">巡</div>
+        <div class="divider"></div>
+        <div class="swatch" id="sw-sumi" style="background:#1a1a1f;" title="墨"></div>
+        <div class="swatch" id="sw-ai" style="background:#16407a;" title="藍"></div>
+        <div class="swatch" id="sw-shu" style="background:#c8372d;" title="朱"></div>
+        <div class="swatch" id="sw-matsu" style="background:#2e6e52;" title="松葉"></div>
+        <div class="divider"></div>
+        <div class="toggle-btn active" id="btn-auto">
+            <div class="dot"></div>自動演出
+        </div>
+        <div class="divider"></div>
+        <div class="action-btn" id="btn-wash">
+            洗い流す
+        </div>
+    </div>
+    
+    <div class="credit">THREE.JS &middot; STABLE FLUIDS</div>
+</div>
+
+<script type="module">
+import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
+
+// --- Initialization ---
+const canvasContainer = document.getElementById('canvas-container');
+const renderer = new THREE.WebGLRenderer({ antialias: false, depth: false, powerPreference: "high-performance" });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(1.0);
+canvasContainer.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+const planeGeometry = new THREE.PlaneGeometry(2, 2);
+const planeMesh = new THREE.Mesh(planeGeometry, new THREE.MeshBasicMaterial());
+scene.add(planeMesh);
+
+// --- Settings & Resolutions ---
+let aspectRatio = window.innerWidth / window.innerHeight;
+const SIM_RES = 256;
+const DYE_RES = 512;
+
+function createFBO(w, h) {
+    return new THREE.WebGLRenderTarget(w, h, {
+        wrapS: THREE.ClampToEdgeWrapping, wrapT: THREE.ClampToEdgeWrapping,
+        minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter,
+        format: THREE.RGBAFormat, type: THREE.HalfFloatType,
+        depthBuffer: false, stencilBuffer: false
+    });
+}
+function createDoubleFBO(w, h) {
+    return {
+        read: createFBO(w, h), write: createFBO(w, h),
+        swap: function() { let temp = this.read; this.read = this.write; this.write = temp; }
+    };
+}
+
+let velocity = createDoubleFBO(SIM_RES, SIM_RES);
+let pressure = createDoubleFBO(SIM_RES, SIM_RES);
+let dye = createDoubleFBO(DYE_RES, DYE_RES);
+let divergence = createFBO(SIM_RES, SIM_RES);
+
+// --- Shaders ---
+const baseVertexShader = `
+    varying vec2 vUv;
+    void main() {
+        vUv = uv;
+        gl_Position = vec4(position, 1.0);
+    }
+`;
+
+const splatShader = `
+    uniform sampler2D uTarget;
+    uniform float aspectRatio;
+    uniform vec3 color;
+    uniform vec2 point1;
+    uniform vec2 point2;
+    uniform float radius;
+    varying vec2 vUv;
+    
+    float sdSegment(vec2 p, vec2 a, vec2 b) {
+        vec2 pa = p - a, ba = b - a;
+        float l2 = dot(ba, ba);
+        float h = l2 > 1e-6 ? clamp(dot(pa, ba)/l2, 0.0, 1.0) : 0.0;
+        return length(pa - ba*h);
+    }
+
+    void main() {
+        vec2 p = vUv;
+        vec2 a = point1;
+        vec2 b = point2;
+        p.x *= aspectRatio;
+        a.x *= aspectRatio;
+        b.x *= aspectRatio;
+        
+        float d = sdSegment(p, a, b);
+        float splat = exp(-d * d / radius);
+        vec3 base = texture2D(uTarget, vUv).xyz;
+        gl_FragColor = vec4(base + color * splat, 1.0);
+    }
+`;
+
+const advectionShader = `
+    uniform sampler2D uVelocity;
+    uniform sampler2D uSource;
+    uniform vec2 texelSize;
+    uniform float dt;
+    uniform float dissipation;
+    varying vec2 vUv;
+    void main() {
+        vec2 coord = vUv - dt * texture2D(uVelocity, vUv).xy * texelSize;
+        vec3 result = texture2D(uSource, coord).xyz;
+        gl_FragColor = vec4(result * dissipation, 1.0);
+    }
+`;
+
+const divergenceShader = `
+    uniform sampler2D uVelocity;
+    uniform vec2 texelSize;
+    varying vec2 vUv;
+    void main() {
+        float L = texture2D(uVelocity, vUv - vec2(texelSize.x, 0.0)).x;
+        float R = texture2D(uVelocity, vUv + vec2(texelSize.x, 0.0)).x;
+        float T = texture2D(uVelocity, vUv + vec2(0.0, texelSize.y)).y;
+        float B = texture2D(uVelocity, vUv - vec2(0.0, texelSize.y)).y;
+        float div = 0.5 * (R - L + T - B);
+        gl_FragColor = vec4(div, 0.0, 0.0, 1.0);
+    }
+`;
+
+const jacobiShader = `
+    uniform sampler2D uPressure;
+    uniform sampler2D uDivergence;
+    uniform vec2 texelSize;
+    varying vec2 vUv;
+    void main() {
+        float L = texture2D(uPressure, vUv - vec2(texelSize.x, 0.0)).x;
+        float R = texture2D(uPressure, vUv + vec2(texelSize.x, 0.0)).x;
+        float T = texture2D(uPressure, vUv + vec2(0.0, texelSize.y)).x;
+        float B = texture2D(uPressure, vUv - vec2(0.0, texelSize.y)).x;
+        float div = texture2D(uDivergence, vUv).x;
+        float p = (L + R + B + T - div) * 0.25;
+        gl_FragColor = vec4(p, 0.0, 0.0, 1.0);
+    }
+`;
+
+const gradientSubtractShader = `
+    uniform sampler2D uPressure;
+    uniform sampler2D uVelocity;
+    uniform vec2 texelSize;
+    varying vec2 vUv;
+    void main() {
+        float L = texture2D(uPressure, vUv - vec2(texelSize.x, 0.0)).x;
+        float R = texture2D(uPressure, vUv + vec2(texelSize.x, 0.0)).x;
+        float T = texture2D(uPressure, vUv + vec2(0.0, texelSize.y)).x;
+        float B = texture2D(uPressure, vUv - vec2(0.0, texelSize.y)).x;
+        vec2 velocity = texture2D(uVelocity, vUv).xy;
+        velocity.xy -= vec2(R - L, T - B);
+        gl_FragColor = vec4(velocity, 0.0, 1.0);
+    }
+`;
+
+const displayShader = `
+    uniform sampler2D uDye;
+    varying vec2 vUv;
+
+    float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+    float noise(vec2 p) {
+        vec2 i = floor(p); vec2 f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+                   mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+    }
+    float fbm(vec2 p) {
+        float v = 0.0; float a = 0.5;
+        for(int i=0; i<3; i++) { v += a * noise(p); p *= 2.0; a *= 0.5; }
+        return v;
+    }
+
+    void main() {
+        vec3 dyeAbsorbance = max(texture2D(uDye, vUv).xyz, 0.0);
+        vec3 bgColor = vec3(0.937, 0.918, 0.878);
+        float n = fbm(vUv * 300.0) * 0.025 - 0.0125;
+        bgColor += n;
+        
+        vec3 color = bgColor * exp(-dyeAbsorbance);
+        gl_FragColor = vec4(color, 1.0);
+    }
+`;
+
+const multiplyShader = `
+    uniform sampler2D uTarget;
+    uniform float value;
+    varying vec2 vUv;
+    void main() {
+        vec3 c = texture2D(uTarget, vUv).xyz;
+        gl_FragColor = vec4(c * value, 1.0);
+    }
+`;
+
+// --- Materials ---
+const createMaterial = (frag, uniforms) => new THREE.ShaderMaterial({ vertexShader: baseVertexShader, fragmentShader: frag, uniforms: uniforms, depthTest: false, depthWrite: false });
+
+const splatMaterial = createMaterial(splatShader, {
+    uTarget: { value: null }, aspectRatio: { value: aspectRatio },
+    color: { value: new THREE.Vector3() }, point1: { value: new THREE.Vector2() },
+    point2: { value: new THREE.Vector2() }, radius: { value: 0.0 }
+});
+
+const advectionMaterial = createMaterial(advectionShader, {
+    uVelocity: { value: null }, uSource: { value: null },
+    texelSize: { value: new THREE.Vector2() }, dt: { value: 0.016 }, dissipation: { value: 1.0 }
+});
+
+const divergenceMaterial = createMaterial(divergenceShader, {
+    uVelocity: { value: null }, texelSize: { value: new THREE.Vector2() }
+});
+
+const jacobiMaterial = createMaterial(jacobiShader, {
+    uPressure: { value: null }, uDivergence: { value: null }, texelSize: { value: new THREE.Vector2() }
+});
+
+const gradientMaterial = createMaterial(gradientSubtractShader, {
+    uPressure: { value: null }, uVelocity: { value: null }, texelSize: { value: new THREE.Vector2() }
+});
+
+const displayMaterial = createMaterial(displayShader, { uDye: { value: null } });
+
+const multiplyMaterial = createMaterial(multiplyShader, { uTarget: { value: null }, value: { value: 1.0 } });
+
+function blit(target, material) {
+    planeMesh.material = material;
+    if (target) {
+        renderer.setRenderTarget(target);
+        renderer.render(scene, camera);
+    } else {
+        renderer.setRenderTarget(null);
+        renderer.render(scene, camera);
+    }
+}
+
+// --- Colors & Logic ---
+const palette = [
+    { id: 'auto', name: '巡', val: null },
+    { id: 'sumi', name: '墨', val: new THREE.Vector3(2.22, 2.19, 1.98) },
+    { id: 'ai', name: '藍', val: new THREE.Vector3(2.38, 1.29, 0.60) },
+    { id: 'shu', name: '朱', val: new THREE.Vector3(0.17, 1.44, 1.60) },
+    { id: 'matsu', name: '松葉', val: new THREE.Vector3(1.65, 0.75, 1.00) }
+];
+
+let activeColorId = 'auto';
+let autoCurrentColorIndex = 1;
+let washingOut = false;
+let washOutTimer = null;
+
+const prefsReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let isAutoPlayEnabled = !prefsReduced;
+let isAutoPlaying = false;
+let lastInteractionTime = performance.now();
+let autoPlayTime = Math.random() * 100;
+
+const input = {
+    x: 0.5, y: 0.5, lastX: 0.5, lastY: 0.5,
+    dragging: false, hovering: false
+};
+
+function getSplatColor() {
+    if (activeColorId === 'auto') {
+        return palette[autoCurrentColorIndex].val;
+    }
+    return palette.find(c => c.id === activeColorId).val;
+}
+
+// --- UI Interaction ---
+document.querySelectorAll('.swatch').forEach(el => {
+    el.addEventListener('click', (e) => {
+        document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        activeColorId = e.currentTarget.id.replace('sw-', '');
+    });
+});
+
+const btnAuto = document.getElementById('btn-auto');
+if (!isAutoPlayEnabled) btnAuto.classList.remove('active');
+
+btnAuto.addEventListener('click', () => {
+    isAutoPlayEnabled = !isAutoPlayEnabled;
+    btnAuto.classList.toggle('active', isAutoPlayEnabled);
+    if (isAutoPlayEnabled) lastInteractionTime = performance.now() - 10000;
+});
+
+const btnWash = document.getElementById('btn-wash');
+btnWash.addEventListener('click', () => {
+    washingOut = true;
+    if (washOutTimer) clearTimeout(washOutTimer);
+    washOutTimer = setTimeout(() => { washingOut = false; }, 3000);
+});
+
+let hintHidden = false;
+function hideHint() {
+    if (!hintHidden) {
+        document.getElementById('hint-text').style.opacity = '0';
+        hintHidden = true;
+    }
+}
+
+// --- Pointer Events ---
+window.addEventListener('pointermove', (e) => {
+    if (e.target.closest('.dock')) return;
+    input.x = e.clientX / window.innerWidth;
+    input.y = 1.0 - e.clientY / window.innerHeight;
+    
+    if (e.buttons > 0 || e.touches) input.dragging = true;
+    else input.hovering = true;
+    
+    lastInteractionTime = performance.now();
+    isAutoPlaying = false;
+    hideHint();
+});
+
+window.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('.dock')) return;
+    input.dragging = true;
+    input.hovering = false;
+    input.x = e.clientX / window.innerWidth;
+    input.y = 1.0 - e.clientY / window.innerHeight;
+    input.lastX = input.x;
+    input.lastY = input.y;
+    
+    if (activeColorId === 'auto') {
+        autoCurrentColorIndex = (autoCurrentColorIndex % 4) + 1;
+    }
+    
+    lastInteractionTime = performance.now();
+    isAutoPlaying = false;
+    hideHint();
+});
+
+window.addEventListener('pointerup', () => {
+    input.dragging = false;
+    input.hovering = false;
+});
+window.addEventListener('pointerleave', () => {
+    input.hovering = false;
+});
+
+window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    aspectRatio = window.innerWidth / window.innerHeight;
+});
+
+// --- Main Loop ---
+let lastTime = performance.now();
+
+function render(now) {
+    requestAnimationFrame(render);
+    let dt = Math.min((now - lastTime) / 1000.0, 0.05);
+    lastTime = now;
+
+    // Auto Play Logic
+    if (isAutoPlayEnabled && (now - lastInteractionTime > 4000)) {
+        isAutoPlaying = true;
+        autoPlayTime += dt * 0.8;
+        
+        let tx = 0.5 + 0.35 * Math.sin(autoPlayTime * 0.6) * Math.cos(autoPlayTime * 0.4);
+        let ty = 0.5 + 0.35 * Math.cos(autoPlayTime * 0.7) * Math.sin(autoPlayTime * 0.3);
+        
+        input.x += (tx - input.x) * 0.04;
+        input.y += (ty - input.y) * 0.04;
+        
+        let flow = Math.sin(autoPlayTime * 1.5) * Math.cos(autoPlayTime * 0.9);
+        if (flow > 0.3) {
+            input.dragging = true;
+            input.hovering = false;
+            if (Math.random() < 0.015 && activeColorId === 'auto') {
+                autoCurrentColorIndex = (autoCurrentColorIndex % 4) + 1;
+            }
+        } else {
+            input.dragging = false;
+            input.hovering = true;
+        }
+    }
+
+    // Input Displacement Calculation
+    let dx = (input.x - input.lastX) * 1000.0;
+    let dy = (input.y - input.lastY) * 1000.0;
+    let len = Math.sqrt(dx * dx + dy * dy);
+    if (len > 100.0) { dx = (dx / len) * 100.0; dy = (dy / len) * 100.0; }
+
+    // Splatting
+    if ((len > 0.1 || isAutoPlaying) && (input.dragging || input.hovering)) {
+        splatMaterial.uniforms.aspectRatio.value = aspectRatio;
+        splatMaterial.uniforms.point1.value.set(input.lastX, input.lastY);
+        splatMaterial.uniforms.point2.value.set(input.x, input.y);
+
+        // Velocity Splat
+        splatMaterial.uniforms.uTarget.value = velocity.read.texture;
+        splatMaterial.uniforms.color.value.set(dx, dy, 0.0).multiplyScalar(15.0);
+        splatMaterial.uniforms.radius.value = 0.0008;
+        blit(velocity.write, splatMaterial);
+        velocity.swap();
+
+        // Dye Splat
+        if (input.dragging) {
+            splatMaterial.uniforms.uTarget.value = dye.read.texture;
+            splatMaterial.uniforms.color.value.copy(getSplatColor()).multiplyScalar(1.2);
+            splatMaterial.uniforms.radius.value = 0.0003;
+            blit(dye.write, splatMaterial);
+            dye.swap();
+        }
+    }
+
+    input.lastX = input.x;
+    input.lastY = input.y;
+
+    // Wash Out
+    if (washingOut) {
+        multiplyMaterial.uniforms.uTarget.value = dye.read.texture;
+        multiplyMaterial.uniforms.value.value = 0.96;
+        blit(dye.write, multiplyMaterial);
+        dye.swap();
+    }
+
+    // Simulation: Advection
+    advectionMaterial.uniforms.dt.value = 0.016;
+    advectionMaterial.uniforms.texelSize.value.set(1.0 / SIM_RES, 1.0 / SIM_RES);
+    
+    advectionMaterial.uniforms.uVelocity.value = velocity.read.texture;
+    advectionMaterial.uniforms.uSource.value = velocity.read.texture;
+    advectionMaterial.uniforms.dissipation.value = 0.98;
+    blit(velocity.write, advectionMaterial);
+    velocity.swap();
+
+    advectionMaterial.uniforms.texelSize.value.set(1.0 / DYE_RES, 1.0 / DYE_RES);
+    advectionMaterial.uniforms.uVelocity.value = velocity.read.texture;
+    advectionMaterial.uniforms.uSource.value = dye.read.texture;
+    advectionMaterial.uniforms.dissipation.value = 0.9999;
+    blit(dye.write, advectionMaterial);
+    dye.swap();
+
+    // Simulation: Divergence
+    divergenceMaterial.uniforms.texelSize.value.set(1.0 / SIM_RES, 1.0 / SIM_RES);
+    divergenceMaterial.uniforms.uVelocity.value = velocity.read.texture;
+    blit(divergence, divergenceMaterial);
+
+    // Simulation: Pressure (Jacobi)
+    multiplyMaterial.uniforms.uTarget.value = pressure.read.texture;
+    multiplyMaterial.uniforms.value.value = 0.9;
+    blit(pressure.write, multiplyMaterial);
+    pressure.swap();
+
+    jacobiMaterial.uniforms.texelSize.value.set(1.0 / SIM_RES, 1.0 / SIM_RES);
+    jacobiMaterial.uniforms.uDivergence.value = divergence.texture;
+    for (let i = 0; i < 20; i++) {
+        jacobiMaterial.uniforms.uPressure.value = pressure.read.texture;
+        blit(pressure.write, jacobiMaterial);
+        pressure.swap();
+    }
+
+    // Simulation: Gradient Subtraction
+    gradientMaterial.uniforms.texelSize.value.set(1.0 / SIM_RES, 1.0 / SIM_RES);
+    gradientMaterial.uniforms.uPressure.value = pressure.read.texture;
+    gradientMaterial.uniforms.uVelocity.value = velocity.read.texture;
+    blit(velocity.write, gradientMaterial);
+    velocity.swap();
+
+    // Display
+    displayMaterial.uniforms.uDye.value = dye.read.texture;
+    blit(null, displayMaterial);
+}
+
+// Start
+requestAnimationFrame(render);
+</script>
+
+</body>
+</html>
