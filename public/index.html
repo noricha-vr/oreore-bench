@@ -1071,6 +1071,56 @@
                     "オセロ等よりコード量が膨らむため、1 ショット出力の完走力が見える"
                 ]
             },
+            "lp-fable5": {
+                title: "Fable 5 発表 LP（水彩絵本）",
+                short: "世界観の再現",
+                desc: "「絵本のような水彩画の世界観」で AI モデル発表 LP を作る。X で話題になった Fable 5 製 LP の再現プロンプト（3 イテレーションで参照同等に収束した凍結版）をそのままベンチ化。",
+                color: "#C65D3B",  // 朱・テラコッタ
+                colorDark: "#9A4527",
+                icon: "fa-solid fa-mountain-sun",
+                difficulty: "中〜高（水彩イラストの SVG 表現 + 構成追従 + 演出）",
+                deliverable: "単一 index.html（CSS/JS インライン化・イラストはインライン SVG）",
+                criteria: [
+                    "生成りクリーム背景 + 朱アクセント + 墨色セリフ体のトーン&マナー準拠",
+                    "秋の草原パレット（緑を使わない）の丘陵風景をインライン SVG で描けるか",
+                    "左揃えの超巨大「Fable 5.」ヒーロー（ピリオドのみ朱色、ボタンなし）",
+                    "指定 7 セクション（ファミリー段状チャート / 2×2 カード / スクロール描画グラフ / 安全性 / はじめかた / 最終CTA）の構成追従",
+                    "人物 + 相棒キャラがページを通して旅をするストーリーの一貫性",
+                    "IntersectionObserver 未発火でも内容が消えない堅牢なリビール実装"
+                ],
+                highlights: [
+                    "「水彩のにじみ」をコード（feTurbulence 等）でどこまで表現してくるか",
+                    "禁止事項（緑・ヒーローのボタン・単色ピクトグラム）を守れるか",
+                    "段状バーチャートと指数カーブグラフの描画アニメーション",
+                    "キャラクターの造形センス（ふわふわの相棒がちゃんと可愛いか）",
+                    "見出しコピー実文の指定にトーンを合わせた補足コピーを書けるか"
+                ]
+            },
+            "suminagashi": {
+                title: "墨流し（WebGL 流体アート)",
+                short: "GPU 流体の一発実装",
+                desc: "画面をなぞると和紙の上で墨がマーブリングする WebGL アート。Stable Fluids + 吸光度の減法混色という実装方式まで名指しした凍結プロンプトで、フロンティアとローカルの実装力の断層を測る。",
+                color: "#16407A",  // 藍
+                colorDark: "#0D2A52",
+                icon: "fa-solid fa-droplet",
+                difficulty: "高（GPU シェーダー流体 + 減法混色 + 和のミニマル UI）",
+                deliverable: "単一 index.html（three.js CDN 可）",
+                criteria: [
+                    "Stable Fluids（advection → vorticity confinement → 圧力投影）の GPU 実装が動くか",
+                    "染料を吸光度で蓄積し「和紙色 × exp(-A)」の減法混色で表示できるか",
+                    "ドラッグ=インク注入 / ホバー=水流のみ、の入力分離",
+                    "和紙 #efeae0 + 墨・藍・朱・松葉 4 色の落ち着いた発色",
+                    "縦書き表題・字間ヒント・半透明ドック（巡/自動演出/洗い流す）の和 UI",
+                    "JS エラーなしで初期表示〜描画〜洗い流しまで完走するか"
+                ],
+                highlights: [
+                    "シェーダーが 1 ショットでコンパイルまで通るか（ローカルモデルの壁）",
+                    "にじみの縁の柔らかさ（ガウスぼかし・拡散の設計センス）",
+                    "マーブリングの渦の美しさ（vorticity の効かせ方）",
+                    "自動演出（放置時の自動滴下）の間の取り方",
+                    "「静謐で余白の多い」トーンを UI 細部まで通せるか"
+                ]
+            },
             "extract-questions": {
                 title: "質問抽出 → フォーム化",
                 short: "JSON / 質問抽出",
@@ -1292,6 +1342,20 @@
             { theme: "hasami-shogi", model: "grok-4-5",            runner: "grok CLI (single-turn)", note: "スモーク検証PASS。ダーク×市松模様のエレガント盤面+ルール要約footer。541行/14KB。", kind: "html" },
 
             // mario-like-2d（モデル出力は scripts/gen-html.py / add-model.sh で追加。検証: node scripts/verify-mario-like-2d.mjs）
+
+            // lp-fable5（水彩絵本 LP。スモーク検証: 全ページロード + スクロール走査で JS エラー数を機械確認）
+            { theme: "lp-fable5", model: "gemma-4-12b-qat",     runner: "LM Studio API",   note: "JSエラー0。構成は追従するがイラストは簡素な図形寄り。616行/20KB。", kind: "html" },
+            { theme: "lp-fable5", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",   note: "JSエラー0。トーンは保つがセクションの作り込みは薄め。456行/18KB。", kind: "html" },
+            { theme: "lp-fable5", model: "gemma-4-31b",         runner: "LM Studio API",   note: "JSエラー0。丘の重なりと朱の太陽で世界観を再現、ローカル最良。484行/25KB。", kind: "html" },
+            { theme: "lp-fable5", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "JSエラー0。紙テクスチャ+明朝の余白設計が最も「絵本」に迫る。1081行/50KB。", kind: "html" },
+            { theme: "lp-fable5", model: "grok-4-5",            runner: "OpenRouter API",  note: "JSエラー0。7セクション完全追従+段状チャートの完成度が高い。1040行/48KB。", kind: "html" },
+
+            // suminagashi（WebGL 流体。スモーク検証: ロード + ドラッグ描画で JS エラー数を機械確認。シェーダー不備はここで露呈する）
+            { theme: "suminagashi", model: "gemma-4-12b-qat",     runner: "LM Studio API",   note: "頂点シェーダーがコンパイル不能（Shader Error ×2）で描画されず。388行/14KB。", kind: "html" },
+            { theme: "suminagashi", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",   note: "フラグメントシェーダーがコンパイル不能（Shader Error ×2）。UI だけ表示。574行/22KB。", kind: "html" },
+            { theme: "suminagashi", model: "gemma-4-31b",         runner: "LM Studio API",   note: "uniform 未定義 TypeError が毎フレーム発生（440件）。ローカル勢は全滅。500行/19KB。", kind: "html" },
+            { theme: "suminagashi", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "JSエラー0で流体が動く。にじみ柔らかめ・淡い水彩調の解釈。765行/24KB。", kind: "html" },
+            { theme: "suminagashi", model: "grok-4-5",            runner: "OpenRouter API",  note: "JSエラー0で流体が動く。墨の濃淡と乱流の迫力はこちらが上。747行/25KB。", kind: "html" },
 
             // extract-questions（20 問入力、基本サイズ、全モデル PASS = 実運用サイズは全モデル対応可の証拠）
             { theme: "extract-questions", model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。20 件抽出、最軽量でも 本番運用スキーマを完全に満たす。", kind: "json" },
