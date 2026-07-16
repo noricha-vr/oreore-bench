@@ -9,10 +9,12 @@ Claude Opus は別途 Agent ツール経由。
 """
 from __future__ import annotations
 import argparse, json, sys, urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PUBLIC = ROOT / "public"
+PRICING_PATH = ROOT / "scripts" / "pricing.json"
 API = "http://127.0.0.1:1234/v1/chat/completions"
 
 MODELS = [
@@ -53,7 +55,84 @@ def gen_one(theme_dir: Path, model_id: str, dir_name: str, prompt: str, max_toke
         body = json.loads(resp.read().decode("utf-8"))
     content = body["choices"][0]["message"]["content"]
     out_file.write_text(content, encoding="utf-8")
+
+    # API レスポンスの usage を実測記録して run.json に書く。
+    # estimate-run-cost.py --write を使わなくても実測値が入るので、
+    # 生成時点で最も正確な usage を残せる (推定より下限問題がない)。
+    usage = body.get("usage") or {}
+    _write_run_measured(theme_dir, out_dir, dir_name, model_id, usage)
+
     return f"{dir_name}: saved {len(content)} chars"
+
+
+def _load_pricing_for(model_slug: str) -> dict | None:
+    """model-map.json → pricing.json から該当 slug の単価を返す。ローカル (単価なし) は None。"""
+    if not PRICING_PATH.exists():
+        return None
+    pricing = json.loads(PRICING_PATH.read_text(encoding="utf-8"))
+    return pricing.get(model_slug)
+
+
+def _write_run_measured(theme_dir: Path, out_dir: Path, model_slug: str, model_id: str, usage: dict) -> None:
+    """LM Studio (OpenAI 互換) の usage から run.json を書く。
+    estimated=False, method=api-usage, generated_at_source=measured。"""
+    theme = theme_dir.name
+    prompt_tokens = int(usage.get("prompt_tokens", 0))
+    completion_tokens = int(usage.get("completion_tokens", 0))
+    now_iso = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+    run: dict = {
+        "schema_version": 1,
+        "theme": theme,
+        "model": model_slug,
+        "model_id": model_id,
+        # LM Studio のみ (gen-questions.py の担当領域)
+        "harness": "lmstudio-api",
+        "reasoning_effort": "none",
+        "attempts": 1,
+        "generated_at": now_iso,
+        "generated_at_source": "measured",
+        "sampling": {"temperature": 0.2, "max_tokens": 16000, "top_p": "default"},
+        "system_prompt": "harness-default",
+        "post_processing": "none",
+        "runtime": {"engine": "lmstudio", "quantization": "qat-4bit" if "qat" in model_slug else "q4_k_m", "api": "openai-compat"},
+        "usage": {
+            "estimated": False,
+            "method": "api-usage",
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+        },
+    }
+    # ローカル: 参考単価なし。actual_usd=0
+    pricing = _load_pricing_for(model_slug)
+    if pricing:
+        usd = round(
+            prompt_tokens * pricing["prompt_usd_per_mtok"] / 1_000_000
+            + completion_tokens * pricing["completion_usd_per_mtok"] / 1_000_000,
+            6,
+        )
+        run["cost"] = {
+            "estimated": False,
+            "usd": usd,
+            "actual_usd": None,
+            "prompt_usd_per_mtok": pricing["prompt_usd_per_mtok"],
+            "completion_usd_per_mtok": pricing["completion_usd_per_mtok"],
+            "pricing_source": pricing["pricing_source"],
+            "pricing_model": pricing["pricing_model"],
+            "pricing_fetched_at": pricing["pricing_fetched_at"],
+        }
+    else:
+        run["cost"] = {
+            "estimated": False,
+            "usd": None,
+            "actual_usd": 0,
+            "prompt_usd_per_mtok": None,
+            "completion_usd_per_mtok": None,
+            "pricing_source": "local-no-reference",
+            "pricing_model": None,
+            "pricing_fetched_at": None,
+        }
+    (out_dir / "run.json").write_text(json.dumps(run, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def main() -> int:
