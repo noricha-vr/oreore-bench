@@ -1384,6 +1384,36 @@
             models: new Set()  // 空 = 全モデル表示
         };
 
+        // --- URL <-> Filter State Sync ---
+        // 共有・リロード復元のためフィルター状態を ?theme=...&models=a,b で持つ。不正キーは無視してデフォルトに落とす
+        // Object.hasOwn: ブラケットアクセスの truthy 判定だと __proto__ / constructor 等の継承キーが素通りするため
+        function restoreFiltersFromURL() {
+            const params = new URLSearchParams(location.search);
+            const theme = params.get('theme');
+            if (theme && Object.hasOwn(THEMES, theme)) activeFilters.theme = theme;
+            const models = (params.get('models') || '').split(',').filter(key => Object.hasOwn(MODELS, key));
+            activeFilters.models = new Set(models);
+        }
+
+        function syncFiltersToURL() {
+            // フィルター以外の既存クエリ（utm 等）とハッシュは壊さず保持する
+            const params = new URLSearchParams(location.search);
+            params.delete('theme');
+            params.delete('models');
+            if (activeFilters.theme !== 'all') params.set('theme', activeFilters.theme);
+            if (activeFilters.models.size > 0) params.set('models', [...activeFilters.models].join(','));
+            const query = params.toString();
+            // replaceState: フィルター操作のたびに履歴を積まない（戻るボタンを汚さない）
+            history.replaceState(null, '', `${location.pathname}${query ? '?' + query : ''}${location.hash}`);
+        }
+
+        // フィルター変更の反映は必ずここを通す（描画 → URL 同期の順。Safari の replaceState 頻度制限で例外が出ても描画は守る）
+        function applyFilters() {
+            renderFilters();
+            renderEntries();
+            syncFiltersToURL();
+        }
+
         // --- Filter Rendering ---
         function renderFilters() {
             // テーマタブ（単一選択）
@@ -1394,7 +1424,7 @@
                 const btn = document.createElement('button');
                 btn.className = 'theme-tab' + (activeFilters.theme === key ? ' active' : '');
                 btn.textContent = key === 'all' ? 'すべて' : THEMES[key].title;
-                btn.onclick = () => { activeFilters.theme = key; renderFilters(); renderEntries(); };
+                btn.onclick = () => { activeFilters.theme = key; applyFilters(); };
                 tabs.appendChild(btn);
             });
 
@@ -1415,8 +1445,7 @@
                 cb.onchange = () => {
                     if (cb.checked) activeFilters.models.add(modelKey);
                     else activeFilters.models.delete(modelKey);
-                    renderFilters();
-                    renderEntries();
+                    applyFilters();
                 };
                 checks.appendChild(label);
             }
@@ -1631,6 +1660,7 @@
 
         // Initial rendering
         document.addEventListener('DOMContentLoaded', () => {
+            restoreFiltersFromURL();
             renderFilters();
             renderEntries();
             renderThemeDescriptions();
