@@ -130,12 +130,15 @@ echo
 # run.json スケルトン生成 + 推定コスト算出。
 # API 経由で usage が取れなかった場合の下限値を埋める。実測 usage を後で埋めたい時は
 # 手で run.json の usage.estimated=false と method="api-usage" に更新してから re-run。
+# #7 Fail Fast: 失敗を握り潰さず非ゼロ exit で停止 (CLAUDE.md「失敗したのに成功扱い」禁止)
 echo "==> run.json スケルトン生成 (uv run scripts/estimate-run-cost.py --write)..."
-if command -v uv >/dev/null 2>&1; then
-  uv run "$ROOT/scripts/estimate-run-cost.py" --theme "$THEME" --model "$MODEL" --write >/dev/null || \
-    echo "  [warn] estimate-run-cost.py failed. Run manually to write run.json." >&2
-else
-  echo "  [warn] uv not found. Skip. Install uv or run scripts/estimate-run-cost.py manually." >&2
+if ! command -v uv >/dev/null 2>&1; then
+  echo "  [ERROR] uv not found. Install uv or run scripts/estimate-run-cost.py manually." >&2
+  exit 4
+fi
+if ! uv run "$ROOT/scripts/estimate-run-cost.py" --theme "$THEME" --model "$MODEL" --write >/dev/null; then
+  echo "  [ERROR] estimate-run-cost.py failed. run.json is not written. Fix and re-run." >&2
+  exit 5
 fi
 
 echo
