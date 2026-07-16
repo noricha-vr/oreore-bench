@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>suminagashi プロンプト — oreore-bench</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-soft: #f7f8fa;
+    --fg: #1a1a1a;
+    --fg-soft: #5a5a5a;
+    --muted-fg: #6b7280;
+    --border: #e5e7eb;
+    --primary: #2563eb;
+    --accent: #E25C2C;
+    --accent-dark: #B0481E;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+    background-color: var(--bg-soft);
+    color: var(--fg);
+    line-height: 1.8;
+    font-size: 0.9375rem;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .hero {
+    padding: 28px 24px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+    color: #ffffff;
+  }
+  .hero-inner { max-width: 760px; margin: 0 auto; }
+  .hero a.back {
+    color: #ffffff;
+    opacity: 0.85;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 12px;
+  }
+  .hero a.back:hover { opacity: 1; }
+  .hero h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: #ffffff;
+    margin-bottom: 4px;
+  }
+  .hero .sub {
+    font-size: 0.9375rem;
+    opacity: 0.9;
+  }
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+  .card {
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .card h2 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin: 28px 0 12px;
+    color: var(--fg);
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+  }
+  .card h2:first-of-type { margin-top: 0; }
+  .card p { margin-bottom: 14px; color: var(--fg-soft); }
+  .card ul, .card ol { margin: 0 0 16px 1.5rem; color: var(--fg-soft); }
+  .card li { margin-bottom: 4px; }
+  .card code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+    background-color: var(--bg-soft);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--fg);
+  }
+  .card strong { color: var(--fg); font-weight: 700; }
+  .meta {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 0.8125rem;
+    color: var(--muted-fg);
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .meta a { color: var(--muted-fg); font-weight: 600; }
+  .meta a:hover { color: var(--primary); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a href="../" class="back">← oreore-bench に戻る</a>
+    <h1>suminagashi プロンプト</h1>
+    <p class="sub">このテーマの凍結プロンプト。新しいモデルで再現する時はこのまま渡してください。</p>
+  </div>
+</header>
+
+<main class="container">
+  <article class="card">
+    <p>「墨流し（Suminagashi）」— 画面いっぱいのインタラクティブアート作品を作ってください。</p>
+
+    <h2>体験</h2>
+    <p>マウスや指で画面をなぞると、和紙の上に墨が流れ出し、本物の液体のように渦を巻きながら溶け合い、大理石模様（マーブリング）を描く。動きは粘性のある水面のようにゆっくり優雅に減衰し、インクは長く紙に残る。にじみの縁はやわらかく、水に垂らした絵の具のようにふんわり拡散する（鋭いエッジや細かい乱流ノイズで硬くしない）。</p>
+
+    <h2>実装</h2>
+    <p>WebGL の GPU 流体シミュレーション（Stable Fluids 法: advection → vorticity confinement → 圧力投影）。three.js 使用可。染料は RGB 加算ではなく吸光度として蓄積し、表示時に「和紙色 × exp(-吸光度)」の減法混色で描く（色が重なるほど濁らず深く沈む）。ドラッグ中はインクを注入し、ホバーでは水流だけを乱す。</p>
+
+    <h2>ビジュアル</h2>
+    <p>背景は温かみのある生成りの和紙 <code>#efeae0</code>。紙の質感はごく淡く（テクスチャで色味を灰色にくすませない。遠目にはほぼ無地に見える程度）。インクは4色 — 墨 <code>#1a1a1f</code>・藍 <code>#16407a</code>・朱 <code>#c8372d</code>・松葉 <code>#2e6e52</code>。発色は顔料のように落ち着いたトーンで、蛍光的な鮮やかさにしない。</p>
+
+    <h2>UI（和のミニマリズム、静謐で余白の多いデザイン）</h2>
+    <ul>
+      <li>左上に縦書きの表題「墨流し」（明朝体）</li>
+      <li>画面左端に縦方向の英字キャプション「SUMINAGASHI — INK DISSOLUTION」（letter-spacing 広め）</li>
+      <li>中央に字間の空いたヒント「画 面 を な ぞ っ て 墨 を 流 す」（初回操作でふわりと消える）</li>
+      <li>画面下部中央に丸みのある半透明のドック: 色スウォッチ（巡=自動サイクル・墨・藍・朱・松葉、選択中はリング表示、ラベルは漢字1〜2文字）、区切り線、「自動演出」トグル（点付き）、「洗い流す」ボタン</li>
+      <li>右下に小さく「THREE.JS · STABLE FLUIDS」のクレジット</li>
+    </ul>
+
+    <h2>機能</h2>
+    <p>「自動演出」ON では放置中に自動でインクが滴下され水流がゆらぐ。「洗い流す」でインクが徐々に流れ落ちて紙が戻る。prefers-reduced-motion に配慮。モバイルのタッチ操作対応。</p>
+
+    <div class="meta">
+      <a href="./PROMPT.md" target="_blank">Markdown 元ファイル</a>
+      <a href="https://github.com/noricha-vr/oreore-bench/blob/main/public/suminagashi/PROMPT.md" target="_blank">GitHub で見る</a>
+    </div>
+  </article>
+</main>
+
+</body>
+</html>

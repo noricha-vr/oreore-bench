@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lp-fable5 プロンプト — oreore-bench</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-soft: #f7f8fa;
+    --fg: #1a1a1a;
+    --fg-soft: #5a5a5a;
+    --muted-fg: #6b7280;
+    --border: #e5e7eb;
+    --primary: #2563eb;
+    --accent: #E25C2C;
+    --accent-dark: #B0481E;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+    background-color: var(--bg-soft);
+    color: var(--fg);
+    line-height: 1.8;
+    font-size: 0.9375rem;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .hero {
+    padding: 28px 24px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+    color: #ffffff;
+  }
+  .hero-inner { max-width: 760px; margin: 0 auto; }
+  .hero a.back {
+    color: #ffffff;
+    opacity: 0.85;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 12px;
+  }
+  .hero a.back:hover { opacity: 1; }
+  .hero h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: #ffffff;
+    margin-bottom: 4px;
+  }
+  .hero .sub {
+    font-size: 0.9375rem;
+    opacity: 0.9;
+  }
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+  .card {
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .card h2 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin: 28px 0 12px;
+    color: var(--fg);
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+  }
+  .card h2:first-of-type { margin-top: 0; }
+  .card p { margin-bottom: 14px; color: var(--fg-soft); }
+  .card ul, .card ol { margin: 0 0 16px 1.5rem; color: var(--fg-soft); }
+  .card li { margin-bottom: 4px; }
+  .card code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+    background-color: var(--bg-soft);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--fg);
+  }
+  .card strong { color: var(--fg); font-weight: 700; }
+  .meta {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 0.8125rem;
+    color: var(--muted-fg);
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .meta a { color: var(--muted-fg); font-weight: 600; }
+  .meta a:hover { color: var(--primary); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a href="../" class="back">← oreore-bench に戻る</a>
+    <h1>lp-fable5 プロンプト</h1>
+    <p class="sub">このテーマの凍結プロンプト。新しいモデルで再現する時はこのまま渡してください。</p>
+  </div>
+</header>
+
+<main class="container">
+  <article class="card">
+    <p>AIモデル「Fable 5」を発表する日本語のランディングページを作ってください。</p>
+
+    <h2>トーン&マナー</h2>
+    <p>絵本のような温かい水彩画の世界観。生成りのクリーム色の紙 (<code>#faf6ee</code> 前後) を背景に、テラコッタ/朱色 (<code>#c65d3b</code>〜<code>#d97757</code> 系) をアクセントカラー、見出しは墨色のセリフ体（明朝/serif）。全体に余白をたっぷり取り、静かで上質な印象。</p>
+
+    <h2>イラスト</h2>
+    <p>絵本の丘陵風景を水彩タッチのインラインSVGで豊かに描き込む。配色は秋の草原 — 生成り・砂色・黄土・淡いセピアのグラデーションの丘（緑は使わない）。重なり合う丘、丘を縫って遠くへ続く白い小道、にじんだ輪郭の朱色の太陽、朱・赤茶・くすんだ金色の茂みや草花・穂を点在させ、水彩のにじみと濃淡を効かせる。赤い服の小さな人物と、クリーム色のふわふわした大きな相棒キャラクターが一緒に歩んでいくストーリーをページ全体に通す。</p>
+
+    <h2>ヘッダー</h2>
+    <p>左に太陽アイコン+「Claude」ロゴ、右にテキストリンク「モデル / できること / 安全性」と、角丸で朱色の「使ってみる」ボタン。スクロールしても固定。</p>
+
+    <h2>セクション構成（各セクションに小さな番号ラベルと英字/和字のキッカーを添える）</h2>
+    <ol>
+      <li><strong>ヒーロー</strong> — 左揃えレイアウト。上に小さく「MYTHOS-CLASS / 一般提供モデル」、その下に画面幅いっぱいの超巨大なセリフ体「Fable 5.」(ピリオドだけ朱色)、その下に左揃えでキャッチコピー「今、いちばん賢いClaudeが、誰でも使える形に。」と補足一文。ビューポート下半分は、丘を縫う小道を人物と相棒が歩む水彩イラストが画面端まで広がる。ボタンは置かない。</li>
+      <li><strong>Claudeファミリー</strong> —「Claudeのいちばん上へ。」Haiku → Sonnet → Opus → Mythos の順に高くなる段状のバーチャートで、最上位クラスの位置づけを表現。</li>
+      <li><strong>できること</strong> —「頼れる仕事のその先まで。」2×2 のカードグリッド。各カードは「左にミニ水彩イラスト、右に太字見出し+2行の説明」の横並び構成: ①画面を見るだけでゲームを最後までクリア（ゲーム画面の小さな水彩絵） ②5,000万行のコードを1日で移行（積み上がったコードの紙束） ③新薬の設計を約10倍のスピードで（分子・フラスコ） ④長い作業も休まず走りきる（道と時計）。アイコン的な単色ピクトグラムではなく、多色の小さな水彩イラストにする。</li>
+      <li><strong>いちばんの強み</strong> —「長く複雑な仕事ほど差は開いていく。」スクロールに連動して描画される折れ線グラフ。Fable 5 の線だけ朱色で指数関数的に伸び、他のモデルの線は灰色で低く留まる。軸ラベルは「仕事の長さ・複雑さ →」。</li>
+      <li><strong>安全性</strong> —「強い力にはやさしいブレーキを。」人物と相棒が並んで夕日を眺めて座る大きな水彩イラスト。補足コピー1〜2行。</li>
+      <li><strong>はじめかた</strong> —「はじめかたはかんたん。」ノートPCの小さなイラストとステップ表記。</li>
+      <li><strong>最終CTA</strong> —「いちばん遠くまでいっしょに。」中央に朱色ボタン「Claudeを使ってみる」、背景は夕暮れの丘に道が続く水彩イラスト。フッターに小さなロゴと注記。</li>
+    </ol>
+
+    <h2>演出</h2>
+    <p>セクションのフェード+スライドイン（IntersectionObserver。ただし未発火でも内容が完全に非表示のままにならないこと）、ヒーローの雲や太陽のゆったりしたパララックス、グラフの描画アニメーション。スマホ表示ではセクションが縦積みになる完全レスポンシブ。</p>
+
+    <div class="meta">
+      <a href="./PROMPT.md" target="_blank">Markdown 元ファイル</a>
+      <a href="https://github.com/noricha-vr/oreore-bench/blob/main/public/lp-fable5/PROMPT.md" target="_blank">GitHub で見る</a>
+    </div>
+  </article>
+</main>
+
+</body>
+</html>
