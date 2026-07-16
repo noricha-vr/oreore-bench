@@ -8,7 +8,9 @@
 - generated_at は git log --diff-filter=A --format=%aI -- <path> の初回コミット時刻を使う
   (「手直しなし」ルールにより生成日と一致するはずという計画の前提)
 - sampling: gen-questions.py 由来 (Gemma × extract-questions 系) のみ temperature 0.2 / max_tokens 16000 が確定
-- 既に estimated: false (実測 usage あり) の run.json は上書きしない
+- #5 デフォルトは既存 run.json のあるエントリをスキップする (手動修正の無警告巻き戻しを防ぐ)
+- --overwrite 指定時のみ既存 run.json を再生成 (usage/cost は保持)
+- 実測 (estimated: false) の run.json は --overwrite でも触らない
 - estimate-run-cost.py --write と組み合わせて完成させる (順序: backfill -> estimate --write -> build-runs-json)
 
 Exit: 0 成功 / 1 index.html パース失敗
@@ -137,7 +139,7 @@ def main() -> int:
     ap.add_argument("--theme")
     ap.add_argument("--model")
     ap.add_argument("--overwrite", action="store_true",
-                    help="既存 run.json のフィールドも上書き (usage/cost は保持)")
+                    help="既存 run.json も再生成する (usage/cost は保持、手動修正は失う)")
     args = ap.parse_args()
 
     entries = parse_entries()
@@ -145,6 +147,7 @@ def main() -> int:
 
     processed = 0
     skipped_measured = 0
+    skipped_existing = 0
     for e in entries:
         if args.theme and e["theme"] != args.theme:
             continue
@@ -157,31 +160,32 @@ def main() -> int:
             continue
 
         run_path = model_dir / "run.json"
-        new_run = build_run(e)
 
+        # #5 デフォルトは既存 run.json をスキップ (手動修正の無警告巻き戻しを防ぐ)
         if run_path.exists():
             existing = json.loads(run_path.read_text(encoding="utf-8"))
             if not _is_estimated(existing):
-                # 実測 usage あり: usage/cost 保持、他フィールドも触らない (measured を尊重)
+                # 実測 usage あり: --overwrite でも触らない (measured を尊重)
                 skipped_measured += 1
                 continue
-            # usage / cost を保持 (estimate-run-cost.py の担当領域)
+            if not args.overwrite:
+                skipped_existing += 1
+                continue
+            # --overwrite: usage/cost は保持しつつフィールドを再生成
+            new_run = build_run(e)
             for k in ("usage", "cost"):
                 if k in existing:
                     new_run[k] = existing[k]
-            if not args.overwrite:
-                # backfill は harness/effort/generated_at 等のみ埋め、他は既存優先
-                for k, v in existing.items():
-                    if k in ("usage", "cost"):
-                        continue
-                    if k not in new_run or new_run[k] in (None, "unknown"):
-                        new_run[k] = v
+        else:
+            new_run = build_run(e)
 
         run_path.write_text(json.dumps(new_run, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         processed += 1
         print(f"[ok] {e['theme']}/{e['model']} harness={new_run['harness']} effort={new_run['reasoning_effort']} generated_at={new_run['generated_at']}", file=sys.stderr)
 
-    print(f"\n# processed={processed} skipped_measured={skipped_measured}", file=sys.stderr)
+    print(f"\n# processed={processed} skipped_measured={skipped_measured} skipped_existing={skipped_existing}", file=sys.stderr)
+    if skipped_existing > 0 and not args.overwrite:
+        print(f"# {skipped_existing} entries already have run.json. Use --overwrite to regenerate.", file=sys.stderr)
     return 0
 
 
