@@ -128,7 +128,12 @@ oreore-bench/
 ### コスト表示は「推定・下限」
 
 - `o200k_base` トークナイザは Gemma/Claude/Grok の実トークナイザと乖離するため、`estimated: true` かつ `method` を明記した上で下限値として扱う
-- 単価は OpenRouter API から取得（`fetch-pricing.py`）。gemma-4-12b-qat は OpenRouter に存在しないため `actual_usd: 0` + 参考単価なし
+- 単価は OpenRouter API から取得（`fetch-pricing.py`）
+- `cost.pricing_source` の 3 値で「実請求 / 参考仮想 / 参考なし」を区別する:
+  - `openrouter`: API モデル（`type=api`）。`actual_usd: null` + `usd` に実請求相当の推定
+  - `openrouter-reference`: ローカル実行だが OpenRouter に該当モデルあり（gemma-4-31b / gemma-4-26b-a4b-qat）。`actual_usd: 0` + `usd` に参考仮想コスト
+  - `local-no-reference`: OpenRouter に存在しないローカルモデル（gemma-4-12b-qat のみ）。`actual_usd: 0` + `usd: null`
+- カードでは「$0 (ローカル・参考 $0.004)」のように参考仮想コストを併記
 - **reasoning トークン・ハーネス側 system prompt を含まない**（実測 API `usage` があるモデルのみ完全値）
 
 ### 更新ワークフロー

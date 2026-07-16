@@ -14,6 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PUBLIC = ROOT / "public"
+PRICING_PATH = ROOT / "scripts" / "pricing.json"
 API = "http://127.0.0.1:1234/v1/chat/completions"
 
 MODELS = [
@@ -116,19 +117,46 @@ def _write_run_measured(
         },
     }
 
-    # #4後半: type=local なので actual_usd=0 が意味。参考単価は cost には反映しない
-    # (index.html 側の $0 (ローカル) 表示ロジックと一貫)。
-    run["cost"] = {
-        "estimated": True,  # cost 側は「参考推定」の意味。usage の実測とは別レイヤ
-        "usd": None,
-        "actual_usd": 0,
-        "prompt_usd_per_mtok": None,
-        "completion_usd_per_mtok": None,
-        "pricing_source": "local-no-reference",
-        "pricing_model": None,
-        "pricing_fetched_at": None,
-    }
+    # gen-questions.py はローカル (type=local) 専用。参考単価があれば「参考仮想コスト」として
+    # usd に記録 (pricing_source=openrouter-reference)、無ければ usd=null。
+    # cost.estimated=true = 「参考推定」の意味。usage 実測フラグ (usage.estimated) と分離。
+    pricing = _load_pricing_for(model_slug)
+    if pricing:
+        usd = round(
+            prompt_tokens * pricing["prompt_usd_per_mtok"] / 1_000_000
+            + completion_tokens * pricing["completion_usd_per_mtok"] / 1_000_000,
+            6,
+        )
+        run["cost"] = {
+            "estimated": True,
+            "usd": usd,
+            "actual_usd": 0,
+            "prompt_usd_per_mtok": pricing["prompt_usd_per_mtok"],
+            "completion_usd_per_mtok": pricing["completion_usd_per_mtok"],
+            "pricing_source": "openrouter-reference",
+            "pricing_model": pricing["pricing_model"],
+            "pricing_fetched_at": pricing["pricing_fetched_at"],
+        }
+    else:
+        run["cost"] = {
+            "estimated": True,
+            "usd": None,
+            "actual_usd": 0,
+            "prompt_usd_per_mtok": None,
+            "completion_usd_per_mtok": None,
+            "pricing_source": "local-no-reference",
+            "pricing_model": None,
+            "pricing_fetched_at": None,
+        }
     (out_dir / "run.json").write_text(json.dumps(run, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def _load_pricing_for(model_slug: str) -> dict | None:
+    """pricing.json から該当 slug の単価を返す。無ければ None。"""
+    if not PRICING_PATH.exists():
+        return None
+    pricing = json.loads(PRICING_PATH.read_text(encoding="utf-8"))
+    return pricing.get(model_slug)
 
 
 def main() -> int:

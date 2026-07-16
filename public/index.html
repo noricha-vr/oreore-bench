@@ -1511,18 +1511,21 @@
                 parts.push(`LM Studio (${escapeHtml(run.runtime.quantization)})`);
             }
 
-            // cost 表示
+            // cost 表示（3分岐）:
+            //   API 実請求相当 (actual_usd=null, usd=number)   → 「$0.49 (推定・下限)」
+            //   ローカル + 参考単価あり (actual_usd=0, usd=num) → 「$0 (ローカル・参考 $0.004)」
+            //   ローカル + 参考なし (actual_usd=0, usd=null)    → 「$0 (ローカル)」
             const cost = run.cost || {};
             const usd = cost.usd;
             const actual = cost.actual_usd;
-            if (typeof usd === 'number') {
+            if (actual === 0 && typeof usd === 'number') {
+                // 参考仮想コスト: 「(推定・下限)」注記はローカルに付けない
+                parts.push(`$0 (ローカル・参考 ${formatUsd(usd)})`);
+            } else if (actual === 0) {
+                parts.push('$0 (ローカル)');
+            } else if (typeof usd === 'number') {
                 const est = cost.estimated ? ' (推定・下限)' : '';
                 parts.push(`${formatUsd(usd)}${est}`);
-            } else if (actual === 0) {
-                // ローカルモデル: 「(推定・下限)」注記は付けない (#4)。
-                // 参考単価は cost には載せない方針 (model-map.json の type=local が意味)。
-                // pricing.json をカード表示用に fetch はしない (単一 fetch の設計方針を保つ)。
-                parts.push('$0 (ローカル)');
             }
             return parts.join(' ・ ');
         }

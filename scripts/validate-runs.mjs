@@ -36,6 +36,11 @@ const COST_ALLOWED = new Set([
   'prompt_usd_per_mtok', 'completion_usd_per_mtok',
   'pricing_source', 'pricing_model', 'pricing_fetched_at',
 ]);
+// pricing_source enum:
+//   openrouter           = 実請求相当 (type=api、単価そのまま cost)
+//   openrouter-reference = 参考仮想コスト (type=local + 参考単価あり。actual_usd=0)
+//   local-no-reference   = 参考単価なし (type=local、gemma-4-12b-qat のみ)
+const PRICING_SOURCE_ENUM = new Set(['openrouter', 'openrouter-reference', 'local-no-reference']);
 
 // runtime の値（engine/quantization/api）は index.html に innerHTML で入るため、
 // 短く安全な文字列のみ許可（英数 / ハイフン / アンダースコア / ドット / 空白 / 括弧）。
@@ -130,9 +135,23 @@ function validateRun(run, where) {
       err(where, `cost.usd ${cost.usd} inconsistent with tokens*rate ${expected.toFixed(6)} (>1% off)`);
     }
   }
-  // ローカル (usd=null): actual_usd=0 期待
-  if (cost.usd === null && cost.actual_usd !== 0) {
-    err(where, 'cost.usd=null requires cost.actual_usd=0 (local-only convention)');
+  // pricing_source enum
+  if (!PRICING_SOURCE_ENUM.has(cost.pricing_source)) {
+    err(where, `cost.pricing_source "${cost.pricing_source}" not in enum ${[...PRICING_SOURCE_ENUM].join('|')}`);
+  }
+  // actual_usd の型と usd との整合:
+  //   pricing_source=openrouter           → actual_usd=null (実請求相当なので null 意味: 実測未取得)
+  //   pricing_source=openrouter-reference → actual_usd=0    (ローカル実行なので実請求はゼロ、usd は参考仮想コスト)
+  //   pricing_source=local-no-reference   → actual_usd=0    (usd=null と併せて「参考すら無し」を表す)
+  if (cost.pricing_source === 'openrouter-reference') {
+    if (typeof cost.usd !== 'number') err(where, 'openrouter-reference requires cost.usd = number (reference virtual cost)');
+    if (cost.actual_usd !== 0) err(where, 'openrouter-reference requires cost.actual_usd = 0 (local: no real charge)');
+  } else if (cost.pricing_source === 'local-no-reference') {
+    if (cost.usd !== null) err(where, 'local-no-reference requires cost.usd = null');
+    if (cost.actual_usd !== 0) err(where, 'local-no-reference requires cost.actual_usd = 0');
+  } else if (cost.pricing_source === 'openrouter') {
+    if (typeof cost.usd !== 'number') err(where, 'openrouter requires cost.usd = number');
+    if (cost.actual_usd !== null) err(where, 'openrouter requires cost.actual_usd = null (real charge not yet measured)');
   }
 }
 

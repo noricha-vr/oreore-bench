@@ -187,8 +187,10 @@ def main() -> int:
 
         pricing = pricing_all.get(model)
         # model-map.json の type で「単価不在の意味」を分岐する（#10）:
-        #   type=local  → 意図的に参考単価なし（actual_usd=0 として記録）
-        #   type=api で pricing 不在 → Fail Fast（$0 表示になる事故を防ぐ）
+        #   type=api    → pricing 必須。不在なら Fail Fast（$0 表示事故を防ぐ）
+        #   type=local  → 参考単価があれば「参考仮想コスト」として usd に載せる（actual_usd=0）
+        #                 pricing_source は "openrouter-reference" に切替 (実請求と区別)
+        #                 参考単価がなければ usd=null（gemma-4-12b-qat のみ）
         map_entry = model_map.get(model, {})
         model_type = map_entry.get("type") if isinstance(map_entry, dict) else None
         if not pricing and model_type == "api":
@@ -197,18 +199,18 @@ def main() -> int:
 
         usd: float | None = None
         note = method
-        if pricing and model_type != "local":
+        is_local_reference = model_type == "local" and bool(pricing)
+        if pricing:
             usd = compute_cost_usd(p_tok, c_tok, pricing)
+            if is_local_reference:
+                note = f"{method} (local reference)"
         else:
-            # type=local または pricing 不在 (type=local のみが到達する)
             note = f"{method} (local: no reference cost)"
 
         rows.append((theme, model, p_tok, c_tok, usd, note))
 
         if args.write:
-            # type=local は「参考単価がある場合も」cost に反映しない（actual_usd=0 が意味）
-            pricing_for_write = pricing if (pricing and model_type != "local") else None
-            _write_run(model_dir, theme, model, kind, p_tok, c_tok, usd, pricing_for_write, method)
+            _write_run(model_dir, theme, model, kind, p_tok, c_tok, usd, pricing, method, is_local_reference=(model_type == "local"))
 
     # 表出力 (stdout = 機械可読タブ区切り、stderr = 人間向けヘッダ)
     print("theme\tmodel\tprompt_tok\tcompletion_tok\tusd\tnote")
@@ -234,9 +236,15 @@ def _write_run(
     usd: float | None,
     pricing: dict | None,
     method: str,
+    is_local_reference: bool = False,
 ) -> None:
     """既存 run.json の usage/cost のみ差し替える。他フィールドは backfill-runs.py が担当。
-    run.json 不在時はスケルトンを作る (schema_version=1、他フィールドは 'unknown')。"""
+    run.json 不在時はスケルトンを作る (schema_version=1、他フィールドは 'unknown')。
+
+    is_local_reference=True (model-map type=local) の場合:
+      - pricing あり → 参考仮想コストとして usd に載せ、actual_usd=0、pricing_source="openrouter-reference"
+      - pricing なし → usd=null、actual_usd=0、pricing_source="local-no-reference"
+    """
     run_path = model_dir / "run.json"
     if run_path.exists():
         run = json.loads(run_path.read_text(encoding="utf-8"))
@@ -264,7 +272,8 @@ def _write_run(
         "completion_tokens": c_tok,
         "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値",
     }
-    if pricing:
+    if pricing and not is_local_reference:
+        # type=api: 実請求相当のコスト（openrouter 単価そのまま）
         run["cost"] = {
             "estimated": True,
             "usd": usd,
@@ -275,8 +284,20 @@ def _write_run(
             "pricing_model": pricing["pricing_model"],
             "pricing_fetched_at": pricing["pricing_fetched_at"],
         }
+    elif pricing and is_local_reference:
+        # type=local + 参考単価あり: 仮想コスト併記。実請求は $0
+        run["cost"] = {
+            "estimated": True,
+            "usd": usd,
+            "actual_usd": 0,
+            "prompt_usd_per_mtok": pricing["prompt_usd_per_mtok"],
+            "completion_usd_per_mtok": pricing["completion_usd_per_mtok"],
+            "pricing_source": "openrouter-reference",
+            "pricing_model": pricing["pricing_model"],
+            "pricing_fetched_at": pricing["pricing_fetched_at"],
+        }
     else:
-        # ローカル専用 (gemma-4-12b-qat)。actual_usd=0, usd=null。参考単価なし
+        # type=local + 参考単価なし (gemma-4-12b-qat)
         run["cost"] = {
             "estimated": True,
             "usd": None,
