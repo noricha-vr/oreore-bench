@@ -595,6 +595,15 @@
             margin: 0;
             flex-grow: 1;
         }
+        .theme-card .card-run-meta {
+            /* run.json 由来のメタ情報 (harness ・ effort ・ コスト)。
+               card-note より控えめ、text-xs 相当は避けて 0.8125rem に留める */
+            color: var(--fg-soft);
+            font-size: 0.8125rem;
+            line-height: 1.5;
+            margin: 0;
+            opacity: 0.85;
+        }
         .theme-card .card-actions {
             display: flex;
             gap: 8px;
@@ -1444,6 +1453,53 @@
             }
         };
 
+        // run.json 集約 (public/runs.json) を DOMContentLoaded 時に fetch し、キー "theme/model" で参照する。
+        // 失敗 (404 / file:// で fetch 不可) はサイレントに握って現状表示のまま。
+        // 表示できるのは run.json の構造化フィールドのみ (harness ラベル・effort・cost)。
+        // system_prompt 本文や環境情報は runs.json 側で enum ラベルに制限済み (validate-runs.mjs)。
+        let RUNS = {};
+
+        // harness slug -> 人間向け短縮ラベル (日本語)。unknown は表示スキップ。
+        const HARNESS_LABEL = {
+            'lmstudio-api': 'LM Studio API',
+            'gptme-lmstudio': 'gptme (LM Studio)',
+            'claude-agent-sdk': 'Claude Agent SDK',
+            'claude-cli-headless': 'claude CLI headless',
+            'grok-cli': 'grok CLI',
+            'openai-api': 'OpenAI API',
+            'openrouter-api': 'OpenRouter API',
+            'antigravity-cli': 'AntiGravity CLI',
+        };
+
+        // run.json → カード用メタ文字列 (「ハーネス ・ effort: high ・ $0.49 (推定)」形式)。
+        // 表示できるものが 1 つもなければ空文字を返す (呼び出し側で条件付きレンダ)。
+        function formatRunMeta(run) {
+            if (!run) return '';
+            const parts = [];
+            const harnessLabel = HARNESS_LABEL[run.harness];
+            if (harnessLabel) parts.push(harnessLabel);
+            // effort: unknown / none は非表示 (前者は不明、後者はそもそも効かないハーネス)
+            if (run.reasoning_effort && run.reasoning_effort !== 'unknown' && run.reasoning_effort !== 'none') {
+                parts.push(`effort: ${run.reasoning_effort}`);
+            }
+            // runtime (ローカル: LM Studio + 量子化を短く表示)
+            if (run.runtime && run.runtime.quantization) {
+                parts.push(`LM Studio (${run.runtime.quantization})`);
+            }
+            // cost 表示
+            const cost = run.cost || {};
+            const usd = cost.usd;
+            const actual = cost.actual_usd;
+            if (typeof usd === 'number') {
+                const est = cost.estimated ? ' (推定・下限)' : '';
+                parts.push(`$${usd.toFixed(usd >= 1 ? 2 : usd >= 0.01 ? 3 : 4)}${est}`);
+            } else if (actual === 0) {
+                // ローカル: 参考単価なし
+                parts.push('$0 (ローカル)');
+            }
+            return parts.join(' ・ ');
+        }
+
         const ENTRIES = [
             { theme: "lp-nishibi", model: "gemma-4-12b-qat",     runner: "LM Studio API",       note: "最軽量 12B での 1 ショット LP。約 13KB。31B と比較して選択肢。", kind: "html" },
             { theme: "lp-nishibi", model: "gemma-4-31b",         runner: "gptme (LM Studio)",   note: "ローカルLLM単体の1ショットLP。418行/14KB。", kind: "html" },
@@ -1612,6 +1668,10 @@
                 card.className = 'theme-card shadow-sm';
                 card.style.borderLeftColor = theme.color;
 
+                // run.json 由来のメタ (harness ・ effort ・ コスト)。runs.json fetch 失敗時は空文字 → 行ごと非表示
+                const runMeta = formatRunMeta(RUNS[`${entry.theme}/${entry.model}`]);
+                const runMetaHtml = runMeta ? `<p class="card-run-meta">${runMeta}</p>` : '';
+
                 card.innerHTML = `
                     <div class="card-header">
                         <span class="badge" style="background-color: ${theme.color};">${theme.short}</span>
@@ -1625,6 +1685,7 @@
                         <p class="card-subtitle">${theme.title} ・ ${entry.runner}</p>
                     </div>
                     <p class="card-note">${entry.note}</p>
+                    ${runMetaHtml}
                     <div class="card-actions">
                         <a href="${entry.kind === 'json' ? `./${entry.theme}/${entry.model}/output.html` : `./${entry.theme}/${entry.model}/index.html`}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">実物を見る</a>
                         <a href="./${entry.theme}/prompt.html" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">プロンプト</a>
@@ -1797,6 +1858,16 @@
             renderEntries();
             renderThemeDescriptions();
             renderModelDescriptions();
+
+            // runs.json 取得は非同期。失敗 (file:// / 404) は catch で握って現状表示のまま。
+            // 成功時のみ RUNS を差し替え、renderEntries() を再実行してメタ行を追加描画する。
+            fetch('./runs.json', { cache: 'no-cache' })
+                .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
+                .then(data => {
+                    RUNS = data;
+                    renderEntries();
+                })
+                .catch(() => { /* 意図的に無視: runs.json 未配信環境をサポート */ });
         });
     </script>
 </body>
