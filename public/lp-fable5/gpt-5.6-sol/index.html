@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#faf6ee">
+<meta name="description" content="Fable 5 — 今、いちばん賢いClaudeが、誰でも使える形に。">
+<title>Fable 5 | Claude</title>
+<script>document.documentElement.classList.add('js');</script>
+<style>
+:root {
+  --paper: #faf6ee;
+  --paper-deep: #f3eadc;
+  --ink: #292521;
+  --muted: #756c62;
+  --terracotta: #c65d3b;
+  --terracotta-light: #d97757;
+  --rust: #9f4732;
+  --ochre: #c89a48;
+  --sand: #dfc79e;
+  --sepia: #9b7758;
+  --line: rgba(73, 55, 40, .16);
+  --serif: "Yu Mincho", "Hiragino Mincho ProN", "Hiragino Mincho Pro", "Noto Serif JP", "Times New Roman", serif;
+  --sans: "Hiragino Sans", "Yu Gothic", "YuGothic", "Noto Sans JP", system-ui, sans-serif;
+  --content: 1180px;
+  --header-height: 76px;
+}
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+  background: var(--paper);
+}
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 15% 10%, rgba(211,177,124,.08), transparent 28%),
+    radial-gradient(circle at 86% 30%, rgba(198,93,59,.045), transparent 23%),
+    var(--paper);
+  font-family: var(--sans);
+  font-feature-settings: "palt";
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  content: "";
+  opacity: .18;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.23'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button, a {
+  -webkit-tap-highlight-color: transparent;
+}
+svg {
+  display: block;
+}
+.site-header {
+  position: fixed;
+  z-index: 80;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: var(--header-height);
+  border-bottom: 1px solid rgba(91,67,49,.1);
+  background: rgba(250,246,238,.82);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+}
+.header-inner {
+  display: flex;
+  width: min(calc(100% - 48px), 1360px);
+  height: 100%;
+  margin: auto;
+  align-items: center;
+  justify-content: space-between;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font: 600 21px/1 var(--serif);
+  letter-spacing: -.02em;
+}
+.brand-sun {
+  width: 25px;
+  height: 25px;
+  color: var(--terracotta);
+}
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 34px;
+}
+.header-nav a:not(.header-cta) {
+  position: relative;
+  color: #554d45;
+  font-size: 13px;
+  letter-spacing: .05em;
+}
+.header-nav a:not(.header-cta)::after {
+  position: absolute;
+  right: 0;
+  bottom: -7px;
+  left: 0;
+  height: 1px;
+  content: "";
+  background: var(--terracotta);
+  transform: scaleX(0);
+  transition: transform .3s ease;
+}
+.header-nav a:hover::after {
+  transform: scaleX(1);
+}
+.header-cta, .primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--terracotta);
+  box-shadow: 0 8px 24px rgba(154,66,42,.17);
+  transition: transform .25s ease, background .25s ease, box-shadow .25s ease;
+}
+.header-cta {
+  min-width: 112px;
+  min-height: 42px;
+  padding: 0 22px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.header-cta:hover, .primary-button:hover {
+  background: #b94e31;
+  box-shadow: 0 12px 30px rgba(154,66,42,.23);
+  transform: translateY(-2px);
+}
+main {
+  overflow: hidden;
+}
+.hero {
+  position: relative;
+  min-height: 100svh;
+  padding-top: calc(var(--header-height) + 57px);
+  overflow: hidden;
+}
+.hero-copy {
+  position: relative;
+  z-index: 5;
+  width: min(calc(100% - 96px), 1360px);
+  margin: 0 auto;
+}
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 19px;
+  color: #766a5f;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .18em;
+}
+.eyebrow::before {
+  width: 31px;
+  height: 1px;
+  content: "";
+  background: var(--terracotta);
+}
+.hero-title {
+  margin: 0;
+  font: 400 clamp(112px, 16.2vw, 252px)/.74 var(--serif);
+  letter-spacing: -.085em;
+  white-space: nowrap;
+}
+.hero-title .dot {
+  color: var(--terracotta);
+}
+.hero-text {
+  max-width: 660px;
+  margin-top: clamp(35px, 5.5vh, 68px);
+}
+.hero-text h2 {
+  margin: 0 0 14px;
+  font: 500 clamp(22px, 2.2vw, 34px)/1.55 var(--serif);
+  letter-spacing: -.025em;
+}
+.hero-text p {
+  max-width: 570px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 2;
+}
+.hero-landscape {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: clamp(385px, 47vh, 590px);
+  margin-top: -4px;
+}
+.hero-landscape svg {
+  width: 100%;
+  height: 100%;
+}
+.parallax-sun {
+  transform: translateY(var(--sun-y, 0px));
+  transition: transform .12s linear;
+}
+.parallax-cloud {
+  transform: translateX(var(--cloud-x, 0px));
+  transition: transform .12s linear;
+}
+.container {
+  width: min(calc(100% - 96px), var(--content));
+  margin: 0 auto;
+}
+.content-section {
+  position: relative;
+  padding: clamp(125px, 15vw, 205px) 0;
+}
+.section-heading {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 34px;
+  margin-bottom: clamp(62px, 8vw, 105px);
+  align-items: start;
+}
+.section-kicker {
+  padding-top: 13px;
+  color: var(--terracotta);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .17em;
+  line-height: 1.8;
+  text-transform: uppercase;
+}
+.section-kicker span {
+  display: block;
+  margin-top: 5px;
+  color: #8a7c70;
+  letter-spacing: .1em;
+}
+.section-heading h2 {
+  max-width: 880px;
+  margin: 0;
+  font: 400 clamp(40px, 5.1vw, 74px)/1.3 var(--serif);
+  letter-spacing: -.045em;
+}
+.section-heading h2 em {
+  color: var(--terracotta);
+  font-style: normal;
+}
+.js .reveal {
+  opacity: .72;
+  transform: translateY(28px);
+  transition: opacity .9s cubic-bezier(.22,.65,.3,1), transform .9s cubic-bezier(.22,.65,.3,1);
+}
+.js .reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+.family {
+  background: linear-gradient(180deg, rgba(244,235,221,.25), rgba(238,224,203,.68) 55%, rgba(250,246,238,0));
+}
+.family-chart-wrap {
+  display: grid;
+  grid-template-columns: .78fr 1.55fr;
+  gap: 70px;
+  align-items: end;
+}
+.family-copy {
+  padding-bottom: 24px;
+}
+.family-copy p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 2;
+}
+.family-copy .small-note {
+  display: block;
+  margin-top: 24px;
+  color: #95887a;
+  font-size: 11px;
+  line-height: 1.7;
+}
+.family-chart {
+  position: relative;
+  display: grid;
+  height: 430px;
+  padding: 25px 20px 47px 56px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  align-items: end;
+}
+.family-chart::before {
+  position: absolute;
+  top: 0;
+  bottom: 47px;
+  left: 35px;
+  width: 1px;
+  content: "";
+  background: linear-gradient(to bottom, transparent, rgba(67,53,42,.19));
+}
+.family-chart::after {
+  position: absolute;
+  right: 0;
+  bottom: 46px;
+  left: 35px;
+  height: 1px;
+  content: "";
+  background: rgba(67,53,42,.19);
+}
+.chart-step {
+  position: relative;
+  z-index: 2;
+  border-radius: 80px 80px 8px 8px;
+  background:
+    linear-gradient(150deg, rgba(255,255,255,.44), transparent 45%),
+    rgba(173,149,123,.24);
+  box-shadow: inset 0 0 0 1px rgba(91,68,49,.05);
+}
+.chart-step:nth-child(1) { height: 29%; }
+.chart-step:nth-child(2) { height: 45%; background-color: rgba(199,164,105,.24); }
+.chart-step:nth-child(3) { height: 64%; background-color: rgba(188,121,77,.2); }
+.chart-step:nth-child(4) {
+  height: 92%;
+  background:
+    linear-gradient(150deg, rgba(255,255,255,.27), transparent 44%),
+    linear-gradient(180deg, var(--terracotta-light), #b34e33);
+  box-shadow: 0 18px 40px rgba(159,71,50,.16);
+}
+.step-name {
+  position: absolute;
+  right: 0;
+  bottom: -31px;
+  left: 0;
+  text-align: center;
+  color: #75695e;
+  font: 500 12px/1 var(--serif);
+}
+.chart-step:nth-child(4) .step-name {
+  color: var(--rust);
+  font-weight: 700;
+}
+.step-top {
+  position: absolute;
+  top: -33px;
+  right: 0;
+  left: 0;
+  text-align: center;
+  color: #8c7b6d;
+  font-size: 9px;
+  letter-spacing: .12em;
+}
+.chart-step:nth-child(4) .step-top {
+  top: 27px;
+  color: rgba(255,255,255,.9);
+}
+.capability-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+.capability-card {
+  display: grid;
+  min-height: 230px;
+  padding: 30px;
+  border: 1px solid rgba(91,67,49,.11);
+  border-radius: 5px;
+  background: rgba(255,252,246,.56);
+  grid-template-columns: 42% 1fr;
+  gap: 26px;
+  align-items: center;
+  transition: transform .35s ease, box-shadow .35s ease, background .35s ease;
+}
+.capability-card:hover {
+  background: rgba(255,253,248,.88);
+  box-shadow: 0 20px 55px rgba(100,73,49,.08);
+  transform: translateY(-5px);
+}
+.mini-art {
+  width: 100%;
+  height: 155px;
+}
+.capability-card h3 {
+  margin: 0 0 13px;
+  font: 600 20px/1.55 var(--serif);
+  letter-spacing: -.02em;
+}
+.capability-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.95;
+}
+.graph-section {
+  background:
+    radial-gradient(circle at 85% 30%, rgba(198,93,59,.07), transparent 26%),
+    linear-gradient(180deg, transparent, rgba(242,232,217,.65), transparent);
+}
+.graph-shell {
+  position: relative;
+  padding: 40px 38px 24px;
+  border: 1px solid rgba(91,67,49,.11);
+  border-radius: 6px;
+  background: rgba(255,253,248,.54);
+}
+.graph-legend {
+  display: flex;
+  justify-content: flex-end;
+  gap: 23px;
+  margin-bottom: 14px;
+  color: #83786f;
+  font-size: 10px;
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.legend-line {
+  width: 25px;
+  height: 2px;
+  background: #aaa39d;
+}
+.legend-line.fable {
+  background: var(--terracotta);
+}
+.main-graph {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.graph-grid {
+  stroke: rgba(65,52,42,.11);
+  stroke-width: 1;
+}
+.graph-axis {
+  stroke: rgba(54,43,35,.32);
+  stroke-width: 1.25;
+}
+.graph-line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1.8s cubic-bezier(.32,.02,.22,1);
+}
+.js .graph-section:not(.in-view) .graph-line {
+  stroke-dashoffset: 1;
+}
+.graph-line.other {
+  stroke: #aaa49e;
+  stroke-width: 2.25;
+}
+.graph-line.fable {
+  stroke: var(--terracotta);
+  stroke-width: 4;
+  filter: drop-shadow(0 4px 7px rgba(198,93,59,.18));
+}
+.graph-dot {
+  fill: var(--terracotta);
+  opacity: 1;
+  transition: opacity .4s 1.45s ease;
+}
+.js .graph-section:not(.in-view) .graph-dot {
+  opacity: 0;
+}
+.axis-label {
+  margin: 10px 18px 0 0;
+  color: #766a61;
+  font-size: 11px;
+  text-align: right;
+  letter-spacing: .04em;
+}
+.graph-note {
+  position: absolute;
+  top: 34%;
+  right: 9%;
+  color: var(--terracotta);
+  font: 600 13px/1.5 var(--serif);
+}
+.safety {
+  padding-bottom: 0;
+}
+.safety-art {
+  position: relative;
+  width: 100%;
+  height: clamp(480px, 55vw, 680px);
+  margin-top: -15px;
+}
+.safety-art svg {
+  width: 100%;
+  height: 100%;
+}
+.safety-caption {
+  display: flex;
+  max-width: 730px;
+  margin: 35px 0 0 auto;
+  gap: 28px;
+  align-items: flex-start;
+}
+.safety-caption::before {
+  width: 52px;
+  height: 1px;
+  margin-top: 13px;
+  flex: 0 0 auto;
+  content: "";
+  background: var(--terracotta);
+}
+.safety-caption p {
+  margin: 0;
+  color: var(--muted);
+  font: 400 16px/2 var(--serif);
+}
+.getting-started {
+  padding-top: clamp(125px, 15vw, 205px);
+}
+.start-panel {
+  display: grid;
+  padding: clamp(35px, 5vw, 65px);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  grid-template-columns: .9fr 1.3fr;
+  gap: clamp(50px, 8vw, 110px);
+  align-items: center;
+}
+.laptop-art {
+  width: 100%;
+  max-width: 400px;
+  margin: auto;
+}
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.steps li {
+  display: grid;
+  padding: 24px 0;
+  border-bottom: 1px solid rgba(91,67,49,.12);
+  grid-template-columns: 48px 1fr;
+  gap: 18px;
+  align-items: baseline;
+}
+.steps li:last-child {
+  border-bottom: 0;
+}
+.step-number {
+  color: var(--terracotta);
+  font: 500 12px/1 var(--serif);
+}
+.steps strong {
+  display: block;
+  margin-bottom: 7px;
+  font: 600 18px/1.5 var(--serif);
+}
+.steps p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.8;
+}
+.final-cta {
+  position: relative;
+  min-height: 760px;
+  margin-top: clamp(110px, 14vw, 190px);
+  padding: 130px 24px 0;
+  overflow: hidden;
+  text-align: center;
+}
+.cta-copy {
+  position: relative;
+  z-index: 4;
+}
+.cta-kicker {
+  color: var(--terracotta);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .2em;
+}
+.final-cta h2 {
+  margin: 22px 0 35px;
+  font: 400 clamp(49px, 7vw, 92px)/1.25 var(--serif);
+  letter-spacing: -.055em;
+}
+.primary-button {
+  min-height: 57px;
+  padding: 0 35px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.cta-landscape {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 510px;
+}
+.cta-landscape svg {
+  width: 100%;
+  height: 100%;
+}
+.site-footer {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  width: min(calc(100% - 48px), 1360px);
+  min-height: 95px;
+  margin: -95px auto 0;
+  color: rgba(50,40,33,.67);
+  align-items: center;
+  justify-content: space-between;
+}
+.footer-brand {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font: 600 16px/1 var(--serif);
+}
+.footer-brand svg {
+  width: 19px;
+  color: var(--terracotta);
+}
+.footer-note {
+  font-size: 9px;
+  line-height: 1.7;
+  text-align: right;
+  letter-spacing: .04em;
+}
+@media (max-width: 900px) {
+  :root { --header-height: 68px; }
+  .header-inner { width: min(calc(100% - 32px), 1360px); }
+  .header-nav { gap: 20px; }
+  .header-nav a:not(.header-cta) { display: none; }
+  .header-cta { min-width: 100px; min-height: 39px; }
+  .hero { padding-top: calc(var(--header-height) + 57px); }
+  .hero-copy { width: calc(100% - 40px); }
+  .hero-title { font-size: clamp(76px, 19vw, 150px); }
+  .hero-landscape { height: 410px; margin-top: 20px; }
+  .container { width: calc(100% - 40px); }
+  .section-heading { grid-template-columns: 1fr; gap: 20px; }
+  .section-kicker { padding-top: 0; }
+  .family-chart-wrap { grid-template-columns: 1fr; gap: 45px; }
+  .family-copy { max-width: 560px; }
+  .capability-grid { grid-template-columns: 1fr; }
+  .capability-card { min-height: 210px; }
+  .start-panel { grid-template-columns: 1fr; }
+  .laptop-art { max-width: 360px; }
+}
+@media (max-width: 560px) {
+  .brand { font-size: 18px; }
+  .brand-sun { width: 22px; height: 22px; }
+  .hero { min-height: auto; padding-top: 113px; }
+  .hero-title { font-size: clamp(68px, 21.8vw, 115px); line-height: .84; }
+  .hero-text { margin-top: 42px; }
+  .hero-text h2 { font-size: 22px; }
+  .hero-text p { font-size: 12px; }
+  .hero-landscape { height: 360px; margin-top: 12px; }
+  .content-section { padding: 105px 0; }
+  .section-heading { margin-bottom: 55px; }
+  .section-heading h2 { font-size: 39px; }
+  .family-chart { height: 330px; padding-left: 30px; padding-right: 4px; gap: 6px; }
+  .family-chart::before, .family-chart::after { left: 16px; }
+  .chart-step:nth-child(4) .step-top { font-size: 8px; }
+  .capability-card {
+    padding: 22px 18px;
+    grid-template-columns: 39% 1fr;
+    gap: 15px;
+  }
+  .mini-art { height: 125px; }
+  .capability-card h3 { font-size: 16px; }
+  .capability-card p { font-size: 10.5px; }
+  .graph-shell { padding: 25px 10px 17px; }
+  .graph-legend { padding-right: 10px; gap: 13px; }
+  .graph-note { top: 33%; right: 7%; font-size: 10px; }
+  .safety-art { height: 420px; }
+  .safety-caption { margin-top: 18px; gap: 15px; }
+  .safety-caption::before { width: 28px; }
+  .safety-caption p { font-size: 14px; }
+  .start-panel { padding: 38px 8px; }
+  .final-cta { min-height: 670px; padding-top: 100px; }
+  .final-cta h2 { font-size: 48px; }
+  .cta-landscape { height: 410px; }
+  .site-footer {
+    min-height: 100px;
+    margin-top: -100px;
+    align-items: flex-end;
+    padding-bottom: 22px;
+  }
+  .footer-note { max-width: 215px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+  .js .reveal {
+    opacity: 1;
+    transform: none;
+  }
+  .js .graph-section:not(.in-view) .graph-line {
+    stroke-dashoffset: 0;
+  }
+}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="#top" aria-label="Claude ホーム">
+      <svg class="brand-sun" viewBox="0 0 32 32" aria-hidden="true">
+        <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8">
+          <circle cx="16" cy="16" r="5.4" fill="currentColor" opacity=".92"/>
+          <path d="M16 2.7v5M16 24.3v5M2.7 16h5M24.3 16h5M6.6 6.6l3.5 3.5M21.9 21.9l3.5 3.5M25.4 6.6l-3.5 3.5M10.1 21.9l-3.5 3.5"/>
+        </g>
+      </svg>
+      <span>Claude</span>
+    </a>
+    <nav class="header-nav" aria-label="メインナビゲーション">
+      <a href="#models">モデル</a>
+      <a href="#capabilities">できること</a>
+      <a href="#safety">安全性</a>
+      <a class="header-cta" href="#start">使ってみる</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-copy reveal">
+      <div class="eyebrow">MYTHOS-CLASS / 一般提供モデル</div>
+      <h1 class="hero-title" id="hero-title">Fable 5<span class="dot">.</span></h1>
+      <div class="hero-text">
+        <h2>今、いちばん賢いClaudeが、<br>誰でも使える形に。</h2>
+        <p>考えつづけ、つくりつづけ、最後まで歩ききる。長く複雑な仕事のために生まれた、新しい最上位モデルです。</p>
+      </div>
+    </div>
+
+    <div class="hero-landscape" aria-hidden="true">
+      <svg viewBox="0 0 1600 560" preserveAspectRatio="xMidYMax slice">
+        <defs>
+          <linearGradient id="heroSky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#faf6ee" stop-opacity="0"/>
+            <stop offset=".58" stop-color="#f5e9d7"/>
+            <stop offset="1" stop-color="#ddbd8e"/>
+          </linearGradient>
+          <linearGradient id="heroHill1" x1="0" y1="0" x2="1" y2="1">
+            <stop stop-color="#d8b982"/>
+            <stop offset=".55" stop-color="#cda670"/>
+            <stop offset="1" stop-color="#b9855d"/>
+          </linearGradient>
+          <linearGradient id="heroHill2" x1="0" y1="0" x2=".8" y2="1">
+            <stop stop-color="#ead5ae"/>
+            <stop offset=".55" stop-color="#d3b17d"/>
+            <stop offset="1" stop-color="#bd875e"/>
+          </linearGradient>
+          <linearGradient id="heroHill3" x1="0" y1="0" x2="1" y2="1">
+            <stop stop-color="#e7c793"/>
+            <stop offset=".5" stop-color="#d8a96c"/>
+            <stop offset="1" stop-color="#b87551"/>
+          </linearGradient>
+          <radialGradient id="heroSun">
+            <stop offset="0" stop-color="#d96443" stop-opacity=".95"/>
+            <stop offset=".7" stop-color="#d96443" stop-opacity=".7"/>
+            <stop offset="1" stop-color="#d96443" stop-opacity="0"/>
+          </radialGradient>
+          <filter id="waterHero" x="-15%" y="-20%" width="130%" height="145%">
+            <feTurbulence type="fractalNoise" baseFrequency=".012 .035" numOctaves="3" seed="7" result="noise"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="9"/>
+            <feGaussianBlur stdDeviation=".25"/>
+          </filter>
+          <filter id="softHero" x="-30%" y="-30%" width="160%" height="160%">
+            <feTurbulence baseFrequency=".04" numOctaves="2" seed="4" result="n"/>
+            <feDisplacementMap in="SourceGraphic" in2="n" scale="7"/>
+            <feGaussianBlur stdDeviation="3"/>
+          </filter>
+          <filter id="fluffHero" x="-30%" y="-30%" width="160%" height="160%">
+            <feTurbulence type="fractalNoise" baseFrequency=".025" numOctaves="3" seed="9" result="f"/>
+            <feDisplacementMap in="SourceGraphic" in2="f" scale="5"/>
+          </filter>
+        </defs>
+
+        <rect width="1600" height="560" fill="url(#heroSky)"/>
+        <g class="parallax-cloud" opacity=".5" filter="url(#softHero)">
+          <path d="M207 115c65-29 131-25 187 4 38-22 92-20 130 8-87 20-223 24-317-12Z" fill="#fff9ed"/>
+          <path d="M1070 146c58-25 111-18 151 7 42-23 91-19 127 8-83 17-196 18-278-15Z" fill="#fff9ed"/>
+        </g>
+        <g class="parallax-sun" filter="url(#softHero)">
+          <circle cx="1268" cy="114" r="67" fill="url(#heroSun)"/>
+          <circle cx="1268" cy="114" r="35" fill="#cf6244" opacity=".72"/>
+        </g>
+
+        <g filter="url(#waterHero)">
+          <path d="M0 289C186 215 330 237 489 287c170 54 316 26 474-41 204-86 400-46 637 39v275H0Z" fill="#e7d4af" opacity=".85"/>
+          <path d="M0 355c174-94 343-92 520-28 166 60 299 64 446 3 207-86 399-79 634 22v208H0Z" fill="url(#heroHill1)" opacity=".88"/>
+          <path d="M0 430c209-92 390-67 571-4 194 67 331 24 490-55 159-80 344-55 539 16v173H0Z" fill="url(#heroHill2)"/>
+          <path d="M0 495c244-100 432-64 622-4 174 55 314 32 489-39 153-62 310-54 489-2v110H0Z" fill="url(#heroHill3)" opacity=".96"/>
+        </g>
+
+        <path d="M1600 479c-158-27-308-24-423 16-107 37-192 48-285 32 78-37 153-63 233-80 139-29 304-29 475 6Z" fill="#a45b42" opacity=".2" filter="url(#softHero)"/>
+
+        <path d="M792 560c33-57 70-99 125-127 48-25 122-33 150-61-48 10-102 22-144 47-79 47-129 91-180 141Z" fill="#fffaf0" opacity=".93" filter="url(#waterHero)"/>
+        <path d="M838 560c31-46 63-75 105-99" fill="none" stroke="#d7c29e" stroke-width="3" opacity=".35"/>
+
+        <g opacity=".92">
+          <g fill="#a44934" filter="url(#softHero)">
+            <circle cx="154" cy="422" r="11"/><circle cx="173" cy="413" r="13"/><circle cx="191" cy="424" r="10"/>
+            <circle cx="1368" cy="394" r="16"/><circle cx="1392" cy="384" r="11"/><circle cx="1411" cy="402" r="15"/>
+            <circle cx="378" cy="472" r="12"/><circle cx="400" cy="463" r="9"/><circle cx="417" cy="477" r="14"/>
+          </g>
+          <g fill="none" stroke="#965b3c" stroke-linecap="round">
+            <path d="M104 497q4-46-6-76M119 500q-3-53 13-91M132 503q8-39 34-63" stroke-width="4"/>
+            <path d="M119 457l-15-13M126 445l14-15M106 469l-17-8" stroke-width="3"/>
+            <path d="M1248 510q8-66-11-102M1262 511q-2-62 23-109M1280 515q3-46 38-77" stroke-width="4"/>
+          </g>
+          <g fill="#c39242" opacity=".95">
+            <ellipse cx="97" cy="419" rx="6" ry="13" transform="rotate(-22 97 419)"/>
+            <ellipse cx="131" cy="408" rx="7" ry="14" transform="rotate(28 131 408)"/>
+            <ellipse cx="1237" cy="407" rx="8" ry="16" transform="rotate(-20 1237 407)"/>
+            <ellipse cx="1286" cy="402" rx="8" ry="16" transform="rotate(24 1286 402)"/>
+          </g>
+          <g fill="#bd6545" opacity=".76">
+            <circle cx="276" cy="443" r="4"/><circle cx="291" cy="454" r="5"/><circle cx="305" cy="438" r="3"/>
+            <circle cx="1485" cy="457" r="6"/><circle cx="1504" cy="443" r="4"/><circle cx="1523" cy="459" r="5"/>
+            <circle cx="619" cy="452" r="5"/><circle cx="639" cy="441" r="3"/>
+          </g>
+        </g>
+
+        <g transform="translate(1012 383)">
+          <ellipse cx="43" cy="118" rx="54" ry="10" fill="#7b513c" opacity=".17" filter="url(#softHero)"/>
+          <g filter="url(#fluffHero)">
+            <circle cx="67" cy="52" r="31" fill="#f4ead5"/>
+            <circle cx="46" cy="69" r="38" fill="#f6ecd8"/>
+            <circle cx="79" cy="77" r="37" fill="#f1e2c8"/>
+            <circle cx="57" cy="96" r="33" fill="#f5ead4"/>
+            <circle cx="92" cy="95" r="25" fill="#eddbbd"/>
+            <circle cx="93" cy="47" r="19" fill="#f6ecd8"/>
+          </g>
+          <path d="M40 108q-5 24 2 31M83 112q5 22 1 29" fill="none" stroke="#8b6b52" stroke-width="7" stroke-linecap="round"/>
+          <circle cx="62" cy="47" r="2.8" fill="#493d35"/>
+          <circle cx="84" cy="48" r="2.8" fill="#493d35"/>
+          <path d="M70 58q6 5 12 0" fill="none" stroke="#8b5d4a" stroke-width="2" stroke-linecap="round"/>
+          <path d="M39 72q-12 4-17 16" fill="none" stroke="#8e6c53" stroke-width="4" stroke-linecap="round"/>
+        </g>
+
+        <g transform="translate(963 416)">
+          <ellipse cx="18" cy="88" rx="27" ry="7" fill="#75503c" opacity=".17"/>
+          <circle cx="20" cy="15" r="12" fill="#c99471"/>
+          <path d="M9 28q11-7 23 0l6 42-31 0Z" fill="#ba4935"/>
+          <path d="M12 68l-5 31M31 68l9 30" stroke="#5f493e" stroke-width="6" stroke-linecap="round"/>
+          <path d="M10 39l-15 25M32 39l17 17" stroke="#a86b4c" stroke-width="5" stroke-linecap="round"/>
+          <path d="M7 8q10-14 22 0l-2 7H9Z" fill="#554339"/>
+          <path d="M-6 64l-2 29" stroke="#8a6347" stroke-width="3"/>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <section class="content-section family" id="models" aria-labelledby="family-title">
+    <div class="container">
+      <div class="section-heading reveal">
+        <div class="section-kicker">01 / FAMILY<span>Claudeファミリー</span></div>
+        <h2 id="family-title">Claudeの<br><em>いちばん上へ。</em></h2>
+      </div>
+      <div class="family-chart-wrap reveal">
+        <div class="family-copy">
+          <p>速さを選ぶ日も、深さを選ぶ日も。<br>Fable 5は、その先にある仕事のための<br>新しい「Mythos」クラスです。</p>
+          <span class="small-note">知性・推論の深さ・長時間タスクの遂行力を<br>総合した相対イメージ。</span>
+        </div>
+        <div class="family-chart" role="img" aria-label="Haiku、Sonnet、Opus、Mythosの順に性能が高くなる段状グラフ">
+          <div class="chart-step">
+            <span class="step-top">QUICK</span>
+            <span class="step-name">Haiku</span>
+          </div>
+          <div class="chart-step">
+            <span class="step-top">BALANCED</span>
+            <span class="step-name">Sonnet</span>
+          </div>
+          <div class="chart-step">
+            <span class="step-top">DEEP</span>
+            <span class="step-name">Opus</span>
+          </div>
+          <div class="chart-step">
+            <span class="step-top">FABLE 5</span>
+            <span class="step-name">Mythos</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content-section" id="capabilities" aria-labelledby="capabilities-title">
+    <div class="container">
+      <div class="section-heading reveal">
+        <div class="section-kicker">02 / CAPABILITIES<span>できること</span></div>
+        <h2 id="capabilities-title">頼れる仕事の、<br><em>その先まで。</em></h2>
+      </div>
+
+      <div class="capability-grid">
+        <article class="capability-card reveal">
+          <svg class="mini-art" viewBox="0 0 190 150" aria-hidden="true">
+            <defs>
+              <filter id="mini1" x="-20%" y="-20%" width="140%" height="140%">
+                <feTurbulence baseFrequency=".025" numOctaves="2" seed="2" result="n"/>
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="3"/>
+              </filter>
+              <linearGradient id="screen1" x1="0" y1="0" x2="1" y2="1">
+                <stop stop-color="#e8c98f"/><stop offset="1" stop-color="#b96447"/>
+              </linearGradient>
+            </defs>
+            <g filter="url(#mini1)">
+              <path d="M23 24h143q8 0 8 8v85H15V32q0-8 8-8Z" fill="#5d4d42"/>
+              <rect x="24" y="33" width="141" height="75" rx="2" fill="url(#screen1)"/>
+              <path d="M24 86q30-27 59-13t82-18v53H24Z" fill="#d7a15b"/>
+              <path d="M24 99q42-29 75-10t66-3v22H24Z" fill="#a8573e"/>
+              <circle cx="137" cy="49" r="11" fill="#e58a5f" opacity=".9"/>
+              <path d="M78 98q5-17 21-23" fill="none" stroke="#fff5df" stroke-width="4" stroke-linecap="round"/>
+              <circle cx="87" cy="85" r="4" fill="#b94735"/>
+              <path d="M8 117h174l-18 13H27Z" fill="#b49c82"/>
+              <path d="M68 120h55l-6 6H74Z" fill="#806c5e" opacity=".5"/>
+            </g>
+          </svg>
+          <div>
+            <h3>画面を見るだけで、<br>ゲームを最後までクリア</h3>
+            <p>映像を理解し、次の一手を考え、<br>状況の変化に合わせて進みます。</p>
+          </div>
+        </article>
+
+        <article class="capability-card reveal">
+          <svg class="mini-art" viewBox="0 0 190 150" aria-hidden="true">
+            <defs>
+              <filter id="mini2" x="-20%" y="-20%" width="140%" height="140%">
+                <feTurbulence baseFrequency=".03" numOctaves="2" seed="6" result="n"/>
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="2.7"/>
+              </filter>
+            </defs>
+            <g filter="url(#mini2)">
+              <path d="M30 107l102 23 29-19-102-24Z" fill="#b48054" opacity=".42"/>
+              <path d="M26 94l104 25 31-20L57 74Z" fill="#f4ead7" stroke="#a47a5d"/>
+              <path d="M36 79l101 24 26-18L62 61Z" fill="#f8efde" stroke="#b08a6b"/>
+              <path d="M43 64l101 24 21-17L65 48Z" fill="#f4e7cf" stroke="#b58c69"/>
+              <path d="M51 49l98 22 12-14-97-22Z" fill="#fff8e9" stroke="#a77b5d"/>
+              <g fill="none" stroke-linecap="round" stroke-width="3">
+                <path d="M71 49l35 8M65 58l59 13M80 69l42 10" stroke="#c35e3e"/>
+                <path d="M110 48l24 6M128 65l19 5M67 82l37 9M113 93l28 7" stroke="#c89a48"/>
+                <path d="M67 101l63 15" stroke="#8e6c59"/>
+              </g>
+              <circle cx="44" cy="38" r="10" fill="#d06c4c" opacity=".75"/>
+            </g>
+          </svg>
+          <div>
+            <h3>5,000万行のコードを、<br>1日で移行</h3>
+            <p>巨大な構造を見失わず、調査から変換、<br>検証までを一つの流れにします。</p>
+          </div>
+        </article>
+
+        <article class="capability-card reveal">
+          <svg class="mini-art" viewBox="0 0 190 150" aria-hidden="true">
+            <defs>
+              <filter id="mini3" x="-20%" y="-20%" width="140%" height="140%">
+                <feTurbulence baseFrequency=".026" numOctaves="2" seed="8" result="n"/>
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="3"/>
+              </filter>
+              <linearGradient id="liquid3" x1="0" y1="0" x2="0" y2="1">
+                <stop stop-color="#e49558"/><stop offset="1" stop-color="#b54b37"/>
+              </linearGradient>
+            </defs>
+            <g filter="url(#mini3)">
+              <g fill="none" stroke="#9b7557" stroke-width="2">
+                <path d="M37 42l26-15 27 17 28-14 25 19"/>
+                <path d="M63 27v31M90 44l-12 24M118 30l9 30"/>
+              </g>
+              <g>
+                <circle cx="37" cy="42" r="8" fill="#cf6846"/>
+                <circle cx="63" cy="27" r="7" fill="#d2a24c"/>
+                <circle cx="90" cy="44" r="9" fill="#b95a41"/>
+                <circle cx="118" cy="30" r="7" fill="#e0bc75"/>
+                <circle cx="143" cy="49" r="9" fill="#a8513b"/>
+                <circle cx="78" cy="68" r="6" fill="#d79a52"/>
+                <circle cx="127" cy="60" r="6" fill="#cf7452"/>
+              </g>
+              <path d="M66 58v19l-27 47q-5 10 8 10h72q12 0 7-10L99 77V58" fill="#f7edda" stroke="#8d6d59" stroke-width="3"/>
+              <path d="M51 112q31-13 63 1l10 18H42Z" fill="url(#liquid3)" opacity=".9"/>
+              <path d="M68 58h30" stroke="#8d6d59" stroke-width="5" stroke-linecap="round"/>
+              <circle cx="79" cy="105" r="5" fill="#f6d59d" opacity=".8"/>
+              <circle cx="97" cy="119" r="3" fill="#fff1cf" opacity=".8"/>
+            </g>
+          </svg>
+          <div>
+            <h3>新薬の設計を、<br>約10倍のスピードで</h3>
+            <p>仮説を立て、候補を比べ、実験の次の一歩を<br>研究者とともに考えます。</p>
+          </div>
+        </article>
+
+        <article class="capability-card reveal">
+          <svg class="mini-art" viewBox="0 0 190 150" aria-hidden="true">
+            <defs>
+              <filter id="mini4" x="-20%" y="-20%" width="140%" height="140%">
+                <feTurbulence baseFrequency=".02" numOctaves="3" seed="12" result="n"/>
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="4"/>
+              </filter>
+            </defs>
+            <g filter="url(#mini4)">
+              <circle cx="139" cy="45" r="28" fill="#f4e6cc" stroke="#9a765d" stroke-width="3"/>
+              <circle cx="139" cy="45" r="21" fill="#fff9e9"/>
+              <path d="M139 45V30M139 45l13 7" stroke="#b6533b" stroke-width="3" stroke-linecap="round"/>
+              <circle cx="139" cy="45" r="3" fill="#b6533b"/>
+              <path d="M6 128q43-50 79-33 33 15 81-18" fill="none" stroke="#d2ae72" stroke-width="32" stroke-linecap="round"/>
+              <path d="M6 128q43-50 79-33 33 15 81-18" fill="none" stroke="#fff7e7" stroke-width="10" stroke-linecap="round"/>
+              <g fill="#b95b40">
+                <circle cx="30" cy="102" r="6"/><circle cx="21" cy="113" r="4"/>
+                <circle cx="96" cy="104" r="5"/><circle cx="106" cy="99" r="4"/>
+              </g>
+              <g transform="translate(61 78)">
+                <circle cx="0" cy="0" r="6" fill="#bd8c68"/>
+                <path d="M-6 8h13l5 19H-10Z" fill="#bd4f38"/>
+                <path d="M-7 26l-4 14M9 26l5 13" stroke="#665047" stroke-width="4" stroke-linecap="round"/>
+              </g>
+            </g>
+          </svg>
+          <div>
+            <h3>長い作業も、<br>休まず走りきる</h3>
+            <p>途中で目的を見失わず、確認と修正を重ねて、<br>完了まで粘り強く進みます。</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="content-section graph-section reveal" aria-labelledby="strength-title">
+    <div class="container">
+      <div class="section-heading">
+        <div class="section-kicker">03 / ENDURANCE<span>いちばんの強み</span></div>
+        <h2 id="strength-title">長く複雑な仕事ほど、<br><em>差は開いていく。</em></h2>
+      </div>
+
+      <div class="graph-shell" role="img" aria-label="仕事が長く複雑になるほどFable 5のタスク遂行力が指数関数的に伸びる折れ線グラフ">
+        <div class="graph-legend">
+          <span class="legend-item"><span class="legend-line"></span>他のモデル</span>
+          <span class="legend-item"><span class="legend-line fable"></span>Fable 5</span>
+        </div>
+        <svg class="main-graph" viewBox="0 0 1000 520">
+          <g>
+            <line class="graph-grid" x1="75" y1="90" x2="950" y2="90"/>
+            <line class="graph-grid" x1="75" y1="190" x2="950" y2="190"/>
+            <line class="graph-grid" x1="75" y1="290" x2="950" y2="290"/>
+            <line class="graph-grid" x1="75" y1="390" x2="950" y2="390"/>
+            <line class="graph-grid" x1="250" y1="40" x2="250" y2="455"/>
+            <line class="graph-grid" x1="425" y1="40" x2="425" y2="455"/>
+            <line class="graph-grid" x1="600" y1="40" x2="600" y2="455"/>
+            <line class="graph-grid" x1="775" y1="40" x2="775" y2="455"/>
+          </g>
+          <line class="graph-axis" x1="75" y1="455" x2="955" y2="455"/>
+          <line class="graph-axis" x1="75" y1="455" x2="75" y2="38"/>
+
+          <path class="graph-line other" pathLength="1" d="M77 426 C190 412 278 388 366 365 S545 330 640 320 S805 311 945 304"/>
+          <path class="graph-line other" pathLength="1" d="M77 433 C179 420 285 402 382 385 S566 357 669 353 S827 350 945 346"/>
+          <path class="graph-line other" pathLength="1" d="M77 416 C189 401 292 374 400 346 S597 300 718 286 S849 283 945 275"/>
+          <path class="graph-line fable" pathLength="1" d="M77 428 C228 413 340 380 447 334 C560 285 630 248 701 194 C775 138 835 86 945 48"/>
+
+          <circle class="graph-dot" cx="945" cy="48" r="7"/>
+          <circle class="graph-dot" cx="945" cy="48" r="16" fill="none" stroke="#c65d3b" stroke-width="2" opacity=".22"/>
+          <text x="86" y="25" fill="#786d64" font-size="13">仕事を完了する力</text>
+        </svg>
+        <div class="graph-note">考えつづけるほど、<br>強さが活きる。</div>
+        <div class="axis-label">仕事の長さ・複雑さ →</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content-section safety" id="safety" aria-labelledby="safety-title">
+    <div class="container">
+      <div class="section-heading reveal">
+        <div class="section-kicker">04 / SAFETY<span>安全性</span></div>
+        <h2 id="safety-title">強い力には、<br><em>やさしいブレーキを。</em></h2>
+      </div>
+
+      <div class="safety-art reveal" aria-hidden="true">
+        <svg viewBox="0 0 1200 650" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="safeSky" x1="0" y1="0" x2="0" y2="1">
+              <stop stop-color="#faf6ee"/>
+              <stop offset=".56" stop-color="#edcfaa"/>
+              <stop offset="1" stop-color="#c77b58"/>
+            </linearGradient>
+            <linearGradient id="safeHillA" x1="0" y1="0" x2="1" y2="1">
+              <stop stop-color="#d8b07b"/><stop offset="1" stop-color="#9c6549"/>
+            </linearGradient>
+            <linearGradient id="safeHillB" x1="0" y1="0" x2="1" y2="1">
+              <stop stop-color="#c58b60"/><stop offset="1" stop-color="#7d5040"/>
+            </linearGradient>
+            <radialGradient id="safeSun">
+              <stop stop-color="#e47954" stop-opacity=".95"/>
+              <stop offset=".72" stop-color="#ce5b3e" stop-opacity=".68"/>
+              <stop offset="1" stop-color="#ce5b3e" stop-opacity="0"/>
+            </radialGradient>
+            <filter id="safeWash" x="-15%" y="-20%" width="130%" height="145%">
+              <feTurbulence type="fractalNoise" baseFrequency=".012 .03" numOctaves="3" seed="14" result="n"/>
+              <feDisplacementMap in="SourceGraphic" in2="n" scale="8"/>
+              <feGaussianBlur stdDeviation=".25"/>
+            </filter>
+            <filter id="safeSoft" x="-30%" y="-30%" width="160%" height="160%">
+              <feTurbulence baseFrequency=".03" numOctaves="2" result="n"/>
+              <feDisplacementMap in="SourceGraphic" in2="n" scale="8"/>
+              <feGaussianBlur stdDeviation="3"/>
+            </filter>
+            <filter id="safeFluff" x="-30%" y="-30%" width="160%" height="160%">
+              <feTurbulence baseFrequency=".03" numOctaves="2" seed="5" result="n"/>
+              <feDisplacementMap in="SourceGraphic" in2="n" scale="5"/>
+            </filter>
+          </defs>
+          <rect width="1200" height="650" rx="4" fill="url(#safeSky)"/>
+          <g filter="url(#safeSoft)">
+            <circle cx="825" cy="230" r="105" fill="url(#safeSun)"/>
+            <circle cx="825" cy="230" r="54" fill="#d86646" opacity=".76"/>
+            <path d="M91 174q119-54 222 2 87-46 166 2-160 29-388-4Z" fill="#fff8eb" opacity=".45"/>
+          </g>
+          <g filter="url(#safeWash)">
+            <path d="M0 396q160-91 333-40t315 1q191-69 552 12v281H0Z" fill="#e3c293" opacity=".8"/>
+            <path d="M0 476q188-111 379-42t333 9q189-84 488-14v221H0Z" fill="url(#safeHillA)"/>
+            <path d="M0 558q206-101 419-42t344-7q198-69 437-16v157H0Z" fill="url(#safeHillB)"/>
+          </g>
+          <path d="M913 650q-25-71-4-119t-16-95q51 39 43 85t28 129Z" fill="#fff7e7" opacity=".78" filter="url(#safeWash)"/>
+
+          <g opacity=".9">
+            <path d="M90 575q8-63-12-101M105 579q-4-74 24-123M122 580q4-54 40-91" fill="none" stroke="#814a3d" stroke-width="5" stroke-linecap="round"/>
+            <g fill="#c28643">
+              <ellipse cx="77" cy="472" rx="8" ry="18" transform="rotate(-21 77 472)"/>
+              <ellipse cx="129" cy="454" rx="8" ry="18" transform="rotate(24 129 454)"/>
+              <ellipse cx="160" cy="488" rx="7" ry="15" transform="rotate(32 160 488)"/>
+            </g>
+            <g fill="#9e4938" filter="url(#safeSoft)">
+              <circle cx="1082" cy="508" r="18"/><circle cx="1110" cy="496" r="15"/><circle cx="1135" cy="515" r="19"/>
+              <circle cx="247" cy="524" r="12"/><circle cx="271" cy="514" r="15"/>
+            </g>
+          </g>
+
+          <g transform="translate(490 410)">
+            <ellipse cx="124" cy="142" rx="117" ry="18" fill="#543c34" opacity=".19" filter="url(#safeSoft)"/>
+            <g transform="translate(70 13)">
+              <circle cx="0" cy="0" r="16" fill="#bd8a68"/>
+              <path d="M-14 17q14-9 29 0l10 58h-48Z" fill="#b84b37"/>
+              <path d="M-15 72l-11 45M19 72l16 43" stroke="#57433c" stroke-width="9" stroke-linecap="round"/>
+              <path d="M-12 31l-30 31M15 31l30 22" stroke="#9b664f" stroke-width="7" stroke-linecap="round"/>
+              <path d="M-13-8q12-16 29-1l-2 10h-28Z" fill="#4f4039"/>
+            </g>
+            <g transform="translate(151 8)" filter="url(#safeFluff)">
+              <circle cx="35" cy="24" r="31" fill="#f4e8d0"/>
+              <circle cx="9" cy="48" r="41" fill="#f7ecd5"/>
+              <circle cx="48" cy="53" r="45" fill="#efdfc1"/>
+              <circle cx="26" cy="87" r="40" fill="#f6ead2"/>
+              <circle cx="65" cy="87" r="32" fill="#ead6b7"/>
+              <circle cx="65" cy="19" r="23" fill="#f5ead4"/>
+            </g>
+            <path d="M174 65q6 4 12 0" fill="none" stroke="#785747" stroke-width="2.4" stroke-linecap="round"/>
+            <circle cx="164" cy="53" r="3" fill="#403832"/>
+            <circle cx="184" cy="53" r="3" fill="#403832"/>
+            <path d="M155 94q-4 33-1 47M202 96q7 28 2 45" stroke="#735648" stroke-width="8" stroke-linecap="round"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="safety-caption reveal">
+        <p>能力を高めることと、安心して任せられることを、同じ歩幅で。Fable 5は判断の透明性と、人の手に戻せる設計を大切にしています。</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="content-section getting-started" id="start" aria-labelledby="start-title">
+    <div class="container">
+      <div class="section-heading reveal">
+        <div class="section-kicker">05 / GET STARTED<span>はじめかた</span></div>
+        <h2 id="start-title">はじめかたは、<br><em>かんたん。</em></h2>
+      </div>
+
+      <div class="start-panel reveal">
+        <svg class="laptop-art" viewBox="0 0 430 320" aria-hidden="true">
+          <defs>
+            <filter id="laptopWash" x="-20%" y="-20%" width="140%" height="140%">
+              <feTurbulence baseFrequency=".018" numOctaves="3" seed="18" result="n"/>
+              <feDisplacementMap in="SourceGraphic" in2="n" scale="4"/>
+            </filter>
+            <linearGradient id="laptopScreen" x1="0" y1="0" x2="1" y2="1">
+              <stop stop-color="#fbf5e9"/><stop offset="1" stop-color="#e7c99c"/>
+            </linearGradient>
+          </defs>
+          <g filter="url(#laptopWash)">
+            <ellipse cx="214" cy="270" rx="177" ry="23" fill="#8a624a" opacity=".15"/>
+            <rect x="57" y="38" width="315" height="202" rx="14" fill="#68574c"/>
+            <rect x="69" y="51" width="291" height="176" rx="5" fill="url(#laptopScreen)"/>
+            <circle cx="215" cy="44" r="2.5" fill="#cdbda7"/>
+            <path d="M70 194q55-72 117-41t173-40v114H69Z" fill="#d8ad70"/>
+            <path d="M70 213q79-54 137-22t153-20v56H69Z" fill="#b9684b"/>
+            <circle cx="302" cy="88" r="24" fill="#d36b49" opacity=".76"/>
+            <path d="M193 227q13-34 50-50" fill="none" stroke="#fff8e9" stroke-width="8" stroke-linecap="round"/>
+            <g transform="translate(217 167)">
+              <circle cx="0" cy="0" r="6" fill="#bd8b68"/>
+              <path d="M-6 8H7l5 24H-10Z" fill="#b84d37"/>
+            </g>
+            <g transform="translate(241 156)">
+              <circle cx="10" cy="9" r="12" fill="#f4e7ce"/>
+              <circle cx="2" cy="20" r="14" fill="#f5ead4"/>
+              <circle cx="17" cy="23" r="13" fill="#ead7ba"/>
+            </g>
+            <path d="M37 240h354l-34 32H73Z" fill="#bba58b"/>
+            <path d="M151 244h128l-15 17h-98Z" fill="#8d7768" opacity=".55"/>
+            <path d="M73 272h284" stroke="#705d51" stroke-width="4" stroke-linecap="round" opacity=".5"/>
+          </g>
+        </svg>
+
+        <ol class="steps">
+          <li>
+            <span class="step-number">01</span>
+            <div>
+              <strong>Claudeをひらく</strong>
+              <p>ブラウザでも、デスクトップでも。いつもの場所から始められます。</p>
+            </div>
+          </li>
+          <li>
+            <span class="step-number">02</span>
+            <div>
+              <strong>モデルから「Fable 5」を選ぶ</strong>
+              <p>一般提供モデルとして、対象プランのモデル選択画面に表示されます。</p>
+            </div>
+          </li>
+          <li>
+            <span class="step-number">03</span>
+            <div>
+              <strong>やりたいことを、そのまま話す</strong>
+              <p>ゴールや資料を伝えたら、あとは一緒に道筋をつくっていきます。</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="final-cta" aria-labelledby="cta-title">
+    <div class="cta-copy reveal">
+      <div class="cta-kicker">06 / A NEW JOURNEY</div>
+      <h2 id="cta-title">いちばん遠くまで、<br>いっしょに。</h2>
+      <a class="primary-button" href="#" aria-label="Claudeを使ってみる">Claudeを使ってみる</a>
+    </div>
+
+    <div class="cta-landscape" aria-hidden="true">
+      <svg viewBox="0 0 1600 520" preserveAspectRatio="xMidYMax slice">
+        <defs>
+          <linearGradient id="ctaSky" x1="0" y1="0" x2="0" y2="1">
+            <stop stop-color="#faf6ee" stop-opacity="0"/>
+            <stop offset=".42" stop-color="#eac9a0"/>
+            <stop offset="1" stop-color="#b96c4d"/>
+          </linearGradient>
+          <linearGradient id="ctaHill1" x1="0" y1="0" x2="1" y2="1">
+            <stop stop-color="#dbb77e"/><stop offset="1" stop-color="#a6674c"/>
+          </linearGradient>
+          <linearGradient id="ctaHill2" x1="0" y1="0" x2="1" y2="1">
+            <stop stop-color="#c4885c"/><stop offset="1" stop-color="#75483b"/>
+          </linearGradient>
+          <radialGradient id="ctaSun">
+            <stop stop-color="#e87650" stop-opacity=".95"/>
+            <stop offset=".67" stop-color="#ce593d" stop-opacity=".65"/>
+            <stop offset="1" stop-color="#ce593d" stop-opacity="0"/>
+          </radialGradient>
+          <filter id="ctaWash" x="-15%" y="-20%" width="130%" height="150%">
+            <feTurbulence baseFrequency=".012 .034" numOctaves="3" seed="22" result="n"/>
+            <feDisplacementMap in="SourceGraphic" in2="n" scale="9"/>
+          </filter>
+          <filter id="ctaSoft" x="-30%" y="-30%" width="160%" height="160%">
+            <feTurbulence baseFrequency=".03" numOctaves="2" seed="3" result="n"/>
+            <feDisplacementMap in="SourceGraphic" in2="n" scale="8"/>
+            <feGaussianBlur stdDeviation="3"/>
+          </filter>
+        </defs>
+        <rect width="1600" height="520" fill="url(#ctaSky)"/>
+        <g filter="url(#ctaSoft)">
+          <circle cx="800" cy="163" r="93" fill="url(#ctaSun)"/>
+          <circle cx="800" cy="163" r="46" fill="#d56344" opacity=".68"/>
+          <path d="M170 174q82-36 157 4 58-31 122 1-105 22-279-5Z" fill="#fff8e9" opacity=".32"/>
+        </g>
+        <g filter="url(#ctaWash)">
+          <path d="M0 300q247-88 440-11t388 1q313-122 772 8v222H0Z" fill="#e3c292"/>
+          <path d="M0 366q225-106 472-33t391 7q290-112 737-19v199H0Z" fill="url(#ctaHill1)"/>
+          <path d="M0 444q252-103 522-48t409-9q270-90 669-21v154H0Z" fill="url(#ctaHill2)"/>
+        </g>
+        <path d="M716 520q34-72 69-116t20-101q51 52 44 99t48 118Z" fill="#fff7e8" opacity=".89" filter="url(#ctaWash)"/>
+        <g fill="#9b4838" opacity=".82" filter="url(#ctaSoft)">
+          <circle cx="152" cy="419" r="18"/><circle cx="181" cy="408" r="14"/><circle cx="207" cy="426" r="20"/>
+          <circle cx="1376" cy="399" r="17"/><circle cx="1405" cy="389" r="21"/><circle cx="1436" cy="410" r="18"/>
+        </g>
+        <g transform="translate(786 331) scale(.72)">
+          <circle cx="0" cy="0" r="11" fill="#bc8968"/>
+          <path d="M-10 13q11-6 21 0l7 39h-35Z" fill="#b64835"/>
+          <path d="M-11 49l-7 29M13 49l11 28" stroke="#59443c" stroke-width="7" stroke-linecap="round"/>
+        </g>
+        <g transform="translate(826 324) scale(.72)">
+          <circle cx="18" cy="15" r="20" fill="#f4e8d0"/>
+          <circle cx="1" cy="32" r="26" fill="#f6ead4"/>
+          <circle cx="28" cy="38" r="25" fill="#ead7b9"/>
+          <circle cx="14" cy="57" r="23" fill="#f2e2c8"/>
+          <path d="M3 55l-3 27M31 57l4 25" stroke="#76584a" stroke-width="7" stroke-linecap="round"/>
+        </g>
+        <g fill="#d0a04e" opacity=".85">
+          <circle cx="324" cy="425" r="5"/><circle cx="346" cy="413" r="4"/><circle cx="367" cy="429" r="6"/>
+          <circle cx="1194" cy="439" r="5"/><circle cx="1221" cy="426" r="4"/><circle cx="1246" cy="442" r="6"/>
+        </g>
+      </svg>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true">
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8">
+        <circle cx="16" cy="16" r="5.4" fill="currentColor"/>
+        <path d="M16 2.7v5M16 24.3v5M2.7 16h5M24.3 16h5M6.6 6.6l3.5 3.5M21.9 21.9l3.5 3.5M25.4 6.6l-3.5 3.5M10.1 21.9l-3.5 3.5"/>
+      </g>
+    </svg>
+    Claude
+  </div>
+  <div class="footer-note">
+    © 2026 Claude. Fable 5 launch concept.<br>
+    記載の性能値は紹介用の表現です。
+  </div>
+</footer>
+
+<script>
+(() => {
+  const reveals = document.querySelectorAll('.reveal');
+  const graph = document.querySelector('.graph-section');
+
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.12,
+      rootMargin: '0px 0px -6% 0px'
+    });
+
+    reveals.forEach((element) => observer.observe(element));
+  } else {
+    reveals.forEach((element) => element.classList.add('in-view'));
+  }
+
+  window.setTimeout(() => {
+    reveals.forEach((element) => element.classList.add('in-view'));
+    if (graph) graph.classList.add('in-view');
+  }, 3200);
+
+  const root = document.documentElement;
+  let ticking = false;
+
+  const updateParallax = () => {
+    const y = Math.min(window.scrollY, window.innerHeight);
+    root.style.setProperty('--sun-y', `${y * 0.09}px`);
+    root.style.setProperty('--cloud-x', `${y * 0.035}px`);
+    ticking = false;
+  };
+
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      window.requestAnimationFrame(updateParallax);
+      ticking = true;
+    }
+  }, { passive: true });
+
+  updateParallax();
+})();
+</script>
+</body>
+</html>

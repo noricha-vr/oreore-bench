@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#efeae0">
+<title>墨流し — Suminagashi</title>
+<style>
+  :root {
+    color-scheme: light;
+    --paper: #efeae0;
+    --ink: #1a1a1f;
+    --indigo: #16407a;
+    --vermilion: #c8372d;
+    --pine: #2e6e52;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background: var(--paper);
+  }
+
+  body {
+    color: #282624;
+    font-family:
+      "Hiragino Mincho ProN",
+      "Yu Mincho",
+      "YuMincho",
+      "Noto Serif JP",
+      serif;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+  }
+
+  canvas {
+    position: fixed;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+    touch-action: none;
+  }
+
+  .interface {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .title {
+    position: absolute;
+    top: max(28px, env(safe-area-inset-top));
+    left: max(39px, calc(env(safe-area-inset-left) + 27px));
+    margin: 0;
+    writing-mode: vertical-rl;
+    font-size: clamp(22px, 2.1vw, 31px);
+    line-height: 1;
+    letter-spacing: 0.17em;
+    font-weight: 500;
+    color: rgba(27, 25, 24, 0.82);
+  }
+
+  .caption {
+    position: absolute;
+    top: 50%;
+    left: max(10px, env(safe-area-inset-left));
+    transform: translateY(-50%);
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 8px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.34em;
+    color: rgba(31, 29, 27, 0.42);
+    white-space: nowrap;
+  }
+
+  .hint {
+    position: absolute;
+    top: 48%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: max-content;
+    max-width: 88vw;
+    font-size: clamp(11px, 1.15vw, 14px);
+    letter-spacing: 0.42em;
+    color: rgba(47, 43, 39, 0.52);
+    text-shadow: 0 1px 10px rgba(239, 234, 224, 0.5);
+    transition: opacity 1.4s ease, transform 1.4s ease;
+  }
+
+  .hint.hidden {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% - 5px));
+  }
+
+  .credit {
+    position: absolute;
+    right: max(18px, calc(env(safe-area-inset-right) + 12px));
+    bottom: max(17px, calc(env(safe-area-inset-bottom) + 10px));
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 8px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    color: rgba(31, 29, 27, 0.38);
+  }
+
+  .dock {
+    position: absolute;
+    left: 50%;
+    bottom: max(27px, calc(env(safe-area-inset-bottom) + 17px));
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    min-height: 62px;
+    max-width: calc(100vw - 28px);
+    border: 1px solid rgba(74, 68, 61, 0.12);
+    border-radius: 22px;
+    background: rgba(247, 243, 235, 0.76);
+    box-shadow:
+      0 8px 28px rgba(48, 43, 37, 0.07),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(14px) saturate(0.85);
+    -webkit-backdrop-filter: blur(14px) saturate(0.85);
+    pointer-events: auto;
+  }
+
+  .palette {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  button {
+    margin: 0;
+    border: 0;
+    color: inherit;
+    font: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .color-button {
+    position: relative;
+    display: grid;
+    place-items: center;
+    grid-template-rows: 25px 12px;
+    width: 39px;
+    height: 42px;
+    padding: 0;
+    background: transparent;
+    border-radius: 13px;
+    cursor: pointer;
+  }
+
+  .swatch {
+    position: relative;
+    display: block;
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    background: var(--swatch);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.22),
+      0 1px 2px rgba(31, 27, 23, 0.12);
+  }
+
+  .color-button[data-color="cycle"] .swatch {
+    background: conic-gradient(
+      from 35deg,
+      var(--ink),
+      var(--indigo),
+      var(--vermilion),
+      var(--pine),
+      var(--ink)
+    );
+  }
+
+  .color-button .swatch::after {
+    content: "";
+    position: absolute;
+    inset: -5px;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    transform: scale(0.78);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+
+  .color-button.selected .swatch::after {
+    border-color: rgba(43, 39, 35, 0.58);
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  .color-label {
+    font-size: 9px;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    color: rgba(40, 37, 34, 0.63);
+  }
+
+  .divider {
+    width: 1px;
+    height: 28px;
+    flex: 0 0 auto;
+    background: rgba(59, 54, 49, 0.13);
+  }
+
+  .auto-toggle,
+  .wash-button {
+    height: 34px;
+    padding: 0 9px;
+    border-radius: 12px;
+    background: transparent;
+    white-space: nowrap;
+    cursor: pointer;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: rgba(42, 39, 35, 0.69);
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  .auto-toggle {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .toggle-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(65, 60, 55, 0.25);
+    box-shadow: 0 0 0 3px rgba(65, 60, 55, 0.055);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .auto-toggle.active .toggle-dot {
+    background: #315d4c;
+    box-shadow: 0 0 0 3px rgba(46, 110, 82, 0.12);
+  }
+
+  .auto-toggle:hover,
+  .wash-button:hover {
+    background: rgba(57, 52, 47, 0.055);
+    color: rgba(31, 28, 25, 0.9);
+  }
+
+  .wash-button.washing {
+    color: rgba(42, 39, 35, 0.43);
+    cursor: default;
+  }
+
+  .color-button:focus-visible,
+  .auto-toggle:focus-visible,
+  .wash-button:focus-visible {
+    outline: 1px solid rgba(43, 39, 35, 0.55);
+    outline-offset: 2px;
+  }
+
+  .unsupported {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: none;
+    place-items: center;
+    padding: 30px;
+    text-align: center;
+    background: var(--paper);
+    color: rgba(35, 32, 29, 0.7);
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    line-height: 2;
+  }
+
+  @media (max-width: 560px) {
+    .title {
+      top: max(23px, env(safe-area-inset-top));
+      left: max(26px, calc(env(safe-area-inset-left) + 19px));
+    }
+
+    .caption {
+      display: none;
+    }
+
+    .credit {
+      right: 12px;
+      bottom: max(9px, env(safe-area-inset-bottom));
+      font-size: 7px;
+    }
+
+    .hint {
+      top: 43%;
+      font-size: 10px;
+      letter-spacing: 0.28em;
+    }
+
+    .dock {
+      gap: 5px;
+      min-height: 58px;
+      padding: 8px 8px;
+      border-radius: 19px;
+      bottom: max(25px, calc(env(safe-area-inset-bottom) + 17px));
+    }
+
+    .palette {
+      gap: 0;
+    }
+
+    .color-button {
+      width: 34px;
+    }
+
+    .auto-toggle,
+    .wash-button {
+      padding: 0 6px;
+      font-size: 9px;
+      letter-spacing: 0.03em;
+    }
+
+    .auto-toggle {
+      gap: 5px;
+    }
+
+    .divider {
+      margin: 0 2px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hint,
+    .swatch::after,
+    .auto-toggle,
+    .wash-button,
+    .toggle-dot {
+      transition-duration: 0.15s !important;
+    }
+  }
+</style>
+</head>
+<body>
+<canvas id="fluid" aria-label="墨流しのインタラクティブ流体画面"></canvas>
+
+<div class="interface">
+  <h1 class="title">墨流し</h1>
+  <div class="caption">SUMINAGASHI — INK DISSOLUTION</div>
+  <div class="hint" id="hint">画 面 を な ぞ っ て 墨 を 流 す</div>
+
+  <div class="dock" role="toolbar" aria-label="墨流し操作">
+    <div class="palette" role="group" aria-label="墨の色">
+      <button class="color-button selected" data-color="cycle" aria-label="色を巡回" aria-pressed="true">
+        <span class="swatch"></span>
+        <span class="color-label">巡</span>
+      </button>
+      <button class="color-button" data-color="0" aria-label="墨" aria-pressed="false" style="--swatch:#1a1a1f">
+        <span class="swatch"></span>
+        <span class="color-label">墨</span>
+      </button>
+      <button class="color-button" data-color="1" aria-label="藍" aria-pressed="false" style="--swatch:#16407a">
+        <span class="swatch"></span>
+        <span class="color-label">藍</span>
+      </button>
+      <button class="color-button" data-color="2" aria-label="朱" aria-pressed="false" style="--swatch:#c8372d">
+        <span class="swatch"></span>
+        <span class="color-label">朱</span>
+      </button>
+      <button class="color-button" data-color="3" aria-label="松葉" aria-pressed="false" style="--swatch:#2e6e52">
+        <span class="swatch"></span>
+        <span class="color-label">松葉</span>
+      </button>
+    </div>
+
+    <div class="divider" aria-hidden="true"></div>
+
+    <button class="auto-toggle" id="autoToggle" type="button" aria-pressed="true">
+      <span class="toggle-dot" aria-hidden="true"></span>
+      <span>自動演出</span>
+    </button>
+
+    <button class="wash-button" id="washButton" type="button">洗い流す</button>
+  </div>
+
+  <div class="credit">THREE.JS · STABLE FLUIDS</div>
+</div>
+
+<div class="unsupported" id="unsupported">
+  この作品の表示には WebGL 2 が必要です。
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("fluid");
+  const hint = document.getElementById("hint");
+  const autoToggle = document.getElementById("autoToggle");
+  const washButton = document.getElementById("washButton");
+  const unsupported = document.getElementById("unsupported");
+  const colorButtons = [...document.querySelectorAll(".color-button")];
+
+  const gl = canvas.getContext("webgl2", {
+    alpha: false,
+    antialias: false,
+    depth: false,
+    stencil: false,
+    preserveDrawingBuffer: false,
+    powerPreference: "high-performance"
+  });
+
+  if (!gl || !gl.getExtension("EXT_color_buffer_float")) {
+    unsupported.style.display = "grid";
+    return;
+  }
+
+  gl.disable(gl.BLEND);
+  gl.disable(gl.DEPTH_TEST);
+  gl.disable(gl.CULL_FACE);
+
+  let reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const coarsePointer = matchMedia("(pointer: coarse)").matches;
+
+  let autoEnabled = !reducedMotion;
+  let selectedColor = "cycle";
+  let colorCycle = 0;
+  let strokeColor = 0;
+  let hintDismissed = false;
+  let lastUserAction = performance.now();
+  let washing = false;
+  let washEnd = 0;
+  let lastWashPush = 0;
+
+  function updateAutoUI() {
+    autoToggle.classList.toggle("active", autoEnabled);
+    autoToggle.setAttribute("aria-pressed", String(autoEnabled));
+  }
+  updateAutoUI();
+
+  const PAPER_HEX = "#efeae0";
+  const INK_HEX = ["#1a1a1f", "#16407a", "#c8372d", "#2e6e52"];
+
+  function hexRGB(hex) {
+    return [
+      parseInt(hex.slice(1, 3), 16) / 255,
+      parseInt(hex.slice(3, 5), 16) / 255,
+      parseInt(hex.slice(5, 7), 16) / 255
+    ];
+  }
+
+  const paperRGB = hexRGB(PAPER_HEX);
+  const absorbance = INK_HEX.map(hex => {
+    const c = hexRGB(hex);
+    return c.map((v, i) => Math.max(0, -Math.log(Math.max(0.004, v / paperRGB[i]))));
+  });
+
+  const vertexShader = `#version 300 es
+  precision highp float;
+  out vec2 vUv;
+  void main() {
+    vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2));
+    vUv = p * 0.5;
+    gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
+  }`;
+
+  const advectionShader = `#version 300 es
+  precision highp float;
+  in vec2 vUv;
+  out vec4 outColor;
+  uniform sampler2D uVelocity;
+  uniform sampler2D uSource;
+  uniform vec2 uTexel;
+  uniform float uDt;
+  uniform float uDissipation;
+
+  vec4 bilerp(sampler2D tex, vec2 uv) {
+    vec2 st = uv / uTexel - 0.5;
+    vec2 i = floor(st);
+    vec2 f = fract(st);
+    vec2 a = (i + 0.5) * uTexel;
+    vec4 A = texture(tex, a);
+    vec4 B = texture(tex, a + vec2(uTexel.x, 0.0));
+    vec4 C = texture(tex, a + vec2(0.0, uTexel.y));
+    vec4 D = texture(tex, a + uTexel);
+    return mix(mix(A, B, f.x), mix(C, D, f.x), f.y);
+  }
+
+  void main() {
+    vec2 velocity = texture(uVelocity, vUv).xy;
+    vec2 previous = vUv - uDt * velocity * uTexel;
+    outColor = bilerp(uSource, previous) * uDissipation;
+  }`;
+
+  const splatShader = `#version 300 es
+  precision highp float;
+  in vec2 vUv;
+  out vec4 outColor;
+  uniform sampler2D uTarget;
+  uniform vec2 uPoint;
+  uniform vec4 uValue;
+  uniform float uRadius;
+  uniform float uAspect;
+
+  void main() {
+    vec2 p = vUv - uPoint;
+    p.x *= uAspect;
+    float falloff = exp(-dot(p, p) / max(uRadius * uRadius, 0.000001));
+    outColor = texture(uTarget, vUv) + uValue * falloff;
+  }`;
+
+  const curlShader = `#version 300 es
+  precision highp float;
+  in vec2 vUv;
+  out vec4 outColor;
+  uniform sampler2D uVelocity;
+  uniform vec2 uTexel;
+
+  void main() {
+    float L = texture(uVelocity, vUv - vec2(uTexel.x, 0.0)).y;
+    float R = texture(uVelocity, vUv + vec2(uTexel.x, 0.0)).y;
+    float B = texture(uVelocity, vUv - vec2(0.0, uTexel.y)).x;
+    float T = texture(uVelocity, vUv + vec2(0.0, uTexel.y)).x;
+    float c = 0.5 * (R - L - T + B);
+    outColor = vec4(c, 0.0, 0.0, 1.0);
+  }`;
+
+  const vorticityShader = `#version 300 es
+  precision highp float;
+  in vec2 vUv;
+  out vec4 outColor;
+  uniform sampler2D uVelocity;
+  uniform sampler2D uCurl;
+  uniform vec2 uTexel;
+  uniform float uDt;
+  uniform float uStrength;
+
+  void main() {
+    float L = abs(texture(uCurl, vUv - vec2(uTexel.x, 0.0)).x);
+    float R = abs(texture(uCurl, vUv + vec2(uTexel.x, 0.0)).x);
+    float B = abs(texture(uCurl, vUv - vec2(0.0, uTexel.y)).x);
+    float T = abs(texture(uCurl, vUv + vec2(0.0, uTexel.y)).x);
+    float C = texture(uCurl, vUv).x;
+
+    vec2 force = 0.5 * vec2(T - B, R - L);
+    force /= length(force) + 0.0001;
+    force *= uStrength * C;
+    force.y *= -1.0;
+
+    vec2 velocity = texture(uVelocity, vUv).xy;
+    velocity += force * uDt;
+    outColor = vec4(velocity, 0.0, 1.0);
+  }`;
+
+  const divergenceShader = `#version 300 es
+  precision highp float;
+  in vec2 vUv;
+  out vec4 outColor;
+  uniform sampler2D uVelocity;
+  uniform vec2 uTexel;
+
+  void main() {
+    float L = texture(uVelocity, vUv - vec2(uTexel.x, 0.0)).x;
+    float R = texture(uVelocity, vUv + vec2(uTexel.x, 0.0)).x;
+    float B = texture(uVelocity, vUv - vec2(0.0, uTexel.y)).y;
+    float T = texture(uVelocity, vUv + vec2(0.0, uTexel.y)).y;
+    float divergence = 0.5 * (R - L + T - B);
+    outColor = vec4(divergence, 0.0, 0.0, 1.0);
+  }`;
+
+  const pressureShader = `#version 300 es
+  precision highp float;
+  in vec2 vUv;
+  out vec4 outColor;
+  uniform sampler2D uPressure;
+  uniform sampler2D uDivergence;
+  uniform vec2 uTexel;
+
+  void main() {
+    float L = texture(uPressure, vUv - vec2(uTexel.x, 0.0)).x;
+    float R = texture(uPressure, vUv + vec2(uTexel.x, 0.0)).x;
+    float B = texture(uPressure, vUv - vec2(0.0, uTexel.y)).x;
+    float T = texture(uPressure, vUv + vec2(0.0, uTexel.y)).x;
+    float divergence = texture(uDivergence, vUv).x;
+    float pressure = (L + R + B + T - divergence) * 0.25;
+    outColor = vec4(pressure, 0.0, 0.0, 1.0);
+  }`;
+
+  const gradientShader = `#version 300 es
+  precision highp float;
+  in vec2 vUv;
+  out vec4 outColor;
+  uniform sampler2D uPressure;
+  uniform sampler2D uVelocity;
+  uniform vec2 uTexel;
+
+  void main() {
+    float L = texture(uPressure, vUv - vec2(uTexel.x, 0.0)).x;
+    float R = texture(uPressure, vUv + vec2(uTexel.x, 0.0)).x;
+    float B = texture(uPressure, vUv - vec2(0.0, uTexel.y)).x;
+    float T = texture(uPressure, vUv + vec2(0.0, uTexel.y)).x;
+    vec2 velocity = texture(uVelocity, vUv).xy;
+    velocity -= 0.5 * vec2(R - L, T - B);
+    outColor = vec4(velocity, 0.0, 1.0);
+  }`;
+
+  const scaleShader = `#version 300 es
+  precision highp float;
+  in vec2 vUv;
+  out vec4 outColor;
+  uniform sampler2D uTexture;
+  uniform float uScale;
+  void main() {
+    outColor = texture(uTexture, vUv) * uScale;
+  }`;
+
+  const softenShader = `#version 300 es
+  precision highp float;
+  in vec2 vUv;
+  out vec4 outColor;
+  uniform sampler2D uTexture;
+  uniform vec2 uTexel;
+  uniform float uAmount;
+
+  void main() {
+    vec4 C = texture(uTexture, vUv);
+    vec4 L = texture(uTexture, vUv - vec2(uTexel.x, 0.0));
+    vec4 R = texture(uTexture, vUv + vec2(uTexel.x, 0.0));
+    vec4 B = texture(uTexture, vUv - vec2(0.0, uTexel.y));
+    vec4 T = texture(uTexture, vUv + vec2(0.0, uTexel.y));
+    vec4 soft = (C * 4.0 + L + R + B + T) * 0.125;
+    outColor = mix(C, soft, uAmount);
+  }`;
+
+  const displayShader = `#version 300 es
+  precision highp float;
+  in vec2 vUv;
+  out vec4 outColor;
+  uniform sampler2D uDye;
+  uniform vec2 uDyeTexel;
+  uniform vec3 uPaper;
+
+  vec4 bilerp(sampler2D tex, vec2 uv) {
+    vec2 st = uv / uDyeTexel - 0.5;
+    vec2 i = floor(st);
+    vec2 f = fract(st);
+    vec2 a = (i + 0.5) * uDyeTexel;
+    vec4 A = texture(tex, a);
+    vec4 B = texture(tex, a + vec2(uDyeTexel.x, 0.0));
+    vec4 C = texture(tex, a + vec2(0.0, uDyeTexel.y));
+    vec4 D = texture(tex, a + uDyeTexel);
+    return mix(mix(A, B, f.x), mix(C, D, f.x), f.y);
+  }
+
+  float hash21(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+  }
+
+  float valueNoise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    float a = hash21(i);
+    float b = hash21(i + vec2(1.0, 0.0));
+    float c = hash21(i + vec2(0.0, 1.0));
+    float d = hash21(i + vec2(1.0, 1.0));
+    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+  }
+
+  void main() {
+    vec3 center = bilerp(uDye, vUv).rgb;
+    vec3 nearby =
+      bilerp(uDye, vUv + vec2(uDyeTexel.x, 0.0)).rgb +
+      bilerp(uDye, vUv - vec2(uDyeTexel.x, 0.0)).rgb +
+      bilerp(uDye, vUv + vec2(0.0, uDyeTexel.y)).rgb +
+      bilerp(uDye, vUv - vec2(0.0, uDyeTexel.y)).rgb;
+
+    vec3 opticalDensity = max(vec3(0.0), center * 0.68 + nearby * 0.08);
+
+    float broad = valueNoise(vUv * vec2(12.0, 9.0)) - 0.5;
+    float fine = hash21(floor(gl_FragCoord.xy * 0.72)) - 0.5;
+    float fiber = valueNoise(vec2(vUv.x * 34.0, vUv.y * 210.0)) - 0.5;
+    float paperVariation = broad * 0.010 + fine * 0.007 + fiber * 0.003;
+
+    vec3 paper = uPaper * (1.0 + paperVariation);
+    paper += vec3(0.0022, 0.0012, -0.0010) * broad;
+
+    vec3 reflected = paper * exp(-min(opticalDensity, vec3(8.0)));
+    outColor = vec4(reflected, 1.0);
+  }`;
+
+  function compileShader(type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      throw new Error(gl.getShaderInfoLog(shader) || "Shader compilation failed");
+    }
+    return shader;
+  }
+
+  function createProgram(fragmentSource) {
+    const program = gl.createProgram();
+    gl.attachShader(program, compileShader(gl.VERTEX_SHADER, vertexShader));
+    gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, fragmentSource));
+    gl.linkProgram(program);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      throw new Error(gl.getProgramInfoLog(program) || "Program linking failed");
+    }
+
+    const uniforms = {};
+    const count = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
+    for (let i = 0; i < count; i++) {
+      const info = gl.getActiveUniform(program, i);
+      uniforms[info.name] = {
+        location: gl.getUniformLocation(program, info.name),
+        type: info.type
+      };
+    }
+
+    return { program, uniforms };
+  }
+
+  const programs = {
+    advection: createProgram(advectionShader),
+    splat: createProgram(splatShader),
+    curl: createProgram(curlShader),
+    vorticity: createProgram(vorticityShader),
+    divergence: createProgram(divergenceShader),
+    pressure: createProgram(pressureShader),
+    gradient: createProgram(gradientShader),
+    scale: createProgram(scaleShader),
+    soften: createProgram(softenShader),
+    display: createProgram(displayShader)
+  };
+
+  const vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+
+  function makeTarget(width, height) {
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA16F,
+      width,
+      height,
+      0,
+      gl.RGBA,
+      gl.HALF_FLOAT,
+      null
+    );
+
+    const framebuffer = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+    gl.framebufferTexture2D(
+      gl.FRAMEBUFFER,
+      gl.COLOR_ATTACHMENT0,
+      gl.TEXTURE_2D,
+      texture,
+      0
+    );
+
+    return { texture, framebuffer, width, height };
+  }
+
+  function makeDouble(width, height) {
+    return {
+      read: makeTarget(width, height),
+      write: makeTarget(width, height),
+      swap() {
+        const t = this.read;
+        this.read = this.write;
+        this.write = t;
+      }
+    };
+  }
+
+  function deleteTarget(target) {
+    if (!target) return;
+    gl.deleteTexture(target.texture);
+    gl.deleteFramebuffer(target.framebuffer);
+  }
+
+  function deleteDouble(doubleTarget) {
+    if (!doubleTarget) return;
+    deleteTarget(doubleTarget.read);
+    deleteTarget(doubleTarget.write);
+  }
+
+  function clearTarget(target) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
+    gl.viewport(0, 0, target.width, target.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+  }
+
+  function clearDouble(target) {
+    clearTarget(target.read);
+    clearTarget(target.write);
+  }
+
+  function run(programInfo, target, values) {
+    gl.useProgram(programInfo.program);
+    gl.bindVertexArray(vao);
+
+    if (target) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
+      gl.viewport(0, 0, target.width, target.height);
+    } else {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.viewport(0, 0, canvas.width, canvas.height);
+    }
+
+    let textureUnit = 0;
+
+    for (const [name, value] of Object.entries(values)) {
+      const uniform = programInfo.uniforms[name];
+      if (!uniform) continue;
+
+      switch (uniform.type) {
+        case gl.SAMPLER_2D:
+          gl.activeTexture(gl.TEXTURE0 + textureUnit);
+          gl.bindTexture(gl.TEXTURE_2D, value);
+          gl.uniform1i(uniform.location, textureUnit++);
+          break;
+        case gl.FLOAT:
+          gl.uniform1f(uniform.location, value);
+          break;
+        case gl.FLOAT_VEC2:
+          gl.uniform2fv(uniform.location, value);
+          break;
+        case gl.FLOAT_VEC3:
+          gl.uniform3fv(uniform.location, value);
+          break;
+        case gl.FLOAT_VEC4:
+          gl.uniform4fv(uniform.location, value);
+          break;
+      }
+    }
+
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  let simWidth = 0;
+  let simHeight = 0;
+  let texel = [1, 1];
+  let velocity = null;
+  let dye = null;
+  let pressure = null;
+  let divergence = null;
+  let curl = null;
+  let resizeTimer = 0;
+
+  function resize() {
+    const cssWidth = Math.max(1, innerWidth);
+    const cssHeight = Math.max(1, innerHeight);
+    const dpr = Math.min(devicePixelRatio || 1, coarsePointer ? 1.6 : 2);
+
+    canvas.width = Math.round(cssWidth * dpr);
+    canvas.height = Math.round(cssHeight * dpr);
+
+    let scale = coarsePointer ? 0.48 : 0.68;
+    if (reducedMotion) scale *= 0.88;
+
+    let width = Math.max(160, Math.round(cssWidth * scale));
+    let height = Math.max(120, Math.round(cssHeight * scale));
+    const maxDimension = coarsePointer ? 640 : 900;
+    const factor = Math.min(1, maxDimension / Math.max(width, height));
+
+    width = Math.max(2, Math.round(width * factor / 2) * 2);
+    height = Math.max(2, Math.round(height * factor / 2) * 2);
+
+    if (width === simWidth && height === simHeight && velocity) return;
+
+    simWidth = width;
+    simHeight = height;
+    texel = [1 / simWidth, 1 / simHeight];
+
+    deleteDouble(velocity);
+    deleteDouble(dye);
+    deleteDouble(pressure);
+    deleteTarget(divergence);
+    deleteTarget(curl);
+
+    velocity = makeDouble(simWidth, simHeight);
+    dye = makeDouble(simWidth, simHeight);
+    pressure = makeDouble(simWidth, simHeight);
+    divergence = makeTarget(simWidth, simHeight);
+    curl = makeTarget(simWidth, simHeight);
+
+    clearDouble(velocity);
+    clearDouble(dye);
+    clearDouble(pressure);
+    clearTarget(divergence);
+    clearTarget(curl);
+  }
+
+  addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(resize, 120);
+  }, { passive: true });
+
+  resize();
+
+  const splatQueue = [];
+
+  function queueSplat(x, y, vx, vy, inkIndex, amount, radius) {
+    if (!velocity || !dye) return;
+    splatQueue.push({
+      x: Math.max(0.001, Math.min(0.999, x)),
+      y: Math.max(0.001, Math.min(0.999, y)),
+      vx,
+      vy,
+      inkIndex,
+      amount,
+      radius
+    });
+
+    if (splatQueue.length > 44) {
+      splatQueue.splice(0, splatQueue.length - 44);
+    }
+  }
+
+  function processSplats() {
+    if (!splatQueue.length) return;
+
+    const queue = splatQueue.splice(0, 32);
+    const aspect = simWidth / simHeight;
+
+    for (const splat of queue) {
+      run(programs.splat, velocity.write, {
+        uTarget: velocity.read.texture,
+        uPoint: [splat.x, splat.y],
+        uValue: [splat.vx, splat.vy, 0, 0],
+        uRadius: splat.radius * 1.5,
+        uAspect: aspect
+      });
+      velocity.swap();
+
+      if (splat.inkIndex !== null && splat.inkIndex !== undefined) {
+        const od = absorbance[splat.inkIndex];
+        run(programs.splat, dye.write, {
+          uTarget: dye.read.texture,
+          uPoint: [splat.x, splat.y],
+          uValue: [
+            od[0] * splat.amount,
+            od[1] * splat.amount,
+            od[2] * splat.amount,
+            0
+          ],
+          uRadius: splat.radius,
+          uAspect: aspect
+        });
+        dye.swap();
+      }
+    }
+  }
+
+  function chooseColor(advance = true) {
+    if (selectedColor !== "cycle") return Number(selectedColor);
+    const index = colorCycle % INK_HEX.length;
+    if (advance) colorCycle++;
+    return index;
+  }
+
+  function markUserAction() {
+    lastUserAction = performance.now();
+    if (!hintDismissed) {
+      hintDismissed = true;
+      hint.classList.add("hidden");
+    }
+  }
+
+  let activePointer = null;
+  let hoverX = null;
+  let hoverY = null;
+
+  function pointFromEvent(event) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (event.clientX - rect.left) / rect.width,
+      y: 1 - (event.clientY - rect.top) / rect.height,
+      px: event.clientX - rect.left,
+      py: event.clientY - rect.top
+    };
+  }
+
+  function addStrokeSegment(from, to, inkIndex, dragging) {
+    const dxPixels = to.px - from.px;
+    const dyPixels = to.py - from.py;
+    const distance = Math.hypot(dxPixels, dyPixels);
+    const steps = Math.max(1, Math.min(10, Math.ceil(distance / (dragging ? 11 : 20))));
+    const force = dragging ? (reducedMotion ? 4.1 : 6.4) : (reducedMotion ? 0.7 : 1.8);
+    const cellDX = dxPixels * simWidth / Math.max(1, innerWidth);
+    const cellDY = -dyPixels * simHeight / Math.max(1, innerHeight);
+
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      const x = from.x + (to.x - from.x) * t;
+      const y = from.y + (to.y - from.y) * t;
+      const speed = distance / steps;
+      const radius = dragging
+        ? Math.min(0.027, 0.0165 + speed * 0.00022)
+        : 0.032;
+
+      queueSplat(
+        x,
+        y,
+        cellDX / steps * force,
+        cellDY / steps * force,
+        dragging ? inkIndex : null,
+        dragging ? 0.105 + Math.min(0.10, speed * 0.004) : 0,
+        radius
+      );
+    }
+  }
+
+  canvas.addEventListener("pointerdown", event => {
+    event.preventDefault();
+    markUserAction();
+
+    const p = pointFromEvent(event);
+    activePointer = {
+      id: event.pointerId,
+      x: p.x,
+      y: p.y,
+      px: p.px,
+      py: p.py
+    };
+
+    strokeColor = chooseColor(true);
+    canvas.setPointerCapture?.(event.pointerId);
+
+    queueSplat(
+      p.x,
+      p.y,
+      0,
+      0,
+      strokeColor,
+      0.34,
+      coarsePointer ? 0.024 : 0.021
+    );
+  });
+
+  canvas.addEventListener("pointermove", event => {
+    const p = pointFromEvent(event);
+
+    if (activePointer && activePointer.id === event.pointerId) {
+      event.preventDefault();
+      markUserAction();
+
+      const events = event.getCoalescedEvents ? event.getCoalescedEvents() : [event];
+      for (const sample of events) {
+        const next = pointFromEvent(sample);
+        addStrokeSegment(activePointer, next, strokeColor, true);
+        activePointer = {
+          id: event.pointerId,
+          x: next.x,
+          y: next.y,
+          px: next.px,
+          py: next.py
+        };
+      }
+      return;
+    }
+
+    if (event.pointerType === "mouse" && event.buttons === 0) {
+      if (hoverX !== null) {
+        const previous = {
+          x: hoverX.x,
+          y: hoverX.y,
+          px: hoverX.px,
+          py: hoverX.py
+        };
+        addStrokeSegment(previous, p, null, false);
+      }
+      hoverX = p;
+      hoverY = p;
+    }
+  }, { passive: false });
+
+  function endPointer(event) {
+    if (activePointer && activePointer.id === event.pointerId) {
+      activePointer = null;
+    }
+  }
+
+  canvas.addEventListener("pointerup", endPointer);
+  canvas.addEventListener("pointercancel", endPointer);
+  canvas.addEventListener("pointerleave", event => {
+    if (!activePointer) {
+      hoverX = null;
+      hoverY = null;
+    }
+    if (event.pointerType !== "mouse") endPointer(event);
+  });
+
+  colorButtons.forEach(button => {
+    button.addEventListener("click", () => {
+      markUserAction();
+      selectedColor = button.dataset.color;
+
+      colorButtons.forEach(item => {
+        const selected = item === button;
+        item.classList.toggle("selected", selected);
+        item.setAttribute("aria-pressed", String(selected));
+      });
+    });
+  });
+
+  autoToggle.addEventListener("click", () => {
+    markUserAction();
+    autoEnabled = !autoEnabled;
+    updateAutoUI();
+  });
+
+  washButton.addEventListener("click", () => {
+    if (washing) return;
+    markUserAction();
+    washing = true;
+    washEnd = performance.now() + (reducedMotion ? 2100 : 4300);
+    lastWashPush = 0;
+    washButton.classList.add("washing");
+    washButton.textContent = "洗い中";
+    washButton.setAttribute("aria-disabled", "true");
+  });
+
+  const motionQuery = matchMedia("(prefers-reduced-motion: reduce)");
+  const motionChange = event => {
+    reducedMotion = event.matches;
+    if (reducedMotion && autoEnabled) {
+      autoEnabled = false;
+      updateAutoUI();
+    }
+  };
+
+  if (motionQuery.addEventListener) {
+    motionQuery.addEventListener("change", motionChange);
+  } else {
+    motionQuery.addListener(motionChange);
+  }
+
+  let lastAutoMove = 0;
+  let lastAutoDrop = 0;
+  let autoPosition = null;
+
+  function updateAutomatic(now) {
+    if (!autoEnabled || reducedMotion || washing || now - lastUserAction < 3000) {
+      autoPosition = null;
+      return;
+    }
+
+    const phase = now * 0.00013;
+    const x = 0.5 + Math.sin(phase * 1.07) * 0.27 + Math.sin(phase * 2.31) * 0.045;
+    const y = 0.51 + Math.sin(phase * 0.73 + 1.1) * 0.24;
+
+    if (now - lastAutoMove > 88) {
+      if (autoPosition) {
+        const dx = (x - autoPosition.x) * simWidth * 2.1;
+        const dy = (y - autoPosition.y) * simHeight * 2.1;
+        queueSplat(
+          x,
+          y,
+          dx + Math.cos(phase * 2.0) * 2.2,
+          dy + Math.sin(phase * 1.7) * 1.8,
+          null,
+          0,
+          0.052
+        );
+      }
+      autoPosition = { x, y };
+      lastAutoMove = now;
+    }
+
+    if (now - lastAutoDrop > 1450) {
+      const index = chooseColor(true);
+      const dropX = Math.max(0.12, Math.min(0.88, x + Math.sin(phase * 3.7) * 0.07));
+      const dropY = Math.max(0.16, Math.min(0.84, y + Math.cos(phase * 2.9) * 0.06));
+
+      queueSplat(
+        dropX,
+        dropY,
+        Math.cos(phase * 1.9) * 4.5,
+        Math.sin(phase * 1.3) * 3.4,
+        index,
+        0.42,
+        0.027
+      );
+      lastAutoDrop = now;
+    }
+  }
+
+  function updateWash(now) {
+    if (!washing) return;
+
+    if (now >= washEnd) {
+      clearDouble(dye);
+      clearDouble(velocity);
+      clearDouble(pressure);
+      washing = false;
+      washButton.classList.remove("washing");
+      washButton.textContent = "洗い流す";
+      washButton.removeAttribute("aria-disabled");
+      lastUserAction = now;
+      return;
+    }
+
+    if (now - lastWashPush > 78) {
+      const phase = now * 0.001;
+      for (let i = 0; i < 4; i++) {
+        const x = (i + 0.5) / 4 + Math.sin(phase + i * 1.7) * 0.05;
+        queueSplat(
+          x,
+          0.72 + Math.sin(phase * 0.7 + i) * 0.12,
+          Math.sin(phase * 0.9 + i * 2.0) * 1.5,
+          -12,
+          null,
+          0,
+          0.20
+        );
+      }
+      lastWashPush = now;
+    }
+  }
+
+  function simulate(dt) {
+    const velocityDissipation = Math.exp(-dt * (reducedMotion ? 0.42 : 0.24));
+
+    run(programs.advection, velocity.write, {
+      uVelocity: velocity.read.texture,
+      uSource: velocity.read.texture,
+      uTexel: texel,
+      uDt: dt,
+      uDissipation: velocityDissipation
+    });
+    velocity.swap();
+
+    run(programs.curl, curl, {
+      uVelocity: velocity.read.texture,
+      uTexel: texel
+    });
+
+    run(programs.vorticity, velocity.write, {
+      uVelocity: velocity.read.texture,
+      uCurl: curl.texture,
+      uTexel: texel,
+      uDt: dt,
+      uStrength: reducedMotion ? 7.0 : 18.0
+    });
+    velocity.swap();
+
+    run(programs.divergence, divergence, {
+      uVelocity: velocity.read.texture,
+      uTexel: texel
+    });
+
+    run(programs.scale, pressure.write, {
+      uTexture: pressure.read.texture,
+      uScale: 0.0
+    });
+    pressure.swap();
+
+    const pressureIterations = coarsePointer ? 13 : 17;
+    for (let i = 0; i < pressureIterations; i++) {
+      run(programs.pressure, pressure.write, {
+        uPressure: pressure.read.texture,
+        uDivergence: divergence.texture,
+        uTexel: texel
+      });
+      pressure.swap();
+    }
+
+    run(programs.gradient, velocity.write, {
+      uPressure: pressure.read.texture,
+      uVelocity: velocity.read.texture,
+      uTexel: texel
+    });
+    velocity.swap();
+
+    const dyeLoss = washing
+      ? Math.exp(-dt * (reducedMotion ? 2.5 : 1.28))
+      : Math.exp(-dt * 0.0015);
+
+    run(programs.advection, dye.write, {
+      uVelocity: velocity.read.texture,
+      uSource: dye.read.texture,
+      uTexel: texel,
+      uDt: dt,
+      uDissipation: dyeLoss
+    });
+    dye.swap();
+
+    run(programs.soften, dye.write, {
+      uTexture: dye.read.texture,
+      uTexel: texel,
+      uAmount: 1 - Math.exp(-dt * 1.08)
+    });
+    dye.swap();
+  }
+
+  function display() {
+    run(programs.display, null, {
+      uDye: dye.read.texture,
+      uDyeTexel: texel,
+      uPaper: paperRGB
+    });
+  }
+
+  let previousTime = performance.now();
+
+  function frame(now) {
+    const dt = Math.max(0.001, Math.min(0.022, (now - previousTime) / 1000));
+    previousTime = now;
+
+    updateAutomatic(now);
+    updateWash(now);
+    processSplats();
+    simulate(dt);
+    display();
+
+    requestAnimationFrame(frame);
+  }
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

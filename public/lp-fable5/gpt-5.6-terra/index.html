@@ -1,0 +1,912 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#faf6ee">
+  <title>Fable 5. — Claude</title>
+  <style>
+    :root {
+      --paper: #faf6ee;
+      --paper-deep: #f2e8d7;
+      --ink: #29241f;
+      --muted: #75685d;
+      --line: #dfd2c0;
+      --terracotta: #c65d3b;
+      --coral: #d97757;
+      --ochre: #d5a55f;
+      --sand: #e7c98e;
+      --sepia: #9c7152;
+      --white: #fffdf8;
+      --serif: "Iowan Old Style", "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", Georgia, serif;
+      --sans: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: var(--sans);
+      font-feature-settings: "palt";
+      letter-spacing: .025em;
+      overflow-x: hidden;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; }
+    .page { overflow: hidden; }
+
+    .site-header {
+      position: fixed;
+      z-index: 50;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 78px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(20px, 4vw, 64px);
+      background: rgba(250, 246, 238, .82);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(188, 163, 131, .24);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font: 600 22px/1 var(--serif);
+      letter-spacing: -.03em;
+    }
+
+    .sun-mark {
+      width: 27px;
+      height: 27px;
+      color: var(--terracotta);
+      animation: slow-spin 26s linear infinite;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: clamp(16px, 2.2vw, 34px);
+      font-size: 13px;
+      color: #514840;
+    }
+
+    .nav a:not(.header-cta) {
+      position: relative;
+      padding: 6px 0;
+    }
+
+    .nav a:not(.header-cta)::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 1px;
+      width: 100%;
+      height: 1px;
+      transform: scaleX(0);
+      transform-origin: left;
+      background: var(--terracotta);
+      transition: transform .25s ease;
+    }
+    .nav a:hover::after { transform: scaleX(1); }
+
+    .header-cta, .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 19px;
+      border-radius: 999px;
+      color: #fffaf3;
+      background: var(--terracotta);
+      box-shadow: 0 5px 15px rgba(154, 74, 49, .16);
+      transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .header-cta:hover, .button:hover {
+      background: #b94e31;
+      transform: translateY(-2px);
+      box-shadow: 0 9px 21px rgba(154, 74, 49, .22);
+    }
+
+    .hero {
+      position: relative;
+      min-height: min(930px, 100svh);
+      padding: 145px clamp(20px, 7.8vw, 130px) 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+
+    .hero-copy { position: relative; z-index: 2; }
+    .eyebrow, .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--terracotta);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .17em;
+      line-height: 1.5;
+    }
+    .eyebrow::before, .section-label::before {
+      content: "";
+      width: 23px;
+      height: 1px;
+      background: currentColor;
+    }
+
+    .hero h1 {
+      margin: 17px 0 11px;
+      font-family: var(--serif);
+      font-size: clamp(86px, 15vw, 245px);
+      font-weight: 500;
+      line-height: .8;
+      letter-spacing: -.085em;
+    }
+    .hero h1 span { color: var(--terracotta); }
+    .hero-lead {
+      max-width: 590px;
+      margin: 28px 0 7px;
+      font-family: var(--serif);
+      font-size: clamp(21px, 2.3vw, 34px);
+      line-height: 1.55;
+      letter-spacing: .01em;
+    }
+    .hero-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .hero-scene {
+      position: absolute;
+      z-index: 1;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      height: min(49vw, 470px);
+      min-height: 270px;
+      overflow: hidden;
+    }
+    .hero-scene svg, .full-illustration svg, .cta-scene svg { width: 100%; height: 100%; display: block; }
+    .hero-cloud { animation: float-cloud 14s ease-in-out infinite alternate; transform-origin: center; }
+    .hero-sun { animation: float-sun 9s ease-in-out infinite alternate; transform-origin: center; }
+
+    .section {
+      width: min(1160px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 145px 0;
+    }
+    .section-head { max-width: 735px; margin-bottom: 58px; }
+    .section-head h2 {
+      margin: 14px 0 0;
+      font: 500 clamp(38px, 5.3vw, 72px)/1.22 var(--serif);
+      letter-spacing: -.055em;
+    }
+    .section-head p {
+      max-width: 530px;
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 2;
+    }
+
+    .family-section { padding-top: 128px; }
+    .family-wrap {
+      display: grid;
+      grid-template-columns: minmax(220px, .8fr) minmax(350px, 1.2fr);
+      gap: clamp(42px, 9vw, 135px);
+      align-items: end;
+    }
+    .family-wrap .section-head { margin-bottom: 0; }
+
+    .stairs {
+      min-height: 330px;
+      display: flex;
+      align-items: end;
+      gap: 8px;
+      padding-bottom: 19px;
+      border-bottom: 1px solid var(--line);
+    }
+    .step {
+      position: relative;
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: end;
+      padding: 16px 13px;
+      border-radius: 3px 3px 0 0;
+      color: #665a51;
+      background: #e9decd;
+      transition: transform .3s ease;
+    }
+    .step:hover { transform: translateY(-7px); }
+    .step:nth-child(1) { height: 96px; background: #ece3d5; }
+    .step:nth-child(2) { height: 152px; background: #e5d3ba; }
+    .step:nth-child(3) { height: 216px; background: #dcc39e; }
+    .step:nth-child(4) {
+      height: 295px;
+      color: #fff9ef;
+      background: linear-gradient(155deg, #d97757, #ba5235);
+      box-shadow: 10px 9px 0 rgba(198, 93, 59, .1);
+    }
+    .step small { margin-bottom: 5px; font-size: 10px; letter-spacing: .12em; }
+    .step strong { font: 500 clamp(15px, 2vw, 23px)/1 var(--serif); }
+    .step em {
+      position: absolute;
+      top: 15px;
+      right: 13px;
+      font-style: normal;
+      font: 500 12px var(--serif);
+      opacity: .85;
+    }
+    .stairs-caption {
+      margin: 17px 0 0;
+      text-align: right;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .capability-section { padding-top: 115px; }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+    .cap-card {
+      min-height: 204px;
+      display: grid;
+      grid-template-columns: 145px 1fr;
+      align-items: center;
+      gap: 13px;
+      padding: 22px 20px 22px 15px;
+      border: 1px solid rgba(181, 153, 119, .38);
+      border-radius: 4px;
+      background: rgba(255, 253, 248, .38);
+      transition: transform .25s ease, box-shadow .25s ease;
+    }
+    .cap-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 13px 30px rgba(107, 78, 51, .08);
+    }
+    .mini-art { width: 142px; height: 125px; }
+    .cap-card h3 {
+      margin: 0 0 10px;
+      font: 600 clamp(18px, 2vw, 23px)/1.45 var(--serif);
+      letter-spacing: -.02em;
+    }
+    .cap-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.85;
+    }
+
+    .strength-section {
+      width: 100%;
+      padding: 145px max(20px, calc((100% - 1160px) / 2));
+      background: #f5ede1;
+    }
+    .strength-grid {
+      display: grid;
+      grid-template-columns: minmax(260px, .78fr) minmax(440px, 1.22fr);
+      gap: clamp(35px, 8vw, 115px);
+      align-items: center;
+    }
+    .strength-grid .section-head { margin: 0; }
+    .graph-box { position: relative; min-height: 390px; padding: 20px 0 0; }
+    .graph-box svg { display: block; width: 100%; height: 365px; overflow: visible; }
+    .grid-line { stroke: #d7cab9; stroke-width: 1; stroke-dasharray: 3 6; }
+    .axis { stroke: #a79583; stroke-width: 1.2; }
+    .other-line {
+      fill: none;
+      stroke: #a9a097;
+      stroke-width: 2.4;
+      opacity: .9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .fable-line {
+      fill: none;
+      stroke: var(--terracotta);
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: url(#soft-line);
+    }
+    .graph-box.animate .fable-line,
+    .graph-box.animate .other-line {
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
+      animation: draw-line 2.4s cubic-bezier(.22,.72,.2,1) forwards;
+    }
+    .graph-box.animate .other-line:nth-of-type(2) { animation-delay: .2s; }
+    .graph-box.animate .other-line:nth-of-type(3) { animation-delay: .35s; }
+    .graph-box.animate .fable-line { animation-delay: .55s; }
+    .graph-label { font: 12px var(--sans); fill: #75685d; }
+    .fable-label { fill: #b94e31; font: 700 13px var(--sans); }
+    .axis-label { margin-top: -3px; color: var(--muted); font-size: 12px; text-align: center; }
+
+    .safety-section { padding-bottom: 110px; }
+    .safety-copy {
+      display: grid;
+      grid-template-columns: 1fr 1.55fr;
+      align-items: end;
+      gap: clamp(25px, 8vw, 115px);
+      margin-bottom: 42px;
+    }
+    .safety-copy .section-head { margin: 0; }
+    .safety-note {
+      max-width: 425px;
+      margin: 0 0 9px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 2;
+    }
+    .full-illustration {
+      height: clamp(310px, 37vw, 485px);
+      overflow: hidden;
+      border-radius: 3px;
+      background: #ecd2a5;
+    }
+
+    .start-section {
+      display: grid;
+      grid-template-columns: .85fr 1.15fr;
+      gap: clamp(40px, 10vw, 155px);
+      align-items: center;
+      padding-top: 137px;
+    }
+    .start-section .section-head { margin: 0; }
+    .laptop-art { width: 100%; max-width: 370px; justify-self: center; }
+    .steps { border-top: 1px solid var(--line); }
+    .step-row {
+      display: grid;
+      grid-template-columns: 50px 1fr;
+      gap: 17px;
+      padding: 22px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .step-num { color: var(--terracotta); font: 500 19px var(--serif); }
+    .step-row strong { display: block; margin-bottom: 4px; font-size: 14px; }
+    .step-row p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+
+    .cta-section {
+      position: relative;
+      min-height: 555px;
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      text-align: center;
+      background: #d9aa79;
+    }
+    .cta-scene { position: absolute; inset: 0; }
+    .cta-content { position: relative; z-index: 2; padding: 55px 20px; }
+    .cta-content .section-label { color: #794b38; }
+    .cta-content h2 {
+      margin: 17px 0 29px;
+      font: 500 clamp(44px, 7vw, 88px)/1.16 var(--serif);
+      letter-spacing: -.06em;
+    }
+    .cta-content .button { min-width: 205px; min-height: 52px; font-size: 15px; }
+    .footer {
+      position: absolute;
+      z-index: 3;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 21px clamp(20px, 4vw, 64px);
+      color: rgba(72, 48, 37, .72);
+      font-size: 10px;
+    }
+    .footer-brand { display: inline-flex; align-items: center; gap: 6px; font: 600 15px var(--serif); }
+
+    .reveal {
+      opacity: 1;
+      transform: none;
+      transition: opacity .75s ease, transform .75s cubic-bezier(.22,.7,.25,1);
+    }
+    .reveal.pending { opacity: 0; transform: translateY(24px); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    @keyframes draw-line { to { stroke-dashoffset: 0; } }
+    @keyframes float-cloud { from { transform: translateX(-7px); } to { transform: translateX(12px); } }
+    @keyframes float-sun { from { transform: translateY(-4px); } to { transform: translateY(7px); } }
+    @keyframes slow-spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 760px) {
+      .site-header { height: 64px; padding: 0 19px; }
+      .brand { font-size: 20px; }
+      .sun-mark { width: 23px; height: 23px; }
+      .nav { gap: 12px; font-size: 11px; }
+      .nav a:not(.header-cta) { display: none; }
+      .header-cta { min-height: 35px; padding: 0 14px; font-size: 11px; }
+      .hero { min-height: 745px; padding: 113px 20px 0; }
+      .hero h1 { margin-top: 15px; font-size: clamp(78px, 23vw, 130px); }
+      .hero-lead { margin-top: 25px; font-size: 21px; max-width: 345px; }
+      .hero-note { max-width: 300px; font-size: 11px; }
+      .hero-scene { height: 320px; min-height: 0; }
+      .section { width: min(100% - 40px, 1160px); padding: 92px 0; }
+      .section-head { margin-bottom: 36px; }
+      .section-head h2 { font-size: 38px; }
+      .section-head p { font-size: 13px; }
+      .family-wrap, .strength-grid, .safety-copy, .start-section { grid-template-columns: 1fr; gap: 33px; }
+      .family-section { padding-top: 90px; }
+      .stairs { min-height: 245px; }
+      .step { padding: 10px 7px; }
+      .step:nth-child(1) { height: 77px; }
+      .step:nth-child(2) { height: 116px; }
+      .step:nth-child(3) { height: 164px; }
+      .step:nth-child(4) { height: 225px; }
+      .step strong { font-size: 14px; }
+      .step small, .step em { font-size: 8px; }
+      .cards { grid-template-columns: 1fr; gap: 10px; }
+      .cap-card { min-height: 160px; grid-template-columns: 120px 1fr; padding: 15px 12px 15px 8px; }
+      .mini-art { width: 117px; height: 105px; }
+      .cap-card h3 { font-size: 18px; }
+      .cap-card p { font-size: 11px; }
+      .strength-section { padding: 92px 20px; }
+      .graph-box { min-height: 290px; }
+      .graph-box svg { height: 268px; }
+      .safety-section { padding-bottom: 68px; }
+      .full-illustration { height: 290px; }
+      .start-section { padding-top: 90px; }
+      .laptop-art { max-width: 275px; order: -1; }
+      .cta-section { min-height: 475px; }
+      .cta-content h2 { font-size: 46px; }
+      .footer { padding: 15px 18px; font-size: 8px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+      .reveal.pending { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Claude ホーム">
+        <svg class="sun-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <circle cx="16" cy="16" r="7.2" fill="currentColor"/>
+          <path d="M16 1.8v4M16 26.2v4M1.8 16h4M26.2 16h4M5.96 5.96l2.83 2.83M23.21 23.21l2.83 2.83M26.04 5.96l-2.83 2.83M8.79 23.21l-2.83 2.83" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <span>Claude</span>
+      </a>
+      <nav class="nav" aria-label="メインナビゲーション">
+        <a href="#model">モデル</a>
+        <a href="#capabilities">できること</a>
+        <a href="#safety">安全性</a>
+        <a class="header-cta" href="#start">使ってみる</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">MYTHOS-CLASS / 一般提供モデル</div>
+          <h1 id="hero-title">Fable 5<span>.</span></h1>
+          <p class="hero-lead">今、いちばん賢いClaudeが、<br>誰でも使える形に。</p>
+          <p class="hero-note">考える。つくる。確かめる。長い道のりも、そばで歩きます。</p>
+        </div>
+
+        <div class="hero-scene" aria-hidden="true">
+          <svg viewBox="0 0 1600 520" preserveAspectRatio="xMidYMax slice">
+            <defs>
+              <linearGradient id="heroSky" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#faf6ee"/>
+                <stop offset="1" stop-color="#f6e7cf"/>
+              </linearGradient>
+              <linearGradient id="hillBack" x1="0" y1="0" x2="1" y2=".5">
+                <stop stop-color="#e6c995"/><stop offset="1" stop-color="#d4a56d"/>
+              </linearGradient>
+              <linearGradient id="hillMid" x1=".1" y1="0" x2=".9" y2=".8">
+                <stop stop-color="#d8af73"/><stop offset="1" stop-color="#b98255"/>
+              </linearGradient>
+              <linearGradient id="hillFront" x1="0" y1=".1" x2="1" y2=".7">
+                <stop stop-color="#e9ce94"/><stop offset=".55" stop-color="#d9ae71"/><stop offset="1" stop-color="#bd8056"/>
+              </linearGradient>
+              <filter id="heroBlur"><feGaussianBlur stdDeviation="6"/></filter>
+              <filter id="heroWash">
+                <feTurbulence baseFrequency=".015" numOctaves="2" seed="4" type="fractalNoise" result="noise"/>
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="9" xChannelSelector="R" yChannelSelector="G"/>
+              </filter>
+            </defs>
+            <rect width="1600" height="520" fill="url(#heroSky)"/>
+            <g class="hero-cloud" opacity=".54" fill="#fffaf0" filter="url(#heroBlur)">
+              <path d="M145 90c25-39 76-38 94 1 33-15 70 7 70 40H92c-5-25 19-46 53-41Z"/>
+              <path d="M1210 70c21-30 62-30 77 2 29-13 58 7 60 35h-184c-4-22 20-39 47-37Z"/>
+            </g>
+            <g class="hero-sun">
+              <circle cx="1200" cy="128" r="66" fill="#d97757" opacity=".17" filter="url(#heroBlur)"/>
+              <circle cx="1200" cy="128" r="49" fill="#cf6847" opacity=".72" filter="url(#heroWash)"/>
+              <circle cx="1200" cy="128" r="43" fill="#d97757" opacity=".5"/>
+            </g>
+            <path d="M0 300C146 232 286 246 402 302c120 59 194 18 286-34 109-62 238-65 343 13 105 77 197 45 310-24 85-52 171-67 259-55v318H0Z" fill="url(#hillBack)" opacity=".75" filter="url(#heroWash)"/>
+            <path d="M0 352c132-91 280-82 410-15 104 54 171 50 274-7 174-96 330-88 445 8 105 87 265 61 471-42v224H0Z" fill="url(#hillMid)" filter="url(#heroWash)"/>
+            <path d="M0 405c109-74 232-84 354-19 125 68 229 74 355 5 142-78 317-80 432 6 105 78 274 84 459 11v112H0Z" fill="url(#hillFront)" filter="url(#heroWash)"/>
+            <path d="M838 520c-32-42-37-78-4-112 51-52 125-58 179-106 31-28 42-57 32-89 36 48 27 89-10 125-58 56-142 65-171 117-15 27-10 47 13 65Z" fill="#fffdf6" opacity=".94"/>
+            <path d="M895 520c-34-37-33-72-2-107 48-54 119-64 158-116" fill="none" stroke="#f1dfc0" stroke-width="11" opacity=".7"/>
+            <g opacity=".88">
+              <g fill="#b95439">
+                <ellipse cx="177" cy="391" rx="11" ry="23" transform="rotate(-29 177 391)"/>
+                <ellipse cx="194" cy="401" rx="9" ry="17" transform="rotate(22 194 401)"/>
+                <ellipse cx="155" cy="409" rx="7" ry="14"/>
+                <ellipse cx="1384" cy="351" rx="12" ry="29" transform="rotate(29 1384 351)"/>
+                <ellipse cx="1420" cy="364" rx="8" ry="19"/>
+              </g>
+              <g fill="#c99750">
+                <ellipse cx="251" cy="405" rx="7" ry="17"/><ellipse cx="280" cy="414" rx="6" ry="14"/>
+                <ellipse cx="1290" cy="371" rx="8" ry="19"/><ellipse cx="1315" cy="379" rx="6" ry="15"/>
+              </g>
+              <g stroke="#8d6545" stroke-width="2" stroke-linecap="round">
+                <path d="M101 434q-4-31 4-46"/><path d="M116 439q6-27 15-38"/><path d="M1462 400q-2-31 12-55"/><path d="M1491 407q3-24 20-42"/>
+              </g>
+            </g>
+            <g transform="translate(886 348)">
+              <ellipse cx="50" cy="99" rx="68" ry="10" fill="#8d6246" opacity=".18" filter="url(#heroBlur)"/>
+              <g transform="translate(53 2)">
+                <path d="M-5 68c2-30 9-49 23-51 16-2 27 27 24 57H-5Z" fill="#c75538"/>
+                <circle cx="20" cy="10" r="13" fill="#a87552"/>
+                <path d="M8 0q14-15 28 2l-3 11-26-2Z" fill="#704a37"/>
+                <path d="M3 68 0 93M33 68l9 24" stroke="#513a2d" stroke-width="5" stroke-linecap="round"/>
+                <path d="M-3 33-19 50M41 31 59 43" stroke="#a87552" stroke-width="4" stroke-linecap="round"/>
+              </g>
+              <g transform="translate(0 0)">
+                <path d="M-43 85c-10-33-7-65 13-82 21-19 57-16 73 11 14 24 9 57-4 82-23 14-59 13-82-1Z" fill="#f8efd9" stroke="#d9c4a1" stroke-width="2"/>
+                <path d="M-25 19c7-22 27-27 43-16M4 3C20-15 46-3 48 20" fill="none" stroke="#fdf8e9" stroke-width="14" stroke-linecap="round"/>
+                <ellipse cx="-16" cy="39" rx="4" ry="5" fill="#554034"/><ellipse cx="21" cy="39" rx="4" ry="5" fill="#554034"/>
+                <path d="M-4 54q8 7 16 0" fill="none" stroke="#9b6950" stroke-width="2" stroke-linecap="round"/>
+                <path d="M-27 82-32 104M25 84l8 20" stroke="#bdab8d" stroke-width="7" stroke-linecap="round"/>
+                <path d="M-42 57-56 72M44 58l18 8" stroke="#d8c4a4" stroke-width="7" stroke-linecap="round"/>
+              </g>
+            </g>
+          </svg>
+        </div>
+      </section>
+
+      <section class="section family-section reveal" id="model" aria-labelledby="family-title">
+        <div class="family-wrap">
+          <div class="section-head">
+            <div class="section-label">01 / CLAUDE FAMILY</div>
+            <h2 id="family-title">Claudeの<br>いちばん上へ。</h2>
+            <p>これまでのClaudeの得意なことを、もっと深く、もっと遠くへ。Fable 5は、新しい最上位クラスです。</p>
+          </div>
+          <div>
+            <div class="stairs" aria-label="Haiku、Sonnet、Opus、Mythosの順に高くなるモデル階層">
+              <div class="step"><small>LIGHT</small><strong>Haiku</strong><em>01</em></div>
+              <div class="step"><small>BALANCED</small><strong>Sonnet</strong><em>02</em></div>
+              <div class="step"><small>POWERFUL</small><strong>Opus</strong><em>03</em></div>
+              <div class="step"><small>MYTHOS-CLASS</small><strong>Fable 5</strong><em>04</em></div>
+            </div>
+            <p class="stairs-caption">能力、文脈理解、粘り強さのすべてを次の段へ。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section capability-section reveal" id="capabilities" aria-labelledby="capability-title">
+        <div class="section-head">
+          <div class="section-label">02 / WHAT IT CAN DO</div>
+          <h2 id="capability-title">頼れる仕事の<br>その先まで。</h2>
+          <p>難しい問いに腰を据え、画面の向こうの状況を読み、何千もの手順をつないでいきます。</p>
+        </div>
+
+        <div class="cards">
+          <article class="cap-card">
+            <svg class="mini-art" viewBox="0 0 160 130" aria-hidden="true">
+              <defs><filter id="w1"><feTurbulence baseFrequency=".03" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3"/></filter></defs>
+              <path d="M16 26h99a7 7 0 0 1 7 7v62H9V33a7 7 0 0 1 7-7Z" fill="#7c5b49" filter="url(#w1)"/>
+              <path d="M19 30h96v59H19Z" fill="#e8c57c"/>
+              <path d="M20 67c18-22 27-12 43-27 15-14 29-4 42-18 5-6 8-11 10-15v82H20Z" fill="#b67d52"/>
+              <path d="M20 80c16-15 28-8 41-19 18-15 31 1 54-17v45H20Z" fill="#d9a456"/>
+              <circle cx="88" cy="47" r="10" fill="#d56b4b" opacity=".85"/>
+              <path d="M50 83v-20l9-8 8 8v20Z" fill="#f8eed8"/>
+              <path d="M45 99h83l8 8H35Z" fill="#9f775c"/>
+              <path d="M64 99h39l-4 5H68Z" fill="#eadcc1"/>
+              <g transform="translate(76 73)">
+                <circle cx="0" cy="-6" r="3" fill="#573d32"/><path d="M-4 11V0L0-3 5 0l2 11Z" fill="#c65037"/>
+              </g>
+              <path d="M128 79q9-16 17-2M131 79q6-20 13-18" stroke="#bb6946" stroke-width="2" fill="none"/>
+            </svg>
+            <div>
+              <h3>画面を見るだけで<br>ゲームを最後までクリア</h3>
+              <p>状況を読み、試し、次の一手を選ぶ。<br>目の前の世界で考え続けます。</p>
+            </div>
+          </article>
+
+          <article class="cap-card">
+            <svg class="mini-art" viewBox="0 0 160 130" aria-hidden="true">
+              <defs><filter id="w2"><feTurbulence baseFrequency=".025" numOctaves="2" seed="14" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3"/></filter></defs>
+              <ellipse cx="82" cy="111" rx="57" ry="8" fill="#9b7255" opacity=".18"/>
+              <g filter="url(#w2)">
+                <path d="M43 80 110 80 126 92 57 92Z" fill="#c5a26d"/>
+                <path d="M29 67h68l16 13H45Z" fill="#f7eddb"/>
+                <path d="M39 53h67l16 14H54Z" fill="#e4c89a"/>
+                <path d="M29 38h68l15 15H45Z" fill="#fcf6e9"/>
+                <path d="M42 23h62l14 15H56Z" fill="#e9d5b0"/>
+              </g>
+              <g stroke="#a66449" stroke-width="1.3" opacity=".78">
+                <path d="M48 32h33M53 42h44M43 58h46M41 72h36M57 85h43"/>
+              </g>
+              <path d="m112 30 4 6 7 1-5 5 1 7-7-3-6 4 1-8-5-4 7-2Z" fill="#c65d3b"/>
+              <path d="M124 58q14-14 20-1" fill="none" stroke="#bc8a50" stroke-width="2"/>
+            </svg>
+            <div>
+              <h3>5,000万行のコードを<br>1日で移行</h3>
+              <p>大きな構造も細部の約束も見失わず、<br>複雑な変更を最後まで進めます。</p>
+            </div>
+          </article>
+
+          <article class="cap-card">
+            <svg class="mini-art" viewBox="0 0 160 130" aria-hidden="true">
+              <defs><filter id="w3"><feTurbulence baseFrequency=".02" numOctaves="3" seed="8" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="4"/></filter></defs>
+              <g filter="url(#w3)">
+                <path d="M46 21h18v31l17 34c6 14-4 25-19 25H34c-16 0-25-12-18-26l17-33V21Z" fill="#f9f0dc" stroke="#9d765c" stroke-width="2"/>
+                <path d="M30 82q24-13 46 3l6 15H27Z" fill="#d77a58" opacity=".76"/>
+                <path d="M35 20h28" stroke="#725246" stroke-width="5"/>
+              </g>
+              <g stroke="#aa7b55" stroke-width="1.7" fill="none">
+                <path d="M103 38 120 50l-4 23-23 7-17-16 5-22 22-4Z"/>
+                <path d="m88 51 19 10M102 39l1 22M119 50l-17 11M95 79l12-18"/>
+              </g>
+              <g fill="#c65d3b"><circle cx="103" cy="38" r="5"/><circle cx="120" cy="50" r="5"/><circle cx="116" cy="73" r="5"/><circle cx="93" cy="80" r="5"/><circle cx="76" cy="64" r="5"/><circle cx="81" cy="42" r="5"/></g>
+              <path d="M131 92q6-20 8-33M139 91q6-15 14-22" stroke="#bc8a50" stroke-width="2"/>
+            </svg>
+            <div>
+              <h3>新薬の設計を<br>約10倍のスピードで</h3>
+              <p>仮説を広げ、候補を比べ、研究の道を<br>ていねいに照らし出します。</p>
+            </div>
+          </article>
+
+          <article class="cap-card">
+            <svg class="mini-art" viewBox="0 0 160 130" aria-hidden="true">
+              <defs><filter id="w4"><feTurbulence baseFrequency=".025" numOctaves="2" seed="22" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3"/></filter></defs>
+              <path d="M7 105C37 80 57 87 78 66c17-16 29-36 73-50v98H7Z" fill="#d8b171" filter="url(#w4)"/>
+              <path d="M15 113c12-20 39-23 52-42 14-22 20-36 59-50" fill="none" stroke="#fff9ed" stroke-width="10" stroke-linecap="round"/>
+              <path d="M15 113c12-20 39-23 52-42 14-22 20-36 59-50" fill="none" stroke="#ead6b0" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="110" cy="44" r="26" fill="#f4e6cd" stroke="#9e765b" stroke-width="2"/>
+              <path d="M110 27v18l13 9" fill="none" stroke="#c65d3b" stroke-width="3" stroke-linecap="round"/>
+              <circle cx="110" cy="44" r="3" fill="#c65d3b"/>
+              <g fill="#ae573d"><ellipse cx="29" cy="86" rx="5" ry="13"/><ellipse cx="38" cy="92" rx="5" ry="12"/><ellipse cx="136" cy="91" rx="6" ry="15"/></g>
+              <path d="M141 104q-4-27 2-42M148 102q5-22 10-31" stroke="#8e674c" stroke-width="2"/>
+            </svg>
+            <div>
+              <h3>長い作業も<br>休まず走りきる</h3>
+              <p>数時間、数日かかる仕事にも。<br>文脈をたずさえ、粘り強く伴走します。</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="strength-section reveal" aria-labelledby="strength-title">
+        <div class="strength-grid">
+          <div class="section-head">
+            <div class="section-label">03 / ENDURANCE</div>
+            <h2 id="strength-title">長く複雑な仕事ほど<br>差は開いていく。</h2>
+            <p>短い問いへの正しさだけでは測れない、仕事を完遂するための力。</p>
+          </div>
+          <div class="graph-box" id="graph-box">
+            <svg viewBox="0 0 620 360" role="img" aria-label="仕事の長さと複雑さに対してFable 5の性能が大きく伸びるグラフ">
+              <defs>
+                <filter id="soft-line"><feGaussianBlur stdDeviation=".35"/></filter>
+              </defs>
+              <line class="grid-line" x1="54" y1="280" x2="590" y2="280"/>
+              <line class="grid-line" x1="54" y1="208" x2="590" y2="208"/>
+              <line class="grid-line" x1="54" y1="136" x2="590" y2="136"/>
+              <line class="grid-line" x1="54" y1="64" x2="590" y2="64"/>
+              <line class="axis" x1="54" y1="304" x2="592" y2="304"/>
+              <line class="axis" x1="54" y1="304" x2="54" y2="37"/>
+              <text class="graph-label" x="15" y="284">低</text>
+              <text class="graph-label" x="15" y="69">高</text>
+              <path class="other-line" d="M55 276 C130 266 159 250 222 249 S337 236 402 231 S509 224 581 220"/>
+              <path class="other-line" d="M55 280 C133 272 176 266 238 253 S340 244 402 237 S516 232 581 229"/>
+              <path class="fable-line" d="M55 278 C130 272 163 263 216 247 C270 230 296 205 345 181 C408 150 429 113 475 88 C513 66 551 51 582 44"/>
+              <circle cx="582" cy="44" r="5.5" fill="#c65d3b"/>
+              <text class="fable-label" x="464" y="33">Fable 5</text>
+              <text class="graph-label" x="474" y="214">他のモデル</text>
+              <text class="graph-label" x="54" y="327">短い</text>
+              <text class="graph-label" x="555" y="327">長い</text>
+            </svg>
+            <div class="axis-label">仕事の長さ・複雑さ　→</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section safety-section reveal" id="safety" aria-labelledby="safety-title">
+        <div class="safety-copy">
+          <div class="section-head">
+            <div class="section-label">04 / SAFETY</div>
+            <h2 id="safety-title">強い力には<br>やさしいブレーキを。</h2>
+          </div>
+          <p class="safety-note">できることを増やすほど、立ち止まるべき場所を大切に。Fable 5は、慎重さと透明性を土台に設計されています。</p>
+        </div>
+
+        <div class="full-illustration" aria-hidden="true">
+          <svg viewBox="0 0 1200 500" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <linearGradient id="safeSky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f6d6a5"/><stop offset=".62" stop-color="#e9ad78"/><stop offset="1" stop-color="#c77a55"/></linearGradient>
+              <linearGradient id="safeHill" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d7a66d"/><stop offset="1" stop-color="#a9694d"/></linearGradient>
+              <filter id="safeWash"><feTurbulence baseFrequency=".017" numOctaves="3" seed="13" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="10"/></filter>
+              <filter id="sunGlow"><feGaussianBlur stdDeviation="14"/></filter>
+            </defs>
+            <rect width="1200" height="500" fill="url(#safeSky)"/>
+            <circle cx="829" cy="146" r="85" fill="#d25f3e" opacity=".25" filter="url(#sunGlow)"/>
+            <circle cx="829" cy="146" r="58" fill="#d66c47" opacity=".82" filter="url(#safeWash)"/>
+            <path d="M0 271C140 189 286 203 408 267c106 55 195 37 286-26 94-65 222-71 315-2 72 53 129 56 191 24v237H0Z" fill="#ddbc82" filter="url(#safeWash)"/>
+            <path d="M0 351c128-99 255-73 376-14 118 57 216 49 338-24 135-80 316-58 486 33v154H0Z" fill="url(#safeHill)" filter="url(#safeWash)"/>
+            <path d="M0 414c125-49 223-24 343 20 136 50 288 31 390-22 131-67 286-48 467 26v62H0Z" fill="#ae6e50" opacity=".79"/>
+            <g opacity=".9">
+              <g stroke="#885c45" stroke-width="2.5" stroke-linecap="round">
+                <path d="M141 376q-3-42 5-62"/><path d="M157 383q9-43 22-59"/><path d="M1034 386q-3-49 12-76"/><path d="M1063 393q9-40 30-62"/>
+              </g>
+              <g fill="#bd553b">
+                <ellipse cx="128" cy="334" rx="9" ry="21"/><ellipse cx="163" cy="338" rx="10" ry="25"/><ellipse cx="1040" cy="336" rx="10" ry="24"/><ellipse cx="1080" cy="348" rx="8" ry="20"/>
+              </g>
+              <g fill="#d7a557"><ellipse cx="203" cy="370" rx="7" ry="16"/><ellipse cx="1011" cy="372" rx="6" ry="17"/></g>
+            </g>
+            <g transform="translate(540 282)">
+              <ellipse cx="84" cy="115" rx="126" ry="19" fill="#6e493a" opacity=".18"/>
+              <g transform="translate(26 15)">
+                <circle cx="25" cy="19" r="15" fill="#9d6c51"/>
+                <path d="M6 43q19-19 37 0l8 57H-3Z" fill="#c65338"/>
+                <path d="M8 100-3 120M41 99l11 20" stroke="#513a2f" stroke-width="6" stroke-linecap="round"/>
+                <path d="M14 12q12-15 26-1" fill="none" stroke="#6d4638" stroke-width="7" stroke-linecap="round"/>
+              </g>
+              <g transform="translate(82 5)">
+                <path d="M-2 105C-15 74-8 25 17 7 44-12 78 2 90 32c12 29 3 60-13 78-25 12-59 10-79-5Z" fill="#fbf0d8" stroke="#d4b992" stroke-width="2"/>
+                <path d="M11 20q5-27 30-25M39 1q25-12 39 19" fill="none" stroke="#fdf8e8" stroke-width="16" stroke-linecap="round"/>
+                <ellipse cx="24" cy="47" rx="4.5" ry="5.5" fill="#554035"/><ellipse cx="61" cy="47" rx="4.5" ry="5.5" fill="#554035"/>
+                <path d="M35 65q8 7 16 0" fill="none" stroke="#986a52" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M13 104 6 123M69 105l8 18" stroke="#c1aa88" stroke-width="8" stroke-linecap="round"/>
+              </g>
+              <path d="M56 76q17 10 33 0" fill="none" stroke="#a87759" stroke-width="4" stroke-linecap="round"/>
+            </g>
+          </svg>
+        </div>
+      </section>
+
+      <section class="section start-section reveal" id="start" aria-labelledby="start-title">
+        <div class="section-head">
+          <div class="section-label">05 / GET STARTED</div>
+          <h2 id="start-title">はじめかたは<br>かんたん。</h2>
+          <p>必要なのは、最初のひとことだけです。</p>
+        </div>
+
+        <svg class="laptop-art" viewBox="0 0 380 280" aria-hidden="true">
+          <defs>
+            <filter id="lapWash"><feTurbulence baseFrequency=".018" numOctaves="2" seed="18" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="5"/></filter>
+          </defs>
+          <ellipse cx="191" cy="244" rx="142" ry="17" fill="#926e55" opacity=".14"/>
+          <path d="M88 60h202c8 0 14 6 14 14v128H74V74c0-8 6-14 14-14Z" fill="#735b4d" filter="url(#lapWash)"/>
+          <path d="M94 67h194c5 0 9 4 9 9v117H85V76c0-5 4-9 9-9Z" fill="#f5ddb2"/>
+          <path d="M86 164c37-40 59-7 94-38 26-24 51-12 116-47v114H86Z" fill="#d6a564"/>
+          <path d="M86 180c30-21 51-13 77-35 28-24 64-8 133-39v87H86Z" fill="#bd7752"/>
+          <circle cx="250" cy="102" r="20" fill="#d66c4d" opacity=".78"/>
+          <path d="M168 184c10-30 32-44 56-53-17 20-24 37-26 53Z" fill="#fff9e9"/>
+          <g transform="translate(179 146)">
+            <circle cx="3" cy="-9" r="5" fill="#654838"/>
+            <path d="M-4 11V-2l7-4 8 5 4 12Z" fill="#c65339"/>
+          </g>
+          <path d="M64 202h249l32 25c4 4 1 10-6 10H43c-8 0-10-6-5-11Z" fill="#a67e62" filter="url(#lapWash)"/>
+          <path d="M52 225h279l9 8H42Z" fill="#d4b082"/>
+          <path d="M152 207h66l7 8h-80Z" fill="#ead5b0"/>
+          <g fill="#be5b3e"><ellipse cx="44" cy="236" rx="5" ry="12"/><ellipse cx="334" cy="237" rx="5" ry="13"/></g>
+        </svg>
+
+        <div class="steps">
+          <div class="step-row">
+            <div class="step-num">01</div>
+            <div><strong>Claudeにアクセスする</strong><p>ブラウザを開いて、あなたのアカウントでサインイン。</p></div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">02</div>
+            <div><strong>Fable 5を選ぶ</strong><p>モデル選択から、最上位のFable 5を選択します。</p></div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">03</div>
+            <div><strong>最初の問いを投げかける</strong><p>仕事のこと、つくりたいもの。まとまっていなくても大丈夫です。</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="cta-section reveal" aria-labelledby="cta-title">
+        <div class="cta-scene" aria-hidden="true">
+          <svg viewBox="0 0 1500 600" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <linearGradient id="ctaSky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f2cb95"/><stop offset=".55" stop-color="#db8c64"/><stop offset="1" stop-color="#9c614b"/></linearGradient>
+              <filter id="ctaWater"><feTurbulence baseFrequency=".017" numOctaves="3" seed="31" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="11"/></filter>
+              <filter id="ctaGlow"><feGaussianBlur stdDeviation="18"/></filter>
+            </defs>
+            <rect width="1500" height="600" fill="url(#ctaSky)"/>
+            <circle cx="1127" cy="142" r="93" fill="#c65d3b" opacity=".23" filter="url(#ctaGlow)"/>
+            <circle cx="1127" cy="142" r="59" fill="#ca6141" opacity=".77" filter="url(#ctaWater)"/>
+            <path d="M0 348c143-95 283-108 430-29 116 62 207 38 314-35 131-90 282-83 392 4 101 80 234 82 364 13v299H0Z" fill="#d2a267" filter="url(#ctaWater)"/>
+            <path d="M0 418c133-54 249-58 373 3 148 73 285 60 421-14 122-66 257-76 371-10 115 67 214 68 335 17v186H0Z" fill="#ad6c50" filter="url(#ctaWater)"/>
+            <path d="M731 600c-39-54-42-100-3-145 52-58 137-75 169-130 19-33 17-68-3-102 39 51 42 98 5 146-51 66-133 81-148 138-8 31 6 60 30 93Z" fill="#fff4dd" opacity=".92"/>
+            <path d="M788 600c-35-53-26-94 7-135 47-57 115-79 135-132" fill="none" stroke="#e9c99c" stroke-width="15" opacity=".65"/>
+            <g fill="#b74f37" opacity=".82">
+              <ellipse cx="173" cy="449" rx="11" ry="27"/><ellipse cx="210" cy="465" rx="8" ry="20"/><ellipse cx="1270" cy="425" rx="11" ry="25"/><ellipse cx="1309" cy="437" rx="9" ry="22"/>
+            </g>
+            <g stroke="#815743" stroke-width="2.4"><path d="M164 474q-5-37 8-66"/><path d="M195 482q7-34 24-52"/><path d="M1272 453q-5-36 10-63"/><path d="M1304 459q7-30 24-48"/></g>
+          </svg>
+        </div>
+        <div class="cta-content">
+          <div class="section-label">THE NEXT CHAPTER / 次の章へ</div>
+          <h2 id="cta-title">いちばん遠くまで<br>いっしょに。</h2>
+          <a class="button" href="#top">Claudeを使ってみる</a>
+        </div>
+        <footer class="footer">
+          <div class="footer-brand">
+            <svg width="16" height="16" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="7.2" fill="currentColor"/><path d="M16 1.8v4M16 26.2v4M1.8 16h4M26.2 16h4M5.96 5.96l2.83 2.83M23.21 23.21l2.83 2.83M26.04 5.96l-2.83 2.83M8.79 23.21l-2.83 2.83" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            Claude
+          </div>
+          <div>© 2026 Anthropic PBC. Fable 5 は架空のモデルです。</div>
+        </footer>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      const reveals = document.querySelectorAll('.reveal');
+      const graph = document.getElementById('graph-box');
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      if (reduce || !('IntersectionObserver' in window)) {
+        reveals.forEach(el => el.classList.add('visible'));
+        if (graph) graph.classList.add('animate');
+        return;
+      }
+
+      reveals.forEach(el => el.classList.add('pending'));
+
+      const observer = new IntersectionObserver((entries, obs) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.remove('pending');
+            entry.target.classList.add('visible');
+            obs.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -30px 0px' });
+
+      reveals.forEach(el => observer.observe(el));
+
+      const graphObserver = new IntersectionObserver((entries, obs) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('animate');
+            obs.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.35 });
+
+      if (graph) graphObserver.observe(graph);
+
+      window.setTimeout(() => {
+        reveals.forEach(el => {
+          if (!el.classList.contains('visible')) {
+            el.classList.remove('pending');
+            el.classList.add('visible');
+          }
+        });
+      }, 2500);
+    })();
+  </script>
+</body>
+</html>

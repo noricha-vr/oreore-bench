@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Fable 5。今、いちばん賢いClaudeが、誰でも使える形に。">
+  <title>Fable 5. — Claude</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Serif+JP:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #faf6ee;
+      --paper-deep: #f2eadc;
+      --ink: #292622;
+      --muted: #71675d;
+      --terracotta: #c96140;
+      --vermilion: #d97757;
+      --brick: #974530;
+      --ochre: #bd8a4c;
+      --sand: #dfc59e;
+      --line: rgba(56, 43, 34, .15);
+      --serif: "Noto Serif JP", Georgia, serif;
+      --sans: "DM Sans", "Noto Sans JP", sans-serif;
+      --ease: cubic-bezier(.22, .68, .22, 1);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--sans);
+      overflow-x: hidden;
+    }
+    img, svg { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; }
+    .site-header {
+      position: fixed;
+      z-index: 50;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(20px, 4vw, 64px);
+      background: rgba(250, 246, 238, .86);
+      border-bottom: 1px solid rgba(67, 49, 39, .1);
+      backdrop-filter: blur(14px);
+    }
+    .brand {
+      display: inline-flex;
+      gap: 11px;
+      align-items: center;
+      font-family: var(--serif);
+      font-size: 21px;
+      letter-spacing: -.04em;
+      font-weight: 600;
+    }
+    .brand-mark {
+      width: 27px;
+      height: 27px;
+      color: var(--terracotta);
+    }
+    .header-nav {
+      display: flex;
+      gap: clamp(18px, 3vw, 42px);
+      align-items: center;
+      font-size: 13px;
+      color: #5f554d;
+    }
+    .header-nav a:not(.header-cta) { transition: color .25s ease; }
+    .header-nav a:not(.header-cta):hover { color: var(--terracotta); }
+    .header-cta, .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 43px;
+      padding: 0 22px;
+      border-radius: 100px;
+      color: #fff9f1;
+      background: var(--terracotta);
+      font-size: 13px;
+      font-weight: 600;
+      transition: transform .25s ease, background .25s ease, box-shadow .25s ease;
+      box-shadow: 0 5px 16px rgba(162, 67, 40, .13);
+    }
+    .header-cta:hover, .button:hover {
+      background: var(--brick);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(162, 67, 40, .2);
+    }
+
+    .hero {
+      position: relative;
+      min-height: 840px;
+      padding: 165px clamp(20px, 5vw, 76px) 0;
+      overflow: hidden;
+    }
+    .hero-copy { position: relative; z-index: 2; }
+    .eyebrow, .section-kicker {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--terracotta);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    .eyebrow span, .section-kicker span {
+      color: #938174;
+      letter-spacing: .08em;
+      font-weight: 500;
+    }
+    h1, h2, h3 {
+      margin: 0;
+      font-family: var(--serif);
+      font-weight: 500;
+      letter-spacing: -.07em;
+    }
+    .hero h1 {
+      margin: 32px 0 25px;
+      font-size: clamp(80px, 16.7vw, 260px);
+      line-height: .87;
+      white-space: nowrap;
+      color: #292521;
+    }
+    .hero h1 .dot { color: var(--terracotta); }
+    .hero-message {
+      max-width: 550px;
+      margin-left: clamp(0px, 9vw, 150px);
+    }
+    .hero-message h2 {
+      font-size: clamp(25px, 3.1vw, 45px);
+      line-height: 1.35;
+    }
+    .hero-message p {
+      max-width: 440px;
+      margin: 15px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 2;
+    }
+    .hero-art {
+      position: absolute;
+      left: -2%;
+      bottom: 0;
+      width: 104%;
+      height: 460px;
+      min-width: 980px;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .hero-art .sun-layer { transform-origin: 75% 40%; transition: transform .1s linear; }
+    .hero-art .cloud-layer { transition: transform .1s linear; }
+    .scroll-note {
+      position: absolute;
+      z-index: 3;
+      right: clamp(24px, 6vw, 92px);
+      bottom: 30px;
+      color: #8f7c6d;
+      font-size: 10px;
+      letter-spacing: .14em;
+      writing-mode: vertical-rl;
+    }
+
+    .section {
+      position: relative;
+      padding: clamp(100px, 12vw, 180px) clamp(20px, 7vw, 110px);
+    }
+    .section-inner { max-width: 1240px; margin: 0 auto; }
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 40px;
+      margin-bottom: 58px;
+    }
+    .section-heading h2 {
+      margin-top: 17px;
+      font-size: clamp(35px, 5vw, 65px);
+      line-height: 1.24;
+    }
+    .section-intro {
+      max-width: 290px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.9;
+    }
+    .reveal { opacity: 1; transform: none; }
+    .js .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity .8s var(--ease), transform .8s var(--ease);
+    }
+    .js .reveal.is-visible { opacity: 1; transform: translateY(0); }
+    .delay-1 { transition-delay: .1s !important; }
+    .delay-2 { transition-delay: .2s !important; }
+    .delay-3 { transition-delay: .3s !important; }
+
+    .family { background: #f4ede2; }
+    .family .section-inner { max-width: 1080px; }
+    .bars {
+      height: 355px;
+      display: flex;
+      align-items: flex-end;
+      gap: clamp(12px, 3vw, 35px);
+      padding: 0 3% 0;
+      border-bottom: 1px solid rgba(61, 46, 37, .2);
+      border-left: 1px solid rgba(61, 46, 37, .2);
+    }
+    .bar-wrap {
+      position: relative;
+      flex: 1;
+      height: 100%;
+      display: flex;
+      justify-content: flex-end;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .bar {
+      position: relative;
+      min-height: 44px;
+      border-radius: 5px 5px 0 0;
+      background: linear-gradient(110deg, #d1ae79, #e8d3ae);
+      box-shadow: inset 0 7px 14px rgba(255, 255, 255, .23);
+    }
+    .bar-wrap:nth-child(1) .bar { height: 23%; }
+    .bar-wrap:nth-child(2) .bar { height: 43%; background: linear-gradient(110deg, #c99860, #dfbf8c); }
+    .bar-wrap:nth-child(3) .bar { height: 66%; background: linear-gradient(110deg, #b97950, #d79a6d); }
+    .bar-wrap:nth-child(4) .bar {
+      height: 93%;
+      background: linear-gradient(110deg, #ba553a, #d77858);
+      box-shadow: 0 8px 22px rgba(168, 70, 41, .2);
+    }
+    .bar-label { padding-top: 16px; text-align: center; font-family: var(--serif); font-size: clamp(14px, 2vw, 21px); }
+    .bar-number {
+      position: absolute;
+      top: -27px;
+      right: 0;
+      color: #958170;
+      font-size: 10px;
+      letter-spacing: .08em;
+    }
+    .bar-wrap:last-child .bar-number { color: var(--terracotta); font-weight: 700; }
+    .bar-note {
+      margin: 27px 0 0 3%;
+      color: #8f7b69;
+      font-size: 11px;
+    }
+
+    .capabilities { background: var(--paper); }
+    .capability-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .cap-card {
+      display: flex;
+      align-items: center;
+      min-height: 226px;
+      padding: 22px;
+      gap: clamp(17px, 3vw, 35px);
+      background: #f4ecdf;
+      border: 1px solid rgba(75, 55, 43, .1);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .cap-visual {
+      flex: 0 0 39%;
+      max-width: 190px;
+    }
+    .cap-card h3 {
+      margin-bottom: 12px;
+      font-family: var(--sans);
+      font-size: clamp(16px, 2vw, 20px);
+      font-weight: 700;
+      letter-spacing: -.04em;
+      line-height: 1.45;
+    }
+    .cap-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.9;
+    }
+    .watercolor-art { width: 100%; height: auto; }
+
+    .strength {
+      background: #f4ede2;
+      overflow: hidden;
+    }
+    .graph-wrap {
+      position: relative;
+      padding: 10px 0 0;
+    }
+    .graph {
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+    .graph-grid { stroke: #d5c9ba; stroke-width: 1; stroke-dasharray: 3 8; }
+    .graph-axis { stroke: #9e8c7d; stroke-width: 1.2; }
+    .graph-other {
+      fill: none;
+      stroke: #aaa19a;
+      stroke-width: 3;
+      stroke-linecap: round;
+      opacity: .8;
+    }
+    .graph-main {
+      fill: none;
+      stroke: var(--terracotta);
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 1150;
+      stroke-dashoffset: 1150;
+      transition: stroke-dashoffset 1.7s cubic-bezier(.7, 0, .25, 1);
+    }
+    .graph-main.drawn { stroke-dashoffset: 0; }
+    .graph-label {
+      font-family: var(--sans);
+      font-size: 12px;
+      fill: #847468;
+    }
+    .graph-label.main { fill: var(--terracotta); font-weight: 700; }
+    .graph-caption {
+      display: flex;
+      justify-content: space-between;
+      margin: 11px 2% 0;
+      color: #847468;
+      font-size: 11px;
+    }
+    .graph-caption strong { color: var(--terracotta); font-weight: 600; }
+
+    .safety { background: var(--paper); }
+    .safety-layout {
+      display: grid;
+      grid-template-columns: .9fr 1.1fr;
+      gap: clamp(35px, 7vw, 100px);
+      align-items: center;
+    }
+    .safety-copy h2 { max-width: 500px; }
+    .safety-copy p {
+      max-width: 380px;
+      margin: 25px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 2;
+    }
+    .safety-art {
+      border-radius: 5px;
+      overflow: hidden;
+      background: #ead7bd;
+    }
+
+    .getting-started { background: #f4ede2; }
+    .start-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(35px, 8vw, 120px);
+      align-items: center;
+    }
+    .laptop {
+      width: min(100%, 470px);
+      margin: auto;
+    }
+    .steps { counter-reset: steps; }
+    .step {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 17px;
+      padding: 22px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .step:first-child { border-top: 1px solid var(--line); }
+    .step::before {
+      counter-increment: steps;
+      content: "0" counter(steps);
+      color: var(--terracotta);
+      font-size: 11px;
+      padding-top: 3px;
+      letter-spacing: .08em;
+    }
+    .step h3 {
+      font-family: var(--sans);
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -.04em;
+    }
+    .step p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.8;
+    }
+
+    .final-cta {
+      position: relative;
+      min-height: 700px;
+      padding-bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: #ead8bd;
+    }
+    .final-art {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+    .final-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      margin-top: -150px;
+    }
+    .final-content .section-kicker { justify-content: center; color: #a85037; }
+    .final-content .section-kicker span { color: #725c4b; }
+    .final-content h2 {
+      margin: 18px 0 30px;
+      color: #3b2c24;
+      font-size: clamp(40px, 6.3vw, 82px);
+    }
+    .final-content .button { min-height: 52px; padding: 0 30px; }
+    footer {
+      position: absolute;
+      z-index: 3;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 23px clamp(20px, 5vw, 75px);
+      color: #725c4b;
+      font-size: 10px;
+      letter-spacing: .04em;
+    }
+    .footer-brand { display: flex; align-items: center; gap: 7px; font-family: var(--serif); font-size: 15px; }
+    .footer-brand svg { width: 18px; }
+    .footer-note { max-width: 430px; text-align: right; line-height: 1.7; }
+
+    @media (max-width: 720px) {
+      .site-header { height: 64px; }
+      .header-nav { gap: 11px; }
+      .header-nav a:not(.header-cta) { display: none; }
+      .header-cta { min-height: 36px; padding: 0 16px; font-size: 11px; }
+      .hero {
+        min-height: 730px;
+        padding-top: 123px;
+      }
+      .hero h1 {
+        margin-top: 25px;
+        font-size: clamp(67px, 22vw, 125px);
+      }
+      .hero-message { margin-left: 0; max-width: 320px; }
+      .hero-message h2 { font-size: 23px; }
+      .hero-message p { font-size: 12px; line-height: 1.8; }
+      .hero-art { height: 310px; min-width: 670px; left: -23%; }
+      .scroll-note { display: none; }
+      .section { padding-top: 87px; padding-bottom: 87px; }
+      .section-heading { display: block; margin-bottom: 37px; }
+      .section-intro { margin-top: 19px; }
+      .section-heading h2 { font-size: 36px; }
+      .bars { height: 275px; padding-left: 4%; gap: 8px; }
+      .bar-label { font-size: 13px; }
+      .bar-number { font-size: 8px; }
+      .capability-grid, .safety-layout, .start-layout { grid-template-columns: 1fr; }
+      .cap-card { min-height: 175px; padding: 16px; gap: 16px; }
+      .cap-visual { flex-basis: 36%; }
+      .cap-card h3 { font-size: 15px; margin-bottom: 7px; }
+      .cap-card p { font-size: 11px; line-height: 1.7; }
+      .graph { min-width: 690px; margin-left: -15%; }
+      .graph-wrap { overflow: hidden; }
+      .safety-art { order: -1; }
+      .safety-copy p { font-size: 13px; }
+      .laptop { margin-bottom: 25px; }
+      .final-cta { min-height: 610px; }
+      .final-content { margin-top: -120px; }
+      .final-content h2 { font-size: 42px; }
+      footer { align-items: flex-end; padding-bottom: 17px; }
+      .footer-note { max-width: 230px; font-size: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="Claude ホーム">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <circle cx="16" cy="16" r="8.5" fill="currentColor" opacity=".94"/>
+        <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5">
+          <path d="M16 2.5v5"/><path d="M16 24.5v5"/><path d="m2.5 16 5 0"/><path d="m24.5 16 5 0"/>
+          <path d="m6.45 6.45 3.55 3.55"/><path d="m22 22 3.55 3.55"/><path d="m25.55 6.45-3.55 3.55"/><path d="m10 22-3.55 3.55"/>
+        </g>
+      </svg>
+      <span>Claude</span>
+    </a>
+    <nav class="header-nav" aria-label="メインナビゲーション">
+      <a href="#family">モデル</a>
+      <a href="#capabilities">できること</a>
+      <a href="#safety">安全性</a>
+      <a class="header-cta" href="#start">使ってみる</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow">MYTHOS-CLASS <span>/ 一般提供モデル</span></div>
+        <h1>Fable 5<span class="dot">.</span></h1>
+        <div class="hero-message">
+          <h2>今、いちばん賢いClaudeが、誰でも使える形に。</h2>
+          <p>考えること、つくること、遠くまでやり抜くこと。Fable 5は、あなたの物語の続きを一緒に描くモデルです。</p>
+        </div>
+      </div>
+      <div class="hero-art" aria-label="丘を歩く人物と相棒の水彩画" role="img">
+        <svg viewBox="0 0 1500 540" preserveAspectRatio="xMidYMax slice">
+          <defs>
+            <linearGradient id="heroSky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#f5e7d0"/>
+              <stop offset=".72" stop-color="#ead2b1"/>
+              <stop offset="1" stop-color="#d6b38b"/>
+            </linearGradient>
+            <linearGradient id="hillBack" x1="0" y1="0" x2="1" y2=".8">
+              <stop stop-color="#e2c79f"/><stop offset=".5" stop-color="#c9a373"/><stop offset="1" stop-color="#b7855b"/>
+            </linearGradient>
+            <linearGradient id="hillMid" x1="0" y1="0" x2="1" y2=".4">
+              <stop stop-color="#dbbc8e"/><stop offset=".48" stop-color="#b78558"/><stop offset="1" stop-color="#9c6749"/>
+            </linearGradient>
+            <linearGradient id="hillFront" x1=".1" y1="0" x2=".8" y2="1">
+              <stop stop-color="#c79262"/><stop offset=".65" stop-color="#a9674c"/><stop offset="1" stop-color="#7d4c3d"/>
+            </linearGradient>
+            <radialGradient id="sunWash"><stop stop-color="#e98a67" stop-opacity=".78"/><stop offset=".5" stop-color="#d86d4d" stop-opacity=".4"/><stop offset="1" stop-color="#d86d4d" stop-opacity="0"/></radialGradient>
+            <filter id="softHero">
+              <feTurbulence type="fractalNoise" baseFrequency=".018" numOctaves="2" seed="7" result="noise"/>
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="4"/>
+            </filter>
+            <filter id="blurHero"><feGaussianBlur stdDeviation="9"/></filter>
+          </defs>
+          <rect width="1500" height="540" fill="url(#heroSky)"/>
+          <g class="cloud-layer" opacity=".34" fill="#fff8e9" filter="url(#blurHero)">
+            <path d="M60 90c42-42 83-30 109-2 27-47 107-41 121 10 39-17 80 9 77 44H30c-4-23 7-42 30-52z"/>
+            <path d="M1080 100c34-27 73-25 94 9 32-33 98-14 102 29h171v20h-392c-10-25-.3-45 25-58z"/>
+          </g>
+          <g class="sun-layer">
+            <circle cx="1155" cy="148" r="117" fill="url(#sunWash)"/>
+            <circle cx="1155" cy="148" r="49" fill="#d66c4d" opacity=".84" filter="url(#softHero)"/>
+            <circle cx="1155" cy="148" r="56" fill="none" stroke="#d66c4d" stroke-width="12" opacity=".13"/>
+          </g>
+          <path d="M0 300C171 237 294 238 436 292c129 49 227 33 340-24 177-89 275-46 384 6 130 62 209-16 340-36v302H0z" fill="url(#hillBack)" opacity=".93" filter="url(#softHero)"/>
+          <path d="M0 365c126-57 253-54 380-17 147 43 241 12 359-49 102-53 180-34 282 18 168 86 285-1 479-30v253H0z" fill="url(#hillMid)" filter="url(#softHero)"/>
+          <path d="M0 465c134-64 263-53 388-22 115 28 218 4 327-34 147-52 242-1 360 27 144 34 257-21 425-74v178H0z" fill="url(#hillFront)" filter="url(#softHero)"/>
+          <path d="M875 540C833 483 756 442 684 418c-69-23-139-27-217-7-78 21-150 14-218-3-83-21-162-12-249 28l-1 104z" fill="#eedfc7" opacity=".9"/>
+          <path d="M871 540c-32-40-72-70-118-94-63-33-109-40-173-31-77 12-144 10-208-5-72-17-139-9-210 19" fill="none" stroke="#fff9eb" stroke-width="13" opacity=".88"/>
+          <path d="M884 540c-26-30-59-56-104-76-64-30-122-34-180-26" fill="none" stroke="#d2b48d" stroke-width="2" opacity=".55"/>
+          <g opacity=".75" fill="none" stroke-linecap="round">
+            <path d="M84 449q16-36 21-67M98 450q29-28 44-50M254 463q-3-33 5-55M274 467q21-24 38-32M1288 414q8-36 4-63M1300 416q28-31 50-39M1395 457q8-35 6-63" stroke="#b26042" stroke-width="6"/>
+            <path d="M78 451q26-31 39-55M246 463q18-28 29-48M1274 423q26-33 40-52M1377 463q23-30 33-55" stroke="#d4a050" stroke-width="4"/>
+          </g>
+          <g transform="translate(688 378)" filter="url(#softHero)">
+            <path d="M13 65c-6-31 1-54 19-68 18 16 23 42 18 67z" fill="#bd5039"/>
+            <path d="M19 5c-1-17 10-27 21-26 12 1 17 13 12 26z" fill="#7e5140"/>
+            <circle cx="39" cy="-4" r="11" fill="#d39d78"/>
+            <path d="M26 66 18 99M45 66l12 31" stroke="#633f38" stroke-width="6" stroke-linecap="round"/>
+            <path d="M18 99l-9 7M57 97l10 6" stroke="#573b35" stroke-width="4" stroke-linecap="round"/>
+            <path d="M19 26 1 49M49 28l18 15" stroke="#bd5039" stroke-width="8" stroke-linecap="round"/>
+          </g>
+          <g transform="translate(766 350)" filter="url(#softHero)">
+            <path d="M18 104c-14-43 0-85 35-97 43-15 74 21 70 67-4 42-34 56-68 52-19-2-30-8-37-22z" fill="#f5e9d3"/>
+            <path d="M28 49c-25-17-25-42-7-53 23-13 43 8 35 30zM101 44c22-18 38-8 39 8 1 19-18 30-38 22z" fill="#ead8ba"/>
+            <path d="M39 23c8-27 26-33 42-22 11 8 14 27 5 41-15 22-47 9-47-19z" fill="#f7eddc"/>
+            <circle cx="59" cy="27" r="3" fill="#483a35"/><circle cx="81" cy="27" r="3" fill="#483a35"/>
+            <path d="M65 39q7 6 14 0" fill="none" stroke="#a86e58" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M31 92c-11 18-6 31 8 32M105 91c14 17 12 28-3 35" fill="none" stroke="#e9d6b8" stroke-width="13" stroke-linecap="round"/>
+            <path d="M13 72c-14-2-19 8-14 18 6 9 19 6 27-2M118 74c17-3 22 9 14 18-7 7-18 3-25-4" fill="#f8edda"/>
+          </g>
+          <g fill="#a84d38" opacity=".8">
+            <circle cx="547" cy="425" r="5"/><circle cx="565" cy="416" r="3"/><circle cx="1210" cy="400" r="5"/><circle cx="1232" cy="390" r="3"/>
+          </g>
+        </svg>
+      </div>
+      <div class="scroll-note">SCROLL TO EXPLORE ↓</div>
+    </section>
+
+    <section class="section family" id="family">
+      <div class="section-inner">
+        <div class="section-heading reveal">
+          <div>
+            <div class="section-kicker">01 <span>THE FAMILY / Claudeファミリー</span></div>
+            <h2>Claudeのいちばん上へ。</h2>
+          </div>
+          <p class="section-intro">小さくすばやいモデルから、深く考え抜くモデルまで。Fable 5は、Claudeの新しい頂点です。</p>
+        </div>
+        <div class="bars reveal delay-1" aria-label="Claudeモデルの能力比較">
+          <div class="bar-wrap">
+            <div class="bar-number">LIGHT</div>
+            <div class="bar"></div>
+            <div class="bar-label">Haiku</div>
+          </div>
+          <div class="bar-wrap">
+            <div class="bar-number">BALANCED</div>
+            <div class="bar"></div>
+            <div class="bar-label">Sonnet</div>
+          </div>
+          <div class="bar-wrap">
+            <div class="bar-number">DEEP</div>
+            <div class="bar"></div>
+            <div class="bar-label">Opus</div>
+          </div>
+          <div class="bar-wrap">
+            <div class="bar-number">MYTHOS-CLASS</div>
+            <div class="bar"></div>
+            <div class="bar-label">Fable 5</div>
+          </div>
+        </div>
+        <p class="bar-note reveal delay-2">ひらめきの速さと、物語を最後まで運ぶ深さをひとつに。</p>
+      </div>
+    </section>
+
+    <section class="section capabilities" id="capabilities">
+      <div class="section-inner">
+        <div class="section-heading reveal">
+          <div>
+            <div class="section-kicker">02 <span>CAPABILITIES / できること</span></div>
+            <h2>頼れる仕事のその先まで。</h2>
+          </div>
+          <p class="section-intro">目の前の一歩だけでなく、長い道のりの全体を見渡して、ともに歩きます。</p>
+        </div>
+        <div class="capability-grid">
+          <article class="cap-card reveal">
+            <div class="cap-visual">
+              <svg class="watercolor-art" viewBox="0 0 220 160" role="img" aria-label="ゲーム画面の水彩イラスト">
+                <defs>
+                  <linearGradient id="gameBg" x2="0" y2="1"><stop stop-color="#c98160"/><stop offset="1" stop-color="#e6c79b"/></linearGradient>
+                  <filter id="gameWash"><feTurbulence baseFrequency=".04" numOctaves="2" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2"/></filter>
+                </defs>
+                <rect x="13" y="19" width="192" height="116" rx="8" fill="#664a43" opacity=".85"/>
+                <rect x="23" y="28" width="172" height="91" fill="url(#gameBg)"/>
+                <path d="M23 95q29-30 55-8t43-6q27-29 74 11v28H23z" fill="#ad7657" opacity=".8"/>
+                <path d="M32 82l23-19 16 11 20-24 25 21 19-16 34 29" fill="none" stroke="#f5dfb9" stroke-width="5" opacity=".7"/>
+                <g transform="translate(105 65)" filter="url(#gameWash)">
+                  <path d="M0 23-8 48M8 23l10 23" stroke="#5c3c39" stroke-width="4" stroke-linecap="round"/>
+                  <path d="M-12 3q12-13 25 0v24H-12z" fill="#c65d3b"/>
+                  <circle cy="-5" r="8" fill="#d6a076"/>
+                  <path d="m-11 9-13 11m37-10 13 7" stroke="#c65d3b" stroke-width="5" stroke-linecap="round"/>
+                </g>
+                <circle cx="42" cy="45" r="4" fill="#e8b35b"/><circle cx="174" cy="52" r="3" fill="#d45f43"/>
+                <path d="M81 143q30-10 60 0" stroke="#b9875b" stroke-width="5" fill="none" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div>
+              <h3>画面を見るだけで<br>ゲームを最後までクリア</h3>
+              <p>ルールを読み、状況を見て、<br>次の一手を自分で考えます。</p>
+            </div>
+          </article>
+
+          <article class="cap-card reveal delay-1">
+            <div class="cap-visual">
+              <svg class="watercolor-art" viewBox="0 0 220 160" role="img" aria-label="積み上がったコードの紙束の水彩イラスト">
+                <defs><filter id="paperWash"><feTurbulence baseFrequency=".025" numOctaves="2" seed="9" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2"/></filter></defs>
+                <g transform="translate(26 19) rotate(-5)" filter="url(#paperWash)">
+                  <rect x="0" y="0" width="132" height="91" fill="#fff5df" stroke="#b99570" stroke-width="2"/>
+                  <path d="M12 18h71M12 29h99M12 40h58M12 52h88M12 63h76" stroke="#bd6246" stroke-width="3" opacity=".75"/>
+                </g>
+                <g transform="translate(41 35) rotate(4)" filter="url(#paperWash)">
+                  <rect x="0" y="0" width="135" height="91" fill="#f9ecd2" stroke="#ad8668" stroke-width="2"/>
+                  <path d="M12 17h92M12 29h69M12 41h99M12 53h61M12 65h84" stroke="#b87954" stroke-width="3" opacity=".72"/>
+                </g>
+                <g transform="translate(25 58) rotate(-3)" filter="url(#paperWash)">
+                  <rect x="0" y="0" width="148" height="82" fill="#fbf0d9" stroke="#aa7c5c" stroke-width="2"/>
+                  <path d="M14 17h81M14 29h106M14 41h48M14 53h87" stroke="#c65d3b" stroke-width="3" opacity=".8"/>
+                  <path d="M109 17h24M78 41h44" stroke="#d2a148" stroke-width="4"/>
+                </g>
+                <path d="M171 39q22 7 21 27-2 19-22 25" fill="none" stroke="#c65d3b" stroke-width="5" stroke-linecap="round"/>
+                <path d="m169 34 4 12 11-7" fill="none" stroke="#c65d3b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div>
+              <h3>5,000万行のコードを<br>1日で移行</h3>
+              <p>巨大なリポジトリも読み解き、<br>壊さず、整えて、次へ進めます。</p>
+            </div>
+          </article>
+
+          <article class="cap-card reveal delay-2">
+            <div class="cap-visual">
+              <svg class="watercolor-art" viewBox="0 0 220 160" role="img" aria-label="分子とフラスコの水彩イラスト">
+                <defs><radialGradient id="flaskGlow"><stop stop-color="#e5ab6c" stop-opacity=".75"/><stop offset="1" stop-color="#d97757" stop-opacity="0"/></radialGradient><filter id="flaskWash"><feTurbulence baseFrequency=".03" numOctaves="2" seed="11" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3"/></filter></defs>
+                <circle cx="152" cy="76" r="62" fill="url(#flaskGlow)"/>
+                <g fill="none" stroke="#9d543e" stroke-width="3" opacity=".78">
+                  <circle cx="42" cy="48" r="9"/><circle cx="72" cy="27" r="7"/><circle cx="95" cy="55" r="8"/><circle cx="68" cy="80" r="7"/>
+                  <path d="m49 43 17-11M77 31l12 18M88 61 74 75M61 76 48 55"/>
+                </g>
+                <g fill="#c65d3b" opacity=".75"><circle cx="42" cy="48" r="5"/><circle cx="72" cy="27" r="4"/><circle cx="95" cy="55" r="4"/><circle cx="68" cy="80" r="4"/></g>
+                <g transform="translate(121 23)" filter="url(#flaskWash)">
+                  <path d="M25 0h26v38l30 62q5 15-14 17H9q-20-3-12-20l28-59z" fill="#f7ead2" stroke="#a66c50" stroke-width="3"/>
+                  <path d="M1 76q29-17 73 0l7 20q2 13-13 15H10q-17-3-9-19z" fill="#d47755" opacity=".78"/>
+                  <path d="M15 74q19-9 39-1" stroke="#f1bd72" stroke-width="5" fill="none"/>
+                  <path d="M34 12h9" stroke="#9d6049" stroke-width="4" stroke-linecap="round"/>
+                </g>
+                <circle cx="164" cy="16" r="5" fill="#bd8848"/><circle cx="189" cy="39" r="3" fill="#c65d3b"/>
+              </svg>
+            </div>
+            <div>
+              <h3>新薬の設計を<br>約10倍のスピードで</h3>
+              <p>複雑な分子の組み合わせを探り、<br>仮説を次々と形にしていきます。</p>
+            </div>
+          </article>
+
+          <article class="cap-card reveal delay-3">
+            <div class="cap-visual">
+              <svg class="watercolor-art" viewBox="0 0 220 160" role="img" aria-label="道と時計の水彩イラスト">
+                <defs><linearGradient id="roadWash" x2="1" y2="1"><stop stop-color="#d4a16c"/><stop offset="1" stop-color="#9f6248"/></linearGradient></defs>
+                <path d="M0 127q57-43 107-31 45 11 113-25v89H0z" fill="url(#roadWash)" opacity=".83"/>
+                <path d="M8 158q38-30 76-38 39-8 74-42 19-17 46-24" fill="none" stroke="#fff1d8" stroke-width="13" stroke-linecap="round"/>
+                <path d="M9 158q38-30 76-38 39-8 74-42 19-17 46-24" fill="none" stroke="#c79768" stroke-width="2" stroke-linecap="round"/>
+                <g transform="translate(42 27)">
+                  <circle cx="47" cy="47" r="37" fill="#f7e8cb" stroke="#a96a4f" stroke-width="5"/>
+                  <circle cx="47" cy="47" r="29" fill="#fbf1dd"/>
+                  <path d="M47 47V27M47 47l16 9" stroke="#b3573e" stroke-width="4" stroke-linecap="round"/>
+                  <circle cx="47" cy="47" r="3.5" fill="#b3573e"/>
+                  <path d="M47 10v7M47 77v7M10 47h7M77 47h7" stroke="#ae7958" stroke-width="3" stroke-linecap="round"/>
+                </g>
+                <path d="M169 35q14-20 29 1M186 36q10-9 19 1" fill="none" stroke="#bd784c" stroke-width="4" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div>
+              <h3>長い作業も<br>休まず走りきる</h3>
+              <p>途中で見失わない記憶力と、<br>最後まで続ける粘り強さを。</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section strength" id="strength">
+      <div class="section-inner">
+        <div class="section-heading reveal">
+          <div>
+            <div class="section-kicker">03 <span>ENDURANCE / いちばんの強み</span></div>
+            <h2>長く複雑な仕事ほど<br>差は開いていく。</h2>
+          </div>
+          <p class="section-intro">一問一答ではなく、考え続ける仕事でこそ、Fable 5の力は輪郭を持ちはじめます。</p>
+        </div>
+        <div class="graph-wrap reveal delay-1">
+          <svg class="graph" viewBox="0 0 1100 470" role="img" aria-label="仕事の長さと複雑さに対するモデル性能のグラフ">
+            <g>
+              <line class="graph-grid" x1="85" y1="65" x2="1035" y2="65"/>
+              <line class="graph-grid" x1="85" y1="145" x2="1035" y2="145"/>
+              <line class="graph-grid" x1="85" y1="225" x2="1035" y2="225"/>
+              <line class="graph-grid" x1="85" y1="305" x2="1035" y2="305"/>
+              <line class="graph-grid" x1="85" y1="385" x2="1035" y2="385"/>
+              <line class="graph-axis" x1="85" y1="385" x2="1035" y2="385"/>
+              <line class="graph-axis" x1="85" y1="385" x2="85" y2="42"/>
+            </g>
+            <path class="graph-other" d="M85 371 C260 366 388 355 510 347 S780 332 1035 319"/>
+            <path class="graph-other" d="M85 374 C238 371 356 360 485 358 S739 348 1035 337" opacity=".48"/>
+            <path class="graph-main" d="M85 374 C250 371 370 365 478 349 C594 332 669 294 745 245 C819 197 836 126 887 93 C931 65 982 57 1035 53"/>
+            <text x="85" y="413" class="graph-label">短い</text>
+            <text x="995" y="413" class="graph-label">長い</text>
+            <text x="1010" y="445" class="graph-label">仕事の長さ・複雑さ →</text>
+            <text x="74" y="54" text-anchor="end" class="graph-label">成果</text>
+            <text x="945" y="45" class="graph-label main">Fable 5</text>
+            <text x="949" y="313" class="graph-label">他のモデル</text>
+          </svg>
+          <div class="graph-caption">
+            <span>ひとつの答えではなく、<strong>ひとつの旅</strong>を。</span>
+            <span>Conceptual illustration</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section safety" id="safety">
+      <div class="section-inner safety-layout">
+        <div class="safety-copy reveal">
+          <div class="section-kicker">04 <span>SAFETY / 安全性</span></div>
+          <h2>強い力には<br>やさしいブレーキを。</h2>
+          <p>Fable 5は、できることを広げるだけでなく、どう使われるかにも目を配ります。人の判断を支え、安心して任せられるAIを目指しています。</p>
+        </div>
+        <div class="safety-art reveal delay-1">
+          <svg viewBox="0 0 800 500" role="img" aria-label="人物と相棒が夕日を眺める水彩画">
+            <defs>
+              <linearGradient id="eveningSky" x2="0" y2="1"><stop stop-color="#e7b17d"/><stop offset=".52" stop-color="#dc8966"/><stop offset="1" stop-color="#93554b"/></linearGradient>
+              <linearGradient id="eveningHill" x2="0" y2="1"><stop stop-color="#bb7959"/><stop offset="1" stop-color="#69433b"/></linearGradient>
+              <radialGradient id="eveningSun"><stop stop-color="#f6c27e" stop-opacity=".95"/><stop offset="1" stop-color="#e58b62" stop-opacity="0"/></radialGradient>
+              <filter id="eveningWash"><feTurbulence type="fractalNoise" baseFrequency=".014" numOctaves="2" seed="16" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="4"/></filter>
+            </defs>
+            <rect width="800" height="500" fill="url(#eveningSky)"/>
+            <circle cx="568" cy="183" r="140" fill="url(#eveningSun)"/>
+            <circle cx="568" cy="183" r="54" fill="#f3b472" opacity=".93"/>
+            <path d="M0 313q130-94 258-51 120 41 237-22 118-63 305 29v231H0z" fill="url(#eveningHill)" filter="url(#eveningWash)"/>
+            <path d="M0 397q128-67 248-28 93 31 198-7 138-50 354 40v98H0z" fill="#593d38" opacity=".9"/>
+            <path d="M0 455q152-45 306-15 145 28 276-2 126-28 218 4v58H0z" fill="#493633"/>
+            <path d="M92 497q125-78 238-69 124 9 211-43 82-48 172-81" fill="none" stroke="#ebc290" stroke-width="7" opacity=".48"/>
+            <g transform="translate(342 288)" filter="url(#eveningWash)">
+              <path d="M8 92q-8-64 20-91 29 28 25 91z" fill="#a64036"/>
+              <circle cx="29" cy="-11" r="16" fill="#b9795d"/>
+              <path d="M17 6q12-10 27 0" fill="#553a36"/>
+              <path d="M19 89 0 155M43 89l26 65" stroke="#443238" stroke-width="12" stroke-linecap="round"/>
+              <path d="M1 153l-18 14M69 154l18 11" stroke="#382c30" stroke-width="7" stroke-linecap="round"/>
+              <path d="M17 27-30 66M48 28l39 29" stroke="#a64036" stroke-width="13" stroke-linecap="round"/>
+            </g>
+            <g transform="translate(450 291)" filter="url(#eveningWash)">
+              <path d="M12 118q-20-66 10-105 48-30 92 5 33 26 20 91-8 37-54 39-50 2-68-30z" fill="#f1dfbd"/>
+              <path d="M18 37Q-6 5 13-13q27-20 45 14 9 23-8 42zM103 31q24-29 45-9 22 22-1 46-20 17-40-2z" fill="#e4c79f"/>
+              <path d="M38 28q9-30 34-29 25 1 31 28 2 30-31 34-35 0-34-33z" fill="#f5e7cc"/>
+              <circle cx="58" cy="28" r="4" fill="#493936"/><circle cx="83" cy="28" r="4" fill="#493936"/>
+              <path d="M64 43q8 7 16 0" fill="none" stroke="#a96754" stroke-width="3" stroke-linecap="round"/>
+              <path d="M21 103q-20 18-5 40M116 101q21 17 7 40" stroke="#ead6b4" stroke-width="18" fill="none" stroke-linecap="round"/>
+            </g>
+            <g fill="#d18c5e" opacity=".7"><circle cx="112" cy="369" r="5"/><circle cx="128" cy="356" r="3"/><circle cx="705" cy="340" r="5"/><circle cx="727" cy="328" r="3"/></g>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <section class="section getting-started" id="start">
+      <div class="section-inner start-layout">
+        <div class="reveal">
+          <div class="section-kicker">05 <span>FIRST STEP / はじめかた</span></div>
+          <h2>はじめかたは<br>かんたん。</h2>
+          <svg class="laptop" viewBox="0 0 500 310" role="img" aria-label="Claudeを使うノートパソコンの水彩イラスト">
+            <defs>
+              <linearGradient id="screen" x2="0" y2="1"><stop stop-color="#e6b78c"/><stop offset="1" stop-color="#c56b4e"/></linearGradient>
+              <filter id="laptopWash"><feTurbulence baseFrequency=".025" numOctaves="2" seed="21" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2"/></filter>
+            </defs>
+            <path d="M92 40q3-19 24-20h269q19 1 21 20v166H92z" fill="#5d4842" opacity=".92"/>
+            <rect x="108" y="37" width="282" height="149" rx="3" fill="url(#screen)"/>
+            <circle cx="249" cy="49" r="3" fill="#efcfaa"/>
+            <path d="M108 143q71-61 129-19 53 38 153-26v88H108z" fill="#9d5c4b" opacity=".68"/>
+            <path d="M160 148q47-33 88-14" fill="none" stroke="#f8dfb8" stroke-width="6" opacity=".65"/>
+            <g transform="translate(265 90)" filter="url(#laptopWash)">
+              <path d="M0 23q-5-21 9-31 18 12 13 31z" fill="#b54739"/>
+              <circle cx="10" cy="-15" r="7" fill="#c98968"/>
+              <path d="M3 22-4 48M18 22l11 25" stroke="#543b38" stroke-width="4" stroke-linecap="round"/>
+            </g>
+            <path d="M66 213h368l42 34H24z" fill="#72524a" opacity=".95" filter="url(#laptopWash)"/>
+            <path d="M172 222h156l15 16H158z" fill="#b9866d" opacity=".75"/>
+            <path d="M24 247q214 20 452 0l-22 18q-206 18-409 0z" fill="#4d3936"/>
+            <path d="M51 253q196 17 395 0" stroke="#d7a175" stroke-width="2" opacity=".5"/>
+          </svg>
+        </div>
+        <div class="steps reveal delay-1">
+          <div class="step">
+            <div><h3>アカウントをつくる</h3><p>メールアドレスひとつで、あなたの作業場ができあがります。</p></div>
+          </div>
+          <div class="step">
+            <div><h3>やりたいことを話す</h3><p>質問でも、企画でも、途中のコードでも。そのまま渡してください。</p></div>
+          </div>
+          <div class="step">
+            <div><h3>一緒に、遠くまで進む</h3><p>Fable 5が文脈をつなぎ、考え、次の一歩を提案します。</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section final-cta">
+      <div class="final-art" aria-hidden="true">
+        <svg viewBox="0 0 1500 700" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="finalSky" x2="0" y2="1"><stop stop-color="#f3cc9c"/><stop offset=".48" stop-color="#dc8b68"/><stop offset="1" stop-color="#975548"/></linearGradient>
+            <linearGradient id="finalGround" x2="0" y2="1"><stop stop-color="#b77355"/><stop offset="1" stop-color="#654039"/></linearGradient>
+            <radialGradient id="finalSun"><stop stop-color="#f5c684"/><stop offset="1" stop-color="#e38c65" stop-opacity="0"/></radialGradient>
+            <filter id="finalWash"><feTurbulence baseFrequency=".014" numOctaves="2" seed="25" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="4"/></filter>
+          </defs>
+          <rect width="1500" height="700" fill="url(#finalSky)"/>
+          <circle cx="1190" cy="214" r="185" fill="url(#finalSun)"/>
+          <circle cx="1190" cy="214" r="69" fill="#f3b779" opacity=".86"/>
+          <g fill="#fff0d5" opacity=".28">
+            <path d="M110 132q42-38 89-3 45-48 93 4h-202z"/>
+            <path d="M1114 100q41-38 77-4 38-38 81 9h-180z"/>
+          </g>
+          <path d="M0 390q220-143 443-57 175 68 348-15 232-111 709 40v342H0z" fill="#c2845e" filter="url(#finalWash)"/>
+          <path d="M0 522q201-116 402-66 197 49 358-35 221-117 740 13v266H0z" fill="url(#finalGround)" filter="url(#finalWash)"/>
+          <path d="M1500 700H420q176-111 351-161 199-57 321-178 79-79 171-100 70-15 136 8 63 23 101 76z" fill="#f0d1a1" opacity=".9"/>
+          <path d="M1498 700H522q178-95 355-155 170-58 269-168 67-76 137-93 92-23 155 29 61 50 60 126z" fill="none" stroke="#fff2d4" stroke-width="18" opacity=".9"/>
+          <path d="M1498 700H653q166-83 301-138 171-69 236-165" fill="none" stroke="#bd8661" stroke-width="3" opacity=".7"/>
+          <g stroke="#dca16d" stroke-width="6" stroke-linecap="round" opacity=".7">
+            <path d="M101 529q10-37 6-65M112 529q23-28 42-43M331 491q7-30 5-52M342 491q21-25 34-33"/>
+            <path d="M1326 449q5-31 2-53M1338 450q22-27 38-37"/>
+          </g>
+        </svg>
+      </div>
+      <div class="final-content reveal">
+        <div class="section-kicker">06 <span>BEGIN YOUR STORY / 最終章</span></div>
+        <h2>いちばん遠くまで<br>いっしょに。</h2>
+        <a href="#top" class="button">Claudeを使ってみる&nbsp; →</a>
+      </div>
+      <footer>
+        <div class="footer-brand">
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <circle cx="16" cy="16" r="8" fill="currentColor"/>
+            <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M16 3v5M16 24v5M3 16h5M24 16h5M7 7l4 4M21 21l4 4M25 7l-4 4M11 21l-4 4"/></g>
+          </svg>
+          <span>Claude</span>
+        </div>
+        <div class="footer-note">Fable 5は架空のモデル名を用いたコンセプトページです。性能に関する数値はイメージです。</div>
+      </footer>
+    </section>
+  </main>
+
+  <script>
+    document.documentElement.classList.add('js');
+
+    const revealItems = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    revealItems.forEach(item => revealObserver.observe(item));
+    setTimeout(() => {
+      revealItems.forEach(item => item.classList.add('is-visible'));
+    }, 2400);
+
+    const graph = document.querySelector('.graph-main');
+    const graphWrap = document.querySelector('.graph-wrap');
+    let graphStarted = false;
+    const graphObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !graphStarted) {
+          graphStarted = true;
+          graph.classList.add('drawn');
+        }
+      });
+    }, { threshold: .35 });
+    if (graphWrap) graphObserver.observe(graphWrap);
+
+    const sunLayer = document.querySelector('.sun-layer');
+    const cloudLayer = document.querySelector('.cloud-layer');
+    let ticking = false;
+    function parallax() {
+      const y = Math.min(window.scrollY, 700);
+      if (sunLayer) sunLayer.style.transform = `translate(${y * .025}px, ${y * .07}px)`;
+      if (cloudLayer) cloudLayer.style.transform = `translate(${-y * .035}px, ${y * .012}px)`;
+      ticking = false;
+    }
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        window.requestAnimationFrame(parallax);
+        ticking = true;
+      }
+    }, { passive: true });
+  </script>
+</body>
+</html>
