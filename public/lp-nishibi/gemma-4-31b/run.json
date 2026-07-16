@@ -29,12 +29,12 @@
   },
   "cost": {
     "estimated": true,
-    "usd": 0.002072,
-    "actual_usd": null,
-    "prompt_usd_per_mtok": 0.22,
-    "completion_usd_per_mtok": 0.55,
-    "pricing_source": "openrouter",
-    "pricing_model": "google/gemma-4-31b-it",
-    "pricing_fetched_at": "2026-07-16"
+    "usd": null,
+    "actual_usd": 0,
+    "prompt_usd_per_mtok": null,
+    "completion_usd_per_mtok": null,
+    "pricing_source": "local-no-reference",
+    "pricing_model": null,
+    "pricing_fetched_at": null
   }
 }

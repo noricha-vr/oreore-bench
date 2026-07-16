@@ -22,11 +22,40 @@ const SYSTEM_PROMPT_ENUM = new Set(['none', 'harness-default', 'custom', 'unknow
 const EFFORT_ENUM = new Set(['none', 'low', 'medium', 'high', 'unknown']);
 const GEN_AT_SOURCE_ENUM = new Set(['measured', 'git-first-commit', 'unknown']);
 
+// キー allowlist（未知キーは全部エラー。system_prompt_text のような迂回キーを構造的に防ぐ）
+const RUN_ALLOWED = new Set([
+  'schema_version', 'theme', 'model', 'model_id', 'harness', 'reasoning_effort',
+  'attempts', 'generated_at', 'generated_at_source', 'sampling', 'system_prompt',
+  'post_processing', 'runtime', 'usage', 'cost',
+]);
+const SAMPLING_ALLOWED = new Set(['temperature', 'max_tokens', 'top_p']);
+const RUNTIME_ALLOWED = new Set(['engine', 'quantization', 'api']);
+const USAGE_ALLOWED = new Set(['estimated', 'method', 'prompt_tokens', 'completion_tokens', 'note']);
+const COST_ALLOWED = new Set([
+  'estimated', 'usd', 'actual_usd',
+  'prompt_usd_per_mtok', 'completion_usd_per_mtok',
+  'pricing_source', 'pricing_model', 'pricing_fetched_at',
+]);
+
+// runtime の値（engine/quantization/api）は index.html に innerHTML で入るため、
+// 短く安全な文字列のみ許可（英数 / ハイフン / アンダースコア / ドット / 空白 / 括弧）。
+const RUNTIME_VALUE_RE = /^[A-Za-z0-9._ ()\-]{1,40}$/;
+
+// sampling の値は number | "default" | "unknown" のみ許可
+const SAMPLING_VALUE_ALLOWED_STR = new Set(['default', 'unknown']);
+
+function checkAllowedKeys(where, obj, allowed, label) {
+  for (const k of Object.keys(obj)) {
+    if (!allowed.has(k)) err(where, `${label}: unknown key "${k}" (allowlist: ${[...allowed].join(',')})`);
+  }
+}
+
 const errors = [];
 function err(where, msg) { errors.push(`${where}: ${msg}`); }
 
 function validateRun(run, where) {
   if (typeof run !== 'object' || run === null) return err(where, 'not an object');
+  checkAllowedKeys(where, run, RUN_ALLOWED, 'run');
   if (run.schema_version !== 1) err(where, `schema_version must be 1, got ${run.schema_version}`);
   for (const k of ['theme', 'model', 'model_id', 'harness', 'reasoning_effort', 'system_prompt', 'post_processing']) {
     if (typeof run[k] !== 'string') err(where, `${k} must be string`);
@@ -46,11 +75,34 @@ function validateRun(run, where) {
   }
 
   // sampling
-  if (!run.sampling || typeof run.sampling !== 'object') err(where, 'sampling missing');
+  if (!run.sampling || typeof run.sampling !== 'object') {
+    err(where, 'sampling missing');
+  } else {
+    checkAllowedKeys(where, run.sampling, SAMPLING_ALLOWED, 'sampling');
+    for (const [k, v] of Object.entries(run.sampling)) {
+      const ok = typeof v === 'number' || (typeof v === 'string' && SAMPLING_VALUE_ALLOWED_STR.has(v));
+      if (!ok) err(where, `sampling.${k} must be number | "default" | "unknown" (got ${typeof v}: ${JSON.stringify(v)})`);
+    }
+  }
+
+  // runtime（null か object。object の時はキー allowlist と値パターン検査）
+  if (run.runtime !== null && run.runtime !== undefined) {
+    if (typeof run.runtime !== 'object') {
+      err(where, 'runtime must be object or null');
+    } else {
+      checkAllowedKeys(where, run.runtime, RUNTIME_ALLOWED, 'runtime');
+      for (const [k, v] of Object.entries(run.runtime)) {
+        if (typeof v !== 'string' || !RUNTIME_VALUE_RE.test(v)) {
+          err(where, `runtime.${k} must match ${RUNTIME_VALUE_RE} (got ${JSON.stringify(v)})`);
+        }
+      }
+    }
+  }
 
   // usage
   const usage = run.usage;
   if (!usage || typeof usage !== 'object') { err(where, 'usage missing'); return; }
+  checkAllowedKeys(where, usage, USAGE_ALLOWED, 'usage');
   if (typeof usage.prompt_tokens !== 'number') err(where, 'usage.prompt_tokens must be number');
   if (typeof usage.completion_tokens !== 'number') err(where, 'usage.completion_tokens must be number');
   if (usage.estimated === true && (typeof usage.note !== 'string' || !usage.note)) {
@@ -61,7 +113,14 @@ function validateRun(run, where) {
   // cost + tokens 整合 (誤差 1%)
   const cost = run.cost;
   if (!cost || typeof cost !== 'object') { err(where, 'cost missing'); return; }
-  if (cost.usd !== null && typeof cost.usd === 'number' &&
+  checkAllowedKeys(where, cost, COST_ALLOWED, 'cost');
+  // cost.usd は null または number のみ許可（undefined = キー欠落もエラー。#8）
+  if (!('usd' in cost)) {
+    err(where, 'cost.usd key missing (must be null or number)');
+  } else if (cost.usd !== null && typeof cost.usd !== 'number') {
+    err(where, `cost.usd must be null or number (got ${typeof cost.usd})`);
+  }
+  if (typeof cost.usd === 'number' &&
       typeof cost.prompt_usd_per_mtok === 'number' && typeof cost.completion_usd_per_mtok === 'number') {
     const expected = usage.prompt_tokens * cost.prompt_usd_per_mtok / 1_000_000
                    + usage.completion_tokens * cost.completion_usd_per_mtok / 1_000_000;

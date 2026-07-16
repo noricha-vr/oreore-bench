@@ -29,12 +29,12 @@
   },
   "cost": {
     "estimated": true,
-    "usd": 0.000657,
-    "actual_usd": null,
-    "prompt_usd_per_mtok": 0.1,
-    "completion_usd_per_mtok": 0.3,
-    "pricing_source": "openrouter",
-    "pricing_model": "google/gemma-4-26b-a4b-it",
-    "pricing_fetched_at": "2026-07-16"
+    "usd": null,
+    "actual_usd": 0,
+    "prompt_usd_per_mtok": null,
+    "completion_usd_per_mtok": null,
+    "pricing_source": "local-no-reference",
+    "pricing_model": null,
+    "pricing_fetched_at": null
   }
 }

@@ -106,13 +106,13 @@
     },
     "cost": {
       "estimated": true,
-      "usd": 0.000933,
-      "actual_usd": null,
-      "prompt_usd_per_mtok": 0.1,
-      "completion_usd_per_mtok": 0.3,
-      "pricing_source": "openrouter",
-      "pricing_model": "google/gemma-4-26b-a4b-it",
-      "pricing_fetched_at": "2026-07-16"
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
     }
   },
   "extract-questions/gemma-4-31b": {
@@ -146,13 +146,13 @@
     },
     "cost": {
       "estimated": true,
-      "usd": 0.001984,
-      "actual_usd": null,
-      "prompt_usd_per_mtok": 0.22,
-      "completion_usd_per_mtok": 0.55,
-      "pricing_source": "openrouter",
-      "pricing_model": "google/gemma-4-31b-it",
-      "pricing_fetched_at": "2026-07-16"
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
     }
   },
   "extract-questions/grok-4-5": {
@@ -298,13 +298,13 @@
     },
     "cost": {
       "estimated": true,
-      "usd": 0.001766,
-      "actual_usd": null,
-      "prompt_usd_per_mtok": 0.1,
-      "completion_usd_per_mtok": 0.3,
-      "pricing_source": "openrouter",
-      "pricing_model": "google/gemma-4-26b-a4b-it",
-      "pricing_fetched_at": "2026-07-16"
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
     }
   },
   "extract-questions-v2/gemma-4-31b": {
@@ -338,13 +338,13 @@
     },
     "cost": {
       "estimated": true,
-      "usd": 0.003441,
-      "actual_usd": null,
-      "prompt_usd_per_mtok": 0.22,
-      "completion_usd_per_mtok": 0.55,
-      "pricing_source": "openrouter",
-      "pricing_model": "google/gemma-4-31b-it",
-      "pricing_fetched_at": "2026-07-16"
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
     }
   },
   "hasami-shogi/claude-opus-4-8": {
@@ -454,13 +454,13 @@
     },
     "cost": {
       "estimated": true,
-      "usd": 0.001049,
-      "actual_usd": null,
-      "prompt_usd_per_mtok": 0.1,
-      "completion_usd_per_mtok": 0.3,
-      "pricing_source": "openrouter",
-      "pricing_model": "google/gemma-4-26b-a4b-it",
-      "pricing_fetched_at": "2026-07-16"
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
     }
   },
   "hasami-shogi/gemma-4-31b": {
@@ -494,13 +494,13 @@
     },
     "cost": {
       "estimated": true,
-      "usd": 0.002492,
-      "actual_usd": null,
-      "prompt_usd_per_mtok": 0.22,
-      "completion_usd_per_mtok": 0.55,
-      "pricing_source": "openrouter",
-      "pricing_model": "google/gemma-4-31b-it",
-      "pricing_fetched_at": "2026-07-16"
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
     }
   },
   "hasami-shogi/grok-4-5": {
@@ -718,13 +718,13 @@
     },
     "cost": {
       "estimated": true,
-      "usd": 0.001665,
-      "actual_usd": null,
-      "prompt_usd_per_mtok": 0.1,
-      "completion_usd_per_mtok": 0.3,
-      "pricing_source": "openrouter",
-      "pricing_model": "google/gemma-4-26b-a4b-it",
-      "pricing_fetched_at": "2026-07-16"
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
     }
   },
   "lp-fable5/gemma-4-31b": {
@@ -758,13 +758,13 @@
     },
     "cost": {
       "estimated": true,
-      "usd": 0.003985,
-      "actual_usd": null,
-      "prompt_usd_per_mtok": 0.22,
-      "completion_usd_per_mtok": 0.55,
-      "pricing_source": "openrouter",
-      "pricing_model": "google/gemma-4-31b-it",
-      "pricing_fetched_at": "2026-07-16"
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
     }
   },
   "lp-fable5/gpt-5.6-luna": {
@@ -1018,13 +1018,13 @@
     },
     "cost": {
       "estimated": true,
-      "usd": 0.002072,
-      "actual_usd": null,
-      "prompt_usd_per_mtok": 0.22,
-      "completion_usd_per_mtok": 0.55,
-      "pricing_source": "openrouter",
-      "pricing_model": "google/gemma-4-31b-it",
-      "pricing_fetched_at": "2026-07-16"
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
     }
   },
   "lp-nishibi/grok-4-5": {
@@ -1134,13 +1134,13 @@
     },
     "cost": {
       "estimated": true,
-      "usd": 0.000839,
-      "actual_usd": null,
-      "prompt_usd_per_mtok": 0.1,
-      "completion_usd_per_mtok": 0.3,
-      "pricing_source": "openrouter",
-      "pricing_model": "google/gemma-4-26b-a4b-it",
-      "pricing_fetched_at": "2026-07-16"
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
     }
   },
   "othello/gemma-4-31b": {
@@ -1174,13 +1174,13 @@
     },
     "cost": {
       "estimated": true,
-      "usd": 0.001773,
-      "actual_usd": null,
-      "prompt_usd_per_mtok": 0.22,
-      "completion_usd_per_mtok": 0.55,
-      "pricing_source": "openrouter",
-      "pricing_model": "google/gemma-4-31b-it",
-      "pricing_fetched_at": "2026-07-16"
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
     }
   },
   "othello/grok-4-5": {
@@ -1326,13 +1326,13 @@
     },
     "cost": {
       "estimated": true,
-      "usd": 0.000657,
-      "actual_usd": null,
-      "prompt_usd_per_mtok": 0.1,
-      "completion_usd_per_mtok": 0.3,
-      "pricing_source": "openrouter",
-      "pricing_model": "google/gemma-4-26b-a4b-it",
-      "pricing_fetched_at": "2026-07-16"
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
     }
   },
   "pr-triage/gemma-4-31b": {
@@ -1366,13 +1366,13 @@
     },
     "cost": {
       "estimated": true,
-      "usd": 0.001336,
-      "actual_usd": null,
-      "prompt_usd_per_mtok": 0.22,
-      "completion_usd_per_mtok": 0.55,
-      "pricing_source": "openrouter",
-      "pricing_model": "google/gemma-4-31b-it",
-      "pricing_fetched_at": "2026-07-16"
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
     }
   },
   "pr-triage/grok-4-5": {
@@ -1590,13 +1590,13 @@
     },
     "cost": {
       "estimated": true,
-      "usd": 0.001756,
-      "actual_usd": null,
-      "prompt_usd_per_mtok": 0.1,
-      "completion_usd_per_mtok": 0.3,
-      "pricing_source": "openrouter",
-      "pricing_model": "google/gemma-4-26b-a4b-it",
-      "pricing_fetched_at": "2026-07-16"
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
     }
   },
   "suminagashi/gemma-4-31b": {
@@ -1630,13 +1630,13 @@
     },
     "cost": {
       "estimated": true,
-      "usd": 0.003219,
-      "actual_usd": null,
-      "prompt_usd_per_mtok": 0.22,
-      "completion_usd_per_mtok": 0.55,
-      "pricing_source": "openrouter",
-      "pricing_model": "google/gemma-4-31b-it",
-      "pricing_fetched_at": "2026-07-16"
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
     }
   },
   "suminagashi/gpt-5.6-luna": {

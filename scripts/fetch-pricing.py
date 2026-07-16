@@ -43,9 +43,14 @@ def main() -> int:
     today = date.today().isoformat()
     out: dict[str, dict] = {}
     missing: list[str] = []
-    for slug, model_id in model_map.items():
+    for slug, entry in model_map.items():
         if slug.startswith("_"):
             continue
+        # 後方互換: 旧形式 (str) と新形式 ({id, type}) の両対応
+        if isinstance(entry, dict):
+            model_id = entry.get("id")
+        else:
+            model_id = entry
         if model_id is None:
             print(f"[skip] {slug}: no OpenRouter model", file=sys.stderr)
             continue

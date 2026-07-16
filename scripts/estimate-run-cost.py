@@ -31,6 +31,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent.parent
 PUBLIC = ROOT / "public"
 PRICING_PATH = ROOT / "scripts" / "pricing.json"
+MODEL_MAP_PATH = ROOT / "scripts" / "model-map.json"
 
 # JSON テーマは gen-questions.py が末尾に付ける定型接尾辞。プロンプト長推定を実運用と一致させるため含める。
 JSON_PROMPT_SUFFIX = "\n\n---\n\nJSON 単体で出力してください。"
@@ -146,6 +147,7 @@ def main() -> int:
         return 1
 
     pricing_all = json.loads(PRICING_PATH.read_text(encoding="utf-8"))
+    model_map = json.loads(MODEL_MAP_PATH.read_text(encoding="utf-8")) if MODEL_MAP_PATH.exists() else {}
     enc = load_encoder()
     method = "tiktoken-o200k_base-proxy" if enc else "char-heuristic-v1"
 
@@ -184,17 +186,29 @@ def main() -> int:
             c_tok = count_tokens_heuristic(comp_text)
 
         pricing = pricing_all.get(model)
+        # model-map.json の type で「単価不在の意味」を分岐する（#10）:
+        #   type=local  → 意図的に参考単価なし（actual_usd=0 として記録）
+        #   type=api で pricing 不在 → Fail Fast（$0 表示になる事故を防ぐ）
+        map_entry = model_map.get(model, {})
+        model_type = map_entry.get("type") if isinstance(map_entry, dict) else None
+        if not pricing and model_type == "api":
+            print(f"[ERROR] {theme}/{model}: model-map type=api だが pricing.json に単価がない。fetch-pricing.py を再実行するか、type を local に変更してください。", file=sys.stderr)
+            return 1
+
         usd: float | None = None
         note = method
-        if pricing:
+        if pricing and model_type != "local":
             usd = compute_cost_usd(p_tok, c_tok, pricing)
         else:
-            note = f"{method} (no pricing: local-only)"
+            # type=local または pricing 不在 (type=local のみが到達する)
+            note = f"{method} (local: no reference cost)"
 
         rows.append((theme, model, p_tok, c_tok, usd, note))
 
         if args.write:
-            _write_run(model_dir, theme, model, kind, p_tok, c_tok, usd, pricing, method)
+            # type=local は「参考単価がある場合も」cost に反映しない（actual_usd=0 が意味）
+            pricing_for_write = pricing if (pricing and model_type != "local") else None
+            _write_run(model_dir, theme, model, kind, p_tok, c_tok, usd, pricing_for_write, method)
 
     # 表出力 (stdout = 機械可読タブ区切り、stderr = 人間向けヘッダ)
     print("theme\tmodel\tprompt_tok\tcompletion_tok\tusd\tnote")
