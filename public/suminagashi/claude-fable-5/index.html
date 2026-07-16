@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#efeae0">
+<title>墨流し — Suminagashi</title>
+<style>
+  :root{
+    --paper:#efeae0;
+    --ink:#3a352c;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;overflow:hidden;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP",serif;
+    -webkit-font-smoothing:antialiased;
+    -webkit-touch-callout:none;
+  }
+  #paper{
+    position:fixed;inset:0;width:100%;height:100%;display:block;
+    touch-action:none;cursor:crosshair;
+  }
+  /* ---- 表題（縦書き） ---- */
+  .title{
+    position:fixed;top:36px;left:30px;
+    writing-mode:vertical-rl;
+    font-size:clamp(26px,3.4vw,34px);
+    font-weight:500;
+    letter-spacing:.44em;
+    color:#332f27;
+    pointer-events:none;user-select:none;
+    display:flex;flex-direction:column;align-items:center;
+  }
+  .title::after{
+    content:"";
+    display:inline-block;
+    width:1px;height:3.4em;
+    margin-top:1.1em;
+    background:linear-gradient(rgba(58,53,44,.38),rgba(58,53,44,0));
+  }
+  /* ---- 左端の英字キャプション ---- */
+  .caption{
+    position:fixed;left:16px;top:50%;
+    transform:translateY(-50%);
+    writing-mode:vertical-rl;
+    font-size:10px;
+    letter-spacing:.6em;
+    color:rgba(58,53,44,.42);
+    pointer-events:none;user-select:none;
+    white-space:nowrap;
+  }
+  /* ---- 中央ヒント ---- */
+  .hint{
+    position:fixed;left:50%;top:50%;
+    transform:translate(-50%,-50%);
+    font-size:clamp(12px,1.7vw,15px);
+    color:rgba(58,53,44,.52);
+    white-space:nowrap;
+    pointer-events:none;user-select:none;
+    opacity:0;
+    transition:opacity 2s ease;
+  }
+  .hint.show{opacity:1;}
+  .hint.hide{opacity:0;transition:opacity 1.4s ease;}
+  /* ---- 下部ドック ---- */
+  .dock{
+    position:fixed;left:50%;
+    bottom:calc(20px + env(safe-area-inset-bottom));
+    transform:translateX(-50%);
+    display:flex;align-items:center;gap:4px;
+    padding:10px 18px;
+    border-radius:999px;
+    background:rgba(248,244,236,.58);
+    backdrop-filter:blur(16px) saturate(1.05);
+    -webkit-backdrop-filter:blur(16px) saturate(1.05);
+    border:1px solid rgba(58,53,44,.08);
+    box-shadow:0 8px 28px rgba(50,42,30,.09);
+  }
+  .swatches{display:flex;align-items:flex-start;gap:2px;}
+  .sw{
+    display:flex;flex-direction:column;align-items:center;gap:5px;
+    background:none;border:0;cursor:pointer;
+    padding:4px 7px;
+    font-family:inherit;
+  }
+  .chip{
+    width:20px;height:20px;border-radius:50%;
+    background:var(--c);
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.10);
+    transition:box-shadow .35s ease, transform .35s ease;
+  }
+  .chip-cycle{
+    background:conic-gradient(#1a1a1f 0 25%,#16407a 0 50%,#c8372d 0 75%,#2e6e52 0);
+  }
+  .sw .cap{
+    font-size:10px;letter-spacing:.16em;
+    color:rgba(58,53,44,.55);
+    transition:color .3s;
+  }
+  .sw:hover .chip{transform:translateY(-1px);}
+  .sw.selected .chip{
+    box-shadow:0 0 0 2.5px rgba(248,244,236,.95),0 0 0 4px rgba(58,53,44,.55);
+  }
+  .sw.selected .cap{color:rgba(58,53,44,.92);}
+  .sep{
+    width:1px;height:28px;
+    background:rgba(58,53,44,.15);
+    margin:0 10px;flex:none;
+  }
+  .tgl,.btn{
+    background:none;border:0;cursor:pointer;
+    font-family:inherit;
+    font-size:12.5px;letter-spacing:.2em;
+    color:rgba(58,53,44,.62);
+    display:flex;align-items:center;gap:9px;
+    padding:6px 8px;
+    transition:color .3s;
+    white-space:nowrap;
+  }
+  .tgl .dot{
+    width:6px;height:6px;border-radius:50%;flex:none;
+    background:rgba(58,53,44,.22);
+    transition:background .4s, box-shadow .4s;
+  }
+  .tgl.on .dot{
+    background:#c8372d;
+    box-shadow:0 0 7px rgba(200,55,45,.55);
+  }
+  .tgl.on{color:rgba(58,53,44,.9);}
+  .tgl:hover,.btn:hover{color:#1f1b14;}
+  .tgl:focus-visible,.btn:focus-visible,.sw:focus-visible{
+    outline:1px solid rgba(58,53,44,.5);outline-offset:3px;border-radius:6px;
+  }
+  /* ---- クレジット ---- */
+  .credit{
+    position:fixed;right:20px;
+    bottom:calc(16px + env(safe-area-inset-bottom));
+    font-size:9px;letter-spacing:.36em;
+    color:rgba(58,53,44,.34);
+    pointer-events:none;user-select:none;
+  }
+  /* ---- 現れ方 ---- */
+  .fade{opacity:0;animation:fadein 2.2s ease .4s forwards;}
+  @keyframes fadein{to{opacity:1;}}
+  @media (max-width:460px){
+    .dock{gap:0;padding:8px 10px;}
+    .sw{padding:4px 5px;}
+    .sep{margin:0 5px;}
+    .tgl,.btn{font-size:11.5px;letter-spacing:.08em;gap:6px;padding:6px 5px;}
+    .title{top:26px;left:20px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .fade{animation:none;opacity:1;}
+    .hint{transition:opacity .4s;}
+    .hint.hide{transition:opacity .4s;}
+  }
+</style>
+</head>
+<body>
+<canvas id="paper"></canvas>
+
+<h1 class="title fade">墨流し</h1>
+<div class="caption fade">SUMINAGASHI — INK DISSOLUTION</div>
+<div class="hint" id="hint">画 面 を な ぞ っ て 墨 を 流 す</div>
+
+<div class="dock fade" id="dock">
+  <div class="swatches" id="swatches">
+    <button class="sw selected" data-ink="cycle" aria-label="自動サイクル">
+      <span class="chip chip-cycle"></span><span class="cap">巡</span>
+    </button>
+    <button class="sw" data-ink="sumi" aria-label="墨">
+      <span class="chip" style="--c:#1a1a1f"></span><span class="cap">墨</span>
+    </button>
+    <button class="sw" data-ink="ai" aria-label="藍">
+      <span class="chip" style="--c:#16407a"></span><span class="cap">藍</span>
+    </button>
+    <button class="sw" data-ink="shu" aria-label="朱">
+      <span class="chip" style="--c:#c8372d"></span><span class="cap">朱</span>
+    </button>
+    <button class="sw" data-ink="matsuba" aria-label="松葉">
+      <span class="chip" style="--c:#2e6e52"></span><span class="cap">松葉</span>
+    </button>
+  </div>
+  <span class="sep"></span>
+  <button class="tgl" id="autoTgl" aria-pressed="false"><span class="dot"></span>自動演出</button>
+  <span class="sep"></span>
+  <button class="btn" id="washBtn">洗い流す</button>
+</div>
+
+<div class="credit fade">THREE.JS · STABLE FLUIDS</div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+/* ================= 基本設定 ================= */
+
+const PAPER = [0.937, 0.917, 0.878];               // #efeae0
+const INK_HEX = { sumi:'#1a1a1f', ai:'#16407a', shu:'#c8372d', matsuba:'#2e6e52' };
+const CYCLE_ORDER = ['sumi','ai','shu','matsuba'];
+
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const coarse  = matchMedia('(pointer: coarse)').matches;
+
+const SIM_RES  = coarse ? 112 : 160;   // 速度・圧力場
+const DYE_RES  = coarse ? 512 : 768;   // 染料（吸光度）場
+const P_ITER   = coarse ? 26  : 40;    // 圧力ヤコビ反復
+
+const conf = {
+  velDecay : 0.85,     // 粘性のあるゆっくりした減衰
+  dyeDecay : 0.028,    // インクは長く紙に残る
+  curl     : reduced ? 6 : 13,
+  fDrag    : 3600,
+  fHover   : 1050,
+  rVel     : 0.0035,
+  rDye     : 0.0012,
+  inkAmt   : 0.72,
+};
+
+// 吸光度: A = ln(paper / ink)。表示は paper * exp(-A) の減法混色
+function hexRgb(h){
+  return [1,3,5].map(i => parseInt(h.slice(i, i+2), 16) / 255);
+}
+const ABS = {};
+for (const k in INK_HEX){
+  const c = hexRgb(INK_HEX[k]);
+  ABS[k] = c.map((v,i) => Math.log(PAPER[i] / Math.max(v, 0.012)));
+}
+function smoothstep(t){ return t*t*(3-2*t); }
+function cycleAbsorb(phase){
+  const ph = ((phase % 4) + 4) % 4;
+  const i = Math.floor(ph), j = (i+1) % 4;
+  const f = smoothstep(ph - i);
+  const a = ABS[CYCLE_ORDER[i]], b = ABS[CYCLE_ORDER[j]];
+  return [ a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f, a[2]+(b[2]-a[2])*f ];
+}
+const rand = (a,b) => a + Math.random()*(b-a);
+const clampN = (v,a,b) => Math.max(a, Math.min(b, v));
+
+/* ================= レンダラ ================= */
+
+const canvas = document.getElementById('paper');
+let renderer;
+try{
+  renderer = new THREE.WebGLRenderer({
+    canvas, antialias:false, depth:false, stencil:false, alpha:false,
+    powerPreference:'high-performance',
+  });
+}catch(e){
+  document.getElementById('hint').textContent = 'お使いの環境では WebGL を利用できません';
+  document.getElementById('hint').classList.add('show');
+  throw e;
+}
+renderer.autoClear = false;
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+renderer.extensions.get('EXT_color_buffer_float');
+renderer.extensions.get('OES_texture_float_linear');
+
+let W = innerWidth, H = innerHeight, aspect = W / H;
+renderer.setSize(W, H, false);
+
+// フルスクリーン三角形
+const geo = new THREE.BufferGeometry();
+geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1,-1, 3,-1, -1,3]), 2));
+const mesh = new THREE.Mesh(geo);
+mesh.frustumCulled = false;
+const scene = new THREE.Scene();
+scene.add(mesh);
+const cam = new THREE.Camera();
+
+function blit(mat, target){
+  mesh.material = mat;
+  renderer.setRenderTarget(target);
+  renderer.render(scene, cam);
+}
+
+/* ================= FBO ================= */
+
+function createRT(w, h){
+  return new THREE.WebGLRenderTarget(w, h, {
+    type: THREE.HalfFloatType,
+    format: THREE.RGBAFormat,
+    minFilter: THREE.LinearFilter,
+    magFilter: THREE.LinearFilter,
+    wrapS: THREE.ClampToEdgeWrapping,
+    wrapT: THREE.ClampToEdgeWrapping,
+    depthBuffer: false,
+    stencilBuffer: false,
+  });
+}
+function doubleFbo(w, h){
+  let a = createRT(w, h), b = createRT(w, h);
+  return {
+    get read(){ return a; },
+    get write(){ return b; },
+    swap(){ const t = a; a = b; b = t; },
+    dispose(){ a.dispose(); b.dispose(); },
+  };
+}
+function getRes(base){
+  let a = aspect; if (a < 1) a = 1 / a;
+  const lo = Math.round(base), hi = Math.round(base * a);
+  return (W > H) ? { w: hi, h: lo } : { w: lo, h: hi };
+}
+
+let velocity, dye, pressure, divRT, curlRT, simTexel;
+function allocate(){
+  const s = getRes(SIM_RES), d = getRes(DYE_RES);
+  velocity?.dispose(); dye?.dispose(); pressure?.dispose();
+  divRT?.dispose(); curlRT?.dispose();
+  velocity = doubleFbo(s.w, s.h);
+  pressure = doubleFbo(s.w, s.h);
+  dye      = doubleFbo(d.w, d.h);
+  divRT    = createRT(s.w, s.h);
+  curlRT   = createRT(s.w, s.h);
+  simTexel = new THREE.Vector2(1/s.w, 1/s.h);
+  renderer.setClearColor(0x000000, 1);
+  for (const rt of [velocity.read, velocity.write, pressure.read, pressure.write,
+                    dye.read, dye.write, divRT, curlRT]){
+    renderer.setRenderTarget(rt);
+    renderer.clear(true, false, false);
+  }
+  renderer.setRenderTarget(null);
+}
+allocate();
+
+/* ================= シェーダ ================= */
+
+const VERT = `
+precision highp float;
+attribute vec2 position;
+varying vec2 vUv;
+void main(){
+  vUv = position * 0.5 + 0.5;
+  gl_Position = vec4(position, 0.0, 1.0);
+}`;
+
+function prog(frag, uniforms){
+  return new THREE.RawShaderMaterial({
+    vertexShader: VERT, fragmentShader: frag, uniforms,
+    depthTest: false, depthWrite: false,
+  });
+}
+
+const advMat = prog(`
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uVelocity;
+uniform sampler2D uSource;
+uniform vec2 uTexel;
+uniform float uDt;
+uniform float uDissipation;
+void main(){
+  vec2 coord = vUv - uDt * texture2D(uVelocity, vUv).xy * uTexel;
+  gl_FragColor = vec4(uDissipation * texture2D(uSource, coord).rgb, 1.0);
+}`, {
+  uVelocity:{value:null}, uSource:{value:null},
+  uTexel:{value:new THREE.Vector2()}, uDt:{value:0}, uDissipation:{value:1},
+});
+
+const splatMat = prog(`
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uTarget;
+uniform float uAspect;
+uniform vec3 uColor;
+uniform vec2 uPoint;
+uniform float uRadius;
+void main(){
+  vec2 p = vUv - uPoint;
+  p.x *= uAspect;
+  vec3 splat = exp(-dot(p, p) / uRadius) * uColor;
+  vec3 base = texture2D(uTarget, vUv).xyz;
+  gl_FragColor = vec4(base + splat, 1.0);
+}`, {
+  uTarget:{value:null}, uAspect:{value:1},
+  uColor:{value:new THREE.Vector3()}, uPoint:{value:new THREE.Vector2()},
+  uRadius:{value:0.001},
+});
+
+const curlMat = prog(`
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uVelocity;
+uniform vec2 uTexel;
+void main(){
+  float L = texture2D(uVelocity, vUv - vec2(uTexel.x, 0.0)).y;
+  float R = texture2D(uVelocity, vUv + vec2(uTexel.x, 0.0)).y;
+  float B = texture2D(uVelocity, vUv - vec2(0.0, uTexel.y)).x;
+  float T = texture2D(uVelocity, vUv + vec2(0.0, uTexel.y)).x;
+  gl_FragColor = vec4(0.5 * (R - L - T + B), 0.0, 0.0, 1.0);
+}`, {
+  uVelocity:{value:null}, uTexel:{value:new THREE.Vector2()},
+});
+
+const vortMat = prog(`
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uVelocity;
+uniform sampler2D uCurl;
+uniform vec2 uTexel;
+uniform float uStrength;
+uniform float uDt;
+void main(){
+  float L = texture2D(uCurl, vUv - vec2(uTexel.x, 0.0)).x;
+  float R = texture2D(uCurl, vUv + vec2(uTexel.x, 0.0)).x;
+  float B = texture2D(uCurl, vUv - vec2(0.0, uTexel.y)).x;
+  float T = texture2D(uCurl, vUv + vec2(0.0, uTexel.y)).x;
+  float C = texture2D(uCurl, vUv).x;
+  vec2 force = 0.5 * vec2(abs(T) - abs(B), abs(R) - abs(L));
+  force /= (length(force) + 1e-4);
+  force *= uStrength * C;
+  force.y *= -1.0;
+  vec2 vel = texture2D(uVelocity, vUv).xy + force * uDt;
+  vel = clamp(vel, vec2(-1000.0), vec2(1000.0));
+  gl_FragColor = vec4(vel, 0.0, 1.0);
+}`, {
+  uVelocity:{value:null}, uCurl:{value:null},
+  uTexel:{value:new THREE.Vector2()}, uStrength:{value:conf.curl}, uDt:{value:0},
+});
+
+const divMat = prog(`
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uVelocity;
+uniform vec2 uTexel;
+void main(){
+  float L = texture2D(uVelocity, vUv - vec2(uTexel.x, 0.0)).x;
+  float R = texture2D(uVelocity, vUv + vec2(uTexel.x, 0.0)).x;
+  float B = texture2D(uVelocity, vUv - vec2(0.0, uTexel.y)).y;
+  float T = texture2D(uVelocity, vUv + vec2(0.0, uTexel.y)).y;
+  vec2 C = texture2D(uVelocity, vUv).xy;
+  if (vUv.x - uTexel.x < 0.0){ L = -C.x; }
+  if (vUv.x + uTexel.x > 1.0){ R = -C.x; }
+  if (vUv.y - uTexel.y < 0.0){ B = -C.y; }
+  if (vUv.y + uTexel.y > 1.0){ T = -C.y; }
+  gl_FragColor = vec4(0.5 * (R - L + T - B), 0.0, 0.0, 1.0);
+}`, {
+  uVelocity:{value:null}, uTexel:{value:new THREE.Vector2()},
+});
+
+const clearMat = prog(`
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uTexture;
+uniform float uValue;
+void main(){
+  gl_FragColor = uValue * texture2D(uTexture, vUv);
+}`, {
+  uTexture:{value:null}, uValue:{value:0.8},
+});
+
+const pressMat = prog(`
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uPressure;
+uniform sampler2D uDivergence;
+uniform vec2 uTexel;
+void main(){
+  float L = texture2D(uPressure, vUv - vec2(uTexel.x, 0.0)).x;
+  float R = texture2D(uPressure, vUv + vec2(uTexel.x, 0.0)).x;
+  float B = texture2D(uPressure, vUv - vec2(0.0, uTexel.y)).x;
+  float T = texture2D(uPressure, vUv + vec2(0.0, uTexel.y)).x;
+  float div = texture2D(uDivergence, vUv).x;
+  gl_FragColor = vec4((L + R + B + T - div) * 0.25, 0.0, 0.0, 1.0);
+}`, {
+  uPressure:{value:null}, uDivergence:{value:null}, uTexel:{value:new THREE.Vector2()},
+});
+
+const gradMat = prog(`
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uPressure;
+uniform sampler2D uVelocity;
+uniform vec2 uTexel;
+void main(){
+  float L = texture2D(uPressure, vUv - vec2(uTexel.x, 0.0)).x;
+  float R = texture2D(uPressure, vUv + vec2(uTexel.x, 0.0)).x;
+  float B = texture2D(uPressure, vUv - vec2(0.0, uTexel.y)).x;
+  float T = texture2D(uPressure, vUv + vec2(0.0, uTexel.y)).x;
+  vec2 vel = texture2D(uVelocity, vUv).xy - vec2(R - L, T - B);
+  gl_FragColor = vec4(vel, 0.0, 1.0);
+}`, {
+  uPressure:{value:null}, uVelocity:{value:null}, uTexel:{value:new THREE.Vector2()},
+});
+
+// 表示: 和紙色 × exp(-吸光度) の減法混色 + ごく淡い紙の質感
+const displayMat = prog(`
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uDye;
+uniform vec2 uRes;
+uniform vec3 uPaper;
+float hash(vec2 p){
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 34.345);
+  return fract(p.x * p.y);
+}
+float vnoise(vec2 p){
+  vec2 i = floor(p), f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  float a = hash(i);
+  float b = hash(i + vec2(1.0, 0.0));
+  float c = hash(i + vec2(0.0, 1.0));
+  float d = hash(i + vec2(1.0, 1.0));
+  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+void main(){
+  vec3 A = texture2D(uDye, vUv).rgb;
+  vec2 px = vUv * uRes;
+  float grain  = vnoise(px / 2.4) * 0.55 + vnoise(px / 11.0) * 0.45;
+  float fibx   = vnoise(vec2(vUv.x * 620.0, vUv.y * 36.0));
+  float fiby   = vnoise(vec2(vUv.x * 40.0,  vUv.y * 540.0));
+  float blotch = vnoise(vUv * 7.0);
+  float mod_ = 1.0
+    + (grain  - 0.5) * 0.045
+    + (fibx   - 0.5) * 0.015
+    + (fiby   - 0.5) * 0.011
+    + (blotch - 0.5) * 0.018;
+  vec3 paper = uPaper * mod_;
+  vec3 col = paper * exp(-A);
+  float asp = uRes.x / uRes.y;
+  vec2 q = (vUv - 0.5) * vec2(asp, 1.0);
+  col *= 1.0 - 0.05 * smoothstep(0.45, 1.1, length(q));
+  col += (hash(px + 0.7) - 0.5) / 255.0;
+  gl_FragColor = vec4(col, 1.0);
+}`, {
+  uDye:{value:null}, uRes:{value:new THREE.Vector2()},
+  uPaper:{value:new THREE.Vector3(...PAPER)},
+});
+
+/* ================= スプラット ================= */
+
+function splatVelocity(x, y, fx, fy, radius){
+  splatMat.uniforms.uTarget.value = velocity.read.texture;
+  splatMat.uniforms.uAspect.value = aspect;
+  splatMat.uniforms.uPoint.value.set(x, y);
+  splatMat.uniforms.uColor.value.set(fx, fy, 0);
+  splatMat.uniforms.uRadius.value = radius;
+  blit(splatMat, velocity.write);
+  velocity.swap();
+}
+function splatDye(x, y, A, amount, radius){
+  splatMat.uniforms.uTarget.value = dye.read.texture;
+  splatMat.uniforms.uAspect.value = aspect;
+  splatMat.uniforms.uPoint.value.set(x, y);
+  splatMat.uniforms.uColor.value.set(A[0]*amount, A[1]*amount, A[2]*amount);
+  splatMat.uniforms.uRadius.value = radius;
+  blit(splatMat, dye.write);
+  dye.swap();
+}
+
+/* ================= 状態 ================= */
+
+let selected = 'cycle';
+let autoOn = !reduced;
+let washing = false, washEnd = 0, nextWashStir = 0;
+let tNow = 0, lastInteract = -10;
+let nextDrip = 1.0, nextStir = 0.6;
+let dripCount = 0;
+const queue = [];
+
+function currentAbsorb(offset){
+  if (selected !== 'cycle') return ABS[selected];
+  return cycleAbsorb(tNow * 0.16 + (offset || 0));   // 約25秒で4色を一巡
+}
+function interact(){ lastInteract = tNow; }
+
+/* ================= ポインタ（マウス / タッチ） ================= */
+
+const pointers = new Map();
+const hint = document.getElementById('hint');
+let hintHidden = false;
+setTimeout(() => { if (!hintHidden) hint.classList.add('show'); }, 700);
+function hideHint(){
+  if (hintHidden) return;
+  hintHidden = true;
+  hint.classList.remove('show');
+  hint.classList.add('hide');
+}
+
+canvas.addEventListener('pointerdown', e => {
+  canvas.setPointerCapture(e.pointerId);
+  const x = e.clientX / W, y = 1 - e.clientY / H;
+  let p = pointers.get(e.pointerId);
+  if (!p){ p = {}; pointers.set(e.pointerId, p); }
+  p.x = x; p.y = y; p.down = true;
+  queue.push({ x, y, dx:0, dy:0, down:true, drop:true });   // 触れた瞬間のひと滴
+  interact();
+  hideHint();
+});
+canvas.addEventListener('pointermove', e => {
+  const x = e.clientX / W, y = 1 - e.clientY / H;
+  let p = pointers.get(e.pointerId);
+  if (!p){   // ホバー開始（マウス）
+    pointers.set(e.pointerId, { x, y, down:false });
+    return;
+  }
+  const dx = x - p.x, dy = y - p.y;
+  if (dx !== 0 || dy !== 0){
+    queue.push({ x, y, dx, dy, down: p.down });
+  }
+  p.x = x; p.y = y;
+  interact();
+});
+function release(e){
+  const p = pointers.get(e.pointerId);
+  if (!p) return;
+  if (e.pointerType === 'mouse'){ p.down = false; }
+  else { pointers.delete(e.pointerId); }
+}
+canvas.addEventListener('pointerup', release);
+canvas.addEventListener('pointercancel', release);
+
+function processQueue(){
+  for (const s of queue){
+    const dx = clampN(s.dx, -0.03, 0.03);
+    const dy = clampN(s.dy, -0.03, 0.03);
+    const force = s.down ? conf.fDrag : conf.fHover;
+    const rV = s.down ? conf.rVel : conf.rVel * 2.2;
+    if (dx !== 0 || dy !== 0 || s.drop){
+      splatVelocity(s.x, s.y, dx * force, dy * force, rV);
+    }
+    if (s.down){
+      const A = currentAbsorb();
+      const amt = s.drop ? 2.0 : conf.inkAmt;
+      const rD  = s.drop ? conf.rDye * 2.6 : conf.rDye;
+      splatDye(s.x, s.y, A, amt, rD);
+    }
+  }
+  queue.length = 0;
+}
+
+/* ================= 自動演出・洗い流し ================= */
+
+function drip(){
+  dripCount++;
+  // 最初の数滴は画面中央寄りに置いて第一印象をつくる
+  const c = dripCount <= 3 ? 0.22 : 0.34;
+  const x = 0.5 + rand(-c, c), y = 0.5 + rand(-c * 0.8, c * 0.8);
+  const A = selected === 'cycle' ? cycleAbsorb(rand(0, 4)) : ABS[selected];
+  splatDye(x, y, A, rand(1.4, 3.0), rand(0.0006, 0.0034));
+  // まわりに静かな渦を添える
+  const dir = Math.random() < 0.5 ? 1 : -1;
+  const radR = rand(0.03, 0.07), m = rand(60, 150);
+  for (let k = 0; k < 4; k++){
+    const a = (k / 4) * Math.PI * 2 + rand(0, 1);
+    const ox = Math.cos(a) * radR / aspect, oy = Math.sin(a) * radR;
+    splatVelocity(x + ox, y + oy, -Math.sin(a) * m * dir, Math.cos(a) * m * dir, 0.004);
+  }
+}
+
+function director(){
+  if (washing && tNow > washEnd) washing = false;
+  if (washing && tNow > nextWashStir){
+    nextWashStir = tNow + rand(0.25, 0.6);
+    if (!reduced){
+      splatVelocity(rand(0,1), rand(0,1), rand(-140,140), rand(-140,140), 0.02);
+    }
+  }
+  if (!autoOn || document.hidden) return;
+  if (tNow - lastInteract < 2.4) return;
+  if (tNow > nextStir){
+    nextStir = tNow + rand(0.7, 1.8);
+    const a = rand(0, Math.PI * 2), m = rand(30, 110);
+    splatVelocity(rand(0.15,0.85), rand(0.15,0.85), Math.cos(a)*m, Math.sin(a)*m, 0.012);
+  }
+  if (!washing && tNow > nextDrip){
+    nextDrip = tNow + rand(2.4, 5.0);
+    drip();
+  }
+}
+
+function startWash(){
+  washing = true;
+  washEnd = tNow + 7;
+  nextWashStir = tNow;
+}
+
+/* ================= シミュレーション ================= */
+
+function step(dt){
+  const u = simTexel;
+
+  advMat.uniforms.uVelocity.value = velocity.read.texture;
+  advMat.uniforms.uSource.value = velocity.read.texture;
+  advMat.uniforms.uTexel.value.copy(u);
+  advMat.uniforms.uDt.value = dt;
+  advMat.uniforms.uDissipation.value = Math.exp(-conf.velDecay * dt);
+  blit(advMat, velocity.write); velocity.swap();
+
+  curlMat.uniforms.uVelocity.value = velocity.read.texture;
+  curlMat.uniforms.uTexel.value.copy(u);
+  blit(curlMat, curlRT);
+
+  vortMat.uniforms.uVelocity.value = velocity.read.texture;
+  vortMat.uniforms.uCurl.value = curlRT.texture;
+  vortMat.uniforms.uTexel.value.copy(u);
+  vortMat.uniforms.uStrength.value = conf.curl;
+  vortMat.uniforms.uDt.value = dt;
+  blit(vortMat, velocity.write); velocity.swap();
+
+  divMat.uniforms.uVelocity.value = velocity.read.texture;
+  divMat.uniforms.uTexel.value.copy(u);
+  blit(divMat, divRT);
+
+  clearMat.uniforms.uTexture.value = pressure.read.texture;
+  clearMat.uniforms.uValue.value = 0.8;
+  blit(clearMat, pressure.write); pressure.swap();
+
+  pressMat.uniforms.uDivergence.value = divRT.texture;
+  pressMat.uniforms.uTexel.value.copy(u);
+  for (let i = 0; i < P_ITER; i++){
+    pressMat.uniforms.uPressure.value = pressure.read.texture;
+    blit(pressMat, pressure.write); pressure.swap();
+  }
+
+  gradMat.uniforms.uPressure.value = pressure.read.texture;
+  gradMat.uniforms.uVelocity.value = velocity.read.texture;
+  gradMat.uniforms.uTexel.value.copy(u);
+  blit(gradMat, velocity.write); velocity.swap();
+
+  advMat.uniforms.uVelocity.value = velocity.read.texture;
+  advMat.uniforms.uSource.value = dye.read.texture;
+  advMat.uniforms.uTexel.value.copy(u);
+  advMat.uniforms.uDt.value = dt;
+  advMat.uniforms.uDissipation.value = Math.exp(-(washing ? 0.85 : conf.dyeDecay) * dt);
+  blit(advMat, dye.write); dye.swap();
+}
+
+function render(){
+  displayMat.uniforms.uDye.value = dye.read.texture;
+  displayMat.uniforms.uRes.value.set(renderer.domElement.width, renderer.domElement.height);
+  blit(displayMat, null);
+}
+
+let last = performance.now();
+function frame(now){
+  const dt = clampN((now - last) / 1000, 0, 1 / 30);
+  last = now;
+  tNow += dt;
+  processQueue();
+  director();
+  if (dt > 0) step(dt);
+  render();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+document.addEventListener('visibilitychange', () => { last = performance.now(); });
+
+let resizeTimer = 0;
+addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (innerWidth === W && innerHeight === H) return;
+    W = innerWidth; H = innerHeight; aspect = W / H;
+    renderer.setSize(W, H, false);
+    allocate();   // 場を作り直す（紙を張り替える）
+  }, 200);
+});
+
+/* ================= UI ================= */
+
+document.getElementById('swatches').addEventListener('click', e => {
+  const btn = e.target.closest('.sw');
+  if (!btn) return;
+  selected = btn.dataset.ink;
+  document.querySelectorAll('.sw').forEach(el => el.classList.toggle('selected', el === btn));
+});
+
+const autoTgl = document.getElementById('autoTgl');
+function syncAuto(){
+  autoTgl.classList.toggle('on', autoOn);
+  autoTgl.setAttribute('aria-pressed', String(autoOn));
+}
+autoTgl.addEventListener('click', () => {
+  autoOn = !autoOn;
+  if (autoOn){ nextDrip = tNow + 0.8; nextStir = tNow + 0.3; lastInteract = tNow - 10; }
+  syncAuto();
+});
+syncAuto();
+
+document.getElementById('washBtn').addEventListener('click', startWash);
+</script>
+</body>
+</html>
