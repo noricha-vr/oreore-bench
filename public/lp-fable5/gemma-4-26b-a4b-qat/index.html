@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fable 5 | Claude</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #faf6ee;
+            --accent-color: #c65d3b;
+            --accent-light: #d97757;
+            --text-color: #333333;
+            --text-muted: #666666;
+            --ink-color: #2c2c2c;
+            --hill-1: #eaddca;
+            --hill-2: #d2b48c;
+            --hill-3: #c5a07d;
+            --sun-color: rgba(217, 119, 87, 0.6);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+            line-height: 1.8;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, .serif {
+            font-family: 'Noto Serif JP', serif;
+            color: var(--ink-color);
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0; width: 100%;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            background: rgba(250, 246, 238, 0.9);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .logo { display: flex; align-items: center; font-weight: bold; font-size: 1.2rem; }
+        .logo svg { margin-right: 8px; }
+        nav { display: flex; align-items: center; gap: 32px; }
+        nav a { text-decoration: none; color: var(--text-color); font-size: 0.9rem; }
+        .btn-cta {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 8px 24px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: opacity 0.3s;
+        }
+        .btn-cta:hover { opacity: 0.9; }
+
+        /* Section General */
+        section { position: relative; padding: 120px 0; overflow: hidden; }
+        .section-label {
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            color: var(--accent-color);
+            display: block;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        .section-title-wrapper { margin-bottom: 60px; }
+        .section-title-jp { font-size: 2rem; margin-bottom: 8px; }
+        .section-title-en { font-size: 0.8rem; color: var(--text-muted); letter-spacing: 0.1em; }
+
+        /* Hero Section */
+        #hero { height: 100vh; display: flex; align-items: center; padding-top: 70px; }
+        .hero-content { width: 60%; z-index: 10; }
+        .hero-sub { font-size: 0.9rem; letter-spacing: 0.3em; color: var(--accent-color); margin-bottom: 20px; }
+        .hero-main { font-size: clamp(4rem, 12vw, 8rem); line-height: 1; margin-bottom: 20px; }
+        .hero-main span { color: var(--accent-color); }
+        .hero-copy { font-size: 1.5rem; color: var(--text-muted); }
+        .hero-sub-copy { font-size: 1rem; margin-top: 10px; }
+
+        .hero-illustration {
+            position: absolute;
+            bottom: 0; right: 0;
+            width: 100%; height: 60%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Chart Section */
+        .chart-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 40px;
+            height: 300px;
+            padding-bottom: 40px;
+        }
+        .bar-wrapper { display: flex; flex-direction: column; align-items: center; width: 60px; }
+        .bar { width: 100%; background: #e0ddd5; border-radius: 4px 4px 0 0; transition: height 1.5s ease-out; }
+        .bar.active { background: var(--accent-color); }
+        .bar-label { margin-top: 15px; font-size: 0.8rem; color: var(--text-muted); }
+
+        /* Grid Section */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+        }
+        .card {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.4);
+            padding: 30px;
+            border-radius: 8px;
+            gap: 24px;
+        }
+        .card-icon { width: 80px; height: 80px; flex-shrink: 0; }
+        .card-text h3 { font-size: 1.2rem; margin-bottom: 8px; }
+        .card-text p { font-size: 0.9rem; color: var(--text-muted); }
+
+        /* Graph Section */
+        .graph-area {
+            height: 400px;
+            width: 100%;
+            position: relative;
+            margin-top: 40px;
+            border-left: 1px solid #ccc;
+            border-bottom: 1px solid #ccc;
+        }
+        .graph-svg { width: 100%; height: 100%; overflow: visible; }
+        .axis-label { position: absolute; bottom: -40px; right: 0; font-size: 0.8rem; color: var(--text-muted); }
+
+        /* Safety Section */
+        .safety-bg {
+            height: 500px;
+            background: linear-gradient(to bottom, transparent, var(--hill-1));
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .safety-illustration {
+            position: absolute;
+            bottom: 0; width: 100%; height: 100%;
+            z-index: 1;
+        }
+
+        /* Steps Section */
+        .steps { display: flex; justify-content: center; gap: 40px; margin-top: 40px; }
+        .step { text-align: center; position: relative; }
+        .step-num { width: 30px; height: 30px; background: var(--accent-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; font-size: 0.8rem; }
+
+        /* Final CTA */
+        .final-cta {
+            background: linear-gradient(to bottom, transparent, var(--hill-2));
+            text-align: center;
+            padding: 180px 0;
+        }
+        .btn-large {
+            display: inline-block;
+            background: var(--accent-color);
+            color: white;
+            padding: 18px 60px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.2rem;
+            margin-top: 40px;
+        }
+
+        footer { padding: 40px; text-align: center; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid rgba(0,0,0,0.05); }
+
+        /* Animations */
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s ease-out; }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+
+        @media (max-width: 768px) {
+            header { padding: 0 20px; }
+            nav { display: none; }
+            .hero-content { width: 100%; }
+            .grid-container { grid-template-columns: 1fr; }
+            .card { flex-direction: column; text-align: center; }
+            .steps { flex-direction: column; gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" fill="#c65d3b" opacity="0.3"/>
+            <path d="M12 6V18M6 12H18" stroke="#c65d3b" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Claude
+    </div>
+    <nav>
+        <a href="#">モデル</a>
+        <a href="#">できること</a>
+        <a href="#">安全性</a>
+        <a href="#" class="btn-cta">使ってみる</a>
+    </nav>
+</header>
+
+<section id="hero">
+    <div class="container">
+        <div class="hero-content">
+            <span class="hero-sub">MYTHOS-CLASS / 一般提供モデル</span>
+            <h1 class="hero-main">Fable 5<span>.</span></h1>
+            <p class="hero-copy">今、いちばん賢いClaudeが、<br>誰でも使える形に。</p>
+            <p class="hero-sub-copy">想像を超える知性を、あなたの日常へ。</p>
+        </div>
+    </div>
+    <div class="hero-illustration">
+        <svg viewBox="0 0 1000 400" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <radialGradient id="sunGrad" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#d97757" />
+                    <stop offset="100%" stop-color="transparent" />
+                </radialGradient>
+            </defs>
+            <!-- Sun -->
+            <circle cx="850" cy="80" r="60" fill="url(#sunGrad)" />
+            <!-- Hills -->
+            <path d="M0 400 Q 250 250 500 350 T 1000 300 V 400 H 0 Z" fill="#eaddca" opacity="0.8" />
+            <path d="M0 450 Q 300 300 600 400 T 1000 350 V 450 H 0 Z" fill="#d2b48c" opacity="0.6" />
+            <path d="M0 500 Q 400 350 700 450 T 1200 400 V 500 H 0 Z" fill="#c5a07d" opacity="0.5" />
+            <!-- Path -->
+            <path d="M1000 400 Q 700 380 500 400 T 0 350" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity="0.5" />
+            <!-- Characters (Simplified) -->
+            <circle cx="450" cy="375" r="5" fill="#c65d3b" /> <!-- Person -->
+            <circle cx="435" cy="370" r="12" fill="#f5f5f5" opacity="0.9" /> <!-- Companion -->
+            <circle cx="435" cy="370" r="6" fill="#f5f5f5" />
+        </svg>
+    </div>
+</section>
+
+<section id="family">
+    <div class="container">
+        <div class="section-title-wrapper">
+            <span class="section-label">02 / Claude Family</span>
+            <h2 class="section-title-jp">Claudeのいちばん上へ。</h2>
+        </div>
+        <div class="chart-container">
+            <div class="bar-wrapper">
+                <div class="bar" style="height: 20%;"></div>
+                <div class="bar-label">Haiku</div>
+            </div>
+            <div class="bar-wrapper">
+                <div class="bar" style="height: 40%;"></div>
+                <div class="bar-label">Sonnet</div>
+            </div>
+            <div class="bar-wrapper">
+                <div class="bar" style="height: 65%;"></div>
+                <div class="bar-label">Opus</div>
+            </div>
+            <div class="bar-wrapper">
+                <div class="bar active" style="height: 100%;"></div>
+                <div class="bar-label">Mythos</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="capabilities">
+    <div class="container">
+        <div class="section-title-wrapper">
+            <span class="section-label">03 / Capabilities</span>
+            <h2 class="section-title-jp">頼れる仕事のその先まで。</h2>
+        </div>
+        <div class="grid-container">
+            <div class="card reveal">
+                <div class="card-icon">
+                    <svg viewBox="0 0 100 100"><rect x="20" y="30" width="60" height="40" fill="#d2b48c" opacity="0.5"/><path d="M30 40 L70 40 M30 50 L60 50 M30 60 L65 60" stroke="#c65d3b" stroke-width="2"/></svg>
+                </div>
+                <div class="card-text">
+                    <h3>ゲームを最後までクリア</h3>
+                    <p>画面を見るだけで、複雑な戦略も<br>完璧に理解し、攻略します。</p>
+                </div>
+            </div>
+            <div class="card reveal">
+                <div class="card-icon">
+                    <svg viewBox="0 0 100 100"><path d="M40 80 L40 20 L60 20 L60 80 Z M45 20 L45 80 M55 20 L55 80" fill="none" stroke="#c5a07d" stroke-width="3"/></svg>
+                </div>
+                <div class="card-text">
+                    <h3>5,000万行のコードを移行</h3>
+                    <p>膨大なレガシーコードも、<br>わずか1日でモダンな形へ。</p>
+                </div>
+            </div>
+            <div class="card reveal">
+                <div class="card-icon">
+                    <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="20" fill="none" stroke="#d97757" stroke-width="3"/><path d="M50 20 V30 M50 70 V80 M20 50 H30 M70 50 H80" stroke="#d97757" stroke-width="2"/></svg>
+                </div>
+                <div class="card-text">
+                    <h3>新薬設計を約10倍のスピードで</h3>
+                    <p>分子構造のシミュレーションを<br>圧倒的な速さで加速させます。</p>
+                </div>
+            </div>
+            <div class="card reveal">
+                <div class="card-icon">
+                    <svg viewBox="0 0 100 100"><path d="M20 80 Q 50 20 80 80" fill="none" stroke="#c65d3b" stroke-width="2"/><circle cx="50" cy="50" r="5" fill="#c65d3b"/></svg>
+                </div>
+                <div class="card-text">
+                    <h3>長い作業も休まず走りきる</h3>
+                    <p>複雑なプロジェクトの全工程を、<br>一貫した精度で完遂します。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="strength">
+    <div class="container">
+        <div class="section-title-wrapper">
+            <span class="section-label">04 / Strength</span>
+            <h2 class="section-title-jp">長く複雑な仕事ほど差は開いていく。</h2>
+        </div>
+        <div class="graph-area">
+            <svg class="graph-svg" viewBox="0 0 800 400" preserveAspectRatio="none">
+                <!-- Grid lines -->
+                <line x1="0" y1="100" x2="800" y2="100" stroke="#eee" stroke-width="1" />
+                <line x1="0" y1="200" x2="800" y2="200" stroke="#eee" stroke-width="1" />
+                <line x1="0" y1="300" x2="800" y2="300" stroke="#eee" stroke-width="1" />
+                <!-- Other models -->
+                <path id="line-other" d="M0 350 Q 400 340 800 330" fill="none" stroke="#ccc" stroke-width="2" />
+                <!-- Fable 5 line -->
+                <path id="line-fable" d="M0 350 Q 400 350 800 50" fill="none" stroke="#c65d3b" stroke-width="4" />
+            </svg>
+            <div class="axis-label">仕事の長さ・複雑さ →</div>
+        </div>
+    </div>
+</section>
+
+<section id="safety">
+    <div class="safety-bg">
+        <div class="safety-illustration">
+            <svg viewBox="0 0 1000 400" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 400 Q 300 300 600 400 T 1000 350 V 400 H 0 Z" fill="#eaddca" />
+                <circle cx="850" cy="80" r="60" fill="url(#sunGrad)" />
+                <!-- Characters sitting -->
+                <circle cx="400" cy="360" r="5" fill="#c65d3b" />
+                <circle cx="385" cy="355" r="12" fill="#f5f5f5" />
+            </svg>
+        </div>
+        <div class="container" style="position:relative; z-index:2;">
+            <div class="section-title-wrapper">
+                <span class="section-label">05 / Safety</span>
+                <h2 class="section-title-jp">強い力にはやさしいブレーキを。</h2>
+            </div>
+            <p style="max-width: 500px; margin: 0 auto; color: var(--text-muted);">
+                高度な知能が社会に溶け込むよう、<br>
+                徹底した安全性と倫理的ガイドラインを組み込んでいます。
+            </p>
+        </div>
+    </div>
+</section>
+
+<section id="how-to">
+    <div class="container">
+        <div class="section-title-wrapper">
+            <span class="section-label">06 / How to start</span>
+            <h2 class="section-title-jp">はじめかたはかんたん。</h2>
+        </div>
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">1</div>
+                <p>アカウントを作成</p>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <p>プロンプトを入力</p>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <p>Fable 5と対話を開始</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="final-cta">
+    <div class="container">
+        <h2 class="section-title-jp" style="font-size: 3rem;">いちばん遠くまでいっしょに。</h2>
+        <a href="#" class="btn-large">Claudeを使ってみる</a>
+    </div>
+    <div class="hero-illustration" style="height: 100%; opacity: 0.4;">
+        <svg viewBox="0 0 1000 400" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 400 Q 500 100 1000 400 V 400 H 0 Z" fill="#d2b48c" />
+        </svg>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2024 Claude / Fable 5. All rights reserved.</p>
+    </div>
+</footer>
+
+<script>
+    // Intersection Observer for Reveal Animation
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                if(entry.target.id === 'strength') {
+                    animateGraph();
+                }
+            }
+        });
+    }, { threshold: 0.2 });
+
+    document.querySelectorAll('.reveal, section').forEach(el => observer.observe(el));
+
+    // Graph Animation
+    function animateGraph() {
+        const path = document.getElementById('line-fable');
+        const length = path.getTotalLength();
+        path.style.strokeDasharray = length;
+        path.style.strokeDashoffset = length;
+        
+        let start = null;
+        const duration = 2000;
+
+        function step(timestamp) {
+            if (!start) start = timestamp;
+            const progress = timestamp - start;
+            const percent = Math.min(progress / duration, 1);
+            path.style.strokeDashoffset = length * (1 - percent);
+            if (progress < duration) {
+                window.requestAnimationFrame(step);
+            }
+        }
+        window.requestAnimationFrame(step);
+    }
+
+    // Parallax Effect for Hero
+    window.addEventListener('scroll', () => {
+        const scrolled = window.pageYOffset;
+        const heroIllustration = document.querySelector('.hero-illustration');
+        heroIllustration.style.transform = `translateY(${scrolled * 0.3}px)`;
+    });
+</script>
+
+</body>
+</html>

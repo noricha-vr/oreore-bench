@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>墨流し — Suminagashi</title>
+    <style>
+        :root {
+            --washi: #efeae0;
+            --ui-bg: rgba(239, 234, 224, 0.6);
+            --font-main: "Yu Mincho", "Yu Mincho", "MS Mincho", serif;
+        }
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: var(--washi);
+            font-family: var(--font-main);
+        }
+        canvas { display: block; width: 100vw; height: 100vh; }
+
+        /* UI Elements */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+        }
+        .title-vertical {
+            position: absolute; top: 40px; left: 40px;
+            writing-mode: vertical-rl; font-size: 2rem; letter-spacing: 0.5em;
+            color: #333; opacity: 0.7;
+        }
+        .caption-vertical {
+            position: absolute; top: 40px; left: 20px;
+            writing-mode: vertical-rl; font-size: 0.8rem; letter-spacing: 0.3em;
+            color: #555; opacity: 0.5;
+        }
+        .hint {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2rem; letter-spacing: 0.8em;
+            color: #444; opacity: 0.4; transition: opacity 2s;
+        }
+        .hint.hidden { opacity: 0; }
+
+        .dock {
+            position: absolute; bottom: 40px; left: 50%;
+            transform: translateX(-50%);
+            background: var(--ui-bg);
+            backdrop-filter: blur(8px);
+            padding: 12px 24px; border-radius: 50px;
+            display: flex; align-items: center; gap: 20px;
+            pointer-events: auto; border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        .swatch-group { display: flex; gap: 15px; }
+        .swatch {
+            width: 24px; height: 24px; border-radius: 50%;
+            border: 2px solid transparent; cursor: pointer;
+            transition: transform 0.3s; position: relative;
+        }
+        .swatch.active { border-color: #333; transform: scale(1.1); }
+        .swatch::after {
+            content: attr(data-label); position: absolute;
+            bottom: -20px; left: 50%; transform: translateX(-50%);
+            font-size: 0.7rem; white-space: nowrap; color: #333;
+        }
+        .btn {
+            background: none; border: none; font-family: var(--font-main);
+            font-size: 0.8rem; cursor: pointer; color: #333;
+            padding: 5px 10px; transition: opacity 0.3s;
+        }
+        .btn:hover { opacity: 0.6; }
+        .btn.active { color: #000; font-weight: bold; }
+        .btn.active::after { content: " ●"; }
+
+        .credit {
+            position: absolute; bottom: 10px; right: 20px;
+            font-size: 0.6rem; color: #888; letter-spacing: 0.1em;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .hint { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="overlay">
+    <div class="title-vertical">墨流し</div>
+    <div class="caption-vertical">SUMINAGASHI — INK DISSOLUTION</div>
+    <div class="hint" id="hint">画 面 を な ぞ っ て 墨 を 流 す</div>
+    
+    <div class="dock">
+        <div class="swatch-group">
+            <div class="swatch" data-label="巡" style="background: linear-gradient(45deg, #1a1a1f, #c8372d, #2e6e52);" id="swatch-auto"></div>
+            <div class="swatch" data-label="墨" style="background: #1a1a1f;" id="swatch-sumi"></div>
+            <div class="swatch" data-label="藍" style="background: #16407a;" id="swatch-ai"></div>
+            <div class="swatch" data-label="朱" style="background: #c8372d;" id="swatch-shu"></div>
+            <div class="swatch" data-label="松葉" style="background: #2e6e52;" id="swatch-matsuba"></div>
+        </div>
+        <div style="width: 1px; height: 20px; background: rgba(0,0,0,0.1);"></div>
+        <button class="btn" id="btn-auto">自動演出</button>
+        <button class="btn" id="btn-wash">洗い流す</button>
+    </div>
+    <div class="credit">THREE.JS · STABLE FLUIDS</div>
+</div>
+
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+
+    // --- Configuration ---
+    const COLORS = {
+        washi: new THREE.Color(0xefeae0),
+        sumi: new THREE.Color(0x1a1a1f),
+        ai: new THREE.Color(0x16407a),
+        shu: new THREE.Color(0xc8372d),
+        matsuba: new THREE.Color(0x2e6e52)
+    };
+
+    let currentInk = COLORS.sumi;
+    let isAuto = false;
+    let isWashing = false;
+    let hasInteracted = false;
+
+    // --- Fluid Simulation Setup ---
+    // We use a simplified Stable Fluids approach: 
+    // Advection -> Divergence/Pressure -> Rendering
+    const SIM_RES = 128;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 1;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    document.body.appendChild(renderer.domElement);
+
+    // Textures for simulation
+    const createDataTexture = () => {
+        const tex = new THREE.DataTexture(new Float32Array(SIM_RES * SIM_RES * 4), SIM_RES, SIM_RES);
+        tex.type = THREE.FloatType;
+        tex.needsUpdate = true;
+        return tex;
+    };
+
+    // Velocity (RG), Density/Absorbance (RGB)
+    let velTex = createDataTexture();
+    let densTex = createDataTexture();
+    let prevVelTex = createDataTexture();
+    let prevDensTex = createDataTexture();
+
+    // Shader Materials
+    const advectShader = {
+        uniforms: {
+            u_vel: { value: velTex },
+            u_dens: { value: densTex },
+            u_prevDens: { value: prevDensTex },
+            u_dt: { value: 0.15 },
+            u_diss: { value: 0.995 },
+            u_wash: { value: 0.0 }
+        },
+        vertexShader: `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            uniform sampler2D u_vel, u_dens, u_prevDens;
+            uniform float u_dt, u_diss, u_wash;
+            varying vec2 vUv;
+            void main() {
+                vec2 vel = texture2D(u_vel, vUv).xy;
+                vec2 pos = vUv - vel * u_dt;
+                vec4 dens = texture2D(u_prevDens, pos);
+                float d = dens.rgb;
+                gl_FragColor = vec4(d * u_diss, 1.0);
+            }
+        `
+    };
+
+    const pressureShader = {
+        uniforms: {
+            u_vel: { value: velTex },
+            u_dens: { value: densTex },
+            u_res: { value: new THREE.Vector2(SIM_RES, SIM_RES) }
+        },
+        vertexShader: `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = vec4(position, 0.0, 1.0);
+            }
+        `,
+        fragmentShader: `
+            uniform sampler2D u_vel, u_dens;
+            uniform vec2 u_res;
+            varying vec2 vUv;
+            void main() {
+                vec2 texel = 1.0 / u_res;
+                vec2 vel = texture2D(u_vel, vUv).xy;
+                float div = (
+                    (texture2D(u_vel, vUv + vec2(texel.x, 0.0)).x - texture2D(u_vel, vUv - vec2(texel.x, 0.0)).x) +
+                    (texture2D(u_vel, vUv + vec2(0.0, texel.y)).y - texture2D(u_vel, vUv - vec2(0.0, texel.y)).y)
+                ) * 0.5;
+                gl_FragColor = vec4(div, 0.0, 0.0, 1.0);
+            }
+        `
+    };
+
+    const renderShader = {
+        uniforms: {
+            u_dens: { value: densTex },
+            u_washi: { value: COLORS.washi },
+            u_wash: { value: 0.0 }
+        },
+        vertexShader: `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = vec4(position, 0.0, 1.0);
+            }
+        `,
+        fragmentShader: `
+            uniform sampler2D u_dens;
+            uniform vec3 u_washi;
+            uniform float u_wash;
+            varying vec2 vUv;
+            void main() {
+                vec3 dens = texture2D(u_dens, vUv).rgb;
+                // Subtractive mixing: washi_color * exp(-absorbance)
+                // We treat the density as the absorbance.
+                vec3 final = u_washi * exp(-dens * 1.8);
+                gl_FragColor = vec4(final, 1.0);
+            }
+        `
+    };
+
+    // Render targets
+    const renderTargets = [
+        { tex: new THREE.WebGLRenderTarget(SIM_RES, SIM_RES, { type: THREE.FloatType }), mat: new THREE.ShaderMaterial(advectShader) },
+        { tex: new THREE.WebGLRenderTarget(SIM_RES, SIM_RES, { type: THREE.FloatType }), mat: new THREE.ShaderMaterial(pressureShader) },
+        { tex: new THREE.WebGLRenderTarget(SIM_RES, SIM_RES, { type: THREE.FloatType }), mat: new THREE.ShaderMaterial(renderShader) }
+    ];
+
+    const geometry = new THREE.PlaneGeometry(2, 2);
+    const mesh = new THREE.Mesh(geometry, renderTargets[2].mat);
+    scene.add(mesh);
+
+    // Interaction
+    const mouse = new THREE.Vector2();
+    const pointer = new THREE.Vector2();
+    let isMouseDown = false;
+
+    window.addEventListener('mousemove', (e) => {
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        if (isMouseDown) {
+            hasInteracted = true;
+            document.getElementById('hint').classList.add('hidden');
+            injectInk(mouse.x, mouse.y, 0.5, 0.5);
+        }
+    });
+
+    window.addEventListener('mousedown', () => isMouseDown = true);
+    window.addEventListener('mouseup', () => isMouseDown = false);
+    window.addEventListener('touchstart', (e) => {
+        isMouseDown = true;
+        hasInteracted = true;
+        document.getElementById('hint').classList.add('hidden');
+        injectInk(e.touches[0].clientX / window.innerWidth, 1 - e.touches[0].clientY / window.innerHeight, 0.5, 0.5);
+    });
+    window.addEventListener('touchend', () => isMouseDown = false);
+    window.addEventListener('touchmove', (e) => {
+        if (isMouseDown) {
+            injectInk(e.touches[0].clientX / window.innerWidth, 1 - e.touches[0].clientY / window.innerHeight, 0.5, 0.5);
+        }
+    });
+
+    function injectInk(x, y, vx, vy) {
+        const px = (x + 1) * 0.5 * SIM_RES;
+        const py = (1 - y) * 0.5 * SIM_RES;
+        const idx = Math.floor(py) * SIM_RES + Math.floor(px);
+        
+        // Inject velocity
+        prevVelTex.image.data[idx * 4] = vx * 20;
+        prevVelTex.image.data[idx * 4 + 1] = vy * 20;
+        
+        // Inject absorbance (ink color)
+        // We use the inverse of the color to represent "absorbance"
+        // Darker colors = higher absorbance
+        const abs = new THREE.Vector3();
+        COLORS.washi.sub(currentInk).multiplyScalar(1.5);
+        abs.set(abs.x, abs.y, abs.z);
+        
+        prevDensTex.image.data[idx * 4] = abs.x;
+        prevDensTex.image.data[idx * 4 + 1] = abs.y;
+        prevDensTex.image.data[idx * 4 + 2] = abs.z;
+    }
+
+    // UI Logic
+    document.querySelectorAll('.swatch').forEach(s => {
+        s.addEventListener('click', (e) => {
+            document.querySelectorAll('.swatch').forEach(sw => sw.classList.remove('active'));
+            e.target.classList.add('active');
+            const id = e.target.id.replace('swatch-', '');
+            if (id === 'auto') {
+                isAuto = !isAuto;
+                document.getElementById('btn-auto').classList.toggle('active', isAuto);
+            } else {
+                currentInk = COLORS[id === 'sumi' ? 'sumi' : id === 'ai' ? 'ai' : id === 'shu' ? 'shu' : 'matsuba'];
+            }
+        });
+    });
+
+    document.getElementById('btn-auto').addEventListener('click', (e) => {
+        isAuto = !isAuto;
+        e.target.classList.toggle('active', isAuto);
+    });
+
+    document.getElementById('btn-wash').addEventListener('click', (e) => {
+        isWashing = !isWashing;
+        e.target.style.opacity = isWashing ? "0.5" : "1";
+    });
+
+    // Animation Loop
+    function animate() {
+        requestAnimationFrame(animate);
+
+        // Fluid Simulation Steps
+        // 1. Advection
+        renderTargets[0].mat.uniforms.u_vel.value = prevVelTex;
+        renderTargets[0].mat.uniforms.u_dens.value = densTex;
+        renderTargets[0].mat.uniforms.u_prevDens.value = prevDensTex;
+        renderTargets[0].mat.uniforms.u_dt.value = 0.12;
+        renderTargets[0].mat.uniforms.u_diss.value = isWashing ? 0.90 : 0.995;
+        renderTargets[0].mat.uniforms.u_wash.value = isWashing ? 0.02 : 0.0;
+        renderer.setRenderTarget(renderTargets[0].tex);
+        renderer.render(scene, camera);
+
+        // 2. Pressure / Divergence (Simplified)
+        renderTargets[1].mat.uniforms.u_vel.value = velTex;
+        renderTargets[1].mat.uniforms.u_dens.value = densTex;
+        renderTargets[1].mat.uniforms.u_res.value.set(SIM_RES, SIM_RES);
+        renderer.setRenderTarget(renderTargets[1].tex);
+        renderer.render(scene, camera);
+
+        // 3. Final Render
+        renderTargets[2].mat.uniforms.u_dens.value = densTex;
+        renderTargets[2].mat.uniforms.u_washi.value = COLORS.washi;
+        renderTargets[2].mat.uniforms.u_wash.value = isWashing ? 0.01 : 0.0;
+        renderer.setRenderTarget(null);
+        renderer.render(scene, camera);
+
+        // Swap textures
+        let tempVel = prevVelTex;
+        prevVelTex = velTex;
+        velTex = tempVel;
+
+        let tempDens = prevDensTex;
+        prevDensTex = densTex;
+        densTex = tempDens;
+
+        // Auto-play logic
+        if (isAuto && Math.random() < 0.05) {
+            injectInk(Math.random(), Math.random(), (Math.random()-0.5)*2, (Math.random()-0.5)*2);
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate();
+</script>
+</body>
+</html>

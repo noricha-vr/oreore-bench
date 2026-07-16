@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>墨流し — Suminagashi</title>
+    <style>
+        :root {
+            --bg-color: #efeae0;
+            --ink-sumi: #1a1a1f;
+            --ink-ai: #16407a;
+            --ink-shu: #c8372d;
+            --ink-matsuba: #2e6e52;
+            --ui-text: #4a4a4a;
+            --ui-accent: #8c8c8c;
+        }
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: var(--bg-color);
+            font-family: "Sawarabi Mincho", "YuMincho", "MS PMincho", serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+        /* UI Layout */
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 10; color: var(--ui-text);
+        }
+
+        .title {
+            position: absolute; top: 40px; left: 40px;
+            writing-mode: vertical-rl; font-size: 2rem; letter-spacing: 0.5em;
+            font-weight: 400; pointer-events: none;
+        }
+
+        .caption {
+            position: absolute; top: 40px; left: 20px;
+            writing-mode: vertical-lr; font-family: "Optima", sans-serif;
+            font-size: 0.65rem; letter-spacing: 0.4em; color: var(--ui-accent);
+            text-transform: uppercase; pointer-events: none;
+        }
+
+        .hint {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 0.8rem; letter-spacing: 0.6em; opacity: 1;
+            transition: opacity 2s ease-out; pointer-events: none;
+        }
+
+        .dock {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            display: flex; align-items: center; gap: 20px; padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(10px);
+            border-radius: 40px; pointer-events: auto; border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        }
+
+        .swatches { display: flex; gap: 12px; align-items: center; }
+        .swatch {
+            width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
+            position: relative; transition: transform 0.2s ease; border: 2px solid transparent;
+        }
+        .swatch:hover { transform: scale(1.2); }
+        .swatch.active { border-color: var(--ui-text); transform: scale(1.1); }
+        .swatch.active::after {
+            content: ''; position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px;
+            border: 1px solid var(--ui-text); border-radius: 50%;
+        }
+
+        .divider { width: 1px; height: 20px; background: var(--ui-accent); opacity: 0.4; }
+
+        .control {
+            display: flex; align-items: center; gap: 8px; font-size: 0.75rem;
+            cursor: pointer; user-select: none; letter-spacing: 0.1em;
+        }
+        .toggle {
+            width: 32px; height: 16px; background: #ccc; border-radius: 8px;
+            position: relative; transition: background 0.3s;
+        }
+        .toggle::before {
+            content: ''; position: absolute; width: 12px; height: 12px;
+            background: white; border-radius: 50%; top: 2px; left: 2px;
+            transition: transform 0.3s;
+        }
+        .toggle.on { background: var(--ui-text); }
+        .toggle.on::before { transform: translateX(16px); }
+
+        .btn-wash {
+            background: none; border: none; font-family: inherit; cursor: pointer;
+            font-size: 0.75rem; color: var(--ui-text); letter-spacing: 0.1em;
+            transition: opacity 0.2s;
+        }
+        .btn-wash:hover { opacity: 0.6; }
+
+        .credit {
+            position: absolute; bottom: 20px; right: 30px;
+            font-family: monospace; font-size: 0.6rem; color: var(--ui-accent);
+            letter-spacing: 0.1em; pointer-events: none;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * { transition: none !important; animation: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="ui-layer">
+    <div class="caption">SUMINAGASHI — INK DISSOLUTION</div>
+    <div class="title">墨流し</div>
+    <div id="hint" class="hint">画 面 を な ぞ っ て 墨 を 流 す</div>
+    <div class="dock">
+        <div class="swatches" id="swatch-container"></div>
+        <div class="divider"></div>
+        <div class="control" id="auto-toggle">
+            <span>自動演出</span>
+            <div class="toggle" id="toggle-ui"></div>
+        </div>
+        <div class="divider"></div>
+        <button class="btn-wash" id="wash-btn">洗い流す</button>
+    </div>
+    <div class="credit">THREE.JS · STABLE FLUIDS</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+
+<script id="vertexShader" type="x-shader/x-vertex">
+    varying vec2 vUv;
+    void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+</script>
+
+<script id="advectionShader" type="x-shader/x-fragment">
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D uVelocity;
+    uniform sampler2D uSource;
+    uniform float uDt;
+    uniform float uDissipation;
+
+    void main() {
+        vec2 vel = texture2D(uVelocity, vUv).xy;
+        vec2 coord = vUv - uDt * vel;
+        gl_FragColor = uDissipation * texture2D(uSource, coord);
+    }
+</script>
+
+<script id="divergenceShader" type="x-shader/x-fragment">
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D uVelocity;
+    uniform float uTexelSize;
+
+    void main() {
+        float L = texture2D(uVelocity, vUv - vec2(uTexelSize, 0.0)).x;
+        float R = texture2D(uVelocity, vUv + vec2(uTexelSize, 0.0)).x;
+        float T = texture2D(uVelocity, vUv + vec2(0.0, uTexelSize)).y;
+        float B = texture2D(uVelocity, vUv - vec2(0.0, uTexelSize)).y;
+        float div = 0.5 * (R - L + T - B);
+        gl_FragColor = vec4(div, 0.0, 0.0, 1.0);
+    }
+</script>
+
+<script id="jacobiShader" type="x-shader/x-fragment">
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D uPressure;
+    uniform sampler2D uDivergence;
+    uniform float uTexelSize;
+
+    void main() {
+        float L = texture2D(uPressure, vUv - vec2(uTexelSize, 0.0)).x;
+        float R = texture2D(uPressure, vUv + vec2(uTexelSize, 0.0)).x;
+        float T = texture2D(uPressure, vUv + vec2(0.0, uTexelSize)).x;
+        float B = texture2D(uPressure, vUv - vec2(0.0, uTexelSize)).x;
+        float div = texture2D(uDivergence, vUv).x;
+        float p = (L + R + T + B - div) * 0.25;
+        gl_FragColor = vec4(p, 0.0, 0.0, 1.0);
+    }
+</script>
+
+<script id="projectionShader" type="x-shader/x-fragment">
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D uVelocity;
+    uniform sampler2D uPressure;
+    uniform float uTexelSize;
+
+    void main() {
+        float L = texture2D(uPressure, vUv - vec2(uTexelSize, 0.0)).x;
+        float R = texture2D(uPressure, vUv + vec2(uTexelSize, 0.0)).x;
+        float T = texture2D(uPressure, vUv + vec2(0.0, uTexelSize)).x;
+        float B = texture2D(uPressure, vUv - vec2(0.0, uTexelSize)).x;
+        vec2 vel = texture2D(uVelocity, vUv).xy;
+        vel -= 0.5 * vec2(R - L, T - B);
+        gl_FragColor = vec4(vel, 0.0, 1.0);
+    }
+</script>
+
+<script id="vorticityShader" type="x-shader/x-fragment">
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D uVelocity;
+    uniform float uTexelSize;
+
+    void main() {
+        float L = texture2D(uVelocity, vUv - vec2(uTexelSize, 0.0)).y;
+        float R = texture2D(uVelocity, vUv + vec2(uTexelSize, 0.0)).y;
+        float T = texture2D(uVelocity, vUv + vec2(0.0, uTexelSize)).x;
+        float B = texture2D(uVelocity, vUv - vec2(0.0, uTexelSize)).x;
+        float curl = 0.5 * (R - L + T - B);
+        gl_FragColor = vec4(curl, 0.0, 0.0, 1.0);
+    }
+</script>
+
+<script id="renderShader" type="x-shader/x-fragment">
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D uDensity1; // Sumi, Ai
+    uniform sampler2D uDensity2; // Shu, Matsuba
+    uniform vec3 uWashiColor;
+
+    void main() {
+        vec4 d1 = texture2D(uDensity1, vUv); // r:Sumi, g:Ai
+        vec4 d2 = texture2D(uDensity2, vUv); // r:Shu, g:Matsuba
+        
+        // Absorption coefficients for each ink color (Approximate)
+        vec3 cSumi = vec3(0.9, 0.9, 0.9);
+        vec3 cAi = vec3(0.8, 0.5, 0.2);
+        vec3 cShu = vec3(0.1, 0.7, 0.8);
+        vec3 cMatsuba = vec3(0.7, 0.2, 0.6);
+
+        float absR = d1.r * cSumi.r + d1.g * cAi.r + d2.r * cShu.r + d2.g * cMatsuba.r;
+        float absG = d1.r * cSumi.g + d1.g * cAi.g + d2.r * cShu.g + d2.g * cMatsuba.g;
+        float absB = d1.r * cSumi.b + d1.g * cAi.b + d2.r * cShu.b + d2.g * cMatsuba.b;
+
+        vec3 finalColor = uWashiColor * exp(-vec3(absR, absG, absB) * 2.0);
+        gl_FragColor = vec4(finalColor, 1.0);
+    }
+</script>
+
+<script>
+"use strict";
+
+const CONFIG = {
+    washiColor: new THREE.Color(0xefeae0),
+    inks: [
+        { name: '巡', color: '#ffffff', value: 'cycle' },
+        { name: '墨', color: '#1a1a1f', value: 0 },
+        { name: '藍', color: '#16407a', value: 1 },
+        { name: '朱', color: '#c8372d', value: 2 },
+        { name: '松葉', color: '#2e6e52', value: 3 },
+    ],
+    simRes: 256,
+    viscosity: 0.98,
+    inkDissipation: 0.995,
+};
+
+class FluidSimulation {
+    constructor(renderer) {
+        this.renderer = renderer;
+        this.res = CONFIG.simRes;
+        this.texelSize = 1.0 / this.res;
+
+        this.createFBOs();
+        this.initShaders();
+    }
+
+    createFBOs() {
+        const createDoubleFBO = () => {
+            const fbo1 = new THREE.WebGLRenderTarget(this.res, this.res, { type: THREE.HalfFloatType, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter });
+            const fbo2 = new THREE.WebGLRenderTarget(this.res, this.res, { type: THREE.HalfFloatType, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter });
+            return { read: fbo1, write: fbo2, swap: () => { let t = fbo1; fbo1 = fbo2; fbo2 = t; return { read: fbo1, write: fbo2 }; } };
+        };
+
+        this.velocity = createDoubleFBO();
+        this.density1 = createDoubleFBO(); // Sumi, Ai
+        this.density2 = createDoubleFBO(); // Shu, Matsuba
+        this.pressure = createDoubleFBO();
+        this.divergence = new THREE.WebGLRenderTarget(this.res, this.res, { type: THREE.HalfFloatType });
+    }
+
+    initShaders() {
+        const createMat = (fragId) => new THREE.ShaderMaterial({
+            uniforms: { uDt: { value: 0.016 }, uTexelSize: { value: this.texelSize } },
+            vertexShader: document.getElementById('vertexShader').textContent,
+            fragmentShader: document.getElementById(fragId).textContent,
+        });
+
+        this.advectMat = createMat('advectionShader');
+        this.divMat = createMat('divergenceShader');
+        this.jacobiMat = createMat('jacobiShader');
+        this.projMat = createMat('projectionShader');
+        this.vortMat = createMat('vorticityShader');
+    }
+
+    step(dt, dissipation) {
+        const r = this.renderer;
+        const scene = new THREE.Scene();
+        const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), null);
+        scene.add(quad);
+
+        const run = (mat, source, target) => {
+            mat.uniforms.uVelocity.value = this.velocity.read.texture;
+            if (mat.uniforms.uSource) mat.uniforms.uSource.value = source.texture;
+            if (mat.uniforms.uPressure) mat.uniforms.uPressure.value = this.pressure.read.texture;
+            if (mat.uniforms.uDivergence) mat.uniforms.uDivergence.value = this.divergence.texture;
+            
+            r.setRenderTarget(target);
+            quad.material = mat;
+            r.render(scene, cam);
+        };
+
+        // Advection
+        this.advectMat.uniforms.uDt.value = dt;
+        this.advectMat.uniforms.uDissipation.value = CONFIG.viscosity;
+        run(this.advectMat, this.velocity.read, this.velocity.write);
+        this.velocity = this.velocity.swap();
+
+        this.advectMat.uniforms.uDissipation.value = dissipation;
+        run(this.advectMat, this.density1.read, this.density1.write);
+        this.density1 = this.density1.swap();
+        run(this.advectMat, this.density2.read, this.density2.write);
+        this.density2 = this.density2.swap();
+
+        // Projection
+        this.divMat.uniforms.uTexelSize.value = this.texelSize;
+        run(this.divMat, null, this.divergence);
+
+        this.jacobiMat.uniforms.uTexelSize.value = this.texelSize;
+        for (let i = 0; i < 20; i++) {
+            run(this.jacobiMat, null, this.pressure.write);
+            this.pressure = this.pressure.swap();
+        }
+
+        this.projMat.uniforms.uTexelSize.value = this.texelSize;
+        run(this.projMat, null, this.velocity.write);
+        this.velocity = this.velocity.swap();
+
+        r.setRenderTarget(null);
+    }
+
+    inject(x, y, dx, dy, colorIdx) {
+        const r = this.renderer;
+        const scene = new THREE.Scene();
+        const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), null);
+        scene.add(quad);
+
+        const injectMat = new THREE.ShaderMaterial({
+            uniforms: { 
+                uPos: { value: new THREE.Vector2(x, y) }, 
+                uRadius: { value: 0.015 }, 
+                uColor: { value: new THREE.Vector2(0, 0) },
+                uVel: { value: new THREE.Vector2(dx, dy) } 
+            },
+            vertexShader: document.getElementById('vertexShader').textContent,
+            fragmentShader: `
+                precision highp float;
+                varying vec2 vUv;
+                uniform vec2 uPos; uniform float uRadius; uniform vec2 uColor; uniform vec2 uVel;
+                uniform sampler2D uSource;
+                void main() {
+                    float d = distance(vUv, uPos);
+                    float strength = exp(-d * d / (uRadius * uRadius));
+                    vec4 base = texture2D(uSource, vUv);
+                    gl_FragColor = base + vec4(uColor * strength, 0.0, 1.0);
+                }
+            `
+        });
+
+        // Velocity injection
+        injectMat.uniforms.uColor.value = new THREE.Vector2(dx * 0.1, dy * 0.1);
+        r.setRenderTarget(this.velocity.write);
+        quad.material = injectMat;
+        r.render(scene, cam);
+        this.velocity = this.velocity.swap();
+
+        // Density injection
+        let targetDensity = colorIdx < 2 ? this.density1 : this.density2;
+        let channel = colorIdx % 2 === 0 ? new THREE.Vector2(1, 0) : new THREE.Vector2(0, 1);
+        injectMat.uniforms.uColor.value = channel;
+        r.setRenderTarget(targetDensity.write);
+        quad.material = injectMat;
+        r.render(scene, cam);
+        if (colorIdx < 2) this.density1 = targetDensity.swap(); else this.density2 = targetDensity.swap();
+    }
+}
+
+window.onload = () => {
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const sim = new FluidSimulation(renderer);
+    
+    const renderScene = new THREE.Scene();
+    const renderCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    const renderQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
+        uniforms: {
+            uDensity1: { value: sim.density1.read.texture },
+            uDensity2: { value: sim.density2.read.texture },
+            uWashiColor: { value: CONFIG.washiColor }
+        },
+        vertexShader: document.getElementById('vertexShader').textContent,
+        fragmentShader: document.getElementById('renderShader').textContent,
+    }));
+    renderScene.add(renderQuad);
+
+    let currentInk = 1; // Start with Sumi
+    let isAuto = false;
+    let isWashing = false;
+    let lastMouse = new THREE.Vector2();
+    let isDragging = false;
+
+    // UI Setup
+    const swatchContainer = document.getElementById('swatch-container');
+    CONFIG.inks.forEach((ink, i) => {
+        const s = document.createElement('div');
+        s.className = `swatch ${i === 1 ? 'active' : ''}`;
+        s.style.backgroundColor = ink.color;
+        s.onclick = () => {
+            document.querySelectorAll('.swatch').forEach(el => el.classList.remove('active'));
+            s.classList.add('active');
+            currentInk = ink.value === 'cycle' ? 1 : ink.value + 1;
+        };
+        swatchContainer.appendChild(s);
+    });
+
+    document.getElementById('auto-toggle').onclick = () => {
+        isAuto = !isAuto;
+        document.getElementById('toggle-ui').classList.toggle('on', isAuto);
+    };
+
+    document.getElementById('wash-btn').onclick = () => { isWashing = true; };
+
+    const handleInput = (x, y, active) => {
+        const nx = x / window.innerWidth;
+        const ny = 1.0 - y / window.innerHeight;
+        const dx = (nx - lastMouse.x) * 10;
+        const dy = (ny - lastMouse.y) * 10;
+
+        if (active) {
+            let inkIdx = currentInk === 0 ? Math.floor(Math.random() * 4) + 1 : currentInk;
+            sim.inject(nx, ny, dx, dy, inkIdx);
+        } else {
+            sim.inject(nx, ny, dx * 0.2, dy * 0.2, -1); // Just disturb flow
+        }
+        lastMouse.set(nx, ny);
+    };
+
+    window.addEventListener('mousedown', () => { 
+        isDragging = true; 
+        document.getElementById('hint').style.opacity = '0';
+    });
+    window.addEventListener('mouseup', () => isDragging = false);
+    window.addEventListener('mousemove', (e) => handleInput(e.clientX, e.clientY, isDragging));
+    window.addEventListener('touchstart', (e) => { 
+        isDragging = true; 
+        document.getElementById('hint').style.opacity = '0';
+        handleInput(e.touches[0].clientX, e.touches[0].clientY, true);
+    });
+    window.addEventListener('touchend', () => isDragging = false);
+    window.addEventListener('touchmove', (e) => handleInput(e.touches[0].clientX, e.touches[0].clientY, true));
+
+    function animate() {
+        requestAnimationFrame(animate);
+        const dt = 0.016;
+        let dissipation = CONFIG.inkDissipation;
+
+        if (isWashing) {
+            dissipation = 0.92;
+            if (Math.random() > 0.98) isWashing = false;
+        }
+
+        if (isAuto && Math.random() > 0.95) {
+            const rx = Math.random(), ry = Math.random();
+            const rdx = (Math.random() - 0.5) * 0.1, rdy = (Math.random() - 0.5) * 0.1;
+            sim.inject(rx, ry, rdx, rdy, Math.floor(Math.random() * 4) + 1);
+        }
+
+        sim.step(dt, dissipation);
+        
+        renderQuad.material.uniforms.uDensity1.value = sim.density1.read.texture;
+        renderQuad.material.uniforms.uDensity2.value = sim.density2.read.texture;
+        renderer.render(renderScene, renderCam);
+    }
+
+    animate();
+
+    window.addEventListener('resize', () => {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+};
+</script>
+</body>
+</html>
