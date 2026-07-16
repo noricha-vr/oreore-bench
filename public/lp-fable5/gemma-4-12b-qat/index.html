@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fable 5 | Claude</title>
+    <style>
+        :root {
+            --bg-color: #faf6ee;
+            --accent-color: #c65d3b;
+            --accent-light: #d97757;
+            --ink-color: #1a1a1a;
+            --hill-tan: #e5d3b3;
+            --hill-sepia: #c4a484;
+            --hill-ochre: #d97757;
+            --text-main: #1a1a1a;
+            --font-serif: "Yu Mincho", "MS Mincho", serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+            line-height: 1.8;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3, .serif {
+            font-family: var(--font-serif);
+            font-weight: normal;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px 40px;
+            background: rgba(250, 246, 238, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .logo svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--accent-color);
+        }
+
+        nav a {
+            margin-left: 30px;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        nav a:hover {
+            opacity: 1;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            transition: transform 0.3s, background-color 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            background-color: var(--accent-light);
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding-top: 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            z-index: 2;
+        }
+
+        .mythos-label {
+            font-size: 0.8rem;
+            letter-spacing: 0.2em;
+            margin-bottom: 20px;
+            opacity: 0.6;
+        }
+
+        .hero-title {
+            font-size: clamp(5rem, 15vw, 12rem);
+            line-height: 0.9;
+            margin-bottom: 40px;
+            color: var(--ink-color);
+        }
+
+        .hero-title span {
+            color: var(--accent-color);
+        }
+
+        .hero-copy {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .hero-subcopy {
+            font-size: 1.1rem;
+            opacity: 0.7;
+            max-width: 500px;
+        }
+
+        .hero-illustration {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Section Styles */
+        section {
+            padding: 160px 0;
+            position: relative;
+        }
+
+        .section-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            opacity: 0.4;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            margin-bottom: 60px;
+            text-align: center;
+        }
+
+        /* Family Chart */
+        .family-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 40px;
+            height: 300px;
+            padding-bottom: 40px;
+        }
+
+        .bar-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .bar {
+            width: 60px;
+            background: var(--hill-sepia);
+            border-radius: 8px 8px 0 0;
+            transition: height 1.5s ease-out;
+            position: relative;
+        }
+
+        .bar.mythos {
+            background: var(--accent-color);
+            height: 280px;
+        }
+
+        .bar.opus { height: 200px; }
+        .bar.sonnet { height: 140px; }
+        .bar.haiku { height: 80px; }
+
+        .bar-label {
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        /* Capabilities Grid */
+        .capabilities-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+        }
+
+        .cap-card {
+            background: rgba(255,255,255,0.3);
+            padding: 40px;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            transition: transform 0.3s;
+        }
+
+        .cap-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .cap-card svg {
+            flex-shrink: 0;
+            width: 120px;
+            height: 120px;
+        }
+
+        .cap-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+        }
+
+        .cap-card p {
+            font-size: 0.95rem;
+            opacity: 0.8;
+        }
+
+        /* Strengths Graph */
+        .graph-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+            margin-top: 50px;
+        }
+
+        .graph-svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .graph-line-others {
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 3;
+        }
+
+        .graph-line-fable {
+            fill: none;
+            stroke: var(--accent-color);
+            stroke-width: 5;
+            stroke-linecap: round;
+        }
+
+        /* Safety Section */
+        .safety-illustration {
+            width: 100%;
+            height: 500px;
+            margin-bottom: 40px;
+        }
+
+        .safety-copy {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+            font-size: 1.2rem;
+        }
+
+        /* Getting Started */
+        .steps {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin-top: 60px;
+        }
+
+        .step {
+            text-align: center;
+        }
+
+        .step-num {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-weight: bold;
+        }
+
+        /* Final CTA */
+        .final-cta {
+            text-align: center;
+            padding-bottom: 100px;
+        }
+
+        .final-cta svg {
+            width: 100%;
+            height: 400px;
+            margin-bottom: 60px;
+        }
+
+        footer {
+            padding: 40px 0;
+            text-align: center;
+            font-size: 0.8rem;
+            opacity: 0.5;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+
+        /* Animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 1.2s ease-out;
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header { padding: 15px 20px; }
+            nav { display: none; }
+            .hero-title { font-size: 4rem; }
+            .capabilities-grid { grid-template-columns: 1fr; }
+            .steps { flex-direction: column; align-items: center; }
+            .hero-illustration { height: 40%; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <svg viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z"/></svg>
+            <span>Claude</span>
+        </div>
+        <nav>
+            <a href="#family">モデル</a>
+            <a href="#capabilities">できること</a>
+            <a href="#safety">安全性</a>
+            <a href="#" class="btn-primary">使ってみる</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Section 1: Hero -->
+        <section class="hero">
+            <div class="hero-content">
+                <span class="mythos-label">MYTHOS-CLASS / 一般提供モデル</span>
+                <h1 class="hero-title">Fable <span>5.</span></h1>
+                <p class="hero-copy">今、いちばん賢いClaudeが、誰でも使える形に。</p>
+                <p class="hero-subcopy">複雑な思考を、温かな言葉へ。Fable 5は、あなたの創造性を最も深く理解するパートナーです。</p>
+            </div>
+            <div class="hero-illustration">
+                <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <filter id="watercolor">
+                            <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
+                            <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" />
+                        </filter>
+                    </defs>
+                    <!-- Sun -->
+                    <circle cx="700" cy="80" r="40" fill="#c65d3b" opacity="0.3" filter="url(#watercolor)" />
+                    <!-- Hills -->
+                    <path d="M0,400 Q200,200 400,350 T800,250 L800,400 Z" fill="#e5d3b3" opacity="0.6" filter="url(#watercolor)" />
+                    <path d="M-100,400 Q150,150 450,380 T900,300 L900,400 Z" fill="#d97757" opacity="0.4" filter="url(#watercolor)" />
+                    <path d="M200,400 Q400,250 600,400 Z" fill="#c4a484" opacity="0.5" filter="url(#watercolor)" />
+                    <!-- Path -->
+                    <path d="M400,400 Q350,300 300,250 Q250,200 200,180" stroke="#faf6ee" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="10,15" />
+                    <!-- Characters -->
+                    <circle cx="280" cy="220" r="5" fill="#c65d3b" /> <!-- Person -->
+                    <ellipse cx="310" cy="215" rx="15" ry="10" fill="#faf6ee" opacity="0.8" filter="url(#watercolor)" /> <!-- Companion -->
+                </svg>
+            </div>
+        </section>
+
+        <!-- Section 2: Family -->
+        <section id="family" class="reveal">
+            <span class="section-label">02 / Claudeファミリー</span>
+            <h2>Claudeのいちばん上へ。</h2>
+            <div class="family-container">
+                <div class="bar-wrapper">
+                    <div class="bar haiku"></div>
+                    <span class="bar-label">Haiku</span>
+                </div>
+                <div class="bar-wrapper">
+                    <div class="bar sonnet"></div>
+                    <span class="bar-label">Sonnet</span>
+                </div>
+                <div class="bar-wrapper">
+                    <div class="bar opus"></div>
+                    <span class="bar-label">Opus</span>
+                </div>
+                <div class="bar-wrapper">
+                    <div class="bar mythos"></div>
+                    <span class="bar-label">Mythos</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Capabilities -->
+        <section id="capabilities" class="reveal">
+            <span class="section-label">03 / できること</span>
+            <h2>頼れる仕事のその先まで。</h2>
+            <div class="capabilities-grid">
+                <div class="cap-card">
+                    <svg viewBox="0 0 100 100">
+                        <path d="M20,50 Q50,10 80,50 T120,50" stroke="#c65d3b" fill="none" stroke-width="2" opacity="0.5"/>
+                        <rect x="30" y="60" width="40" height="30" rx="5" fill="#e5d3b3" />
+                        <rect x="35" y="50" width="30" height="20" rx="5" fill="#d97757" opacity="0.6"/>
+                    </svg>
+                    <div>
+                        <h3>ゲームをクリア</h3>
+                        <p>画面を見るだけでゲームのルールを理解し、最後までクリアする。</p>
+                    </div>
+                </div>
+                <div class="cap-card">
+                    <svg viewBox="0 0 100 100">
+                        <rect x="20" y="20" width="60" height="60" fill="#e5d3b3" opacity="0.4"/>
+                        <rect x="25" y="25" width="50" height="50" fill="#d97757" opacity="0.6"/>
+                        <rect x="30" y="30" width="40" height="40" fill="#c4a484" opacity="0.8"/>
+                    </svg>
+                    <div>
+                        <h3>コード移行</h3>
+                        <p>5,000万行のコードを、文脈を維持したまま1日で移行。</p>
+                    </div>
+                </div>
+                <div class="cap-card">
+                    <svg viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="30" stroke="#c65d3b" fill="none" stroke-width="2"/>
+                        <path d="M40,50 L60,50 M50,40 L50,60" stroke="#d97757" stroke-width="2"/>
+                        <path d="M30,30 Q50,10 70,30" stroke="#e5d3b3" fill="none" stroke-width="2"/>
+                    </svg>
+                    <div>
+                        <h3>新薬設計</h3>
+                        <p>分子構造のシミュレーションを約10倍のスピードで加速。</p>
+                    </div>
+                </div>
+                <div class="cap-card">
+                    <svg viewBox="0 0 100 100">
+                        <path d="M20,80 Q50,20 80,80" stroke="#c65d3b" fill="none" stroke-width="2"/>
+                        <circle cx="50" cy="50" r="10" fill="#e5d3b3"/>
+                    </svg>
+                    <div>
+                        <h3>長距離の伴走</h3>
+                        <p>数日間にわたる複雑なプロジェクトも、休まず一貫性を保つ。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Strengths -->
+        <section id="strengths" class="reveal">
+            <span class="section-label">04 / いちばんの強み</span>
+            <h2>長く複雑な仕事ほど差は開いていく。</h2>
+            <div class="graph-container">
+                <svg class="graph-svg" viewBox="0 0 800 400">
+                    <!-- Grid -->
+                    <line x1="0" y1="350" x2="800" y2="350" stroke="#ccc" stroke-width="1" />
+                    <line x1="0" y1="0" x2="0" y2="350" stroke="#ccc" stroke-width="1" />
+                    <text x="700" y="370" font-size="12" fill="#999">仕事の長さ・複雑さ →</text>
+                    
+                    <!-- Other Models -->
+                    <path class="graph-line-others" d="M0,300 Q400,280 800,270" />
+                    
+                    <!-- Fable 5 -->
+                    <path id="fablePath" class="graph-line-fable" d="M0,300 Q200,280 400,200 T800,-100" />
+                </svg>
+            </div>
+        </section>
+
+        <!-- Section 5: Safety -->
+        <section id="safety" class="reveal">
+            <span class="section-label">05 / 安全性</span>
+            <h2>強い力にはやさしいブレーキを。</h2>
+            <div class="safety-illustration">
+                <svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M0,500 Q400,300 800,500" fill="#e5d3b3" opacity="0.4" />
+                    <path d="M-100,500 Q300,200 900,500" fill="#d97757" opacity="0.3" />
+                    <circle cx="400" cy="400" r="15" fill="#c65d3b" /> <!-- Person -->
+                    <ellipse cx="430" cy="390" rx="25" ry="15" fill="#faf6ee" opacity="0.8" filter="url(#watercolor)" /> <!-- Companion -->
+                    <circle cx="600" cy="150" r="60" fill="#c65d3b" opacity="0.2" filter="url(#watercolor)" /> <!-- Sunset -->
+                </svg>
+            </div>
+            <div class="safety-copy">
+                <p>Fable 5は、高度な倫理ガイドラインを思考の根底に組み込んでいます。<br>力強い知能が、常に誠実で安全な道を選ぶためのための設計です。</p>
+            </div>
+        </section>
+
+        <!-- Section 6: Getting Started -->
+        <section id="getting-started" class="reveal">
+            <span class="section-label">06 / はじめかた</span>
+            <h2>はじめかたはかんたん。</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <p>Claudeにログイン</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <p>Fable 5を選択</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <p>物語を始める</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 7: Final CTA -->
+        <section id="cta" class="final-cta reveal">
+            <span class="section-label">07 / 結び</span>
+            <h2>いちばん遠くまでいっしょに。</h2>
+            <div class="final-cta-illustration">
+                <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M0,400 Q400,200 800,400" fill="#e5d3b3" opacity="0.4" />
+                    <path d="M0,400 Q200,300 400,400 T800,300" fill="#d97757" opacity="0.3" />
+                    <path d="M0,400 Q400,350 800,400" stroke="#faf6ee" stroke-width="4" fill="none" stroke-dasharray="20,20" />
+                    <circle cx="400" cy="380" r="8" fill="#c65d3b" /> <!-- Person -->
+                    <ellipse cx="420" cy="375" rx="15" ry="10" fill="#faf6ee" opacity="0.8" /> <!-- Companion -->
+                </svg>
+            </div>
+            <a href="#" class="btn-primary" style="padding: 20px 60px; font-size: 1.2rem;">Claudeを使ってみる</a>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Anthropic Claude. Fable 5 is a fictional model for demonstration.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Intersection Observer for reveal animation
+        const observerOptions = {
+            threshold: 0.15
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Scroll-linked Graph Animation
+        const fablePath = document.getElementById('fablePath');
+        const graphContainer = document.querySelector('.graph-container');
+
+        window.addEventListener('scroll', () => {
+            const rect = graphContainer.getBoundingClientRect();
+            const windowHeight = window.innerHeight;
+            
+            // Calculate scroll progress within the viewport
+            let progress = (windowHeight - rect.top) / (windowHeight + rect.height);
+            progress = Math.max(0, Math.min(1, progress));
+
+            if (fablePath) {
+                const length = fablePath.getTotalLength();
+                fablePath.style.strokeDasharray = length;
+                fablePath.style.strokeDashoffset = length * (1 - progress);
+            }
+        });
+
+        // Initial call to set dasharray
+        window.onload = () => {
+            if (fablePath) {
+                const length = fablePath.getTotalLength();
+                fablePath.style.strokeDasharray = length;
+                fablePath.style.strokeDashoffset = length;
+            }
+        };
+    </script>
+</body>
+</html>

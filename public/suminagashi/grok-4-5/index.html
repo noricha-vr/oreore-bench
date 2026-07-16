@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>墨流し — Suminagashi</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#efeae0;font-family:"Hiragino Mincho ProN","Yu Mincho","MS PMincho","Noto Serif JP",serif;touch-action:none;-webkit-user-select:none;user-select:none}
+canvas#c{display:block;width:100%;height:100%;position:fixed;inset:0;z-index:0;cursor:crosshair}
+.ui{position:fixed;inset:0;z-index:10;pointer-events:none}
+.title{position:absolute;top:2.2rem;left:1.6rem;writing-mode:vertical-rl;text-orientation:upright;font-size:1.35rem;letter-spacing:.35em;color:#2a2620;opacity:.72;font-weight:400}
+.caption{position:absolute;top:50%;left:.55rem;transform:translateY(-50%);writing-mode:vertical-rl;text-orientation:mixed;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:.62rem;letter-spacing:.42em;color:#3a3530;opacity:.38;font-weight:400}
+.hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:.95rem;letter-spacing:.55em;color:#3a3530;opacity:0;transition:opacity 1.4s ease;pointer-events:none;white-space:nowrap}
+.hint.show{opacity:.42}
+.hint.hide{opacity:0}
+.credit{position:absolute;bottom:1rem;right:1.1rem;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:.55rem;letter-spacing:.18em;color:#3a3530;opacity:.28}
+.dock{position:absolute;bottom:1.6rem;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:.55rem;padding:.55rem .85rem;background:rgba(239,234,224,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:999px;border:1px solid rgba(60,50,40,.08);box-shadow:0 4px 24px rgba(40,30,20,.06);pointer-events:auto}
+.swatches{display:flex;align-items:center;gap:.4rem}
+.sw{width:1.55rem;height:1.55rem;border-radius:50%;border:2px solid transparent;cursor:pointer;position:relative;transition:transform .2s,box-shadow .25s;outline:none;background:none;padding:0}
+.sw:hover{transform:scale(1.08)}
+.sw.active{box-shadow:0 0 0 2px #efeae0,0 0 0 3.5px currentColor}
+.sw .dot{display:block;width:100%;height:100%;border-radius:50%;border:1px solid rgba(0,0,0,.06)}
+.sw .lbl{position:absolute;bottom:-1.15rem;left:50%;transform:translateX(-50%);font-size:.55rem;color:#3a3530;opacity:.55;letter-spacing:.05em;white-space:nowrap;pointer-events:none}
+.sep{width:1px;height:1.4rem;background:rgba(60,50,40,.12);margin:0 .2rem}
+.tog,.btn{font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;font-size:.7rem;color:#3a3530;background:none;border:none;cursor:pointer;padding:.35rem .55rem;border-radius:999px;letter-spacing:.12em;opacity:.7;transition:opacity .2s,background .2s;display:flex;align-items:center;gap:.35rem;outline:none}
+.tog:hover,.btn:hover{opacity:1;background:rgba(60,50,40,.05)}
+.tog .pip{width:.45rem;height:.45rem;border-radius:50%;border:1.5px solid rgba(60,50,40,.35);background:transparent;transition:background .25s,border-color .25s}
+.tog.on .pip{background:#2a2620;border-color:#2a2620}
+.tog.on{opacity:1}
+@media(max-width:600px){
+  .title{top:1.2rem;left:1rem;font-size:1.1rem}
+  .caption{font-size:.5rem;left:.35rem;letter-spacing:.32em}
+  .hint{font-size:.72rem;letter-spacing:.35em}
+  .dock{bottom:1rem;padding:.45rem .6rem;gap:.35rem;max-width:96vw;flex-wrap:nowrap}
+  .sw{width:1.35rem;height:1.35rem}
+  .sw .lbl{display:none}
+  .tog,.btn{font-size:.62rem;padding:.3rem .4rem;letter-spacing:.08em}
+  .credit{font-size:.48rem;bottom:.6rem;right:.6rem}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui">
+  <div class="title">墨流し</div>
+  <div class="caption">SUMINAGASHI — INK DISSOLUTION</div>
+  <div class="hint" id="hint">画 面 を な ぞ っ て 墨 を 流 す</div>
+  <div class="credit">THREE.JS · STABLE FLUIDS</div>
+  <div class="dock">
+    <div class="swatches" id="swatches"></div>
+    <div class="sep"></div>
+    <button class="tog" id="autoBtn" type="button" aria-pressed="false"><span class="pip"></span>自動演出</button>
+    <button class="btn" id="washBtn" type="button">洗い流す</button>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+
+const PAPER = [0.937, 0.918, 0.878];
+const INKS = [
+  { id:'cycle', name:'巡', hex:'#8a8070', rgb:[0.35,0.32,0.28], cycle:true },
+  { id:'sumi',  name:'墨', hex:'#1a1a1f', rgb:[0.10,0.10,0.12] },
+  { id:'ai',    name:'藍', hex:'#16407a', rgb:[0.09,0.25,0.48] },
+  { id:'shu',   name:'朱', hex:'#c8372d', rgb:[0.78,0.22,0.18] },
+  { id:'matsuba',name:'松葉',hex:'#2e6e52', rgb:[0.18,0.43,0.32] }
+];
+
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const canvas = document.getElementById('c');
+const hintEl = document.getElementById('hint');
+const autoBtn = document.getElementById('autoBtn');
+const washBtn = document.getElementById('washBtn');
+const swatchesEl = document.getElementById('swatches');
+
+let selectedInk = 1;
+let autoMode = false;
+let washing = false;
+let washAmount = 0;
+let hasInteracted = false;
+let cycleIdx = 1;
+let cycleTimer = 0;
+
+INKS.forEach((ink, i) => {
+  const b = document.createElement('button');
+  b.className = 'sw' + (i === selectedInk ? ' active' : '');
+  b.style.color = ink.hex;
+  b.title = ink.name;
+  b.setAttribute('aria-label', ink.name);
+  const d = document.createElement('span');
+  d.className = 'dot';
+  if (ink.cycle) {
+    d.style.background = 'conic-gradient(#1a1a1f,#16407a,#c8372d,#2e6e52,#1a1a1f)';
+  } else {
+    d.style.background = ink.hex;
+  }
+  b.appendChild(d);
+  const l = document.createElement('span');
+  l.className = 'lbl';
+  l.textContent = ink.name;
+  b.appendChild(l);
+  b.addEventListener('click', () => {
+    selectedInk = i;
+    document.querySelectorAll('.sw').forEach((el, j) => el.classList.toggle('active', j === i));
+  });
+  swatchesEl.appendChild(b);
+});
+
+autoBtn.addEventListener('click', () => {
+  autoMode = !autoMode;
+  autoBtn.classList.toggle('on', autoMode);
+  autoBtn.setAttribute('aria-pressed', autoMode ? 'true' : 'false');
+});
+
+washBtn.addEventListener('click', () => {
+  washing = true;
+  washAmount = 1;
+});
+
+setTimeout(() => { if (!hasInteracted) hintEl.classList.add('show'); }, 800);
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:false, alpha:false, powerPreference:'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight, false);
+renderer.autoClear = false;
+
+const gl = renderer.getContext();
+const isWebGL2 = renderer.capabilities.isWebGL2;
+
+const simRes = reducedMotion ? 128 : (Math.min(window.innerWidth, window.innerHeight) < 700 ? 180 : 256);
+const dyeRes = reducedMotion ? 256 : (Math.min(window.innerWidth, window.innerHeight) < 700 ? 360 : 512);
+
+function makeRT(w, h, type, filter) {
+  const rt = new THREE.WebGLRenderTarget(w, h, {
+    minFilter: filter || THREE.LinearFilter,
+    magFilter: filter || THREE.LinearFilter,
+    format: THREE.RGBAFormat,
+    type: type || THREE.UnsignedByteType,
+    depthBuffer: false,
+    stencilBuffer: false,
+    generateMipmaps: false
+  });
+  return rt;
+}
+
+const floatType = (function(){
+  if (isWebGL2) {
+    const ext = gl.getExtension('EXT_color_buffer_float');
+    if (ext) return THREE.FloatType;
+  }
+  const half = gl.getExtension('OES_texture_half_float') || gl.getExtension('EXT_color_buffer_half_float');
+  if (half || isWebGL2) return THREE.HalfFloatType;
+  return THREE.UnsignedByteType;
+})();
+
+let vel0 = makeRT(simRes, simRes, floatType);
+let vel1 = makeRT(simRes, simRes, floatType);
+let divRT = makeRT(simRes, simRes, floatType);
+let pre0 = makeRT(simRes, simRes, floatType);
+let pre1 = makeRT(simRes, simRes, floatType);
+let dye0 = makeRT(dyeRes, dyeRes, floatType);
+let dye1 = makeRT(dyeRes, dyeRes, floatType);
+let curlRT = makeRT(simRes, simRes, floatType);
+
+const scene = new THREE.Scene();
+const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+const quadGeo = new THREE.PlaneBufferGeometry(2, 2);
+const mesh = new THREE.Mesh(quadGeo, new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+scene.add(mesh);
+
+const baseVS = `
+varying vec2 vUv;
+void main(){
+  vUv = uv;
+  gl_Position = vec4(position.xy, 0.0, 1.0);
+}`;
+
+function mkMat(fs, uniforms) {
+  return new THREE.ShaderMaterial({
+    vertexShader: baseVS,
+    fragmentShader: fs,
+    uniforms: uniforms || {},
+    depthTest: false,
+    depthWrite: false
+  });
+}
+
+const clearFS = `
+precision highp float;
+uniform vec4 value;
+void main(){ gl_FragColor = value; }`;
+
+const splatFS = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uTarget;
+uniform vec3 uPoint;
+uniform vec3 uColor;
+uniform float uRadius;
+uniform float uAspect;
+void main(){
+  vec2 p = vUv - uPoint.xy;
+  p.x *= uAspect;
+  float d = exp(-dot(p,p) / uRadius);
+  vec4 base = texture2D(uTarget, vUv);
+  gl_FragColor = vec4(base.rgb + uColor * d, 1.0);
+}`;
+
+const advectFS = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uVelocity;
+uniform sampler2D uSource;
+uniform vec2 uTexel;
+uniform float uDt;
+uniform float uDissipation;
+void main(){
+  vec2 vel = texture2D(uVelocity, vUv).xy;
+  vec2 coord = vUv - uDt * vel * uTexel * 256.0;
+  coord = clamp(coord, uTexel, 1.0 - uTexel);
+  vec4 res = texture2D(uSource, coord);
+  float decay = uDissipation;
+  gl_FragColor = vec4(res.rgb * decay, 1.0);
+}`;
+
+const divergenceFS = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uVelocity;
+uniform vec2 uTexel;
+void main(){
+  float L = texture2D(uVelocity, vUv - vec2(uTexel.x, 0.0)).x;
+  float R = texture2D(uVelocity, vUv + vec2(uTexel.x, 0.0)).x;
+  float B = texture2D(uVelocity, vUv - vec2(0.0, uTexel.y)).y;
+  float T = texture2D(uVelocity, vUv + vec2(0.0, uTexel.y)).y;
+  float div = 0.5 * (R - L + T - B);
+  gl_FragColor = vec4(div, 0.0, 0.0, 1.0);
+}`;
+
+const curlFS = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uVelocity;
+uniform vec2 uTexel;
+void main(){
+  float L = texture2D(uVelocity, vUv - vec2(uTexel.x, 0.0)).y;
+  float R = texture2D(uVelocity, vUv + vec2(uTexel.x, 0.0)).y;
+  float B = texture2D(uVelocity, vUv - vec2(0.0, uTexel.y)).x;
+  float T = texture2D(uVelocity, vUv + vec2(0.0, uTexel.y)).x;
+  float curl = R - L - T + B;
+  gl_FragColor = vec4(0.5 * curl, 0.0, 0.0, 1.0);
+}`;
+
+const vorticityFS = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uVelocity;
+uniform sampler2D uCurl;
+uniform vec2 uTexel;
+uniform float uCurlForce;
+uniform float uDt;
+void main(){
+  float L = texture2D(uCurl, vUv - vec2(uTexel.x, 0.0)).x;
+  float R = texture2D(uCurl, vUv + vec2(uTexel.x, 0.0)).x;
+  float B = texture2D(uCurl, vUv - vec2(0.0, uTexel.y)).x;
+  float T = texture2D(uCurl, vUv + vec2(uTexel.y, 0.0)).x;
+  float C = texture2D(uCurl, vUv).x;
+  vec2 force = 0.5 * vec2(abs(T) - abs(B), abs(R) - abs(L));
+  float len = length(force) + 1e-5;
+  force = force / len;
+  force *= uCurlForce * C;
+  force.y *= -1.0;
+  vec2 vel = texture2D(uVelocity, vUv).xy;
+  vel += force * uDt;
+  vel = clamp(vel, -1200.0, 1200.0);
+  gl_FragColor = vec4(vel, 0.0, 1.0);
+}`;
+
+const pressureFS = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uPressure;
+uniform sampler2D uDivergence;
+uniform vec2 uTexel;
+void main(){
+  float L = texture2D(uPressure, vUv - vec2(uTexel.x, 0.0)).x;
+  float R = texture2D(uPressure, vUv + vec2(uTexel.x, 0.0)).x;
+  float B = texture2D(uPressure, vUv - vec2(0.0, uTexel.y)).x;
+  float T = texture2D(uPressure, vUv + vec2(0.0, uTexel.y)).x;
+  float div = texture2D(uDivergence, vUv).x;
+  float p = (L + R + B + T - div) * 0.25;
+  gl_FragColor = vec4(p, 0.0, 0.0, 1.0);
+}`;
+
+const gradientFS = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uPressure;
+uniform sampler2D uVelocity;
+uniform vec2 uTexel;
+void main(){
+  float L = texture2D(uPressure, vUv - vec2(uTexel.x, 0.0)).x;
+  float R = texture2D(uPressure, vUv + vec2(uTexel.x, 0.0)).x;
+  float B = texture2D(uPressure, vUv - vec2(0.0, uTexel.y)).x;
+  float T = texture2D(uPressure, vUv + vec2(0.0, uTexel.y)).x;
+  vec2 vel = texture2D(uVelocity, vUv).xy;
+  vel -= 0.5 * vec2(R - L, T - B);
+  gl_FragColor = vec4(vel, 0.0, 1.0);
+}`;
+
+const displayFS = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uDye;
+uniform vec3 uPaper;
+uniform float uTime;
+uniform vec2 uRes;
+
+float hash(vec2 p){
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+float noise(vec2 p){
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  float a = hash(i);
+  float b = hash(i + vec2(1.0, 0.0));
+  float c = hash(i + vec2(0.0, 1.0));
+  float d = hash(i + vec2(1.0, 1.0));
+  return mix(mix(a,b,f.x), mix(c,d,f.x), f.y);
+}
+float fbm(vec2 p){
+  float v = 0.0;
+  float a = 0.5;
+  for(int i=0;i<4;i++){
+    v += a * noise(p);
+    p *= 2.05;
+    a *= 0.5;
+  }
+  return v;
+}
+
+void main(){
+  vec3 absb = texture2D(uDye, vUv).rgb;
+  absb = max(absb, 0.0);
+
+  // soft bleed: slight multi-tap blur of absorbance for soft edges
+  vec2 px = 1.5 / uRes;
+  absb *= 0.4;
+  absb += 0.15 * texture2D(uDye, vUv + vec2(px.x, 0.0)).rgb;
+  absb += 0.15 * texture2D(uDye, vUv - vec2(px.x, 0.0)).rgb;
+  absb += 0.15 * texture2D(uDye, vUv + vec2(0.0, px.y)).rgb;
+  absb += 0.15 * texture2D(uDye, vUv - vec2(0.0, px.y)).rgb;
+
+  // paper texture — very subtle
+  float n = fbm(vUv * uRes * 0.018 + 3.7);
+  float fiber = fbm(vUv * vec2(uRes.x * 0.04, uRes.y * 0.008) + 11.0);
+  float grain = (n * 0.55 + fiber * 0.45);
+  vec3 paper = uPaper;
+  paper *= 0.985 + grain * 0.03;
+  // warm vignette-ish edge darkening, very soft
+  float vig = smoothstep(1.15, 0.25, length(vUv - 0.5) * 1.15);
+  paper *= 0.97 + 0.03 * vig;
+
+  // subtractive: paper * exp(-absorbance)
+  vec3 col = paper * exp(-absb * 2.8);
+
+  // slight soft contrast
+  col = mix(paper * 0.98, col, 1.0);
+
+  gl_FragColor = vec4(col, 1.0);
+}`;
+
+const clearMat = mkMat(clearFS, { value: { value: new THREE.Vector4(0,0,0,1) } });
+const splatMat = mkMat(splatFS, {
+  uTarget: { value: null },
+  uPoint: { value: new THREE.Vector3() },
+  uColor: { value: new THREE.Vector3() },
+  uRadius: { value: 0.01 },
+  uAspect: { value: 1 }
+});
+const advectMat = mkMat(advectFS, {
+  uVelocity: { value: null },
+  uSource: { value: null },
+  uTexel: { value: new THREE.Vector2(1/simRes, 1/simRes) },
+  uDt: { value: 0.016 },
+  uDissipation: { value: 1 }
+});
+const divMat = mkMat(divergenceFS, {
+  uVelocity: { value: null },
+  uTexel: { value: new THREE.Vector2(1/simRes, 1/simRes) }
+});
+const curlMat = mkMat(curlFS, {
+  uVelocity: { value: null },
+  uTexel: { value: new THREE.Vector2(1/simRes, 1/simRes) }
+});
+const vortMat = mkMat(vorticityFS, {
+  uVelocity: { value: null },
+  uCurl: { value: null },
+  uTexel: { value: new THREE.Vector2(1/simRes, 1/simRes) },
+  uCurlForce: { value: reducedMotion ? 8 : 18 },
+  uDt: { value: 0.016 }
+});
+const pressMat = mkMat(pressureFS, {
+  uPressure: { value: null },
+  uDivergence: { value: null },
+  uTexel: { value: new THREE.Vector2(1/simRes, 1/simRes) }
+});
+const gradMat = mkMat(gradientFS, {
+  uPressure: { value: null },
+  uVelocity: { value: null },
+  uTexel: { value: new THREE.Vector2(1/simRes, 1/simRes) }
+});
+const dispMat = mkMat(displayFS, {
+  uDye: { value: null },
+  uPaper: { value: new THREE.Vector3(PAPER[0], PAPER[1], PAPER[2]) },
+  uTime: { value: 0 },
+  uRes: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+});
+
+function blit(target, material) {
+  mesh.material = material;
+  renderer.setRenderTarget(target);
+  renderer.render(scene, cam);
+  renderer.setRenderTarget(null);
+}
+
+function clearRT(rt, r, g, b, a) {
+  clearMat.uniforms.value.value.set(r, g, b, a);
+  blit(rt, clearMat);
+}
+
+clearRT(vel0, 0,0,0,1);
+clearRT(vel1, 0,0,0,1);
+clearRT(dye0, 0,0,0,1);
+clearRT(dye1, 0,0,0,1);
+clearRT(pre0, 0,0,0,1);
+clearRT(pre1, 0,0,0,1);
+
+const pointer = {
+  x: 0.5, y: 0.5,
+  px: 0.5, py: 0.5,
+  dx: 0, dy: 0,
+  down: false,
+  moved: false,
+  inside: false
+};
+
+function getInkColor() {
+  if (INKS[selectedInk].cycle) {
+    return INKS[cycleIdx].rgb;
+  }
+  return INKS[selectedInk].rgb;
+}
+
+function splat(x, y, dx, dy, color, isInk) {
+  const aspect = window.innerWidth / window.innerHeight;
+  // velocity splat
+  splatMat.uniforms.uTarget.value = vel0.texture;
+  splatMat.uniforms.uPoint.value.set(x, y, 0);
+  const force = reducedMotion ? 0.35 : 1.0;
+  splatMat.uniforms.uColor.value.set(dx * force, dy * force, 0);
+  splatMat.uniforms.uRadius.value = isInk ? 0.00035 : 0.00055;
+  splatMat.uniforms.uAspect.value = aspect;
+  blit(vel1, splatMat);
+  let t = vel0; vel0 = vel1; vel1 = t;
+
+  if (isInk && color) {
+    // absorbance injection — convert pigment to absorbance contribution
+    const strength = reducedMotion ? 0.45 : 0.85;
+    const ar = -Math.log(Math.max(color[0], 0.02)) * strength;
+    const ag = -Math.log(Math.max(color[1], 0.02)) * strength;
+    const ab = -Math.log(Math.max(color[2], 0.02)) * strength;
+    splatMat.uniforms.uTarget.value = dye0.texture;
+    splatMat.uniforms.uColor.value.set(ar, ag, ab);
+    splatMat.uniforms.uRadius.value = 0.00028;
+    blit(dye1, splatMat);
+    t = dye0; dye0 = dye1; dye1 = t;
+  }
+}
+
+function onPointer(e, type) {
+  const rect = canvas.getBoundingClientRect();
+  let cx, cy;
+  if (e.touches && e.touches.length) {
+    cx = e.touches[0].clientX;
+    cy = e.touches[0].clientY;
+  } else if (e.changedTouches && e.changedTouches.length) {
+    cx = e.changedTouches[0].clientX;
+    cy = e.changedTouches[0].clientY;
+  } else {
+    cx = e.clientX;
+    cy = e.clientY;
+  }
+  const x = (cx - rect.left) / rect.width;
+  const y = 1.0 - (cy - rect.top) / rect.height;
+
+  if (type === 'down') {
+    pointer.down = true;
+    pointer.x = pointer.px = x;
+    pointer.y = pointer.py = y;
+    pointer.dx = pointer.dy = 0;
+    pointer.inside = true;
+    if (!hasInteracted) {
+      hasInteracted = true;
+      hintEl.classList.remove('show');
+      hintEl.classList.add('hide');
+    }
+  } else if (type === 'move') {
+    pointer.px = pointer.x;
+    pointer.py = pointer.y;
+    pointer.x = x;
+    pointer.y = y;
+    pointer.dx = pointer.x - pointer.px;
+    pointer.dy = pointer.y - pointer.py;
+    pointer.moved = true;
+    pointer.inside = true;
+  } else if (type === 'up') {
+    pointer.down = false;
+  } else if (type === 'leave') {
+    pointer.inside = false;
+    pointer.down = false;
+  }
+}
+
+canvas.addEventListener('mousedown', e => onPointer(e, 'down'));
+window.addEventListener('mousemove', e => onPointer(e, 'move'));
+window.addEventListener('mouseup', e => onPointer(e, 'up'));
+canvas.addEventListener('mouseleave', e => onPointer(e, 'leave'));
+canvas.addEventListener('touchstart', e => { e.preventDefault(); onPointer(e, 'down'); }, { passive:false });
+canvas.addEventListener('touchmove', e => { e.preventDefault(); onPointer(e, 'move'); }, { passive:false });
+canvas.addEventListener('touchend', e => onPointer(e, 'up'));
+canvas.addEventListener('touchcancel', e => onPointer(e, 'up'));
+
+// auto drip state
+const drips = [];
+let autoTimer = 0;
+let idleTime = 0;
+
+function spawnDrip() {
+  const x = 0.15 + Math.random() * 0.7;
+  const y = 0.15 + Math.random() * 0.7;
+  const inkI = 1 + Math.floor(Math.random() * 4);
+  drips.push({
+    x, y,
+    vx: (Math.random() - 0.5) * 0.002,
+    vy: (Math.random() - 0.5) * 0.002,
+    life: 0,
+    maxLife: 40 + Math.random() * 60,
+    ink: inkI,
+    phase: Math.random() * Math.PI * 2
+  });
+}
+
+function stepAuto(dt) {
+  if (!autoMode || reducedMotion) return;
+  idleTime += dt;
+  autoTimer += dt;
+  if (autoTimer > 1.8 + Math.random() * 1.5) {
+    autoTimer = 0;
+    spawnDrip();
+    if (Math.random() > 0.5) spawnDrip();
+  }
+  // gentle ambient flow
+  if (Math.random() < 0.04) {
+    const ax = 0.2 + Math.random() * 0.6;
+    const ay = 0.2 + Math.random() * 0.6;
+    const ang = Math.random() * Math.PI * 2;
+    const f = 40 + Math.random() * 80;
+    splat(ax, ay, Math.cos(ang) * f * 0.01, Math.sin(ang) * f * 0.01, null, false);
+  }
+  for (let i = drips.length - 1; i >= 0; i--) {
+    const d = drips[i];
+    d.life++;
+    d.phase += 0.04;
+    d.x += d.vx + Math.sin(d.phase) * 0.0008;
+    d.y += d.vy + Math.cos(d.phase * 0.7) * 0.0006;
+    d.vx += (Math.random() - 0.5) * 0.00015;
+    d.vy += (Math.random() - 0.5) * 0.00015;
+    const col = INKS[d.ink].rgb;
+    const fade = 1.0 - d.life / d.maxLife;
+    if (d.life % 2 === 0) {
+      const ar = -Math.log(Math.max(col[0], 0.02)) * 0.25 * fade;
+      const ag = -Math.log(Math.max(col[1], 0.02)) * 0.25 * fade;
+      const ab = -Math.log(Math.max(col[2], 0.02)) * 0.25 * fade;
+      splatMat.uniforms.uTarget.value = dye0.texture;
+      splatMat.uniforms.uPoint.value.set(d.x, d.y, 0);
+      splatMat.uniforms.uColor.value.set(ar, ag, ab);
+      splatMat.uniforms.uRadius.value = 0.00018 + 0.0001 * fade;
+      splatMat.uniforms.uAspect.value = window.innerWidth / window.innerHeight;
+      blit(dye1, splatMat);
+      let t = dye0; dye0 = dye1; dye1 = t;
+
+      splat(d.x, d.y, d.vx * 80, d.vy * 80, null, false);
+    }
+    if (d.life > d.maxLife || d.x < 0 || d.x > 1 || d.y < 0 || d.y > 1) {
+      drips.splice(i, 1);
+    }
+  }
+}
+
+let last = performance.now();
+let time = 0;
+const jacobiIter = reducedMotion ? 12 : 22;
+
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min((now - last) / 1000, 0.033);
+  last = now;
+  time += dt;
+
+  // cycle color
+  if (INKS[selectedInk].cycle) {
+    cycleTimer += dt;
+    if (cycleTimer > 2.5) {
+      cycleTimer = 0;
+      cycleIdx = 1 + (cycleIdx % 4);
+    }
+  }
+
+  // pointer forces
+  if (pointer.moved) {
+    const sp = reducedMotion ? 1200 : 2800;
+    const dx = pointer.dx * sp;
+    const dy = pointer.dy * sp;
+    if (pointer.down) {
+      splat(pointer.x, pointer.y, dx, dy, getInkColor(), true);
+    } else if (pointer.inside) {
+      // hover: flow only
+      const mag = Math.hypot(pointer.dx, pointer.dy);
+      if (mag > 0.00005) {
+        splat(pointer.x, pointer.y, dx * 0.55, dy * 0.55, null, false);
+      }
+    }
+    pointer.moved = false;
+  }
+
+  stepAuto(dt);
+
+  // wash
+  let dyeDiss = 0.9992;
+  let velDiss = 0.985;
+  if (washing) {
+    washAmount += dt * 0.35;
+    dyeDiss = Math.max(0.92, 0.9992 - washAmount * 0.04);
+    velDiss = 0.96;
+    // add downward flow while washing
+    if (Math.random() < 0.3) {
+      const wx = Math.random();
+      splat(wx, 0.9, (Math.random()-0.5)*20, -80 - Math.random()*40, null, false);
+    }
+    if (washAmount > 8) {
+      washing = false;
+      washAmount = 0;
+      clearRT(dye0, 0,0,0,1);
+      clearRT(dye1, 0,0,0,1);
+    }
+  }
+
+  const simTexel = new THREE.Vector2(1 / simRes, 1 / simRes);
+  const dyeTexel = new THREE.Vector2(1 / dyeRes, 1 / dyeRes);
+
+  // --- Stable Fluids pipeline ---
+  // 1. Advect velocity
+  advectMat.uniforms.uVelocity.value = vel0.texture;
+  advectMat.uniforms.uSource.value = vel0.texture;
+  advectMat.uniforms.uTexel.value.copy(simTexel);
+  advectMat.uniforms.uDt.value = dt;
+  advectMat.uniforms.uDissipation.value = velDiss;
+  blit(vel1, advectMat);
+  { let t = vel0; vel0 = vel1; vel1 = t; }
+
+  // 2. Vorticity confinement
+  curlMat.uniforms.uVelocity.value = vel0.texture;
+  curlMat.uniforms.uTexel.value.copy(simTexel);
+  blit(curlRT, curlMat);
+
+  vortMat.uniforms.uVelocity.value = vel0.texture;
+  vortMat.uniforms.uCurl.value = curlRT.texture;
+  vortMat.uniforms.uTexel.value.copy(simTexel);
+  vortMat.uniforms.uDt.value = dt;
+  vortMat.uniforms.uCurlForce.value = reducedMotion ? 6 : 14;
+  blit(vel1, vortMat);
+  { let t = vel0; vel0 = vel1; vel1 = t; }
+
+  // 3. Divergence
+  divMat.uniforms.uVelocity.value = vel0.texture;
+  divMat.uniforms.uTexel.value.copy(simTexel);
+  blit(divRT, divMat);
+
+  // 4. Pressure projection (Jacobi)
+  clearRT(pre0, 0,0,0,1);
+  for (let i = 0; i < jacobiIter; i++) {
+    pressMat.uniforms.uPressure.value = pre0.texture;
+    pressMat.uniforms.uDivergence.value = divRT.texture;
+    pressMat.uniforms.uTexel.value.copy(simTexel);
+    blit(pre1, pressMat);
+    { let t = pre0; pre0 = pre1; pre1 = t; }
+  }
+
+  // 5. Subtract gradient
+  gradMat.uniforms.uPressure.value = pre0.texture;
+  gradMat.uniforms.uVelocity.value = vel0.texture;
+  gradMat.uniforms.uTexel.value.copy(simTexel);
+  blit(vel1, gradMat);
+  { let t = vel0; vel0 = vel1; vel1 = t; }
+
+  // 6. Advect dye
+  advectMat.uniforms.uVelocity.value = vel0.texture;
+  advectMat.uniforms.uSource.value = dye0.texture;
+  advectMat.uniforms.uTexel.value.set(1 / dyeRes, 1 / dyeRes);
+  advectMat.uniforms.uDt.value = dt;
+  advectMat.uniforms.uDissipation.value = dyeDiss;
+  blit(dye1, advectMat);
+  { let t = dye0; dye0 = dye1; dye1 = t; }
+
+  // Display
+  dispMat.uniforms.uDye.value = dye0.texture;
+  dispMat.uniforms.uTime.value = time;
+  dispMat.uniforms.uRes.value.set(window.innerWidth * renderer.getPixelRatio(), window.innerHeight * renderer.getPixelRatio());
+  blit(null, dispMat);
+}
+
+function onResize() {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  renderer.setSize(w, h, false);
+  dispMat.uniforms.uRes.value.set(w * renderer.getPixelRatio(), h * renderer.getPixelRatio());
+}
+window.addEventListener('resize', onResize);
+
+// gentle initial swirl so paper isn't completely empty of life
+setTimeout(() => {
+  for (let i = 0; i < 3; i++) {
+    const a = Math.random() * Math.PI * 2;
+    splat(0.5 + Math.cos(a)*0.05, 0.5 + Math.sin(a)*0.05, Math.cos(a+1)*30, Math.sin(a+1)*30, null, false);
+  }
+}, 200);
+
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

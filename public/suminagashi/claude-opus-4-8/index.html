@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>墨流し — SUMINAGASHI</title>
+<style>
+  :root{
+    --washi:#efeae0;
+    --ink-sumi:#1a1a1f;
+    --ink-ai:#16407a;
+    --ink-shu:#c8372d;
+    --ink-matsuba:#2e6e52;
+    --fg:#3a352c;
+    --fg-soft:#6b6355;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--washi);color:var(--fg);font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;}
+  canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair;}
+
+  /* 表題 */
+  .title{
+    position:fixed;top:38px;left:44px;z-index:10;
+    writing-mode:vertical-rl;
+    font-size:34px;letter-spacing:0.35em;
+    color:var(--fg);
+    font-weight:500;
+    text-shadow:0 0 20px rgba(239,234,224,0.6);
+    pointer-events:none;
+    user-select:none;
+  }
+  .title small{
+    display:block;font-size:11px;letter-spacing:0.5em;margin-top:24px;
+    color:var(--fg-soft);font-family:"Times New Roman",serif;
+  }
+
+  /* 左端英字 */
+  .side-caption{
+    position:fixed;left:18px;top:50%;transform:translateY(-50%) rotate(180deg);
+    writing-mode:vertical-rl;
+    font-family:"Times New Roman",Georgia,serif;
+    font-size:10px;letter-spacing:0.55em;
+    color:var(--fg-soft);
+    pointer-events:none;user-select:none;
+    z-index:10;
+  }
+
+  /* ヒント */
+  .hint{
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+    font-size:15px;letter-spacing:0.6em;color:var(--fg-soft);
+    pointer-events:none;user-select:none;
+    transition:opacity 1.4s ease;
+    z-index:9;
+    text-shadow:0 0 30px rgba(239,234,224,0.9);
+  }
+  .hint.hidden{opacity:0;}
+
+  /* ドック */
+  .dock{
+    position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
+    display:flex;align-items:center;gap:14px;
+    padding:12px 22px;
+    background:rgba(255,252,246,0.72);
+    backdrop-filter:blur(14px) saturate(1.05);
+    -webkit-backdrop-filter:blur(14px) saturate(1.05);
+    border:1px solid rgba(120,110,90,0.15);
+    border-radius:999px;
+    box-shadow:0 8px 30px rgba(80,70,50,0.08), 0 2px 6px rgba(80,70,50,0.04);
+    z-index:20;
+    user-select:none;
+  }
+  .swatches{display:flex;gap:10px;align-items:center;}
+  .sw{
+    width:34px;height:34px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;position:relative;
+    font-size:13px;color:#fff;font-weight:500;letter-spacing:0.05em;
+    transition:transform 0.2s ease;
+    border:1px solid rgba(255,255,255,0.4);
+  }
+  .sw:hover{transform:scale(1.08);}
+  .sw[data-color="cycle"]{background:conic-gradient(from 0deg, #1a1a1f, #16407a, #c8372d, #2e6e52, #1a1a1f);color:#fff;text-shadow:0 0 4px rgba(0,0,0,0.6);}
+  .sw[data-color="sumi"]{background:#1a1a1f;}
+  .sw[data-color="ai"]{background:#16407a;}
+  .sw[data-color="shu"]{background:#c8372d;}
+  .sw[data-color="matsuba"]{background:#2e6e52;}
+  .sw.active::after{
+    content:"";position:absolute;inset:-5px;border-radius:50%;
+    border:1.5px solid rgba(60,50,35,0.55);
+  }
+  .divider{width:1px;height:26px;background:rgba(120,110,90,0.25);}
+  .toggle{
+    display:flex;align-items:center;gap:8px;cursor:pointer;
+    font-size:12px;letter-spacing:0.15em;color:var(--fg);
+    font-family:"Hiragino Mincho ProN",serif;
+  }
+  .toggle .dot{
+    width:8px;height:8px;border-radius:50%;
+    background:rgba(120,110,90,0.3);
+    transition:background 0.3s ease, box-shadow 0.3s ease;
+  }
+  .toggle.on .dot{background:#c8372d;box-shadow:0 0 8px rgba(200,55,45,0.5);}
+  .wash{
+    cursor:pointer;font-size:12px;letter-spacing:0.15em;color:var(--fg);
+    background:none;border:none;font-family:"Hiragino Mincho ProN",serif;
+    padding:4px 6px;
+  }
+  .wash:hover{color:#c8372d;}
+
+  /* クレジット */
+  .credit{
+    position:fixed;bottom:14px;right:18px;
+    font-family:"Times New Roman",Georgia,serif;
+    font-size:9px;letter-spacing:0.35em;color:var(--fg-soft);
+    opacity:0.7;pointer-events:none;user-select:none;z-index:10;
+  }
+
+  @media (max-width:640px){
+    .title{top:22px;left:22px;font-size:26px;}
+    .side-caption{font-size:9px;left:10px;}
+    .hint{font-size:12px;letter-spacing:0.4em;}
+    .dock{padding:10px 16px;gap:10px;bottom:18px;}
+    .sw{width:30px;height:30px;font-size:11px;}
+    .toggle,.wash{font-size:11px;}
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="title">墨流し<small>SUMINAGASHI</small></div>
+<div class="side-caption">SUMINAGASHI &nbsp;—&nbsp; INK DISSOLUTION</div>
+<div class="hint" id="hint">画 面 を な ぞ っ て 墨 を 流 す</div>
+
+<div class="dock">
+  <div class="swatches">
+    <div class="sw active" data-color="cycle" title="巡（自動サイクル）">巡</div>
+    <div class="sw" data-color="sumi" title="墨"></div>
+    <div class="sw" data-color="ai" title="藍"></div>
+    <div class="sw" data-color="shu" title="朱"></div>
+    <div class="sw" data-color="matsuba" title="松葉"></div>
+  </div>
+  <div class="divider"></div>
+  <div class="toggle" id="autoToggle"><span class="dot"></span><span>自動演出</span></div>
+  <div class="divider"></div>
+  <button class="wash" id="washBtn">洗い流す</button>
+</div>
+
+<div class="credit">THREE.JS · STABLE FLUIDS</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script>
+(() => {
+  const canvas = document.getElementById('c');
+  const hintEl = document.getElementById('hint');
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:false, preserveDrawingBuffer:false});
+  renderer.setPixelRatio(1);
+  renderer.autoClear = false;
+
+  // Simulation resolution
+  const SIM_SCALE = Math.min(window.devicePixelRatio || 1, 1.2);
+  let W = window.innerWidth, H = window.innerHeight;
+  const simW = () => Math.max(160, Math.floor(W * 0.55));
+  const simH = () => Math.max(120, Math.floor(H * 0.55));
+  const dyeW = () => Math.max(320, Math.floor(W * 0.9));
+  const dyeH = () => Math.max(240, Math.floor(H * 0.9));
+
+  renderer.setSize(W, H, false);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2,2));
+  scene.add(quad);
+
+  // Ink colors (linear-ish, treated as absorbance rate: higher = darker/more saturated)
+  const INKS = {
+    sumi:     new THREE.Vector3(1.35, 1.35, 1.30),   // near-black -> absorbs all
+    ai:       new THREE.Vector3(1.30, 0.75, 0.30),   // absorbs R/G, less B -> blue
+    shu:      new THREE.Vector3(0.25, 1.10, 1.20),   // absorbs G/B -> red-orange
+    matsuba:  new THREE.Vector3(1.05, 0.35, 0.90)    // absorbs R/B -> green
+  };
+  const INK_LIST = ['sumi','ai','shu','matsuba'];
+  let currentColor = 'cycle';
+  let cycleIndex = 0;
+  let cycleTimer = 0;
+
+  // Ping-pong render targets
+  function makeRT(w,h,type=THREE.HalfFloatType,format=THREE.RGBAFormat){
+    return new THREE.WebGLRenderTarget(w,h,{
+      minFilter:THREE.LinearFilter,
+      magFilter:THREE.LinearFilter,
+      wrapS:THREE.ClampToEdgeWrapping,
+      wrapT:THREE.ClampToEdgeWrapping,
+      format:format,
+      type:type,
+      depthBuffer:false,
+      stencilBuffer:false
+    });
+  }
+
+  let velA, velB, prsA, prsB, divRT, curlRT, dyeA, dyeB;
+
+  function initRTs(){
+    const sw = simW(), sh = simH();
+    const dw = dyeW(), dh = dyeH();
+    [velA,velB,prsA,prsB,divRT,curlRT,dyeA,dyeB].forEach(rt=>rt&&rt.dispose());
+    velA = makeRT(sw,sh);
+    velB = makeRT(sw,sh);
+    prsA = makeRT(sw,sh);
+    prsB = makeRT(sw,sh);
+    divRT = makeRT(sw,sh);
+    curlRT = makeRT(sw,sh);
+    dyeA = makeRT(dw,dh);
+    dyeB = makeRT(dw,dh);
+  }
+  initRTs();
+
+  // --- Shaders ---
+  const vs = `
+    varying vec2 vUv;
+    void main(){ vUv = uv; gl_Position = vec4(position,1.0); }
+  `;
+
+  // Advection with semi-lagrangian, using RK2-ish
+  const advectFS = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D uVel;
+    uniform sampler2D uSrc;
+    uniform vec2 uTexel;
+    uniform float uDt;
+    uniform float uDissipation;
+    void main(){
+      vec2 v = texture2D(uVel, vUv).xy;
+      vec2 coord = vUv - uDt * v * uTexel;
+      vec4 result = texture2D(uSrc, coord);
+      gl_FragColor = result * uDissipation;
+    }
+  `;
+
+  // Divergence
+  const divergenceFS = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D uVel;
+    uniform vec2 uTexel;
+    void main(){
+      float L = texture2D(uVel, vUv - vec2(uTexel.x,0.0)).x;
+      float R = texture2D(uVel, vUv + vec2(uTexel.x,0.0)).x;
+      float B = texture2D(uVel, vUv - vec2(0.0,uTexel.y)).y;
+      float T = texture2D(uVel, vUv + vec2(0.0,uTexel.y)).y;
+      float div = 0.5 * (R - L + T - B);
+      gl_FragColor = vec4(div,0.0,0.0,1.0);
+    }
+  `;
+
+  // Curl
+  const curlFS = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D uVel;
+    uniform vec2 uTexel;
+    void main(){
+      float L = texture2D(uVel, vUv - vec2(uTexel.x,0.0)).y;
+      float R = texture2D(uVel, vUv + vec2(uTexel.x,0.0)).y;
+      float B = texture2D(uVel, vUv - vec2(0.0,uTexel.y)).x;
+      float T = texture2D(uVel, vUv + vec2(0.0,uTexel.y)).x;
+      float c = 0.5 * ((R - L) - (T - B));
+      gl_FragColor = vec4(c,0.0,0.0,1.0);
+    }
+  `;
+
+  // Vorticity confinement (gentle)
+  const vorticityFS = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D uVel;
+    uniform sampler2D uCurl;
+    uniform vec2 uTexel;
+    uniform float uCurlAmt;
+    uniform float uDt;
+    void main(){
+      float L = texture2D(uCurl, vUv - vec2(uTexel.x,0.0)).x;
+      float R = texture2D(uCurl, vUv + vec2(uTexel.x,0.0)).x;
+      float B = texture2D(uCurl, vUv - vec2(0.0,uTexel.y)).x;
+      float T = texture2D(uCurl, vUv + vec2(0.0,uTexel.y)).x;
+      float C = texture2D(uCurl, vUv).x;
+      vec2 force = 0.5 * vec2(abs(T) - abs(B), abs(L) - abs(R));
+      float lenSq = max(dot(force,force), 1e-5);
+      force *= inversesqrt(lenSq) * uCurlAmt * C;
+      force.y *= -1.0;
+      vec2 vel = texture2D(uVel, vUv).xy;
+      vel += force * uDt;
+      gl_FragColor = vec4(vel, 0.0, 1.0);
+    }
+  `;
+
+  // Jacobi pressure
+  const pressureFS = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D uPressure;
+    uniform sampler2D uDivergence;
+    uniform vec2 uTexel;
+    void main(){
+      float L = texture2D(uPressure, vUv - vec2(uTexel.x,0.0)).x;
+      float R = texture2D(uPressure, vUv + vec2(uTexel.x,0.0)).x;
+      float B = texture2D(uPressure, vUv - vec2(0.0,uTexel.y)).x;
+      float T = texture2D(uPressure, vUv + vec2(0.0,uTexel.y)).x;
+      float d = texture2D(uDivergence, vUv).x;
+      float p = (L + R + B + T - d) * 0.25;
+      gl_FragColor = vec4(p,0.0,0.0,1.0);
+    }
+  `;
+
+  // Gradient subtract
+  const gradSubFS = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D uPressure;
+    uniform sampler2D uVel;
+    uniform vec2 uTexel;
+    void main(){
+      float L = texture2D(uPressure, vUv - vec2(uTexel.x,0.0)).x;
+      float R = texture2D(uPressure, vUv + vec2(uTexel.x,0.0)).x;
+      float B = texture2D(uPressure, vUv - vec2(0.0,uTexel.y)).x;
+      float T = texture2D(uPressure, vUv + vec2(0.0,uTexel.y)).x;
+      vec2 vel = texture2D(uVel, vUv).xy;
+      vel -= 0.5 * vec2(R - L, T - B);
+      gl_FragColor = vec4(vel, 0.0, 1.0);
+    }
+  `;
+
+  // Splat velocity + dye (dye adds absorbance)
+  const splatVelFS = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D uTarget;
+    uniform vec2 uPoint;
+    uniform vec2 uForce;
+    uniform float uRadius;
+    uniform float uAspect;
+    void main(){
+      vec2 p = vUv - uPoint;
+      p.x *= uAspect;
+      float d = exp(-dot(p,p) / uRadius);
+      vec2 base = texture2D(uTarget, vUv).xy;
+      gl_FragColor = vec4(base + uForce * d, 0.0, 1.0);
+    }
+  `;
+
+  const splatDyeFS = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D uTarget;
+    uniform vec2 uPoint;
+    uniform vec3 uColor;   // absorbance addition
+    uniform float uRadius;
+    uniform float uAspect;
+    uniform float uAmount;
+    void main(){
+      vec2 p = vUv - uPoint;
+      p.x *= uAspect;
+      float d = exp(-dot(p,p) / uRadius);
+      vec3 base = texture2D(uTarget, vUv).rgb;
+      gl_FragColor = vec4(base + uColor * d * uAmount, 1.0);
+    }
+  `;
+
+  // Wash: gently fade dye
+  const washFS = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D uDye;
+    uniform float uFactor;
+    void main(){
+      vec4 c = texture2D(uDye, vUv);
+      gl_FragColor = vec4(c.rgb * uFactor, 1.0);
+    }
+  `;
+
+  // Display: washi paper + subtractive dye
+  const displayFS = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D uDye;
+    uniform vec3 uPaper;
+    uniform vec2 uRes;
+    uniform float uTime;
+
+    // hash noise
+    float hash(vec2 p){ return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }
+    float vnoise(vec2 p){
+      vec2 i = floor(p); vec2 f = fract(p);
+      float a = hash(i);
+      float b = hash(i+vec2(1.0,0.0));
+      float c = hash(i+vec2(0.0,1.0));
+      float d = hash(i+vec2(1.0,1.0));
+      vec2 u = f*f*(3.0-2.0*f);
+      return mix(mix(a,b,u.x), mix(c,d,u.x), u.y);
+    }
+
+    void main(){
+      vec3 absorb = texture2D(uDye, vUv).rgb;
+      // subtractive: paper * exp(-absorbance)
+      vec3 col = uPaper * exp(-absorb);
+
+      // extremely subtle washi fibre
+      float n1 = vnoise(vUv * vec2(uRes.x, uRes.y) * 0.9);
+      float n2 = vnoise(vUv * vec2(uRes.x, uRes.y) * 3.2 + 17.0);
+      float paperNoise = (n1 * 0.6 + n2 * 0.4 - 0.5) * 0.012;
+      col += paperNoise;
+
+      // vignette
+      vec2 q = vUv - 0.5;
+      float vig = 1.0 - dot(q,q) * 0.25;
+      col *= vig;
+
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `;
+
+  function makeMat(fs, uniforms){
+    return new THREE.ShaderMaterial({
+      vertexShader: vs,
+      fragmentShader: fs,
+      uniforms: uniforms,
+      depthTest:false, depthWrite:false, transparent:false
+    });
+  }
+
+  const uTexelSim = { value: new THREE.Vector2(1/simW(), 1/simH()) };
+  const uTexelDye = { value: new THREE.Vector2(1/dyeW(), 1/dyeH()) };
+
+  const advectMat = makeMat(advectFS, {
+    uVel:{value:null}, uSrc:{value:null},
+    uTexel:{value:new THREE.Vector2()}, uDt:{value:0.016}, uDissipation:{value:1.0}
+  });
+  const divMat = makeMat(divergenceFS, { uVel:{value:null}, uTexel:uTexelSim });
+  const curlMat = makeMat(curlFS, { uVel:{value:null}, uTexel:uTexelSim });
+  const vortMat = makeMat(vorticityFS, {
+    uVel:{value:null}, uCurl:{value:null}, uTexel:uTexelSim,
+    uCurlAmt:{value:1.2}, uDt:{value:0.016}
+  });
+  const pressMat = makeMat(pressureFS, { uPressure:{value:null}, uDivergence:{value:null}, uTexel:uTexelSim });
+  const gradMat = makeMat(gradSubFS, { uPressure:{value:null}, uVel:{value:null}, uTexel:uTexelSim });
+  const splatVelMat = makeMat(splatVelFS, {
+    uTarget:{value:null}, uPoint:{value:new THREE.Vector2()},
+    uForce:{value:new THREE.Vector2()}, uRadius:{value:0.0002}, uAspect:{value:1.0}
+  });
+  const splatDyeMat = makeMat(splatDyeFS, {
+    uTarget:{value:null}, uPoint:{value:new THREE.Vector2()},
+    uColor:{value:new THREE.Vector3()}, uRadius:{value:0.0003},
+    uAspect:{value:1.0}, uAmount:{value:1.0}
+  });
+  const washMat = makeMat(washFS, { uDye:{value:null}, uFactor:{value:1.0} });
+  const displayMat = makeMat(displayFS, {
+    uDye:{value:null},
+    uPaper:{value:new THREE.Vector3(0xef/255, 0xea/255, 0xe0/255)},
+    uRes:{value:new THREE.Vector2(W,H)},
+    uTime:{value:0}
+  });
+
+  function blit(mat, target){
+    quad.material = mat;
+    renderer.setRenderTarget(target);
+    renderer.render(scene, camera);
+  }
+
+  // Initialize with zero
+  function clearRT(rt, r=0,g=0,b=0,a=1){
+    renderer.setRenderTarget(rt);
+    renderer.setClearColor(new THREE.Color(r,g,b), a);
+    renderer.clear(true,false,false);
+  }
+  [velA,velB,prsA,prsB,divRT,curlRT,dyeA,dyeB].forEach(rt=>clearRT(rt));
+
+  // --- Interaction ---
+  const pointers = new Map();
+  let lastMoveTime = 0;
+  let hasInteracted = false;
+
+  function getPointerUV(clientX, clientY){
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (clientX - rect.left) / rect.width,
+      y: 1.0 - (clientY - rect.top) / rect.height
+    };
+  }
+
+  function pickColor(){
+    if(currentColor === 'cycle'){
+      return INKS[INK_LIST[cycleIndex % INK_LIST.length]];
+    }
+    return INKS[currentColor];
+  }
+
+  const splats = [];
+
+  function queueSplat(x, y, dx, dy, opts={}){
+    splats.push({
+      x, y, dx, dy,
+      injectDye: opts.injectDye !== false,
+      colorOverride: opts.colorOverride || null,
+      forceScale: opts.forceScale ?? 1.0,
+      dyeScale: opts.dyeScale ?? 1.0,
+      radius: opts.radius ?? null
+    });
+  }
+
+  function onPointerDown(e){
+    hideHint();
+    hasInteracted = true;
+    const uv = getPointerUV(e.clientX, e.clientY);
+    pointers.set(e.pointerId, {x:uv.x, y:uv.y, px:uv.x, py:uv.y, down:true});
+    canvas.setPointerCapture(e.pointerId);
+  }
+  function onPointerMove(e){
+    const uv = getPointerUV(e.clientX, e.clientY);
+    let p = pointers.get(e.pointerId);
+    if(!p){
+      p = {x:uv.x, y:uv.y, px:uv.x, py:uv.y, down:false};
+      pointers.set(e.pointerId, p);
+    }
+    p.px = p.x; p.py = p.y;
+    p.x = uv.x; p.y = uv.y;
+    const dx = (p.x - p.px);
+    const dy = (p.y - p.py);
+    const speed = Math.hypot(dx,dy);
+    if(speed < 1e-5) return;
+    lastMoveTime = performance.now();
+    if(p.down){
+      hideHint();
+      hasInteracted = true;
+      queueSplat(p.x, p.y, dx, dy, {injectDye:true, forceScale:1.0, dyeScale:1.0});
+      if(currentColor === 'cycle'){
+        cycleTimer += speed;
+        if(cycleTimer > 0.35){ cycleIndex++; cycleTimer = 0; }
+      }
+    }else{
+      queueSplat(p.x, p.y, dx*0.7, dy*0.7, {injectDye:false, forceScale:0.55});
+    }
+  }
+  function onPointerUp(e){
+    const p = pointers.get(e.pointerId);
+    if(p) p.down = false;
+  }
+
+  canvas.addEventListener('pointerdown', onPointerDown);
+  canvas.addEventListener('pointermove', onPointerMove);
+  canvas.addEventListener('pointerup', onPointerUp);
+  canvas.addEventListener('pointercancel', onPointerUp);
+  canvas.addEventListener('pointerleave', onPointerUp);
+
+  function hideHint(){ hintEl.classList.add('hidden'); }
+
+  // --- UI ---
+  document.querySelectorAll('.sw').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      document.querySelectorAll('.sw').forEach(s=>s.classList.remove('active'));
+      el.classList.add('active');
+      currentColor = el.dataset.color;
+    });
+  });
+
+  const autoToggle = document.getElementById('autoToggle');
+  let autoOn = true;
+  autoToggle.classList.add('on');
+  autoToggle.addEventListener('click', ()=>{
+    autoOn = !autoOn;
+    autoToggle.classList.toggle('on', autoOn);
+  });
+
+  let washing = 0;
+  document.getElementById('washBtn').addEventListener('click', ()=>{
+    washing = 2.5; // seconds
+  });
+
+  // --- Simulation step ---
+  function applySplats(){
+    if(splats.length === 0) return;
+    const aspect = W / H;
+    const dyeRadiusBase = 0.00025;
+    const velRadiusBase = 0.00015;
+
+    splatVelMat.uniforms.uAspect.value = aspect;
+    splatDyeMat.uniforms.uAspect.value = aspect;
+
+    for(const s of splats){
+      // Inject velocity
+      splatVelMat.uniforms.uTarget.value = velA.texture;
+      splatVelMat.uniforms.uPoint.value.set(s.x, s.y);
+      const forceMag = 1200 * s.forceScale;
+      splatVelMat.uniforms.uForce.value.set(s.dx * forceMag, s.dy * forceMag);
+      splatVelMat.uniforms.uRadius.value = s.radius ?? velRadiusBase;
+      blit(splatVelMat, velB);
+      [velA, velB] = [velB, velA];
+
+      if(s.injectDye){
+        const color = s.colorOverride || pickColor();
+        splatDyeMat.uniforms.uTarget.value = dyeA.texture;
+        splatDyeMat.uniforms.uPoint.value.set(s.x, s.y);
+        splatDyeMat.uniforms.uColor.value.copy(color);
+        splatDyeMat.uniforms.uRadius.value = (s.radius ?? dyeRadiusBase) * 1.5;
+        splatDyeMat.uniforms.uAmount.value = 0.55 * s.dyeScale;
+        blit(splatDyeMat, dyeB);
+        [dyeA, dyeB] = [dyeB, dyeA];
+      }
+    }
+    splats.length = 0;
+  }
+
+  function step(dt){
+    // curl -> vorticity confinement
+    curlMat.uniforms.uVel.value = velA.texture;
+    blit(curlMat, curlRT);
+
+    vortMat.uniforms.uVel.value = velA.texture;
+    vortMat.uniforms.uCurl.value = curlRT.texture;
+    vortMat.uniforms.uDt.value = dt;
+    blit(vortMat, velB);
+    [velA, velB] = [velB, velA];
+
+    // divergence
+    divMat.uniforms.uVel.value = velA.texture;
+    blit(divMat, divRT);
+
+    // pressure iterations (jacobi)
+    clearRT(prsA);
+    const ITER = 24;
+    for(let i=0;i<ITER;i++){
+      pressMat.uniforms.uPressure.value = prsA.texture;
+      pressMat.uniforms.uDivergence.value = divRT.texture;
+      blit(pressMat, prsB);
+      [prsA, prsB] = [prsB, prsA];
+    }
+
+    // gradient subtract
+    gradMat.uniforms.uPressure.value = prsA.texture;
+    gradMat.uniforms.uVel.value = velA.texture;
+    blit(gradMat, velB);
+    [velA, velB] = [velB, velA];
+
+    // advect velocity
+    advectMat.uniforms.uVel.value = velA.texture;
+    advectMat.uniforms.uSrc.value = velA.texture;
+    advectMat.uniforms.uTexel.value.set(1/simW(), 1/simH());
+    advectMat.uniforms.uDt.value = dt;
+    advectMat.uniforms.uDissipation.value = 0.985; // viscous decay
+    blit(advectMat, velB);
+    [velA, velB] = [velB, velA];
+
+    // advect dye (uses velocity but sampled from dye res)
+    advectMat.uniforms.uVel.value = velA.texture;
+    advectMat.uniforms.uSrc.value = dyeA.texture;
+    advectMat.uniforms.uTexel.value.set(1/dyeW(), 1/dyeH());
+    advectMat.uniforms.uDt.value = dt;
+    advectMat.uniforms.uDissipation.value = 0.9988; // ink stays long
+    blit(advectMat, dyeB);
+    [dyeA, dyeB] = [dyeB, dyeA];
+
+    // Wash animation
+    if(washing > 0){
+      washing -= dt;
+      washMat.uniforms.uDye.value = dyeA.texture;
+      washMat.uniforms.uFactor.value = 0.965;
+      blit(washMat, dyeB);
+      [dyeA, dyeB] = [dyeB, dyeA];
+    }
+  }
+
+  function render(){
+    displayMat.uniforms.uDye.value = dyeA.texture;
+    displayMat.uniforms.uRes.value.set(W,H);
+    quad.material = displayMat;
+    renderer.setRenderTarget(null);
+    renderer.render(scene, camera);
+  }
+
+  // Auto performance: periodic drops
+  let autoTimer = 0;
+  let autoDripCd = 0;
+  function autoTick(dt){
+    if(!autoOn) return;
+    const idle = performance.now() - lastMoveTime;
+    autoTimer += dt;
+    autoDripCd -= dt;
+
+    // idle-triggered drips
+    if(idle > 1400 && autoDripCd <= 0){
+      const cx = 0.15 + Math.random() * 0.7;
+      const cy = 0.15 + Math.random() * 0.7;
+      const inkKey = INK_LIST[Math.floor(Math.random()*INK_LIST.length)];
+      const color = INKS[inkKey];
+      // several small drips forming a cluster
+      const drops = 1 + Math.floor(Math.random()*2);
+      for(let i=0;i<drops;i++){
+        const jx = (Math.random()-0.5)*0.04;
+        const jy = (Math.random()-0.5)*0.04;
+        const ang = Math.random() * Math.PI * 2;
+        const spd = 0.0006 + Math.random()*0.0009;
+        queueSplat(cx+jx, cy+jy, Math.cos(ang)*spd, Math.sin(ang)*spd, {
+          injectDye:true,
+          colorOverride: color,
+          forceScale: 1.3,
+          dyeScale: 1.0,
+          radius: 0.0004
+        });
+      }
+      autoDripCd = 1.6 + Math.random()*2.2;
+    }
+
+    // gentle ambient currents
+    if(Math.random() < 0.02){
+      const x = Math.random(), y = Math.random();
+      const ang = Math.random() * Math.PI * 2;
+      const s = 0.0004;
+      queueSplat(x, y, Math.cos(ang)*s, Math.sin(ang)*s, {
+        injectDye:false, forceScale:0.4, radius:0.0006
+      });
+    }
+  }
+
+  // --- Main loop ---
+  let last = performance.now();
+  function loop(now){
+    const rawDt = (now - last)/1000;
+    last = now;
+    const dt = Math.min(rawDt, 1/30) * (reduced ? 0.6 : 1.0);
+
+    autoTick(dt);
+    applySplats();
+    step(dt);
+    render();
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // Auto-hide hint after some time regardless
+  setTimeout(()=>{ if(!hasInteracted) { /* keep visible until first interaction */ } }, 100);
+  setTimeout(()=>{ hideHint(); }, 12000);
+
+  // Resize
+  let resizeTO;
+  window.addEventListener('resize', ()=>{
+    clearTimeout(resizeTO);
+    resizeTO = setTimeout(()=>{
+      W = window.innerWidth; H = window.innerHeight;
+      renderer.setSize(W,H,false);
+      initRTs();
+      [velA,velB,prsA,prsB,divRT,curlRT].forEach(rt=>clearRT(rt));
+      // Preserve dye by not clearing dyeA/dyeB fully - but sizes changed so we must clear
+      clearRT(dyeA); clearRT(dyeB);
+    }, 150);
+  });
+
+})();
+</script>
+</body>
+</html>
