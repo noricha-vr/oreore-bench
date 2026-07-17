@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>mario-like-2d プロンプト — oreore-bench</title>
+<title>roguelike プロンプト — oreore-bench</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -14,8 +14,8 @@
     --muted-fg: #6b7280;
     --border: #e5e7eb;
     --primary: #2563eb;
-    --accent: #E53935;
-    --accent-dark: #B71C1C;
+    --accent: #6A1B9A;
+    --accent-dark: #4A148C;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -107,50 +107,54 @@
 <header class="hero">
   <div class="hero-inner">
     <a href="../" class="back">← oreore-bench に戻る</a>
-    <h1>mario-like-2d プロンプト</h1>
+    <h1>roguelike プロンプト</h1>
     <p class="sub">このテーマの凍結プロンプト。新しいモデルで再現する時はこのまま渡してください。</p>
   </div>
 </header>
 
 <main class="container">
   <article class="card">
-    <p>HTML+CSS+バニラ JavaScript で、スーパーマリオ風の <strong>2D 横スクロールプラットフォーマー</strong> を実装してください。ファイルは <code>index.html</code> 1 枚にまとめ、style と script はインライン化してください。</p>
-    <p>任天堂の公式素材・名称・音楽・スプライトは使わないこと。オリジナルの見た目（図形・色面で十分）でよい。ゲームタイトルもオリジナル名にすること。</p>
+    <p>HTML+CSS+バニラ JavaScript で、<strong>ターン制ローグライク</strong>（自動生成ダンジョン探索 RPG）を実装してください。ファイルは <code>index.html</code> 1 枚にまとめ、style と script はインライン化してください。</p>
+    <p>既存作品の名称・素材・音楽は使わないこと。ゲームタイトルもオリジナル名にすること。</p>
 
     <h2>プレイ要件（必須）</h2>
     <ul>
-      <li>横スクロールの 2D プラットフォーマー（サイドビュー）</li>
-      <li>左右移動: 矢印キー ←→ および A / D</li>
-      <li>ジャンプ: Space / 矢印キー ↑ / W</li>
+      <li>グリッドベースのトップダウン視点ダンジョン探索</li>
+      <li>移動: 矢印キー / W A S D（1 入力 = 1 ターン）</li>
+      <li>アイテム使用: 数字キー 1〜9</li>
+      <li>階段を降りる: <code>&gt;</code> または Enter（階段のマス上で）</li>
       <li>リスタート: R / 開始: Enter または Space</li>
-      <li>重力・着地・穴落下ミス</li>
-      <li>横歩き敵。上から踏むと撃破、横接触でダメージ</li>
-      <li>コイン（収集物）取得でスコア増加</li>
-      <li>ゴール到達でクリア表示</li>
-      <li>HUD にスコア常時表示、クリア/ゲームオーバー後に再開可能</li>
+      <li>ターン制（プレイヤー 1 手 → 敵 1 手、リアルタイム要素なし）</li>
+      <li>ダンジョン自動生成（部屋 + 通路 / 全部屋到達可能 / 毎回変化 / 階段 1 つ）</li>
+      <li>視界（FOV）: 視界内は明るく、探索済みは薄く、未探索は非表示</li>
+      <li>敵 2 種以上、少なくとも 1 種は追跡型。隣接で相互攻撃</li>
+      <li>HP / 攻撃力ダメージ計算、経験値・レベルアップ、深い階ほど強敵</li>
+      <li>回復薬・武器強化などアイテム 2 種以上、拾ってインベントリ使用</li>
+      <li>地下 3 階の階段でクリア、HP 0 でゲームオーバー → R で再挑戦</li>
+      <li>HUD: HP / 最大HP、レベル、経験値、階数、インベントリ常時表示</li>
+      <li>直近 3 行以上のメッセージログ表示</li>
     </ul>
 
     <h2>ステージ要件</h2>
     <ul>
-      <li>画面幅より長いステージ（横スクロールが必要）</li>
-      <li>足場の高低差が 1 段以上</li>
-      <li>穴（落下死ゾーン）が 1 箇所以上</li>
-      <li>敵 2 体以上、コイン 3 個以上</li>
+      <li>1 階あたり 40×25 タイル程度以上</li>
+      <li>1 階あたり部屋 6 個以上</li>
+      <li>1 階あたり敵 5 体以上、アイテム 3 個以上</li>
     </ul>
 
     <h2>技術要件</h2>
     <ul>
       <li>外部ライブラリ・CDN・画像・音声に依存しない（完全オフライン）</li>
-      <li><code>requestAnimationFrame</code> 等でゲームループ</li>
-      <li>絵文字は使わない</li>
+      <li>タイルは ASCII 文字（<code>@</code> <code>s</code> <code>&gt;</code> 等）または図形描画。絵文字は使わない</li>
+      <li>乱数シードは毎回変える（リロードで別のダンジョン）</li>
       <li>モバイル対応は必須ではない</li>
     </ul>
 
-    <p><code>index.html</code> 1 枚で、「開始 → 走って跳んで敵を踏む → コイン取得 → ゴール」まで遊べる状態にしてください。説明・前置き・コードフェンスは不要です。</p>
+    <p><code>index.html</code> 1 枚で、「開始 → 探索 → 戦闘 → アイテム使用 → 階段で地下 3 階 → クリア」まで遊べる状態にしてください。説明・前置き・コードフェンスは不要です。</p>
 
     <div class="meta">
       <a href="./PROMPT.md" target="_blank">Markdown 元ファイル</a>
-      <a href="https://github.com/noricha-vr/oreore-bench/blob/main/public/mario-like-2d/PROMPT.md" target="_blank">GitHub で見る</a>
+      <a href="https://github.com/noricha-vr/oreore-bench/blob/main/public/roguelike/PROMPT.md" target="_blank">GitHub で見る</a>
     </div>
   </article>
 </main>
