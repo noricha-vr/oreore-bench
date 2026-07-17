@@ -19,14 +19,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 1710,
-      "completion_tokens": 2574,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 1816,
+      "completion_tokens": 2512,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.0729,
+      "usd": 0.07188,
       "actual_usd": null,
       "prompt_usd_per_mtok": 5.0,
       "completion_usd_per_mtok": 25.0,
@@ -59,9 +59,9 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 1710,
-      "completion_tokens": 2565,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 1816,
+      "completion_tokens": 2497,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
@@ -99,14 +99,14 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 1710,
-      "completion_tokens": 2540,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 1816,
+      "completion_tokens": 2486,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.000933,
+      "usd": 0.000927,
       "actual_usd": 0,
       "prompt_usd_per_mtok": 0.1,
       "completion_usd_per_mtok": 0.3,
@@ -139,14 +139,14 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 1710,
-      "completion_tokens": 2924,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 1816,
+      "completion_tokens": 3121,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.001984,
+      "usd": 0.002116,
       "actual_usd": 0,
       "prompt_usd_per_mtok": 0.22,
       "completion_usd_per_mtok": 0.55,
@@ -175,14 +175,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 1710,
-      "completion_tokens": 2558,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 1816,
+      "completion_tokens": 2487,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.018768,
+      "usd": 0.018554,
       "actual_usd": null,
       "prompt_usd_per_mtok": 2.0,
       "completion_usd_per_mtok": 6.0,
@@ -211,14 +211,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 2784,
-      "completion_tokens": 5047,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 2814,
+      "completion_tokens": 4758,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.140095,
+      "usd": 0.13302,
       "actual_usd": null,
       "prompt_usd_per_mtok": 5.0,
       "completion_usd_per_mtok": 25.0,
@@ -251,9 +251,9 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 2784,
-      "completion_tokens": 4560,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 2814,
+      "completion_tokens": 4275,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
@@ -291,14 +291,14 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 2784,
-      "completion_tokens": 4960,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 2814,
+      "completion_tokens": 4696,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.001766,
+      "usd": 0.00169,
       "actual_usd": 0,
       "prompt_usd_per_mtok": 0.1,
       "completion_usd_per_mtok": 0.3,
@@ -331,14 +331,14 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 2784,
-      "completion_tokens": 5142,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 2814,
+      "completion_tokens": 5033,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.003441,
+      "usd": 0.003387,
       "actual_usd": 0,
       "prompt_usd_per_mtok": 0.22,
       "completion_usd_per_mtok": 0.55,
@@ -367,14 +367,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 864,
-      "completion_tokens": 4251,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 890,
+      "completion_tokens": 3530,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.110595,
+      "usd": 0.0927,
       "actual_usd": null,
       "prompt_usd_per_mtok": 5.0,
       "completion_usd_per_mtok": 25.0,
@@ -407,9 +407,9 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 864,
-      "completion_tokens": 3251,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 890,
+      "completion_tokens": 3286,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
@@ -447,14 +447,14 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 864,
-      "completion_tokens": 3209,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 890,
+      "completion_tokens": 3414,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.001049,
+      "usd": 0.001113,
       "actual_usd": 0,
       "prompt_usd_per_mtok": 0.1,
       "completion_usd_per_mtok": 0.3,
@@ -487,14 +487,14 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 864,
-      "completion_tokens": 4185,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 890,
+      "completion_tokens": 3994,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.002492,
+      "usd": 0.002393,
       "actual_usd": 0,
       "prompt_usd_per_mtok": 0.22,
       "completion_usd_per_mtok": 0.55,
@@ -523,14 +523,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 864,
-      "completion_tokens": 4354,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 890,
+      "completion_tokens": 3425,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.027852,
+      "usd": 0.02233,
       "actual_usd": null,
       "prompt_usd_per_mtok": 2.0,
       "completion_usd_per_mtok": 6.0,
@@ -559,14 +559,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 1122,
-      "completion_tokens": 15410,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 1232,
+      "completion_tokens": 11454,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.78172,
+      "usd": 0.58502,
       "actual_usd": null,
       "prompt_usd_per_mtok": 10.0,
       "completion_usd_per_mtok": 50.0,
@@ -595,14 +595,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 1122,
-      "completion_tokens": 16826,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 1232,
+      "completion_tokens": 12961,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.42626,
+      "usd": 0.330185,
       "actual_usd": null,
       "prompt_usd_per_mtok": 5.0,
       "completion_usd_per_mtok": 25.0,
@@ -631,14 +631,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 1122,
-      "completion_tokens": 7861,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 1232,
+      "completion_tokens": 6221,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.096576,
+      "usd": 0.077116,
       "actual_usd": null,
       "prompt_usd_per_mtok": 2.0,
       "completion_usd_per_mtok": 12.0,
@@ -671,9 +671,9 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 1122,
-      "completion_tokens": 5346,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 1232,
+      "completion_tokens": 5304,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
@@ -711,14 +711,14 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 1122,
-      "completion_tokens": 5177,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 1232,
+      "completion_tokens": 4730,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.001665,
+      "usd": 0.001542,
       "actual_usd": 0,
       "prompt_usd_per_mtok": 0.1,
       "completion_usd_per_mtok": 0.3,
@@ -751,14 +751,14 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 1122,
-      "completion_tokens": 6796,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 1232,
+      "completion_tokens": 6560,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.003985,
+      "usd": 0.003879,
       "actual_usd": 0,
       "prompt_usd_per_mtok": 0.22,
       "completion_usd_per_mtok": 0.55,
@@ -787,14 +787,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 1122,
-      "completion_tokens": 14782,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 1232,
+      "completion_tokens": 11277,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.089814,
+      "usd": 0.068894,
       "actual_usd": null,
       "prompt_usd_per_mtok": 1.0,
       "completion_usd_per_mtok": 6.0,
@@ -823,14 +823,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 1122,
-      "completion_tokens": 17511,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 1232,
+      "completion_tokens": 13081,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.53094,
+      "usd": 0.39859,
       "actual_usd": null,
       "prompt_usd_per_mtok": 5.0,
       "completion_usd_per_mtok": 30.0,
@@ -859,14 +859,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 1122,
-      "completion_tokens": 14363,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 1232,
+      "completion_tokens": 10741,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.21825,
+      "usd": 0.164195,
       "actual_usd": null,
       "prompt_usd_per_mtok": 2.5,
       "completion_usd_per_mtok": 15.0,
@@ -895,14 +895,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 1122,
-      "completion_tokens": 16239,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 1232,
+      "completion_tokens": 12502,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.099678,
+      "usd": 0.077476,
       "actual_usd": null,
       "prompt_usd_per_mtok": 2.0,
       "completion_usd_per_mtok": 6.0,
@@ -931,14 +931,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 782,
-      "completion_tokens": 12169,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 842,
+      "completion_tokens": 10411,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.308135,
+      "usd": 0.264485,
       "actual_usd": null,
       "prompt_usd_per_mtok": 5.0,
       "completion_usd_per_mtok": 25.0,
@@ -971,9 +971,9 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 782,
-      "completion_tokens": 3492,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 842,
+      "completion_tokens": 3560,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
@@ -1011,14 +1011,14 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 782,
-      "completion_tokens": 3454,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 842,
+      "completion_tokens": 3666,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.002072,
+      "usd": 0.002202,
       "actual_usd": 0,
       "prompt_usd_per_mtok": 0.22,
       "completion_usd_per_mtok": 0.55,
@@ -1047,14 +1047,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 782,
-      "completion_tokens": 8085,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 842,
+      "completion_tokens": 6799,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.050074,
+      "usd": 0.042478,
       "actual_usd": null,
       "prompt_usd_per_mtok": 2.0,
       "completion_usd_per_mtok": 6.0,
@@ -1087,9 +1087,9 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 253,
-      "completion_tokens": 2372,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 273,
+      "completion_tokens": 2631,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
@@ -1127,14 +1127,14 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 253,
-      "completion_tokens": 2714,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 273,
+      "completion_tokens": 3017,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.000839,
+      "usd": 0.000932,
       "actual_usd": 0,
       "prompt_usd_per_mtok": 0.1,
       "completion_usd_per_mtok": 0.3,
@@ -1167,14 +1167,14 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 253,
-      "completion_tokens": 3122,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 273,
+      "completion_tokens": 3183,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.001773,
+      "usd": 0.001811,
       "actual_usd": 0,
       "prompt_usd_per_mtok": 0.22,
       "completion_usd_per_mtok": 0.55,
@@ -1203,14 +1203,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 253,
-      "completion_tokens": 4158,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 273,
+      "completion_tokens": 3385,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.025454,
+      "usd": 0.020856,
       "actual_usd": null,
       "prompt_usd_per_mtok": 2.0,
       "completion_usd_per_mtok": 6.0,
@@ -1239,14 +1239,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 2600,
-      "completion_tokens": 1674,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 2653,
+      "completion_tokens": 1701,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.05485,
+      "usd": 0.05579,
       "actual_usd": null,
       "prompt_usd_per_mtok": 5.0,
       "completion_usd_per_mtok": 25.0,
@@ -1279,9 +1279,9 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 2600,
-      "completion_tokens": 1148,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 2653,
+      "completion_tokens": 1162,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
@@ -1319,14 +1319,14 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 2600,
-      "completion_tokens": 1323,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 2653,
+      "completion_tokens": 1342,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.000657,
+      "usd": 0.000668,
       "actual_usd": 0,
       "prompt_usd_per_mtok": 0.1,
       "completion_usd_per_mtok": 0.3,
@@ -1359,14 +1359,14 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 2600,
-      "completion_tokens": 1389,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 2653,
+      "completion_tokens": 1409,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.001336,
+      "usd": 0.001359,
       "actual_usd": 0,
       "prompt_usd_per_mtok": 0.22,
       "completion_usd_per_mtok": 0.55,
@@ -1395,14 +1395,314 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 2600,
-      "completion_tokens": 1862,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 2653,
+      "completion_tokens": 1928,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.016372,
+      "usd": 0.016874,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 2.0,
+      "completion_usd_per_mtok": 6.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "x-ai/grok-4.5",
+      "pricing_fetched_at": "2026-07-16"
+    }
+  },
+  "roguelike/gemini-3-1-pro": {
+    "schema_version": 1,
+    "theme": "roguelike",
+    "model": "gemini-3-1-pro",
+    "model_id": "gemini-3-1-pro",
+    "harness": "antigravity-cli",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-17T16:13:47+09:00",
+    "generated_at_source": "git-first-commit",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": true,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 1139,
+      "completion_tokens": 3747,
+      "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": 0.047242,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 2.0,
+      "completion_usd_per_mtok": 12.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "google/gemini-3.1-pro-preview",
+      "pricing_fetched_at": "2026-07-16"
+    }
+  },
+  "roguelike/gemma-4-12b-qat": {
+    "schema_version": 1,
+    "theme": "roguelike",
+    "model": "gemma-4-12b-qat",
+    "model_id": "gemma-4-12b-qat",
+    "harness": "lmstudio-api",
+    "reasoning_effort": "none",
+    "attempts": 3,
+    "generated_at": "2026-07-17T16:13:47+09:00",
+    "generated_at_source": "git-first-commit",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 60000,
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "lmstudio",
+      "quantization": "qat-4bit",
+      "api": "openai-compat"
+    },
+    "usage": {
+      "estimated": true,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 1139,
+      "completion_tokens": 4043,
+      "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
+  "roguelike/gemma-4-26b-a4b-qat": {
+    "schema_version": 1,
+    "theme": "roguelike",
+    "model": "gemma-4-26b-a4b-qat",
+    "model_id": "gemma-4-26b-a4b-qat",
+    "harness": "lmstudio-api",
+    "reasoning_effort": "none",
+    "attempts": 1,
+    "generated_at": "2026-07-17T16:13:47+09:00",
+    "generated_at_source": "git-first-commit",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "lmstudio",
+      "quantization": "qat-4bit",
+      "api": "openai-compat"
+    },
+    "usage": {
+      "estimated": true,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 1139,
+      "completion_tokens": 3785,
+      "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": 0.001249,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": 0.1,
+      "completion_usd_per_mtok": 0.3,
+      "pricing_source": "openrouter-reference",
+      "pricing_model": "google/gemma-4-26b-a4b-it",
+      "pricing_fetched_at": "2026-07-16"
+    }
+  },
+  "roguelike/gemma-4-31b": {
+    "schema_version": 1,
+    "theme": "roguelike",
+    "model": "gemma-4-31b",
+    "model_id": "gemma-4-31b",
+    "harness": "lmstudio-api",
+    "reasoning_effort": "none",
+    "attempts": 1,
+    "generated_at": "2026-07-17T16:13:47+09:00",
+    "generated_at_source": "git-first-commit",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "lmstudio",
+      "quantization": "q4_k_m",
+      "api": "openai-compat"
+    },
+    "usage": {
+      "estimated": true,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 1139,
+      "completion_tokens": 3888,
+      "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": 0.002389,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": 0.22,
+      "completion_usd_per_mtok": 0.55,
+      "pricing_source": "openrouter-reference",
+      "pricing_model": "google/gemma-4-31b-it",
+      "pricing_fetched_at": "2026-07-16"
+    }
+  },
+  "roguelike/gpt-5.6-luna": {
+    "schema_version": 1,
+    "theme": "roguelike",
+    "model": "gpt-5.6-luna",
+    "model_id": "gpt-5.6-luna",
+    "harness": "openai-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-17T16:13:47+09:00",
+    "generated_at_source": "git-first-commit",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "openai-api-usage",
+      "prompt_tokens": 1049,
+      "completion_tokens": 12792,
+      "note": "API 実測値。completion に reasoning 6082 トークンを含む"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": 0.077801,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 1.0,
+      "completion_usd_per_mtok": 6.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "openai/gpt-5.6-luna",
+      "pricing_fetched_at": "2026-07-16"
+    }
+  },
+  "roguelike/gpt-5.6-sol": {
+    "schema_version": 1,
+    "theme": "roguelike",
+    "model": "gpt-5.6-sol",
+    "model_id": "gpt-5.6-sol",
+    "harness": "openai-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-17T16:13:47+09:00",
+    "generated_at_source": "git-first-commit",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "openai-api-usage",
+      "prompt_tokens": 1049,
+      "completion_tokens": 16240,
+      "note": "API 実測値。completion に reasoning 7323 トークンを含む"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": 0.492445,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 5.0,
+      "completion_usd_per_mtok": 30.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "openai/gpt-5.6-sol",
+      "pricing_fetched_at": "2026-07-16"
+    }
+  },
+  "roguelike/gpt-5.6-terra": {
+    "schema_version": 1,
+    "theme": "roguelike",
+    "model": "gpt-5.6-terra",
+    "model_id": "gpt-5.6-terra",
+    "harness": "openai-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-17T16:13:47+09:00",
+    "generated_at_source": "git-first-commit",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "openai-api-usage",
+      "prompt_tokens": 1049,
+      "completion_tokens": 9415,
+      "note": "API 実測値。completion に reasoning 2070 トークンを含む"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": 0.143847,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 2.5,
+      "completion_usd_per_mtok": 15.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "openai/gpt-5.6-terra",
+      "pricing_fetched_at": "2026-07-16"
+    }
+  },
+  "roguelike/grok-4-5": {
+    "schema_version": 1,
+    "theme": "roguelike",
+    "model": "grok-4-5",
+    "model_id": "grok-4-5",
+    "harness": "grok-cli",
+    "reasoning_effort": "none",
+    "attempts": 1,
+    "generated_at": "2026-07-17T16:13:47+09:00",
+    "generated_at_source": "git-first-commit",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": true,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 1139,
+      "completion_tokens": 4398,
+      "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": 0.028666,
       "actual_usd": null,
       "prompt_usd_per_mtok": 2.0,
       "completion_usd_per_mtok": 6.0,
@@ -1431,14 +1731,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 727,
-      "completion_tokens": 8461,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 733,
+      "completion_tokens": 6415,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.43032,
+      "usd": 0.32808,
       "actual_usd": null,
       "prompt_usd_per_mtok": 10.0,
       "completion_usd_per_mtok": 50.0,
@@ -1467,14 +1767,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 727,
-      "completion_tokens": 8058,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 733,
+      "completion_tokens": 6187,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.205085,
+      "usd": 0.15834,
       "actual_usd": null,
       "prompt_usd_per_mtok": 5.0,
       "completion_usd_per_mtok": 25.0,
@@ -1503,14 +1803,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 727,
-      "completion_tokens": 6070,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 733,
+      "completion_tokens": 5061,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.074294,
+      "usd": 0.062198,
       "actual_usd": null,
       "prompt_usd_per_mtok": 2.0,
       "completion_usd_per_mtok": 12.0,
@@ -1543,9 +1843,9 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 727,
-      "completion_tokens": 4013,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 733,
+      "completion_tokens": 3629,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
@@ -1583,14 +1883,14 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 727,
-      "completion_tokens": 5612,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 733,
+      "completion_tokens": 5643,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.001756,
+      "usd": 0.001766,
       "actual_usd": 0,
       "prompt_usd_per_mtok": 0.1,
       "completion_usd_per_mtok": 0.3,
@@ -1623,14 +1923,14 @@
     },
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 727,
-      "completion_tokens": 5562,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 733,
+      "completion_tokens": 4827,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.003219,
+      "usd": 0.002816,
       "actual_usd": 0,
       "prompt_usd_per_mtok": 0.22,
       "completion_usd_per_mtok": 0.55,
@@ -1659,14 +1959,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 727,
-      "completion_tokens": 7505,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 733,
+      "completion_tokens": 5729,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.045757,
+      "usd": 0.035107,
       "actual_usd": null,
       "prompt_usd_per_mtok": 1.0,
       "completion_usd_per_mtok": 6.0,
@@ -1695,14 +1995,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 727,
-      "completion_tokens": 10928,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 733,
+      "completion_tokens": 8854,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.331475,
+      "usd": 0.269285,
       "actual_usd": null,
       "prompt_usd_per_mtok": 5.0,
       "completion_usd_per_mtok": 30.0,
@@ -1731,14 +2031,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 727,
-      "completion_tokens": 7611,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 733,
+      "completion_tokens": 6119,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.115983,
+      "usd": 0.093618,
       "actual_usd": null,
       "prompt_usd_per_mtok": 2.5,
       "completion_usd_per_mtok": 15.0,
@@ -1767,14 +2067,14 @@
     "runtime": null,
     "usage": {
       "estimated": true,
-      "method": "tiktoken-o200k_base-proxy",
-      "prompt_tokens": 727,
-      "completion_tokens": 8674,
+      "method": "char-heuristic-v1",
+      "prompt_tokens": 733,
+      "completion_tokens": 6364,
       "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
     },
     "cost": {
       "estimated": true,
-      "usd": 0.053498,
+      "usd": 0.03965,
       "actual_usd": null,
       "prompt_usd_per_mtok": 2.0,
       "completion_usd_per_mtok": 6.0,

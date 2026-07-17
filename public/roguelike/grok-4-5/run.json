@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "theme": "roguelike",
+  "model": "grok-4-5",
+  "model_id": "grok-4-5",
+  "harness": "grok-cli",
+  "reasoning_effort": "none",
+  "attempts": 1,
+  "generated_at": "2026-07-17T16:13:47+09:00",
+  "generated_at_source": "git-first-commit",
+  "sampling": {
+    "temperature": "default",
+    "max_tokens": "default",
+    "top_p": "default"
+  },
+  "system_prompt": "harness-default",
+  "post_processing": "none",
+  "runtime": null,
+  "usage": {
+    "estimated": true,
+    "method": "char-heuristic-v1",
+    "prompt_tokens": 1139,
+    "completion_tokens": 4398,
+    "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+  },
+  "cost": {
+    "estimated": true,
+    "usd": 0.028666,
+    "actual_usd": null,
+    "prompt_usd_per_mtok": 2.0,
+    "completion_usd_per_mtok": 6.0,
+    "pricing_source": "openrouter",
+    "pricing_model": "x-ai/grok-4.5",
+    "pricing_fetched_at": "2026-07-16"
+  }
+}
