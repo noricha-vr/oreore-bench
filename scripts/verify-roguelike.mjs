@@ -35,9 +35,16 @@ const results = [];
 const ARROW_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
 
 async function snapshot(page) {
-  // canvas があれば PNG バイト、無ければ DOM 内容のハッシュ相当を返す
-  const buf = await page.screenshot({ fullPage: false });
-  return buf;
+  // ビューポートのスクショ PNG バイト列。canvas / DOM 描画のどちらでも同じ土俵で差分比較できる
+  return page.screenshot({ fullPage: false });
+}
+
+async function pressStart(page) {
+  // タイトル画面の有無がモデル依存なので Enter / Space の両方を送る（両タイミングとも同一シーケンスで撮る前提）
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(150);
+  await page.keyboard.press('Space');
+  await page.waitForTimeout(200);
 }
 
 function bufEqual(a, b) {
@@ -75,26 +82,24 @@ for (const model of models) {
     await page.screenshot({ path: path.join(SHOTS, `roguelike-${model}-01-initial.png`) });
 
     // 開始
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(150);
-    await page.keyboard.press('Space');
-    await page.waitForTimeout(200);
+    await pressStart(page);
     await page.screenshot({ path: path.join(SHOTS, `roguelike-${model}-02-after-start.png`) });
     const afterStartShot = await snapshot(page);
 
-    // 矢印キー入力で描画変化
-    await page.keyboard.press('ArrowRight');
-    await page.waitForTimeout(120);
-    await page.keyboard.press('ArrowDown');
-    await page.waitForTimeout(120);
-    await page.keyboard.press('ArrowLeft');
-    await page.waitForTimeout(120);
-    await page.keyboard.press('ArrowUp');
-    await page.waitForTimeout(200);
-    const afterMoveShot = await snapshot(page);
-    r.pixelChanged = !bufEqual(afterStartShot, afterMoveShot);
+    // 矢印キー入力で描画が変化するか、1 手ごとに差分を見る
+    // （固定シーケンス一括比較だと右→下→左→上の閉ループで元の位置・同一フレームに戻り偽 FAIL になる）
+    let prevShot = afterStartShot;
+    for (const key of ARROW_KEYS) {
+      await page.keyboard.press(key);
+      await page.waitForTimeout(150);
+      const shot = await snapshot(page);
+      if (!bufEqual(prevShot, shot)) { r.pixelChanged = true; break; }
+      prevShot = shot;
+    }
 
     // 40 回ランダム連打（ターン制の連続動作でクラッシュしないか）
+    // survivedInput は連打フェーズ中の新規エラーだけで判定する（ロード時エラーは jsErrors 側で見える）
+    const errorsBeforeMash = errors.length;
     for (let i = 0; i < 40; i++) {
       const key = ARROW_KEYS[Math.floor(Math.random() * ARROW_KEYS.length)];
       await page.keyboard.press(key);
@@ -102,16 +107,13 @@ for (const model of models) {
     }
     await page.screenshot({ path: path.join(SHOTS, `roguelike-${model}-03-after-moves.png`) });
 
-    r.survivedInput = errors.length === 0;
+    r.survivedInput = errors.length === errorsBeforeMash;
 
     // マップのランダム性: リロード + 開始キー後のスクショが1回目の同時点と変わるか
     // （タイトル画面が静的なゲームでも偽陰性にならないよう、開始後の画面同士で比較する）
     await page.goto(url);
     await page.waitForTimeout(600);
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(150);
-    await page.keyboard.press('Space');
-    await page.waitForTimeout(200);
+    await pressStart(page);
     await page.screenshot({ path: path.join(SHOTS, `roguelike-${model}-04-after-reload.png`) });
     const reloadShot = await snapshot(page);
     r.mapChanged = !bufEqual(afterStartShot, reloadShot);
