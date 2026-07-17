@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>VOID WALKER</title>
+    <style>
+        body {
+            background: #111;
+            color: #eee;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+        }
+        #game-container {
+            position: relative;
+            border: 4px solid #444;
+            margin-top: 20px;
+        }
+        canvas {
+            display: block;
+            background: #000;
+        }
+        #ui-panel {
+            width: 600px;
+            padding: 10px;
+            background: #222;
+            border: 2px solid #444;
+            display: flex;
+            justify-content: space-between;
+            box-sizing: border-box;
+        }
+        #log-container {
+            width: 600px;
+            height: 80px;
+            background: #000;
+            border: 2px solid #444;
+            margin-top: 5px;
+            padding: 5px;
+            font-size: 14px;
+            overflow: hidden;
+            color: #aaa;
+        }
+        .log-entry { margin-bottom: 2px; }
+        .stats-val { color: #fff; font-weight: bold; }
+        .inv-slot { display: inline-block; width: 30px; height: 20px; border: 1px solid #444; text-align: center; font-size: 12px; margin-right: 5px; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+</div>
+
+<div id="ui-panel">
+    <div>
+        HP: <span id="hp-val" class="stats-val">0/0</span> | 
+        LV: <span id="lv-val" class="stats-val">1</span> | 
+        EXP: <span id="exp-val" class="stats-val">0</span> | 
+        FLOOR: <span id="floor-val" class="stats-val">1</span>
+    </div>
+    <div id="inventory-display">
+        INV: <span id="inv-slots"></span>
+    </div>
+</div>
+<div id="log-container" id="log"></div>
+
+<script>
+/**
+ * VOID WALKER - Roguelike Engine
+ */
+
+const CONFIG = {
+    WIDTH: 40,
+    HEIGHT: 25,
+    TILE_SIZE: 20,
+    MAX_FLOOR: 3
+};
+
+const TILE = {
+    WALL: '#',
+    FLOOR: '.',
+    STAIRS: '>',
+    PLAYER: '@',
+    ENEMY1: 's', // Slime
+    ENEMY2: 'G', // Ghost
+    ITEM_POTION: '!',
+    ITEM_WEAPON: '*',
+    EMPTY: ' '
+};
+
+const STATE = {
+    map: [],
+    explored: [],
+    player: { x: 0, y: 0, hp: 20, maxHp: 20, atk: 5, lv: 1, exp: 0, nextExp: 10, inv: [] },
+    enemies: [],
+    items: [],
+    floor: 1,
+    gameOver: false,
+    gameWon: false,
+    logs: []
+};
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = CONFIG.WIDTH * CONFIG.TILE_SIZE;
+canvas.height = CONFIG.HEIGHT * CONFIG.TILE_SIZE;
+
+// --- UTILS ---
+const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+function addLog(msg) {
+    STATE.logs.unshift(msg);
+    if (STATE.logs.length > 3) STATE.logs.pop();
+    const logEl = document.getElementById('log-container');
+    logEl.innerHTML = '';
+    STATE.logs.forEach(l => {
+        const div = document.createElement('div');
+        div.className = 'log-entry';
+        div.textContent = l;
+        logEl.appendChild(div);
+    });
+}
+
+// --- MAP GENERATION ---
+function generateMap() {
+    STATE.map = Array(CONFIG.HEIGHT).fill().map(() => Array(CONFIG.WIDTH).fill(TILE.WALL));
+    STATE.explored = Array(CONFIG.HEIGHT).fill().map(() => Array(CONFIG.WIDTH).fill(false));
+    STATE.enemies = [];
+    STATE.items = [];
+
+    // Simple Room Generation
+    const rooms = [];
+    for (let i = 0; i < 8; i++) {
+        const w = rand(4, 7);
+        const h = rand(4, 6);
+        const x = rand(1, CONFIG.WIDTH - w - 1);
+        const y = rand(1, CONFIG.HEIGHT - h - 1);
+        
+        let overlap = false;
+        for(let r of rooms) {
+            if (!(x + w < r.x || x > r.x + r.w || y + h < r.y || y > r.y + r.h)) overlap = true;
+        }
+        if (overlap) continue;
+
+        const room = { x, y, w, h, cx: Math.floor(x + w/2), cy: Math.floor(y + h/2) };
+        rooms.push(room);
+
+        for (let ry = y; ry < y + h; ry++) {
+            for (let rx = x; rx < x + w; rx++) {
+                STATE.map[ry][rx] = TILE.FLOOR;
+            }
+        }
+    }
+
+    // Connect rooms with corridors
+    for (let i = 0; i < rooms.length - 1; i++) {
+        let x = rooms[i].cx;
+        let y = rooms[i].cy;
+        const targetX = rooms[i+1].cx;
+        const targetY = rooms[i+1].cy;
+
+        while (x !== targetX) {
+            STATE.map[y][x] = TILE.FLOOR;
+            x += (targetX > x) ? 1 : -1;
+        }
+        while (y !== targetY) {
+            STATE.map[y][x] = TILE.FLOOR;
+            y += (targetY > y) ? 1 : -1;
+        }
+    }
+
+    // Place Player
+    STATE.player.x = rooms[0].cx;
+    STATE.player.y = rooms[0].cy;
+
+    // Place Stairs
+    const lastRoom = rooms[rooms.length - 1];
+    STATE.map[lastRoom.cy][lastRoom.cx] = TILE.STAIRS;
+
+    // Place Enemies
+    const enemyTypes = [
+        { char: TILE.ENEMY1, hp: 5 + STATE.floor*2, atk: 2 + STATE.floor },
+        { char: TILE.ENEMY2, hp: 10 + STATE.floor*3, atk: 4 + STATE.floor }
+    ];
+
+    for (let i = 0; i < 5 + STATE.floor; i++) {
+        const r = rooms[rand(0, rooms.length-1)];
+        const ex = rand(r.x, r.x + r.w - 1);
+        const ey = rand(r.y, r.y + r.h - 1);
+        if (STATE.map[ey][ex] === TILE.FLOOR) {
+            const type = enemyTypes[rand(0, enemyTypes.length - 1)];
+            STATE.enemies.push({ x: ex, y: ey, hp: type.hp, maxHp: type.hp, atk: type.atk, char: type.char });
+        }
+    }
+
+    // Place Items
+    for (let i = 0; i < 3; i++) {
+        const r = rooms[rand(0, rooms.length-1)];
+        const ix = rand(r.x, r.x + r.w - 1);
+        const iy = rand(r.y, r.y + r.h - 1);
+        if (STATE.map[iy][ix] === TILE.FLOOR) {
+            const isPot = Math.random() > 0.5;
+            STATE.items.push({
+                x: ix, y: iy, 
+                type: isPot ? 'POTION' : 'WEAPON',
+                char: isPot ? TILE.ITEM_POTION : TILE.ITEM_WEAPON
+            });
+        }
+    }
+
+    updateFOV();
+    updateUI();
+}
+
+function updateFOV() {
+    // Reset visibility is not needed, we just update what's visible
+    // For simplicity, we calculate visibility every turn
+    const visible = Array(CONFIG.HEIGHT).fill().map(() => Array(CONFIG.WIDTH).fill(false));
+    const range = 5;
+    for (let dy = -range; dy <= range; dy++) {
+        for (let dx = -range; dx <= range; dx++) {
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist <= range) {
+                const nx = STATE.player.x + dx;
+                const ny = STATE.player.y + dy;
+                if (nx >= 0 && nx < CONFIG.WIDTH && ny >= 0 && ny < CONFIG.HEIGHT) {
+                    visible[ny][nx] = true;
+                    STATE.explored[ny][nx] = true;
+                }
+            }
+        }
+    }
+    STATE.visible = visible;
+}
+
+function updateUI() {
+    document.getElementById('hp-val').textContent = `${STATE.player.hp}/${STATE.player.maxHp}`;
+    document.getElementById('lv-val').textContent = STATE.player.lv;
+    document.getElementById('exp-val').textContent = STATE.player.exp;
+    document.getElementById('floor-val').textContent = STATE.floor;
+    
+    const invEl = document.getElementById('inv-slots');
+    invEl.innerHTML = '';
+    for (let i = 0; i < 9; i++) {
+        const slot = document.createElement('span');
+        slot.className = 'inv-slot';
+        if (STATE.player.inv[i]) {
+            slot.textContent = STATE.player.inv[i].type === 'POTION' ? 'P' : 'W';
+        }
+        invEl.appendChild(slot);
+    }
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    for (let y = 0; y < CONFIG.HEIGHT; y++) {
+        for (let x = 0; x < CONFIG.WIDTH; x++) {
+            const isVisible = STATE.visible && STATE.visible[y][x];
+            const isExplored = STATE.explored[y][x];
+
+            if (isVisible || isExplored) {
+                ctx.font = "18px monospace";
+                ctx.textAlign = "center";
+                
+                if (isVisible) {
+                    ctx.fillStyle = "#fff";
+                    const char = STATE.map[y][x];
+                    if (char === TILE.WALL) ctx.fillStyle = "#555";
+                    else if (char === TILE.STAIRS) ctx.fillStyle = "#0f0";
+                    else ctx.fillStyle = "#888";
+                    ctx.fillText(char, x * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE/2, y * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE/1.5);
+                } else {
+                    ctx.fillStyle = "#222";
+                    ctx.fillText(STATE.map[y][x], x * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE/2, y * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE/1.5);
+                }
+            }
+        }
+    }
+
+    // Draw items
+    STATE.items.forEach(it => {
+        if (STATE.visible && STATE.visible[it.y][it.x]) {
+            ctx.fillStyle = "#ff0";
+            ctx.fillText(it.char, it.x * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE/2, it.y * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE/1.5);
+        }
+    });
+
+    // Draw enemies
+    STATE.enemies.forEach(en => {
+        if (STATE.visible && STATE.visible[en.y][en.x]) {
+            ctx.fillStyle = "#f00";
+            ctx.fillText(en.char, en.x * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE/2, en.y * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE/1.5);
+        }
+    });
+
+    // Draw player
+    ctx.fillStyle = "#0af";
+    ctx.fillText(TILE.PLAYER, STATE.player.x * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE/2, STATE.player.y * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE/1.5);
+
+    if (STATE.gameOver) {
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#fff";
+        ctx.font = "40px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(STATE.gameWon ? "VICTORY!" : "GAME OVER", canvas.width/2, canvas.height/2);
+        ctx.font = "20px monospace";
+        ctx.fillText("Press R to Restart", canvas.width/2, canvas.height/2 + 40);
+    }
+}
+
+// --- GAME LOGIC ---
+function movePlayer(dx, dy) {
+    if (STATE.gameOver) return;
+
+    const nx = STATE.player.x + dx;
+    const ny = STATE.player.y + dy;
+
+    // Wall collision
+    if (STATE.map[ny][nx] === TILE.WALL) return;
+
+    // Enemy collision (Attack)
+    const targetEnemy = STATE.enemies.find(e => e.x === nx && e.y === ny);
+    if (targetEnemy) {
+        attack(STATE.player, targetEnemy);
+        enemyTurn();
+        return;
+    }
+
+    // Item pickup
+    const itemIdx = STATE.items.findIndex(i => i.x === nx && i.y === ny);
+    if (itemIdx !== -1 && STATE.player.inv.length < 9) {
+        STATE.player.inv.push(STATE.items[itemIdx]);
+        addLog("Picked up item.");
+        STATE.items.splice(itemIdx, 1);
+    }
+
+    // Move
+    STATE.player.x = nx;
+    STATE.player.y = ny;
+
+    // Stairs
+    if (STATE.map[ny][nx] === TILE.STAIRS) {
+        if (STATE.floor === CONFIG.MAX_FLOOR) {
+            STATE.gameWon = true;
+            STATE.gameOver = true;
+            addLog("You escaped the void!");
+        } else {
+            STATE.floor++;
+            generateMap();
+            addLog(`Descended to floor ${STATE.floor}`);
+        }
+    }
+
+    enemyTurn();
+    updateFOV();
+    updateUI();
+    draw();
+}
+
+function attack(attacker, defender) {
+    const dmg = attacker.atk + rand(-1, 1);
+    defender.hp -= dmg;
+    addLog(`${attacker === STATE.player ? 'You' : 'Enemy'} dealt ${dmg} damage`);
+
+    if (defender.hp <= 0) {
+        if (defender === STATE.player) {
+            STATE.gameOver = true;
+            addLog("You died...");
+        } else {
+            // Enemy death
+            const idx = STATE.enemies.indexOf(defender);
+            if (idx > -1) {
+                STATE.enemies.splice(idx, 1);
+                const expGain = 5 + (STATE.floor * 2);
+                STATE.player.exp += expGain;
+                addLog(`Enemy defeated! +${expGain} EXP`);
+                if (STATE.player.exp >= STATE.player.nextExp) {
+                    levelUp();
+                }
+            }
+        }
+    }
+}
+
+function levelUp() {
+    STATE.player.lv++;
+    STATE.player.exp = 0;
+    STATE.player.nextExp += 10;
+    STATE.player.maxHp += 10;
+    STATE.player.hp = STATE.player.maxHp;
+    STATE.player.atk += 3;
+    addLog("LEVEL UP!");
+}
+
+function enemyTurn() {
+    STATE.enemies.forEach(en => {
+        // Simple AI: Move towards player if visible
+        const dist = Math.abs(en.x - STATE.player.x) + Math.abs(en.y - STATE.player.y);
+        if (dist < 6) {
+            if (dist === 1) {
+                attack(en, STATE.player);
+            } else {
+                const dx = en.x < STATE.player.x ? 1 : (en.x > STATE.player.x ? -1 : 0);
+                const dy = en.y < STATE.player.y ? 1 : (en.y > STATE.player.y ? -1 : 0);
+                
+                // Check if move is valid
+                if (STATE.map[en.y + dy][en.x + dx] === TILE.FLOOR && 
+                    !STATE.enemies.some(e => e.x === en.x + dx && e.y === en.y + dy)) {
+                    en.x += dx;
+                    en.y += dy;
+                }
+            }
+        }
+    });
+
+    // Check player death after enemies move
+    if (STATE.player.hp <= 0) {
+        STATE.gameOver = true;
+    }
+}
+
+function useItem(idx) {
+    const item = STATE.player.inv[idx];
+    if (!item) return;
+
+    if (item.type === 'POTION') {
+        STATE.player.hp = Math.min(STATE.player.maxHp, STATE.player.hp + 20);
+        addLog("Used potion. HP restored.");
+        STATE.player.inv.splice(idx, 1);
+    } else if (item.type === 'WEAPON') {
+        STATE.player.atk += 3;
+        addLog("Equipped weapon. ATK up!");
+        STATE.player.inv.splice(idx, 1);
+    }
+    updateUI();
+    draw();
+}
+
+// --- INPUT ---
+window.addEventListener('keydown', e => {
+    if (e.key === 'r' || e.key === 'R') {
+        STATE.player.hp = 20;
+        STATE.player.maxHp = 20;
+        STATE.player.atk = 5;
+        STATE.player.lv = 1;
+        STATE.player.exp = 0;
+        STATE.player.nextExp = 10;
+        STATE.player.x = 0;
+        STATE.player.y = 0;
+        STATE.floor = 1;
+        STATE.gameOver = false;
+        STATE.gameWon = false;
+        STATE.enemies = [];
+        STATE.items = [];
+        generateMap();
+    }
+    if (e.key === 'Enter' || e.key === ' ') {
+        if (STATE.gameOver) {
+            // Restart logic handled by R, but for convenience
+        }
+    }
+
+    if (STATE.gameOver) return;
+
+    switch(e.key) {
+        case 'ArrowUp': case 'w': case 'W': movePlayer(0, -1); break;
+        case 'ArrowDown': case 's': case 'S': movePlayer(0, 1); break;
+        case 'ArrowLeft': case 'a': case 'A': movePlayer(-1, 0); break;
+        case 'ArrowRight': case 'd': case 'D': movePlayer(1, 0); break;
+        case 'Enter': case '>': // Stairs
+            if (STATE.map[STATE.player.y][STATE.player.x] === TILE.STAIRS) {
+                // Handled in movePlayer logic for simplicity
+                movePlayer(0, 0); 
+            }
+            break;
+    }
+
+    // Item keys 1-9
+    if (e.key >= '1' && e.key <= '9') {
+        useItem(parseInt(e.key) - 1);
+    }
+});
+
+// Init
+generateMap();
+draw();
+
+</script>
+</body>
+</html>

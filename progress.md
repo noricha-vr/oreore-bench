@@ -25,8 +25,8 @@ sleep-mode / morning-briefing で参照されるエントリーポイント。
 - [x] extract-questions-v2 (40問) 追加でグラデーション顕在化（12B のみ ❌）
 - [x] `lp-nishibi` / `othello` テーマも Gemma 4 12B QAT で生成
 - [x] `wrangler.toml` を作って Cloudflare Pages デプロイ設定を固定化
-- [x] `mario-like-2d` テーマ追加（凍結プロンプト + スモーク検証スクリプト）。モデル 1 ショット出力は未実施
-- [ ] `mario-like-2d` を 5 モデルで 1 ショット生成して ENTRIES 登録
+- [x] `roguelike` テーマ追加（凍結プロンプト + スモーク検証スクリプト）。モデル 1 ショット出力は未実施
+- [x] `roguelike` を 8 モデルで 1 ショット生成して ENTRIES 登録（PASS 6 / FAIL 2: gemma-12b 黒画面・gemma-31b JSエラー）
 
 ### 中期
 

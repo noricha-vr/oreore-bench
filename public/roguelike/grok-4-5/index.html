@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crypt of Hollow Ember</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#0a0c10;color:#c8d0d8;font-family:"Courier New",Courier,monospace;overflow:hidden}
+#wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:8px;gap:6px}
+h1{font-size:16px;letter-spacing:2px;color:#e8a04a;font-weight:normal}
+#hud{display:flex;flex-wrap:wrap;gap:12px 20px;font-size:13px;width:min(960px,100%);justify-content:space-between}
+#hud span{white-space:nowrap}
+#hud b{color:#e8a04a;font-weight:normal}
+canvas{background:#050608;border:1px solid #2a3038;image-rendering:pixelated;max-width:100%;height:auto}
+#inv{font-size:12px;width:min(960px,100%);color:#9aa4b0;min-height:18px}
+#log{width:min(960px,100%);font-size:12px;line-height:1.45;color:#8a94a0;min-height:54px}
+#log .line{opacity:0.95}
+#help{font-size:11px;color:#5a6470;width:min(960px,100%);text-align:center}
+#overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(5,6,8,0.88);z-index:10}
+#overlay.hidden{display:none}
+#panel{text-align:center;padding:28px 36px;border:1px solid #3a4450;background:#10141a;max-width:420px}
+#panel h2{color:#e8a04a;font-size:22px;margin-bottom:12px;letter-spacing:1px;font-weight:normal}
+#panel p{font-size:13px;line-height:1.6;color:#a0aab4;margin-bottom:8px}
+#panel .hint{color:#e8a04a;margin-top:16px;font-size:12px}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <h1>CRYPT OF HOLLOW EMBER</h1>
+  <div id="hud">
+    <span>HP <b id="hp">20</b>/<b id="mhp">20</b></span>
+    <span>ATK <b id="atk">4</b></span>
+    <span>LV <b id="lv">1</b></span>
+    <span>XP <b id="xp">0</b>/<b id="xpn">10</b></span>
+    <span>FLOOR <b id="fl">B1</b></span>
+  </div>
+  <canvas id="cv" width="800" height="500"></canvas>
+  <div id="inv">INV: (empty)</div>
+  <div id="log"></div>
+  <div id="help">Move: Arrows/WASD | Use: 1-9 | Stairs: Enter/&gt; | Restart: R</div>
+</div>
+<div id="overlay">
+  <div id="panel">
+    <h2 id="otitle">Crypt of Hollow Ember</h2>
+    <p id="otext">Descend the shifting crypt. Survive three depths and claim the hollow ember.</p>
+    <p class="hint" id="ohint">Press ENTER or SPACE to begin</p>
+  </div>
+</div>
+<script>
+(function(){
+"use strict";
+
+const W=48,H=28,TW=16,TH=16;
+const MAX_FLOOR=3;
+const TILE={WALL:0,FLOOR:1,STAIRS:2};
+
+const ENEMY_DEFS={
+  mite:{ch:"m",name:"Mite",hp:6,atk:2,xp:4,color:"#7ec87e",chase:false,speed:1},
+  stalker:{ch:"S",name:"Stalker",hp:10,atk:3,xp:8,color:"#c86e6e",chase:true,speed:1},
+  brute:{ch:"B",name:"Brute",hp:18,atk:5,xp:14,color:"#b8884a",chase:true,speed:1}
+};
+
+const ITEM_DEFS={
+  potion:{ch:"!",name:"Salve",color:"#6ec8e8",kind:"heal",power:12},
+  blade:{ch:"/",name:"Blade",color:"#e8d06e",kind:"weapon",power:2},
+  tonic:{ch:"*",name:"Tonic",color:"#9e7ee8",kind:"heal",power:20}
+};
+
+let rng=Math.random;
+function seedRng(){rng=Math.random;}
+function ri(a,b){return a+Math.floor(rng()*(b-a+1));}
+function pick(a){return a[ri(0,a.length-1)];}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=ri(0,i);[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+const cv=document.getElementById("cv");
+const ctx=cv.getContext("2d");
+cv.width=W*TW;cv.height=H*TH;
+
+const overlay=document.getElementById("overlay");
+const otitle=document.getElementById("otitle");
+const otext=document.getElementById("otext");
+const ohint=document.getElementById("ohint");
+
+let mode="title"; // title | play | dead | win
+let map,visible,explored,rooms;
+let player,enemies,items,floor,messages;
+let inventory;
+
+function log(msg){
+  messages.push(msg);
+  if(messages.length>6)messages.shift();
+  renderLog();
+}
+function renderLog(){
+  const el=document.getElementById("log");
+  el.innerHTML=messages.map(m=>'<div class="line">'+esc(m)+"</div>").join("");
+}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+function updateHUD(){
+  document.getElementById("hp").textContent=player.hp;
+  document.getElementById("mhp").textContent=player.maxHp;
+  document.getElementById("atk").textContent=player.atk;
+  document.getElementById("lv").textContent=player.lv;
+  document.getElementById("xp").textContent=player.xp;
+  document.getElementById("xpn").textContent=player.xpNext;
+  document.getElementById("fl").textContent="B"+floor;
+  const inv=inventory.map((it,i)=>((i+1)+":"+it.name)).join("  ");
+  document.getElementById("inv").textContent="INV: "+(inv||"(empty)");
+}
+
+function showOverlay(title,text,hint){
+  otitle.textContent=title;
+  otext.textContent=text;
+  ohint.textContent=hint;
+  overlay.classList.remove("hidden");
+}
+function hideOverlay(){overlay.classList.add("hidden");}
+
+// ---- Dungeon generation ----
+function genDungeon(){
+  const minRooms=6,maxRooms=10;
+  for(let tryAll=0;tryAll<20;tryAll++){
+    map=Array.from({length:H},()=>Array(W).fill(TILE.WALL));
+    rooms=[];
+    for(let n=0;n<140&&rooms.length<maxRooms;n++){
+      const rw=ri(4,9),rh=ri(4,7);
+      const rx=ri(1,W-rw-2),ry=ri(1,H-rh-2);
+      const room={x:rx,y:ry,w:rw,h:rh,cx:rx+Math.floor(rw/2),cy:ry+Math.floor(rh/2)};
+      if(rooms.some(o=>overlap(room,o,1)))continue;
+      carveRoom(room);
+      if(rooms.length>0){
+        const prev=rooms[rooms.length-1];
+        carveCorridor(prev.cx,prev.cy,room.cx,room.cy);
+      }
+      rooms.push(room);
+    }
+    if(rooms.length<minRooms)continue;
+    for(let i=0;i<rooms.length-1;i++){
+      const a=rooms[i],b=rooms[i+1];
+      carveCorridor(a.cx,a.cy,b.cx,b.cy);
+    }
+    for(let k=0;k<3;k++){
+      const a=pick(rooms),b=pick(rooms);
+      if(a!==b)carveCorridor(a.cx,a.cy,b.cx,b.cy);
+    }
+    const sr=rooms[rooms.length-1];
+    const sx=ri(sr.x+1,sr.x+sr.w-2);
+    const sy=ri(sr.y+1,sr.y+sr.h-2);
+    map[sy][sx]=TILE.STAIRS;
+    return {sx,sy};
+  }
+  // Fallback: force a simple linked layout
+  map=Array.from({length:H},()=>Array(W).fill(TILE.WALL));
+  rooms=[];
+  for(let i=0;i<minRooms;i++){
+    const room={x:2+i*7,y:4+(i%2)*8,w:5,h:5,cx:4+i*7,cy:6+(i%2)*8};
+    carveRoom(room);
+    if(rooms.length)carveCorridor(rooms[rooms.length-1].cx,rooms[rooms.length-1].cy,room.cx,room.cy);
+    rooms.push(room);
+  }
+  const sr=rooms[rooms.length-1];
+  map[sr.cy][sr.cx]=TILE.STAIRS;
+  return {sx:sr.cx,sy:sr.cy};
+}
+
+function overlap(a,b,pad){
+  return !(a.x+a.w+pad<=b.x||b.x+b.w+pad<=a.x||a.y+a.h+pad<=b.y||b.y+b.h+pad<=a.y);
+}
+function carveRoom(r){
+  for(let y=r.y;y<r.y+r.h;y++)
+    for(let x=r.x;x<r.x+r.w;x++)
+      map[y][x]=TILE.FLOOR;
+}
+function carveCorridor(x1,y1,x2,y2){
+  let x=x1,y=y1;
+  if(rng()<0.5){
+    while(x!==x2){map[y][x]=TILE.FLOOR;x+=x2>x?1:-1;}
+    while(y!==y2){map[y][x]=TILE.FLOOR;y+=y2>y?1:-1;}
+  }else{
+    while(y!==y2){map[y][x]=TILE.FLOOR;y+=y2>y?1:-1;}
+    while(x!==x2){map[y][x]=TILE.FLOOR;x+=x2>x?1:-1;}
+  }
+  map[y2][x2]=TILE.FLOOR;
+}
+
+function floorTiles(){
+  const t=[];
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(map[y][x]!==TILE.WALL)t.push({x,y});
+  return t;
+}
+function freeAt(x,y){
+  if(x<0||y<0||x>=W||y>=H)return false;
+  if(map[y][x]===TILE.WALL)return false;
+  if(player&&player.x===x&&player.y===y)return false;
+  if(enemies.some(e=>e.x===x&&e.y===y&&e.hp>0))return false;
+  return true;
+}
+function enemyAt(x,y){return enemies.find(e=>e.x===x&&e.y===y&&e.hp>0)||null;}
+function itemAt(x,y){return items.find(i=>i.x===x&&i.y===y)||null;}
+
+function scaleForFloor(base){
+  return Math.max(1,Math.floor(base*(1+(floor-1)*0.45)));
+}
+
+function spawnEntities(stairs){
+  enemies=[];
+  items=[];
+  const blocked=(t)=> (t.x===stairs.sx&&t.y===stairs.sy)||(t.x===player.x&&t.y===player.y);
+  const far=shuffle(floorTiles().filter(t=>!blocked(t)&&Math.abs(t.x-player.x)+Math.abs(t.y-player.y)>=6));
+  const near=shuffle(floorTiles().filter(t=>!blocked(t)&&Math.abs(t.x-player.x)+Math.abs(t.y-player.y)<6));
+  const pool=far.concat(near);
+  let ti=0;
+
+  const count=ri(6,9);
+  const types=["mite","mite","stalker","stalker","brute"];
+  for(let i=0;i<count&&ti<pool.length;i++){
+    const def=ENEMY_DEFS[pick(types)];
+    const t=pool[ti++];
+    enemies.push({
+      x:t.x,y:t.y,
+      ch:def.ch,name:def.name,color:def.color,
+      hp:scaleForFloor(def.hp),maxHp:scaleForFloor(def.hp),
+      atk:scaleForFloor(def.atk),xp:scaleForFloor(def.xp),
+      chase:def.chase
+    });
+  }
+  while(enemies.length<5&&ti<pool.length){
+    const def=ENEMY_DEFS.mite;
+    const t=pool[ti++];
+    enemies.push({
+      x:t.x,y:t.y,ch:def.ch,name:def.name,color:def.color,
+      hp:scaleForFloor(def.hp),maxHp:scaleForFloor(def.hp),
+      atk:scaleForFloor(def.atk),xp:scaleForFloor(def.xp),chase:def.chase
+    });
+  }
+
+  const used=new Set(enemies.map(e=>e.x+","+e.y));
+  const itemTiles=pool.filter(t=>!used.has(t.x+","+t.y));
+  let ii=0;
+  const ic=ri(4,7);
+  const kinds=["potion","potion","blade","tonic"];
+  for(let i=0;i<ic&&ii<itemTiles.length;i++){
+    const def=ITEM_DEFS[pick(kinds)];
+    const t=itemTiles[ii++];
+    items.push({x:t.x,y:t.y,ch:def.ch,name:def.name,color:def.color,kind:def.kind,power:def.power});
+  }
+  while(items.length<3&&ii<itemTiles.length){
+    const def=ITEM_DEFS.potion;
+    const t=itemTiles[ii++];
+    items.push({x:t.x,y:t.y,ch:def.ch,name:def.name,color:def.color,kind:def.kind,power:def.power});
+  }
+}
+
+// ---- FOV (shadowcast-ish ray) ----
+function dist2(ax,ay,bx,by){const dx=ax-bx,dy=ay-by;return dx*dx+dy*dy;}
+function los(x0,y0,x1,y1){
+  let dx=Math.abs(x1-x0),dy=Math.abs(y1-y0);
+  let sx=x0<x1?1:-1,sy=y0<y1?1:-1;
+  let err=dx-dy,x=x0,y=y0;
+  while(true){
+    if(x===x1&&y===y1)return true;
+    if(!(x===x0&&y===y0)&&map[y][x]===TILE.WALL)return false;
+    const e2=2*err;
+    if(e2>-dy){err-=dy;x+=sx;}
+    if(e2<dx){err+=dx;y+=sy;}
+  }
+}
+function computeFOV(){
+  visible=Array.from({length:H},()=>Array(W).fill(false));
+  const R=8,R2=R*R;
+  for(let y=Math.max(0,player.y-R);y<=Math.min(H-1,player.y+R);y++){
+    for(let x=Math.max(0,player.x-R);x<=Math.min(W-1,player.x+R);x++){
+      if(dist2(player.x,player.y,x,y)>R2)continue;
+      if(los(player.x,player.y,x,y)){
+        visible[y][x]=true;
+        explored[y][x]=true;
+      }
+    }
+  }
+}
+
+// ---- Game flow ----
+function newGame(){
+  seedRng();
+  floor=1;
+  player={x:0,y:0,hp:24,maxHp:24,atk:4,lv:1,xp:0,xpNext:12};
+  inventory=[];
+  messages=[];
+  genFloor(true);
+  mode="play";
+  hideOverlay();
+  log("You enter the Crypt of Hollow Ember.");
+  log("Find the stairs. Survive to depth 3.");
+  updateHUD();
+  draw();
+}
+
+function genFloor(first){
+  const stairs=genDungeon();
+  explored=Array.from({length:H},()=>Array(W).fill(false));
+  // place player in first room
+  const r=rooms[0];
+  player.x=r.cx;player.y=r.cy;
+  // avoid stairs overlap
+  if(player.x===stairs.sx&&player.y===stairs.sy){
+    player.x=r.x+1;player.y=r.y+1;
+  }
+  spawnEntities(stairs);
+  computeFOV();
+  if(!first)log("You descend to B"+floor+".");
+}
+
+function xpForLevel(lv){return 8+lv*6;}
+
+function gainXp(n){
+  player.xp+=n;
+  log("Gained "+n+" XP.");
+  while(player.xp>=player.xpNext){
+    player.xp-=player.xpNext;
+    player.lv++;
+    player.xpNext=xpForLevel(player.lv);
+    player.maxHp+=6;
+    player.hp=player.maxHp;
+    player.atk+=2;
+    log("Level up! Now LV "+player.lv+".");
+  }
+}
+
+function attack(attacker,defender,isPlayer){
+  const dmg=Math.max(1,attacker.atk+ri(-1,1));
+  defender.hp-=dmg;
+  if(isPlayer){
+    log("You hit "+defender.name+" for "+dmg+".");
+    if(defender.hp<=0){
+      log(defender.name+" is slain.");
+      gainXp(defender.xp);
+    }
+  }else{
+    log(attacker.name+" hits you for "+dmg+".");
+    if(defender.hp<=0){
+      defender.hp=0;
+      mode="dead";
+      log("You collapse in the dark.");
+      showOverlay("Game Over","You fell on B"+floor+". Press R to try again.","Press R to restart");
+    }
+  }
+}
+
+function tryMove(dx,dy){
+  if(mode!=="play")return;
+  const nx=player.x+dx,ny=player.y+dy;
+  if(nx<0||ny<0||nx>=W||ny>=H)return;
+  if(map[ny][nx]===TILE.WALL)return;
+
+  const foe=enemyAt(nx,ny);
+  if(foe){
+    attack(player,foe,true);
+    endPlayerTurn();
+    return;
+  }
+  player.x=nx;player.y=ny;
+  const it=itemAt(nx,ny);
+  if(it){
+    if(inventory.length>=9){
+      log("Inventory full. Cannot pick up "+it.name+".");
+    }else{
+      inventory.push({name:it.name,kind:it.kind,power:it.power,ch:it.ch,color:it.color});
+      items=items.filter(i=>i!==it);
+      log("Picked up "+it.name+".");
+    }
+  }
+  endPlayerTurn();
+}
+
+function useStairs(){
+  if(mode!=="play")return;
+  if(map[player.y][player.x]!==TILE.STAIRS){
+    log("There are no stairs here.");
+    return;
+  }
+  if(floor>=MAX_FLOOR){
+    mode="win";
+    log("You seize the Hollow Ember!");
+    showOverlay("Victory","You cleared B"+MAX_FLOOR+" and claimed the Hollow Ember.","Press R to play again");
+    updateHUD();
+    draw();
+    return;
+  }
+  floor++;
+  genFloor(false);
+  updateHUD();
+  draw();
+}
+
+function useItem(slot){
+  if(mode!=="play")return;
+  if(slot<0||slot>=inventory.length)return;
+  const it=inventory[slot];
+  if(it.kind==="heal"){
+    const before=player.hp;
+    player.hp=Math.min(player.maxHp,player.hp+it.power);
+    log("Used "+it.name+". Restored "+(player.hp-before)+" HP.");
+  }else if(it.kind==="weapon"){
+    player.atk+=it.power;
+    log("Equipped "+it.name+". ATK +"+it.power+".");
+  }
+  inventory.splice(slot,1);
+  endPlayerTurn();
+}
+
+function endPlayerTurn(){
+  enemies=enemies.filter(e=>e.hp>0);
+  enemyTurn();
+  computeFOV();
+  updateHUD();
+  draw();
+}
+
+function canSeePlayer(e){
+  const R=8;
+  if(dist2(e.x,e.y,player.x,player.y)>R*R)return false;
+  return los(e.x,e.y,player.x,player.y);
+}
+
+function stepToward(e,tx,ty){
+  const opts=[];
+  const dx=Math.sign(tx-e.x),dy=Math.sign(ty-e.y);
+  if(dx)opts.push({x:e.x+dx,y:e.y});
+  if(dy)opts.push({x:e.x,y:e.y+dy});
+  if(dx&&dy)opts.push({x:e.x+dx,y:e.y+dy});
+  // prefer closer
+  opts.sort((a,b)=>dist2(a.x,a.y,tx,ty)-dist2(b.x,b.y,tx,ty));
+  for(const o of opts){
+    if(o.x===player.x&&o.y===player.y)return o;
+    if(freeAt(o.x,o.y))return o;
+  }
+  return null;
+}
+
+function randomStep(e){
+  const dirs=shuffle([[1,0],[-1,0],[0,1],[0,-1]]);
+  for(const [dx,dy] of dirs){
+    const nx=e.x+dx,ny=e.y+dy;
+    if(nx===player.x&&ny===player.y)return {x:nx,y:ny};
+    if(freeAt(nx,ny))return {x:nx,y:ny};
+  }
+  return null;
+}
+
+function enemyTurn(){
+  if(mode!=="play")return;
+  for(const e of enemies){
+    if(e.hp<=0||mode!=="play")continue;
+    const adj=Math.abs(e.x-player.x)+Math.abs(e.y-player.y)===1;
+    if(adj){
+      attack(e,player,false);
+      continue;
+    }
+    let step=null;
+    if(e.chase&&canSeePlayer(e)){
+      step=stepToward(e,player.x,player.y);
+    }else if(!e.chase&&rng()<0.4){
+      step=randomStep(e);
+    }else if(e.chase&&rng()<0.25){
+      step=randomStep(e);
+    }
+    if(step){
+      if(step.x===player.x&&step.y===player.y){
+        attack(e,player,false);
+      }else{
+        e.x=step.x;e.y=step.y;
+      }
+    }
+  }
+}
+
+// ---- Render ----
+function draw(){
+  ctx.fillStyle="#050608";
+  ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.font="bold 14px 'Courier New',monospace";
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+
+  for(let y=0;y<H;y++){
+    for(let x=0;x<W;x++){
+      if(!explored[y][x])continue;
+      const vis=visible[y][x];
+      const t=map[y][x];
+      let ch=" ",col="#1a1e24";
+      if(t===TILE.WALL){ch="#";col=vis?"#5a6470":"#2a3038";}
+      else if(t===TILE.FLOOR){ch=".";col=vis?"#3a4450":"#1a2028";}
+      else if(t===TILE.STAIRS){ch=">";col=vis?"#e8a04a":"#5a4020";}
+      // floor tint
+      if(t!==TILE.WALL){
+        ctx.fillStyle=vis?"#12161c":"#0a0c10";
+        ctx.fillRect(x*TW,y*TH,TW,TH);
+      }else{
+        ctx.fillStyle=vis?"#0e1218":"#080a0e";
+        ctx.fillRect(x*TW,y*TH,TW,TH);
+      }
+      ctx.fillStyle=col;
+      ctx.fillText(ch,x*TW+TW/2,y*TH+TH/2+1);
+    }
+  }
+
+  // items
+  for(const it of items){
+    if(!explored[it.y][it.x])continue;
+    if(!visible[it.y][it.x])continue;
+    ctx.fillStyle=it.color;
+    ctx.fillText(it.ch,it.x*TW+TW/2,it.y*TH+TH/2+1);
+  }
+  // enemies
+  for(const e of enemies){
+    if(e.hp<=0)continue;
+    if(!visible[e.y][e.x])continue;
+    ctx.fillStyle=e.color;
+    ctx.fillText(e.ch,e.x*TW+TW/2,e.y*TH+TH/2+1);
+  }
+  // player
+  if(mode!=="title"){
+    ctx.fillStyle="#f0f4f8";
+    ctx.fillText("@",player.x*TW+TW/2,player.y*TH+TH/2+1);
+  }
+}
+
+// ---- Input ----
+const keyMap={
+  ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],
+  w:[0,-1],W:[0,-1],s:[0,1],S:[0,1],a:[-1,0],A:[-1,0],d:[1,0],D:[1,0]
+};
+
+window.addEventListener("keydown",function(ev){
+  const k=ev.key;
+  if(mode==="title"){
+    if(k==="Enter"||k===" "){ev.preventDefault();newGame();}
+    return;
+  }
+  if(k==="r"||k==="R"){
+    ev.preventDefault();
+    newGame();
+    return;
+  }
+  if(mode==="dead"||mode==="win")return;
+
+  if(keyMap[k]){
+    ev.preventDefault();
+    tryMove(keyMap[k][0],keyMap[k][1]);
+    return;
+  }
+  if(k==="Enter"||k===">"){
+    ev.preventDefault();
+    useStairs();
+    return;
+  }
+  if(k>="1"&&k<="9"){
+    ev.preventDefault();
+    useItem(parseInt(k,10)-1);
+    return;
+  }
+});
+
+// init title
+function boot(){
+  seedRng();
+  floor=1;
+  player={x:0,y:0,hp:24,maxHp:24,atk:4,lv:1,xp:0,xpNext:12};
+  inventory=[];
+  messages=["Welcome, delver.","Arrow keys / WASD to move."];
+  genFloor(true);
+  // dim FOV on title for backdrop
+  computeFOV();
+  updateHUD();
+  renderLog();
+  draw();
+  showOverlay("Crypt of Hollow Ember","A turn-based crypt crawl. Explore rooms, fight foes, gather gear, and descend three depths.","Press ENTER or SPACE to begin");
+  mode="title";
+}
+boot();
+})();
+</script>
+</body>
+</html>

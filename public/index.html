@@ -1055,29 +1055,29 @@
                     "終局判定・リセットの状態管理が安定しているか"
                 ]
             },
-            "mario-like-2d": {
-                title: "マリオ風 2D プラットフォーマー",
-                short: "リアルタイム物理",
-                desc: "HTML/CSS/JS 1 枚で動く横スクロール 2D プラットフォーマー。重力・着地・敵踏み・コイン・ゴールまで。盤ゲームと違いリアルタイム物理と状態マシンの一発再現性を測る。",
-                color: "#E53935",
-                colorDark: "#B71C1C",
-                icon: "fa-solid fa-person-running",
-                difficulty: "中〜高（リアルタイム物理 + 当たり判定 + カメラ + 状態遷移）",
+            "roguelike": {
+                title: "ローグライク（自動生成ダンジョン）",
+                short: "システム統合の一発実装",
+                desc: "ダンジョン自動生成・ターン制戦闘・FOV・インベントリ・レベル成長・階層進行を 1 枚の index.html に統合するターン制ローグライク。単機能の再現ではなく、複数システムの噛み合わせをワンショットで組み切れるかを測る。",
+                color: "#6A1B9A",
+                colorDark: "#4A148C",
+                icon: "fa-solid fa-dungeon",
+                difficulty: "高（ダンジョン生成 + FOV + ターン制AI + 成長・階層の状態管理）",
                 deliverable: "単一 index.html（CSS/JS インライン化・外部アセット禁止）",
                 criteria: [
-                    "左右移動（←→ / A D）とジャンプ（Space / ↑ / W）が動く",
-                    "重力と足場着地があり、すり抜けしない",
-                    "横歩き敵を上から踏むと撃破、横接触でダメージ",
-                    "コイン（収集物）取得でスコア増加、HUD にスコア表示",
-                    "横スクロールが必要な長さのステージと穴落下ミス",
-                    "ゴール到達でクリア、リスタート（R / Enter）で再開できる"
+                    "部屋+通路のランダム生成で全部屋に到達できる（リロードごとに変化）",
+                    "ターン制（プレイヤー1手→敵1手）と追跡型の敵AIが機能する",
+                    "FOV と探索済みフォグ（見た場所は薄く残る）の描画",
+                    "回復薬・武器のインベントリ管理と数字キーでの使用",
+                    "経験値・レベルアップ・深い階ほど敵が強い成長曲線",
+                    "地下3階クリア / 死亡→R リスタートの状態遷移が破綻しない"
                 ],
                 highlights: [
-                    "盤面ターン制ではなく requestAnimationFrame のリアルタイムループを一発で組み立てられるか",
-                    "AABB 衝突・踏み判定・カメラ追従など「動くゲーム」特有の状態バグが出ないか",
-                    "外部ライブラリ・画像なしで見た目と操作性を成立させられるか",
-                    "タイトル / プレイ / クリア / ゲームオーバーの状態遷移が破綻しないか",
-                    "オセロ等よりコード量が膨らむため、1 ショット出力の完走力が見える"
+                    "ダンジョン生成の破綻（孤立部屋・壁抜け・階段未配置）が出ないか",
+                    "FOV・探索済みフォグの実装品質（影計算か半径式か、残し方の設計）",
+                    "生成・戦闘・成長・UI という複数システムをワンショットで噛み合わせる完走力",
+                    "敵AIの質（追跡の自然さ・壁沿いの迂回）",
+                    "HUD・メッセージログの読みやすさと難易度バランスのセンス"
                 ]
             },
             "lp-fable5": {
@@ -1572,7 +1572,15 @@
             { theme: "hasami-shogi", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "スモーク検証PASS。木目盤+ステータスバッジ+ルール折りたたみ付き。467行/14KB。", kind: "html" },
             { theme: "hasami-shogi", model: "grok-4-5",            runner: "grok CLI (single-turn)", note: "スモーク検証PASS。ダーク×市松模様のエレガント盤面+ルール要約footer。541行/14KB。", kind: "html" },
 
-            // mario-like-2d（モデル出力は scripts/gen-html.py / add-model.sh で追加。検証: node scripts/verify-mario-like-2d.mjs）
+            // roguelike（ターン制ダンジョン RPG。スモーク検証: JSエラー / 移動反映 / 40手連打 / リロードでマップ変化を機械確認）
+            { theme: "roguelike", model: "gemma-4-12b-qat",     runner: "LM Studio API",   note: "context 65536 に拡張して3回目で完走（既定 32768 では reasoning が上限を食い潰し空出力）。ただし初期化時 JS エラー44件で盤面が描画されず黒画面（HP 0/0）。508行/16KB。", kind: "html" },
+            { theme: "roguelike", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",   note: "スモークPASS・JSエラー0。移動・戦闘・HUD が動くローカル勢唯一の完走。メッセージログの更新は乏しくフォグは簡素。496行/15KB。", kind: "html" },
+            { theme: "roguelike", model: "gemma-4-31b",         runner: "LM Studio API",   note: "JSエラー2件（undefined 参照）で verify FAIL。盤面と HUD は出るが敵・アイテムが機能せず体裁が崩れる。503行/16KB。", kind: "html" },
+            { theme: "roguelike", model: "gpt-5.6-sol",         runner: "OpenAI API (reasoning high)", note: "JSエラー0。日本語UI「灰灯の地下譜」。FOV+フォグ・9枠インベントリ・戦闘ログまで揃い完成度は全モデル中最高。1183行/31KB。", kind: "html" },
+            { theme: "roguelike", model: "gpt-5.6-terra",       runner: "OpenAI API (reasoning high)", note: "JSエラー0。「星煤の地下回廊」。記号凡例付きで情報設計が丁寧、フォグは階調表現。960行/23KB。", kind: "html" },
+            { theme: "roguelike", model: "gpt-5.6-luna",        runner: "OpenAI API (reasoning high)", note: "JSエラー0。FOV の明暗が最も明瞭なモノトーン。残り敵数 HUD など独自要素あり。866行/20KB。", kind: "html" },
+            { theme: "roguelike", model: "grok-4-5",            runner: "grok CLI (single-turn)", note: "JSエラー0。英語UI「CRYPT OF HOLLOW EMBER」。戦闘ログ・FOV 階調・階段まで一通り動く。586行/17KB。", kind: "html" },
+            { theme: "roguelike", model: "gemini-3-1-pro",      runner: "AntiGravity CLI (High)", note: "JSエラー0。ミニマルな端末風 UI。基本要素は揃うがフォグなし・ログ更新は控えめ。559行/14KB。", kind: "html" },
 
             // lp-fable5（水彩絵本 LP。スモーク検証: 全ページロード + スクロール走査で JS エラー数を機械確認）
             { theme: "lp-fable5", model: "gemma-4-12b-qat",     runner: "LM Studio API",   note: "JSエラー0。構成は追従するがイラストは簡素な図形寄り。616行/20KB。", kind: "html" },

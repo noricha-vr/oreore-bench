@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>THE ABYSS - Roguelike</title>
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        #game-container {
+            position: relative;
+            border: 2px solid #333;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+        }
+        canvas {
+            display: block;
+            background-color: #000;
+        }
+        #hud {
+            width: 800px;
+            padding: 10px;
+            background: #111;
+            border: 2px solid #333;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            font-size: 14px;
+        }
+        #log {
+            width: 800px;
+            height: 80px;
+            background: #050505;
+            border: 2px solid #333;
+            padding: 5px;
+            margin-top: 10px;
+            overflow: hidden;
+            font-size: 12px;
+            color: #aaa;
+        }
+        .stat-val { color: #fff; }
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="500"></canvas>
+        <div id="overlay">
+            <h1 id="msg-title">THE ABYSS</h1>
+            <p id="msg-desc">Press SPACE or ENTER to start</p>
+        </div>
+    </div>
+
+    <div id="hud">
+        <div>
+            HP: <span id="hp" class="stat-val">0</span> / <span id="maxhp" class="stat-val">0</span> | 
+            LV: <span id="lv" class="stat-val">1</span> | 
+            XP: <span id="xp" class="stat-val">0</span> | 
+            Floor: <span id="flr" class="stat-val">1</span>
+        </div>
+        <div id="inv-display">Inventory: -</div>
+        <div style="text-align: right;">R: Restart | Arrows/WASD: Move</div>
+    </div>
+    <div id="log"></div>
+
+<script>
+/**
+ * GAME CONFIG & STATE
+ */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const logEl = document.getElementById('log');
+const overlay = document.getElementById('overlay');
+const msgTitle = document.getElementById('msg-title');
+const msgDesc = document.getElementById('msg-desc');
+
+const TILE_SIZE = 20;
+const MAP_WIDTH = 40;
+const MAP_HEIGHT = 25;
+
+let gameState = {
+    running: false,
+    floor: 1,
+    map: [],
+    explored: [],
+    visible: [],
+    player: null,
+    enemies: [],
+    items: [],
+    logs: [],
+    stairs: {x: 0, y: 0},
+    keys: {}
+};
+
+/**
+ * CLASSES
+ */
+class Entity {
+    constructor(x, y, char, color, hp, atk) {
+        this.x = x;
+        this.y = y;
+        this.char = char;
+        this.color = color;
+        this.hp = hp;
+        this.maxHp = hp;
+        this.atk = atk;
+        this.dead = false;
+    }
+}
+
+class Player extends Entity {
+    constructor(x, y) {
+        super(x, y, '@', '#00ff00', 100, 10);
+        this.xp = 0;
+        this.lv = 1;
+        this.inventory = [];
+    }
+}
+
+class Enemy extends Entity {
+    constructor(x, y, type) {
+        let hp, atk, char, color;
+        if (type === 'slime') {
+            hp = 20 + (gameState.floor * 10);
+            atk = 3 + (gameState.floor * 2);
+            char = 's';
+            color = '#ff5555';
+        } else {
+            hp = 40 + (gameState.floor * 15);
+            atk = 6 + (gameState.floor * 3);
+            char = 'g';
+            color = '#ffaa00';
+        }
+        super(x, y, char, color, hp, atk);
+        this.type = type;
+        this.chase = type === 'goblin';
+    }
+}
+
+/**
+ * MAP GENERATION
+ */
+function initMap() {
+    gameState.map = Array.from({length: MAP_HEIGHT}, () => Array(MAP_WIDTH).fill(1));
+    gameState.explored = Array.from({length: MAP_HEIGHT}, () => Array(MAP_WIDTH).fill(false));
+    gameState.visible = Array.from({length: MAP_HEIGHT}, () => Array(MAP_WIDTH).fill(false));
+
+    let rooms = [];
+    // Create 6+ rooms
+    for (let i = 0; i < 8; i++) {
+        let w = 5 + Math.floor(Math.random() * 5);
+        let h = 5 + Math.floor(Math.random() * 5);
+        let x = Math.floor(Math.random() * (MAP_WIDTH - w - 2)) + 1;
+        let y = Math.floor(Math.random() * (MAP_HEIGHT - h - 2)) + 1;
+
+        let overlap = rooms.some(r => x < r.x + r.w && x + w > r.x && y < r.y + r.h && y + h > r.y);
+        if (!overlap) {
+            rooms.push({x, y, w, h});
+            for (let ry = y; ry < y + h; ry++) {
+                for (let rx = x; rx < x + w; rx++) {
+                    gameState.map[ry][rx] = 0;
+                }
+            }
+        }
+    }
+
+    // Connect rooms in a chain
+    for (let i = 0; i < rooms.length - 1; i++) {
+        let r1 = rooms[i];
+        let r2 = rooms[i+1];
+        let cx = Math.floor((r1.x + r1.x + r1.w) / 2);
+        let cy = Math.floor((r1.y + r1.y + r1.h) / 2);
+        let cx2 = Math.floor((r2.x + r2.x + r2.w) / 2);
+        let cy2 = Math.floor((r2.y + r2.y + r2.h) / 2);
+
+        // Horizontal then vertical
+        if (Math.random() > 0.5) {
+            for (let x = Math.min(cx, cx2); x <= Math.max(cx, cx2); x++) gameState.map[cy][x] = 0;
+            for (let y = Math.min(cy, cy2); y <= Math.max(cy, cy2); y++) gameState.map[y][cx2] = 0;
+        } else {
+            for (let y = Math.min(cy, cy2); y <= Math.max(cy, cy2); y++) gameState.map[y][cx] = 0;
+            for (let x = Math.min(cx, cx2); x <= Math.max(cx, cx2); x++) gameState.map[y][cx2] = 0;
+        }
+    }
+
+    // Place Stairs in last room
+    let lastRoom = rooms[rooms.length - 1];
+    gameState.stairs = {x: lastRoom.x + Math.floor(lastRoom.w/2), y: lastRoom.y + Math.floor(lastRoom.h/2)};
+    gameState.map[gameState.stairs.y][gameState.stairs.x] = 2; // 2 = Stairs
+
+    // Place Entities
+    gameState.enemies = [];
+    gameState.items = [];
+    rooms.forEach((r, idx) => {
+        if (idx === rooms.length - 1) return; // Skip last room for stairs
+        
+        // Enemies
+        for (let e = 0; e < 2; e++) {
+            let ex = r.x + Math.floor(Math.random() * (r.w - 2)) + 1;
+            let ey = r.y + Math.floor(Math.random() * (r.h - 2)) + 1;
+            if (gameState.map[ey][ex] === 0) {
+                gameState.enemies.push(new Enemy(ex, ey, Math.random() > 0.5 ? 'slime' : 'goblin'));
+            }
+        }
+        // Items
+        for (let it = 0; it < 2; it++) {
+            let ix = r.x + Math.floor(Math.random() * (r.w - 2)) + 1;
+            let iy = r.y + Math.floor(Math.random() * (r.h - 2)) + 1;
+            if (gameState.map[iy][ix] === 0) {
+                let type = Math.random() > 0.5 ? 'potion' : 'weapon';
+                gameState.items.push({x: ix, y: iy, type: type, val: type === 'potion' ? 20 : 2});
+            }
+        }
+    });
+
+    // Player
+    gameState.player = new Player(rooms[0].x + 1, rooms[0].y + 1);
+}
+
+/**
+ * LOGIC
+ */
+function addLog(msg) {
+    gameState.logs.unshift(msg);
+    if (gameState.logs.length > 3) gameState.logs.pop();
+    logEl.innerHTML = gameState.logs.join('<br>');
+}
+
+function updateFOV() {
+    gameState.visible = Array.from({length: MAP_HEIGHT}, () => Array(MAP_WIDTH).fill(false));
+    let q = [{x: gameState.player.x, y: gameState.player.y, d: 0}];
+    let visited = new Set();
+    visited.add(`${gameState.player.x},${gameState.player.y}`);
+
+    while (q.length > 0) {
+        let curr = q.shift();
+        if (curr.d > 10) continue;
+
+        gameState.visible[curr.y][curr.x] = true;
+        gameState.explored[curr.y][curr.x] = true;
+
+        const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+        for (let [dx, dy] of dirs) {
+            let nx = curr.x + dx;
+            let ny = curr.y + dy;
+            if (nx >= 0 && nx < MAP_WIDTH && ny >= 0 && ny < MAP_HEIGHT) {
+                if (!visited.has(`${nx},${ny}`)) {
+                    if (gameState.map[ny][nx] === 0 || gameState.map[ny][nx] === 2 || gameState.map[ny][nx] === '@') {
+                        visited.add(`${nx},${ny}`);
+                        q.push({x: nx, y: ny, d: curr.d + 1});
+                    }
+                }
+            }
+        }
+    }
+}
+
+function moveEntity(e, dx, dy) {
+    let nx = e.x + dx;
+    let ny = e.y + dy;
+    if (nx < 0 || nx >= MAP_WIDTH || ny < 0 || ny >= MAP_HEIGHT) return false;
+    
+    let targetTile = gameState.map[ny][nx];
+    
+    // Collision with walls
+    if (targetTile === 1) return false;
+
+    // Interaction with items
+    let itemIdx = gameState.items.findIndex(i => i.x === nx && i.y === ny);
+    if (itemIdx !== -1) {
+        let item = gameState.items[itemIdx];
+        if (e instanceof Player) {
+            e.inventory.push(item);
+            gameState.items.splice(itemIdx, 1);
+            addLog(`Picked up ${item.type}`);
+            return true;
+        }
+    }
+
+    // Interaction with enemies
+    let enemyIdx = gameState.enemies.findIndex(en => en.x === nx && en.y === ny && !en.dead);
+    if (enemyIdx !== -1) {
+        let en = gameState.enemies[enemyIdx];
+        if (e instanceof Player) {
+            // Attack
+            en.hp -= e.atk;
+            addLog(`Hit ${en.char} for ${e.atk}`);
+            if (en.hp <= 0) {
+                en.dead = true;
+                e.xp += 10;
+                addLog(`Defeated ${en.char}!`);
+                if (e.xp >= e.lv * 50) {
+                    e.lv++;
+                    e.maxHp += 20;
+                    e.hp = e.maxHp;
+                    e.atk += 2;
+                    addLog(`LEVEL UP! LV ${e.lv}`);
+                }
+            }
+            return false; // Stay in place
+        } else {
+            // Enemy attacks player
+            e.hp -= en.atk;
+            addLog(`Hit by ${en.char} for ${en.atk}`);
+            if (e.hp <= 0) gameOver();
+            return false;
+        }
+    }
+
+    // Stairs
+    if (targetTile === 2) {
+        if (e instanceof Player) {
+            if (gameState.floor < 3) {
+                gameState.floor++;
+                initMap();
+                gameState.player.x = rooms[0].x + 1;
+                gameState.player.y = rooms[0].y + 1;
+                addLog(`Descended to floor ${gameState.floor}`);
+                return true;
+            } else {
+                victory();
+                return true;
+            }
+        }
+    }
+
+    e.x = nx;
+    e.y = ny;
+    return true;
+}
+
+function gameOver() {
+    gameState.running = false;
+    msgTitle.innerText = "YOU DIED";
+    msgDesc.innerText = "Press R to try again";
+    overlay.style.display = "flex";
+}
+
+function victory() {
+    gameState.running = false;
+    msgTitle.innerText = "VICTORY";
+    msgDesc.innerText = "You escaped the abyss!";
+    overlay.style.display = "flex";
+}
+
+function update() {
+    if (!gameState.running) return;
+
+    let dx = 0, dy = 0;
+    if (gameState.keys['ArrowUp'] || gameState.keys['w']) dy = -1;
+    else if (gameState.keys['ArrowDown'] || gameState.keys['s']) dy = 1;
+    else if (gameState.keys['ArrowLeft'] || gameState.keys['a']) dx = -1;
+    else if (gameState.keys['ArrowRight'] || gameState.keys['d']) dx = 1;
+
+    if (dx !== 0 || dy !== 0) {
+        moveEntity(gameState.player, dx, dy);
+        updateFOV();
+        
+        // Enemies move
+        gameState.enemies.forEach(en => {
+            if (en.dead) return;
+            let dist = Math.abs(en.x - gameState.player.x) + Math.abs(en.y - gameState.player.y);
+            
+            if (en.chase && dist < 8) {
+                let moveX = Math.sign(gameState.player.x - en.x);
+                let moveY = Math.sign(gameState.player.y - en.y);
+                if (moveX !== 0) moveEntity(en, moveX, 0);
+                else if (moveY !== 0) moveEntity(en, 0, moveY);
+            } else {
+                let rx = Math.floor(Math.random() * 3) - 1;
+                let ry = Math.floor(Math.random() * 3) - 1;
+                if (rx !== 0 || ry !== 0) moveEntity(en, rx, ry);
+            }
+
+            if (Math.abs(en.x - gameState.player.x) <= 1 && Math.abs(en.y - gameState.player.y) <= 1) {
+                if (en.x !== gameState.player.x || en.y !== gameState.player.y) {
+                    gameState.player.hp -= en.atk;
+                    addLog(`Hit by ${en.char} for ${en.atk}`);
+                    if (gameState.player.hp <= 0) gameOver();
+                }
+            }
+        });
+    }
+
+    // Update HUD
+    document.getElementById('hp').innerText = gameState.player.hp;
+    document.getElementById('maxhp').innerText = gameState.player.maxHp;
+    document.getElementById('lv').innerText = gameState.player.lv;
+    document.getElementById('xp').innerText = gameState.player.xp;
+    document.getElementById('flr').innerText = gameState.floor;
+    
+    let invStr = gameState.player.inventory.map((i, idx) => `[${idx+1}:${i.type}]`).join(', ');
+    document.getElementById('inv-display').innerText = "Inv: " + (invStr || "-");
+}
+
+/**
+ * RENDERING
+ */
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (let y = 0; y < MAP_HEIGHT; y++) {
+        for (let x = 0; x < MAP_WIDTH; x++) {
+            let tile = gameState.map[y][x];
+            let isVisible = gameState.visible[y][x];
+            let isExplored = gameState.explored[y][x];
+
+            if (!isExplored) continue;
+
+            if (isVisible) {
+                if (tile === 1) ctx.fillStyle = '#444';
+                else if (tile === 2) ctx.fillStyle = '#00f';
+                else ctx.fillStyle = '#222';
+                ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            } else {
+                ctx.fillStyle = '#111';
+                ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            }
+        }
+    }
+
+    // Draw Items
+    gameState.items.forEach(item => {
+        if (gameState.visible[item.y][item.x]) {
+            ctx.fillStyle = item.type === 'potion' ? '#f0f' : '#ff0';
+            ctx.fillText(item.type === 'potion' ? 'H' : 'W', item.x * TILE_SIZE + 6, item.y * TILE_SIZE + 14);
+        }
+    });
+
+    // Draw Enemies
+    gameState.enemies.forEach(en => {
+        if (!en.dead && gameState.visible[en.y][en.x]) {
+            ctx.fillStyle = en.color;
+            ctx.fillText(en.char, en.x * TILE_SIZE + 6, en.y * TILE_SIZE + 14);
+        }
+    });
+
+    // Draw Player
+    if (gameState.visible[gameState.player.y][gameState.player.x]) {
+        ctx.fillStyle = '#00ff00';
+        ctx.fillText('@', gameState.player.x * TILE_SIZE + 6, gameState.player.y * TILE_SIZE + 14);
+    }
+
+    requestAnimationFrame(draw);
+}
+
+/**
+ * INPUTS
+ */
+window.addEventListener('keydown', e => {
+    gameState.keys[e.key] = true;
+    if (e.key === ' ' || e.key === 'Enter') {
+        if (!gameState.running) {
+            gameState.running = true;
+            overlay.style.display = "none";
+            initMap();
+            updateFOV();
+        }
+    }
+    if (e.key.length === 1 && e.key >= '1' && e.key <= '9') {
+        let idx = parseInt(e.key) - 1;
+        if (gameState.player.inventory[idx]) {
+            let item = gameState.player.inventory[idx];
+            if (item.type === 'potion') {
+                gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + item.val);
+                gameState.player.inventory.splice(idx, 1);
+                addLog(`Used Potion: +${item.val} HP`);
+            } else if (item.type === 'weapon') {
+                gameState.player.atk += item.val;
+                gameState.player.inventory.splice(idx, 1);
+                addLog(`Equipped Weapon: +${item.val} ATK`);
+            }
+        }
+    }
+    if (e.key.toLowerCase() === 'r') {
+        location.reload();
+    }
+});
+
+window.addEventListener('keyup', e => {
+    gameState.keys[e.key] = false;
+});
+
+// Start loop
+setInterval(update, 100);
+draw();
+
+</script>
+</body>
+</html>
