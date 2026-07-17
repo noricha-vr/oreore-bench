@@ -18,14 +18,14 @@
   "runtime": null,
   "usage": {
     "estimated": true,
-    "method": "char-heuristic-v1",
-    "prompt_tokens": 1139,
-    "completion_tokens": 3747,
+    "method": "tiktoken-o200k_base-proxy",
+    "prompt_tokens": 1052,
+    "completion_tokens": 4740,
     "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
   },
   "cost": {
     "estimated": true,
-    "usd": 0.047242,
+    "usd": 0.058984,
     "actual_usd": null,
     "prompt_usd_per_mtok": 2.0,
     "completion_usd_per_mtok": 12.0,

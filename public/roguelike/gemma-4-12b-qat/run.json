@@ -22,9 +22,9 @@
   },
   "usage": {
     "estimated": true,
-    "method": "char-heuristic-v1",
-    "prompt_tokens": 1139,
-    "completion_tokens": 4043,
+    "method": "tiktoken-o200k_base-proxy",
+    "prompt_tokens": 1052,
+    "completion_tokens": 4501,
     "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
   },
   "cost": {

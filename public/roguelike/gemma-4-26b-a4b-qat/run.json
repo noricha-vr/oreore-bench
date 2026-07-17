@@ -22,14 +22,14 @@
   },
   "usage": {
     "estimated": true,
-    "method": "char-heuristic-v1",
-    "prompt_tokens": 1139,
-    "completion_tokens": 3785,
+    "method": "tiktoken-o200k_base-proxy",
+    "prompt_tokens": 1052,
+    "completion_tokens": 4147,
     "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
   },
   "cost": {
     "estimated": true,
-    "usd": 0.001249,
+    "usd": 0.001349,
     "actual_usd": 0,
     "prompt_usd_per_mtok": 0.1,
     "completion_usd_per_mtok": 0.3,
