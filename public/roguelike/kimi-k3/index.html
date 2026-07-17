@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>深淵回廊 - ABYSS CORRIDOR -</title>
+<style>
+  html,body{margin:0;padding:0;background:#0a0a0f;color:#c8c8d0;font-family:"Courier New",monospace;user-select:none;}
+  #wrap{position:relative;width:900px;margin:14px auto;padding:8px;}
+  canvas{display:block;background:#000;border:1px solid #333;}
+  #hud{margin-top:8px;font-size:14px;line-height:1.6;}
+  #stats{color:#ffd75f;}
+  #hpbar{width:320px;height:14px;background:#1a1a1a;border:1px solid #555;margin:4px 0;}
+  #hpfill{height:100%;width:100%;background:#3c6;transition:width .1s;}
+  #inv{color:#9fdb9f;white-space:pre-wrap;}
+  #log{margin-top:6px;font-size:14px;min-height:112px;border-top:1px solid #333;padding-top:4px;}
+  #overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;z-index:10;}
+  #overlay h1{color:#ffcc66;letter-spacing:6px;margin:6px;}
+  #overlay h2{color:#889;letter-spacing:4px;margin:4px;font-weight:normal;}
+  #overlay p{margin:6px;}
+  .dim{color:#778;}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game"></canvas>
+  <div id="hud">
+    <div id="stats"></div>
+    <div id="hpbar"><div id="hpfill"></div></div>
+    <div id="inv"></div>
+  </div>
+  <div id="log"></div>
+  <div id="overlay"></div>
+</div>
+<script>
+'use strict';
+/* ============ 定数 ============ */
+const W=48, H=28, TILE_W=18, TILE_H=20, FOV_R=8, MAX_FLOOR=3;
+const T_WALL=0, T_FLOOR=1, T_STAIRS=2;
+const DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
+
+const ENEMY_DEFS={
+  slime:{name:'スライム',     ch:'s', color:'#4cd964', hp:8,  atk:2, xp:6,  sight:5},
+  bat:  {name:'コウモリ',     ch:'b', color:'#c08fff', hp:5,  atk:3, xp:5,  sight:7, erratic:true},
+  orc:  {name:'オーク',       ch:'o', color:'#ff9f43', hp:14, atk:4, xp:14, sight:6},
+  golem:{name:'ロックゴーレム',ch:'G', color:'#aab2bd', hp:24, atk:6, xp:26, sight:5, slow:0.35}
+};
+const ITEM_DEFS={
+  potion:{name:'回復薬',       ch:'!', color:'#ff5f7a', kind:'heal',   val:15},
+  elixir:{name:'上級回復薬',   ch:'!', color:'#ffb35f', kind:'heal',   val:35},
+  knife: {name:'ナイフ',       ch:'/', color:'#cccccc', kind:'weapon', val:2},
+  ssword:{name:'ショートソード',ch:'/', color:'#7fd0ff', kind:'weapon', val:4},
+  lsword:{name:'ロングソード', ch:'/', color:'#c09fff', kind:'weapon', val:7}
+};
+
+/* ============ 状態 ============ */
+let map=null, rooms=[], enemies=[], items=[], inv=[];
+let visible=new Set(), explored=new Set(), messages=[];
+let px=0, py=0, hp=20, maxHp=20, atk=4, weaponPow=0;
+let level=1, xp=0, nextXp=15, floor=1, state='title';
+
+const canvas=document.getElementById('game');
+canvas.width=W*TILE_W; canvas.height=H*TILE_H;
+const ctx=canvas.getContext('2d');
+ctx.font='16px "Courier New",monospace';
+ctx.textAlign='center'; ctx.textBaseline='middle';
+const statsEl=document.getElementById('stats');
+const hpfillEl=document.getElementById('hpfill');
+const invEl=document.getElementById('inv');
+const logEl=document.getElementById('log');
+const overlayEl=document.getElementById('overlay');
+
+function randInt(a,b){return a+Math.floor(Math.random()*(b-a+1));}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function addMsg(m){messages.push(m); if(messages.length>40)messages.shift();}
+function enemyAt(x,y){return enemies.find(e=>e.x===x&&e.y===y);}
+
+/* ============ ダンジョン生成 ============ */
+function genDungeon(){
+  let attempts=0;
+  do{
+    attempts++;
+    map=new Array(W*H).fill(T_WALL);
+    rooms=[];
+    for(let t=0;t<300&&rooms.length<10;t++){
+      const w=randInt(4,9), h=randInt(4,7);
+      const x=randInt(1,W-w-1), y=randInt(1,H-h-1);
+      if(rooms.some(o=>x-1<o.x+o.w&&x+w+1>o.x&&y-1<o.y+o.h&&y+h+1>o.y)) continue;
+      rooms.push({x,y,w,h,cx:x+(w>>1),cy:y+(h>>1)});
+    }
+  }while(rooms.length<6 && attempts<60);
+  for(const r of rooms)
+    for(let y=r.y;y<r.y+r.h;y++)
+      for(let x=r.x;x<r.x+r.w;x++)
+        map[y*W+x]=T_FLOOR;
+  for(let i=1;i<rooms.length;i++) corridor(rooms[i-1].cx,rooms[i-1].cy,rooms[i].cx,rooms[i].cy);
+  if(rooms.length>3){ // 環状にして袋小路を減らす
+    const i=randInt(2,rooms.length-1);
+    corridor(rooms[0].cx,rooms[0].cy,rooms[i].cx,rooms[i].cy);
+  }
+}
+function corridor(x0,y0,x1,y1){
+  let x=x0,y=y0;
+  const carve=(a,b)=>{map[b*W+a]=T_FLOOR;};
+  if(Math.random()<0.5){
+    while(x!==x1){carve(x,y);x+=Math.sign(x1-x);}
+    while(y!==y1){carve(x,y);y+=Math.sign(y1-y);}
+  }else{
+    while(y!==y1){carve(x,y);y+=Math.sign(y1-y);}
+    while(x!==x1){carve(x,y);x+=Math.sign(x1-x);}
+  }
+  carve(x,y);
+}
+function pickEnemyType(){
+  const pool = floor===1 ? ['slime','slime','slime','bat','bat']
+             : floor===2 ? ['slime','bat','orc','orc','orc']
+             :             ['bat','orc','orc','golem','golem'];
+  return pool[randInt(0,pool.length-1)];
+}
+function spawnEnemies(){
+  enemies=[];
+  const count=6+floor; // 1階あたり5体以上
+  let tries=0;
+  while(enemies.length<count && tries<800){
+    tries++;
+    const x=randInt(1,W-2), y=randInt(1,H-2);
+    if(map[y*W+x]!==T_FLOOR) continue;
+    if((x-px)*(x-px)+(y-py)*(y-py)<49) continue; // プレイヤーから7マス以上離す
+    if(enemyAt(x,y)) continue;
+    const key=pickEnemyType(), d=ENEMY_DEFS[key];
+    const mhp=d.hp+(floor-1)*3; // 深い階ほど強い
+    enemies.push({key,name:d.name,ch:d.ch,color:d.color,x,y,
+      hp:mhp,maxHp:mhp,atk:d.atk+(floor-1),xp:d.xp+(floor-1)*4,
+      sight:d.sight,erratic:!!d.erratic,slow:d.slow||0});
+  }
+}
+function spawnItems(){
+  items=[];
+  const list=['potion','potion',
+    floor===1?'knife':floor===2?'ssword':'lsword',
+    floor>=2?'elixir':'potion'];
+  if(Math.random()<0.5) list.push('potion');
+  for(const key of list){
+    for(let t=0;t<200;t++){
+      const x=randInt(1,W-2), y=randInt(1,H-2);
+      if(map[y*W+x]!==T_FLOOR) continue;
+      if(x===px&&y===py) continue;
+      if(items.some(it=>it.x===x&&it.y===y)) continue;
+      items.push({x,y,type:key});
+      break;
+    }
+  }
+}
+function genFloor(){
+  genDungeon();
+  px=rooms[0].cx; py=rooms[0].cy;
+  // 階段はプレイヤーから最も遠い部屋に
+  let best=rooms[rooms.length-1], bd=-1;
+  for(const r of rooms){
+    const d=(r.cx-px)*(r.cx-px)+(r.cy-py)*(r.cy-py);
+    if(d>bd){bd=d;best=r;}
+  }
+  map[best.cy*W+best.cx]=T_STAIRS;
+  explored=new Set(); visible=new Set();
+  spawnEnemies();
+  spawnItems();
+  computeFOV();
+  addMsg(`地下 ${floor} 階に足を踏み入れた……`);
+}
+
+/* ============ FOV ============ */
+function hasLOS(x0,y0,x1,y1){
+  const dx=Math.abs(x1-x0), sx=x0<x1?1:-1;
+  const dy=-Math.abs(y1-y0), sy=y0<y1?1:-1;
+  let err=dx+dy, x=x0, y=y0;
+  while(true){
+    if(x===x1&&y===y1) return true;
+    if(!(x===x0&&y===y0) && map[y*W+x]===T_WALL) return false;
+    const e2=2*err;
+    if(e2>=dy){err+=dy;x+=sx;}
+    if(e2<=dx){err+=dx;y+=sy;}
+  }
+}
+function computeFOV(){
+  visible=new Set();
+  visible.add(py*W+px);
+  explored.add(py*W+px);
+  for(let y=py-FOV_R;y<=py+FOV_R;y++){
+    for(let x=px-FOV_R;x<=px+FOV_R;x++){
+      if(x<0||y<0||x>=W||y>=H) continue;
+      if((x-px)*(x-px)+(y-py)*(y-py)>FOV_R*FOV_R) continue;
+      if(hasLOS(px,py,x,y)){
+        visible.add(y*W+x);
+        explored.add(y*W+x);
+      }
+    }
+  }
+}
+
+/* ============ AI ============ */
+function bfsStep(e){ // プレイヤーへの最短経路の1手目
+  const start=py*W+px, goal=e.y*W+e.x;
+  const prev=new Int32Array(W*H).fill(-1);
+  prev[start]=start;
+  const q=[start]; let head=0;
+  while(head<q.length){
+    const cur=q[head++];
+    if(cur===goal) break;
+    const cx=cur%W, cy=(cur/W)|0;
+    for(const d of DIRS){
+      const nx=cx+d[0], ny=cy+d[1];
+      if(nx<0||ny<0||nx>=W||ny>=H) continue;
+      const ni=ny*W+nx;
+      if(prev[ni]!==-1||map[ni]===T_WALL) continue;
+      prev[ni]=cur; q.push(ni);
+    }
+  }
+  if(prev[goal]===-1) return null;
+  let cur=goal;
+  while(prev[cur]!==start) cur=prev[cur];
+  return [cur%W,(cur/W)|0];
+}
+function randomStep(e){
+  const d=DIRS[randInt(0,3)];
+  const nx=e.x+d[0], ny=e.y+d[1];
+  if(nx<0||ny<0||nx>=W||ny>=H) return null;
+  if(map[ny*W+nx]===T_WALL) return null;
+  if(nx===px&&ny===py) return null;
+  if(enemyAt(nx,ny)) return null;
+  return [nx,ny];
+}
+function enemiesTurn(){
+  for(const e of [...enemies]){
+    if(state!=='play') return;
+    const ddx=Math.abs(e.x-px), ddy=Math.abs(e.y-py);
+    if(ddx+ddy===1){ // 隣接: 攻撃
+      const dmg=e.atk+randInt(0,1);
+      hp-=dmg;
+      addMsg(`${e.name}の攻撃！ ${dmg} ダメージを受けた。`);
+      if(hp<=0){hp=0; playerDie(); return;}
+      continue;
+    }
+    const sees=(e.x-px)*(e.x-px)+(e.y-py)*(e.y-py)<=e.sight*e.sight && hasLOS(e.x,e.y,px,py);
+    let mv=null;
+    if(sees){
+      if(e.slow && Math.random()<e.slow){ /* 動かない */ }
+      else if(e.erratic && Math.random()<0.4) mv=randomStep(e);
+      else mv=bfsStep(e); // 視界に入ると追跡
+    }else if(Math.random()<0.5){
+      mv=randomStep(e);
+    }
+    if(mv){
+      const mx=mv[0], my=mv[1];
+      if(!(mx===px&&my===py) && !enemyAt(mx,my) && map[my*W+mx]!==T_WALL){e.x=mx;e.y=my;}
+    }
+  }
+}
+
+/* ============ 戦闘・成長 ============ */
+function attackEnemy(e){
+  const dmg=atk+weaponPow+randInt(0,2);
+  e.hp-=dmg;
+  addMsg(`${e.name}に ${dmg} ダメージを与えた！`);
+  if(e.hp<=0){
+    addMsg(`${e.name}を倒した！（+${e.xp} EXP）`);
+    enemies.splice(enemies.indexOf(e),1);
+    gainXp(e.xp);
+  }
+}
+function gainXp(v){
+  xp+=v;
+  while(xp>=nextXp){
+    xp-=nextXp; level++; nextXp=15+(level-1)*10;
+    maxHp+=6; atk+=1;
+    hp=Math.min(maxHp,hp+8);
+    addMsg(`レベルアップ！ Lv${level} になった！（最大HP+6 攻撃力+1）`);
+  }
+}
+
+/* ============ 行動 ============ */
+function tryMove(dx,dy){
+  if(state!=='play') return;
+  const nx=px+dx, ny=py+dy;
+  if(nx<0||ny<0||nx>=W||ny>=H) return;
+  const en=enemyAt(nx,ny);
+  if(en){ attackEnemy(en); endTurn(); return; }
+  if(map[ny*W+nx]===T_WALL) return;
+  px=nx; py=ny;
+  const ii=items.findIndex(it=>it.x===px&&it.y===py);
+  if(ii>=0){
+    if(inv.length<9){
+      const it=items.splice(ii,1)[0];
+      inv.push(it.type);
+      addMsg(`${ITEM_DEFS[it.type].name} を拾った。（${inv.length}番スロット）`);
+    }else{
+      addMsg('インベントリがいっぱいで拾えない！');
+    }
+  }
+  if(map[py*W+px]===T_STAIRS) addMsg('下り階段がある。Enter か > で降りられる。');
+  endTurn();
+}
+function useItem(i){
+  if(state!=='play') return;
+  if(i<0||i>=inv.length) return;
+  const d=ITEM_DEFS[inv[i]];
+  if(d.kind==='heal'){
+    if(hp>=maxHp){addMsg('HPはすでに全快している。');render();return;}
+    hp=Math.min(maxHp,hp+d.val);
+    addMsg(`${d.name}を使った。HPが ${d.val} 回復した。（HP ${hp}/${maxHp}）`);
+    inv.splice(i,1);
+  }else if(d.kind==='weapon'){
+    if(d.val<=weaponPow){
+      addMsg(`${d.name}は今の武器（+${weaponPow}）より弱いので捨てた。`);
+    }else{
+      weaponPow=d.val;
+      addMsg(`${d.name}を装備した！ 攻撃力が +${d.val} になった。`);
+    }
+    inv.splice(i,1);
+  }
+  endTurn();
+}
+function descend(){
+  if(state!=='play') return;
+  if(map[py*W+px]!==T_STAIRS){addMsg('ここには階段がない。');render();return;}
+  if(floor>=MAX_FLOOR){gameClear();return;}
+  floor++;
+  addMsg('階段を降りた……');
+  genFloor();
+  render();
+}
+function endTurn(){
+  enemiesTurn();
+  if(state==='play') computeFOV();
+  render();
+}
+
+/* ============ ゲーム状態遷移 ============ */
+function newGame(){
+  hp=20; maxHp=20; atk=4; weaponPow=0;
+  level=1; xp=0; nextXp=15; floor=1;
+  inv=[]; messages=[];
+  state='play';
+  hideOverlay();
+  addMsg('深淵回廊へようこそ。地下3階の最深部を目指せ！');
+  genFloor();
+  render();
+}
+function playerDie(){
+  state='dead';
+  addMsg('あなたは力尽きた……');
+  render();
+  showOverlay(`<h1 style="color:#ff6666">GAME OVER</h1>
+    <p>あなたは地下 ${floor} 階で力尽きた……（到達 Lv ${level}）</p>
+    <p class="dim">R キーで再挑戦</p>`);
+}
+function gameClear(){
+  state='clear';
+  render();
+  showOverlay(`<h1 style="color:#7fff9f">DUNGEON CLEAR!</h1>
+    <p>深淵回廊の最深部へたどり着いた！（Lv ${level} / HP ${hp}/${maxHp}）</p>
+    <p class="dim">R キーでもう一度遊ぶ</p>`);
+}
+function showTitle(){
+  state='title';
+  showOverlay(`<h1>深淵回廊</h1><h2>- ABYSS CORRIDOR -</h2>
+    <p>自動生成ダンジョンを探索し、地下3階の階段を降りて最深部へたどり着け。</p>
+    <p class="dim">移動: 矢印キー / WASD　アイテム使用: 1〜9<br>
+    階段を降りる: 階段の上で Enter / &gt;　リスタート: R</p>
+    <p>Enter または Space で開始</p>`);
+}
+function showOverlay(html){overlayEl.innerHTML=html; overlayEl.style.display='flex';}
+function hideOverlay(){overlayEl.style.display='none';}
+
+/* ============ 描画 ============ */
+function drawCh(ch,x,y,color){
+  ctx.fillStyle=color;
+  ctx.fillText(ch, x*TILE_W+TILE_W/2, y*TILE_H+TILE_H/2+1);
+}
+function render(){
+  ctx.fillStyle='#000';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  if(!map) return;
+  for(let y=0;y<H;y++){
+    for(let x=0;x<W;x++){
+      const i=y*W+x;
+      const vis=visible.has(i);
+      if(!vis && !explored.has(i)) continue; // 未探索は描画しない
+      const t=map[i];
+      if(t===T_WALL)      drawCh('#',x,y,vis?'#7a86a8':'#2c3242');
+      else if(t===T_STAIRS)drawCh('>',x,y,vis?'#ffd75f':'#6b5d2a');
+      else                drawCh('.',x,y,vis?'#5a5a48':'#25251d');
+    }
+  }
+  for(const it of items){
+    const i=it.y*W+it.x;
+    if(!explored.has(i)) continue;
+    const d=ITEM_DEFS[it.type];
+    drawCh(d.ch,it.x,it.y,visible.has(i)?d.color:'#3a4a3d');
+  }
+  for(const e of enemies){
+    if(!visible.has(e.y*W+e.x)) continue; // 敵は視界内のみ
+    drawCh(e.ch,e.x,e.y,e.color);
+  }
+  drawCh('@',px,py,'#ffe066');
+  renderHUD();
+}
+function renderHUD(){
+  statsEl.textContent=`Lv ${level}   EXP ${xp}/${nextXp}   HP ${hp}/${maxHp}   攻撃力 ${atk}+${weaponPow}   地下 ${floor} 階 / ${MAX_FLOOR}`;
+  hpfillEl.style.width=Math.max(0,100*hp/maxHp)+'%';
+  hpfillEl.style.background=hp>maxHp*0.3?'#3c6':'#c33';
+  invEl.textContent='インベントリ: '+(inv.length?inv.map((k,i)=>`${i+1}:${ITEM_DEFS[k].name}`).join('  '):'(空)');
+  const last=messages.slice(-6);
+  logEl.innerHTML=last.map((m,i)=>`<div style="opacity:${(0.35+0.65*(i+1)/last.length).toFixed(2)}">${esc(m)}</div>`).join('');
+}
+
+/* ============ 入力 ============ */
+document.addEventListener('keydown',e=>{
+  const k=e.key;
+  if(state==='title'){
+    if(k==='Enter'||k===' '){e.preventDefault();newGame();}
+    return;
+  }
+  if(state==='dead'||state==='clear'){
+    if(k==='r'||k==='R'||k==='Enter'){e.preventDefault();newGame();}
+    return;
+  }
+  const lk=k.length===1?k.toLowerCase():k;
+  let handled=true;
+  if(k==='ArrowUp'||lk==='w')        tryMove(0,-1);
+  else if(k==='ArrowDown'||lk==='s') tryMove(0,1);
+  else if(k==='ArrowLeft'||lk==='a') tryMove(-1,0);
+  else if(k==='ArrowRight'||lk==='d')tryMove(1,0);
+  else if(k==='Enter'||k==='>')      descend();
+  else if(lk==='r')                  newGame();
+  else if(k>='1'&&k<='9')            useItem(parseInt(k,10)-1);
+  else handled=false;
+  if(handled) e.preventDefault();
+});
+
+showTitle();
+render();
+</script>
+</body>
+</html>

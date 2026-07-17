@@ -53,11 +53,14 @@ ENTRY_LINE_RE = re.compile(
 
 
 def parse_entries() -> list[dict]:
-    text = INDEX_HTML.read_text(encoding="utf-8")
-    # ENTRIES = [ ... ]; の中身を切り出す
-    m = re.search(r"const ENTRIES = \[(.+?)\];", text, re.DOTALL)
+    # ENTRIES は 2026-07-17 に index.html から data.js へ切り出された（viewer.html との共有のため）
+    data_js = PUBLIC / "data.js"
+    src = data_js if data_js.exists() else INDEX_HTML
+    text = src.read_text(encoding="utf-8")
+    # ENTRIES = [ ... ]; の中身を切り出す（window.ENTRIES / const ENTRIES 両対応）
+    m = re.search(r"(?:window\.|const )ENTRIES = \[(.+?)\];", text, re.DOTALL)
     if not m:
-        raise RuntimeError("ENTRIES literal not found in public/index.html")
+        raise RuntimeError("ENTRIES literal not found in public/data.js / index.html")
     body = m.group(1)
     entries: list[dict] = []
     for line in body.splitlines():
