@@ -1450,6 +1450,31 @@
                 links: [
                     { label: "公式 Model Card", href: "https://storage.googleapis.com/deepmind-media/Model-Cards/Gemini-3-1-Pro-Model-Card.pdf" }
                 ]
+            },
+            "kimi-k3": {
+                label: "Kimi K3",
+                provider: "Moonshot AI",
+                type: "api",
+                color: "#6E56CF",
+                colorDark: "#4C3D99",
+                release: "2026-07-16",
+                size: "2.8T 総パラメータ（MoE / 活性数非公開）",
+                context: "1M tokens (1,048,576)",
+                output: "非公開",
+                quantization: "—（API モデル）",
+                runtime: "OpenRouter API（reasoning effort: high）",
+                stats: [
+                    { value: "2.8T", label: "パラメータ", note: "MoE 総数（活性数非公開）" },
+                    { value: "FP", label: "量子化", note: "API モデル" },
+                    { value: "1M", label: "コンテキスト", note: "OpenRouter / 公式" },
+                    { value: "—", label: "最大出力", note: "非公開" }
+                ],
+                strengths: "オープンウェイト最大級の 2.8T MoE（896 experts 中 16 活性、二次情報）。Kimi Delta Attention で 1M コンテキストでも最大 6.3 倍高速デコードを謳う。内部評価では Fable 5 / GPT-5.6 Sol に次ぐ位置と主張（公式発表の二次報道）。",
+                weaknesses: "リリース当日（2026-07-16）で実運用の知見が無い。活性パラメータ数は非公開。ウェイト公開は 2026-07-27 予定でまだ API のみ。OpenRouter の配信元が Moonshot AI 単独。",
+                links: [
+                    { label: "Moonshot AI 公式", href: "https://www.moonshot.ai/" },
+                    { label: "OpenRouter", href: "https://openrouter.ai/moonshotai/kimi-k3" }
+                ]
             }
         };
 
@@ -1574,6 +1599,10 @@
             { theme: "suminagashi", model: "gpt-5.6-terra",  runner: "OpenAI API (reasoning high)", note: "JSエラー0で流体が動く。にじみ柔らかめの上品な発色。874行/24KB。", kind: "html" },
             { theme: "suminagashi", model: "gpt-5.6-sol",    runner: "OpenAI API (reasoning high)", note: "JSエラー0だがドラッグしてもインクが描画されない（白紙のまま）。1348行/35KB。", kind: "html" },
             { theme: "suminagashi", model: "gemini-3-1-pro", runner: "AntiGravity CLI (High)", note: "JSエラー0で流体が動く。藍の単色ストロークが美しいが混色は控えめ。607行/20KB。", kind: "html" },
+
+            // kimi-k3（リリース翌日に OpenRouter API 経由・reasoning high で追加。スモーク検証は既存と同一手順）
+            { theme: "lp-fable5", model: "kimi-k3",   runner: "OpenRouter API (reasoning high)", note: "JSエラー0。水彩トーンと7セクション構成に完全追従、SVGイラストも破綻なし。843行/47KB。", kind: "html" },
+            { theme: "suminagashi", model: "kimi-k3", runner: "OpenRouter API (reasoning high)", note: "JSエラー0で流体が動く。墨と朱の大胆な混色と乱流はフロンティア級。自動流出モード付き。544行/22KB。", kind: "html" },
 
             // extract-questions（20 問入力、基本サイズ、全モデル PASS = 実運用サイズは全モデル対応可の証拠）
             { theme: "extract-questions", model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。20 件抽出、最軽量でも 本番運用スキーマを完全に満たす。", kind: "json" },
