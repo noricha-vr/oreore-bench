@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Shattered Crypt</title>
+    <style>
+        body {
+            background-color: #111;
+            color: #eee;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+        }
+        #game-container {
+            position: relative;
+            border: 4px solid #444;
+        }
+        canvas {
+            display: block;
+            background-color: #000;
+        }
+        #hud {
+            position: absolute;
+            top: 0;
+            right: -220px;
+            width: 200px;
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        #log {
+            position: absolute;
+            bottom: 0;
+            left: -220px;
+            width: 200px;
+            text-align: right;
+            font-size: 13px;
+            color: #aaa;
+        }
+        .stat-val { color: #ffcc00; }
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 10;
+        }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="ctx"></canvas>
+    <div id="hud">
+        <div>Floor: <span id="floor-val" class="stat-val">1</span></div>
+        <div>HP: <span id="hp-val" class="stat-val">0/0</span></div>
+        <div>ATK: <span id="atk-val" class="stat-val">0</span></div>
+        <div>LVL: <span id="lvl-val" class="stat-val">1</span></div>
+        <div>EXP: <span id="exp-val" class="stat-val">0/0</span></div>
+        <div style="margin-top:10px;">Inventory:</div>
+        <div id="inv-list" style="font-size:12px;"></div>
+    </div>
+    <div id="log"></div>
+    <div id="overlay">
+        <h1 id="overlay-title">SHATTERED CRYPT</h1>
+        <p id="overlay-msg">Press ENTER to Start</p>
+    </div>
+</div>
+
+<script>
+/** 
+ * SHATTERED CRYPT - Roguelike Implementation
+ */
+
+const TILE_SIZE = 20;
+const MAP_WIDTH = 40;
+const MAP_HEIGHT = 25;
+
+const TILE_WALL = '#';
+const TILE_FLOOR = '.';
+const TILE_STAIRS = '>';
+const PLAYER_CHAR = '@';
+
+const canvas = document.getElementById('ctx');
+const ctx = canvas.getContext('2d');
+canvas.width = MAP_WIDTH * TILE_SIZE;
+canvas.height = MAP_HEIGHT * TILE_SIZE;
+
+let gameState = 'TITLE'; // TITLE, PLAYING, GAMEOVER, CLEAR
+let floor = 1;
+let map = [];
+let player = null;
+let enemies = [];
+let items = [];
+let rooms = [];
+let explored = []; // FOV memory
+
+class Entity {
+    constructor(x, y, char, color) {
+        this.x = x;
+        this.y = y;
+        this.char = char;
+        this.color = color;
+    }
+}
+
+class Player extends Entity {
+    constructor(x, y) {
+        super(x, y, PLAYER_CHAR, '#fff');
+        this.maxHp = 20;
+        this.hp = 20;
+        this.atk = 3;
+        this.lvl = 1;
+        this.exp = 0;
+        this.nextLvlExp = 10;
+        this.inventory = [];
+    }
+
+    takeDamage(dmg) {
+        this.hp -= dmg;
+        return dmg;
+    }
+
+    gainExp(amt) {
+        this.exp += amt;
+        if (this.exp >= this.nextLvlExp) {
+            this.lvl++;
+            this.exp -= this.nextLvlExp;
+            this.nextLvlExp = Math.floor(this.nextLvlExp * 1.5);
+            this.maxHp += 5;
+            this.hp = this.maxHp;
+            this.atk += 1;
+            return true; // Leveled up
+        }
+        return false;
+    }
+}
+
+class Enemy extends Entity {
+    constructor(x, y, type) {
+        let char = 'e', color = '#f00', name = 'Enemy';
+        let behavior = 'random';
+
+        if (type === 0) { // Chaser
+            char = 'K'; color = '#f55'; name = 'Kobold'; behavior = 'chase';
+        } else { // Slime
+            char = 's'; color = '#5f5'; name = 'Slime'; behavior = 'random';
+        }
+
+        super(x, y, char, color);
+        this.name = name;
+        this.behavior = behavior;
+        this.maxHp = 5 + (floor * 2);
+        this.hp = this.maxHp;
+        this.atk = 1 + Math.floor(floor / 2);
+        this.expValue = 3 + floor;
+    }
+
+    move() {
+        let dx = 0, dy = 0;
+        if (this.behavior === 'chase') {
+            dx = Math.sign(player.x - this.x);
+            dy = Math.sign(player.y - this.y);
+            // Simple pathing: prioritize axis with larger distance
+            if (Math.abs(player.x - this.x) > Math.abs(player.y - this.y)) {
+                dy = 0;
+            } else {
+                dx = 0;
+            }
+        } else {
+            dx = Math.floor(Math.random() * 3) - 1;
+            dy = Math.floor(Math.random() * 3) - 1;
+        }
+
+        const nx = this.x + dx;
+        const ny = this.y + dy;
+
+        if (nx === player.x && ny === player.y) {
+            const dmg = player.takeDamage(this.atk);
+            addLog(`${this.name} attacks you for ${dmg}!`);
+        } else if (nx >= 0 && nx < MAP_WIDTH && ny >= 0 && ny < MAP_HEIGHT && map[ny][nx] === TILE_FLOOR) {
+            // Check if another enemy is there
+            if (!enemies.some(e => e !== this && e.x === nx && e.y === ny)) {
+                this.x = nx;
+                this.y = ny;
+            }
+        }
+    }
+}
+
+class Item extends Entity {
+    constructor(x, y, type) {
+        let char = '!', color = '#0f0', name = 'Potion';
+        if (type === 1) { char = '+'; color = '#ff0'; name = 'Sword'; }
+        super(x, y, char, color);
+        this.type = type; // 0: Potion, 1: Sword
+        this.name = name;
+    }
+}
+
+function initGame() {
+    floor = 1;
+    player = new Player(0, 0);
+    generateFloor();
+    gameState = 'PLAYING';
+    document.getElementById('overlay').classList.add('hidden');
+}
+
+function generateFloor() {
+    map = [];
+    explored = [];
+    rooms = [];
+    enemies = [];
+    items = [];
+
+    for (let y = 0; y < MAP_HEIGHT; y++) {
+        map[y] = [];
+        explored[y] = [];
+        for (let x = 0; x < MAP_WIDTH; x++) {
+            map[y][x] = TILE_WALL;
+            explored[y][x] = false;
+        }
+    }
+
+    // Room generation
+    const roomCount = 6 + Math.floor(Math.random() * 4);
+    for (let i = 0; i < roomCount; i++) {
+        const rw = 4 + Math.floor(Math.random() * 6);
+        const rh = 4 + Math.floor(Math.random() * 6);
+        const rx = Math.floor(Math.random() * (MAP_WIDTH - rw - 1)) + 1;
+        const ry = Math.floor(Math.random() * (MAP_HEIGHT - rh - 1)) + 1;
+
+        const overlap = rooms.some(r => rx < r.x + r.w && rx + rw > r.x && ry < r.y + r.h && ry + rh > r.y);
+        if (overlap) continue;
+
+        for (let y = ry; y < ry + rh; y++) {
+            for (let x = rx; x < rx + rw; x++) {
+                map[y][x] = TILE_FLOOR;
+            }
+        }
+        rooms.push({ x: rx, y: ry, w: rw, h: rh, cx: Math.floor(rx + rw / 2), cy: Math.floor(ry + rh / 2) });
+    }
+
+    // Connect rooms
+    for (let i = 0; i < rooms.length - 1; i++) {
+        let x1 = rooms[i].cx, y1 = rooms[i].cy;
+        let x2 = rooms[i + 1].cx, y2 = rooms[i + 1].cy;
+        
+        // Horizontal then vertical
+        for (let x = Math.min(x1, x2); x <= Math.max(x1, x2); x++) map[y1][x] = TILE_FLOOR;
+        for (let y = Math.min(y1, y2); y <= Math.max(y1, y2); y++) map[y][x2] = TILE_FLOOR;
+    }
+
+    // Player start
+    player.x = rooms[0].cx;
+    player.y = rooms[0].cy;
+
+    // Stairs end
+    const lastRoom = rooms[rooms.length - 1];
+    map[lastRoom.cy][lastRoom.cx] = TILE_STAIRS;
+
+    // Populate enemies and items
+    for (let i = 1; i < rooms.length; i++) {
+        const r = rooms[i];
+        // Enemies: 1-2 per room
+        const eCount = 1 + Math.floor(Math.random() * 2);
+        for (let j = 0; j < eCount; j++) {
+            const ex = r.x + Math.floor(Math.random() * r.w);
+            const ey = r.y + Math.floor(Math.random() * r.h);
+            if (map[ey][ex] === TILE_FLOOR) {
+                enemies.push(new Enemy(ex, ey, Math.random() > 0.5 ? 0 : 1));
+            }
+        }
+        // Items: 0-1 per room
+        if (Math.random() > 0.4) {
+            const ix = r.x + Math.floor(Math.random() * r.w);
+            const iy = r.y + Math.floor(Math.random() * r.h);
+            if (map[iy][ix] === TILE_FLOOR) {
+                items.push(new Item(ix, iy, Math.random() > 0.7 ? 1 : 0));
+            }
+        }
+    }
+
+    updateFOV();
+    render();
+}
+
+function updateFOV() {
+    // Simple distance-based FOV with wall blocking (Raycasting lite)
+    for (let y = 0; y < MAP_HEIGHT; y++) {
+        for (let x = 0; x < MAP_WIDTH; x++) {
+            if (canSee(player.x, player.y, x, y)) {
+                explored[y][x] = true;
+            }
+        }
+    }
+}
+
+function canSee(x1, y1, x2, y2) {
+    const dist = Math.sqrt((x1 - x2)**2 + (y1 - y2)**2);
+    if (dist > 8) return false; // Vision range
+
+    // Simple line-of-sight check
+    let steps = Math.max(Math.abs(x1 - x2), Math.abs(y1 - y2));
+    for (let i = 1; i <= steps; i++) {
+        const tx = Math.round(x1 + (x2 - x1) * (i / steps));
+        const ty = Math.round(y1 + (y2 - y1) * (i / steps));
+        if (tx === x2 && ty === y2) break;
+        if (map[ty][tx] === TILE_WALL) return false;
+    }
+    return true;
+}
+
+function addLog(msg) {
+    const logEl = document.getElementById('log');
+    const div = document.createElement('div');
+    div.textContent = msg;
+    logEl.prepend(div);
+    if (logEl.childNodes.length > 5) {
+        logEl.removeChild(logEl.lastChild);
+    }
+}
+
+function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (let y = 0; y < MAP_HEIGHT; y++) {
+        for (let x = 0; x < MAP_WIDTH; x++) {
+            if (!explored[y][x]) continue;
+
+            const isVisible = canSee(player.x, player.y, x, y);
+            const char = map[y][x];
+            ctx.fillStyle = isVisible ? '#eee' : '#444';
+            if (char === TILE_WALL) ctx.fillStyle = isVisible ? '#888' : '#333';
+            if (char === TILE_STAIRS) ctx.fillStyle = isVisible ? '#0ff' : '#055';
+
+            ctx.font = '16px Courier New';
+            ctx.fillText(char, x * TILE_SIZE + 5, y * TILE_SIZE + 15);
+        }
+    }
+
+    // Items
+    items.forEach(it => {
+        if (explored[it.y][it.x]) {
+            ctx.fillStyle = it.color;
+            ctx.fillText(it.char, it.x * TILE_SIZE + 5, it.y * TILE_SIZE + 15);
+        }
+    });
+
+    // Enemies
+    enemies.forEach(en => {
+        if (explored[en.y][en.x]) {
+            ctx.fillStyle = en.color;
+            ctx.fillText(en.char, en.x * TILE_SIZE + 5, en.y * TILE_SIZE + 15);
+        }
+    });
+
+    // Player
+    ctx.fillStyle = player.color;
+    ctx.fillText(player.char, player.x * TILE_SIZE + 5, player.y * TILE_SIZE + 15);
+
+    // HUD
+    document.getElementById('floor-val').textContent = floor;
+    document.getElementById('hp-val').textContent = `${player.hp}/${player.maxHp}`;
+    document.getElementById('atk-val').textContent = player.atk;
+    document.getElementById('lvl-val').textContent = player.lvl;
+    document.getElementById('exp-val').textContent = `${player.exp}/${player.nextLvlExp}`;
+    
+    const invEl = document.getElementById('inv-list');
+    invEl.innerHTML = '';
+    player.inventory.forEach((item, idx) => {
+        invEl.innerHTML += `<div>${idx + 1}: ${item.name}</div>`;
+    });
+}
+
+function handleTurn(dx, dy) {
+    const nx = player.x + dx;
+    const ny = player.y + dy;
+
+    // Combat check
+    const enemy = enemies.find(e => e.x === nx && e.y === ny);
+    if (enemy) {
+        const dmg = enemy.hp > 0 ? Math.max(1, player.atk - Math.floor(Math.random() * 2)) : 0;
+        enemy.hp -= dmg;
+        addLog(`You hit ${enemy.name} for ${dmg}!`);
+        if (enemy.hp <= 0) {
+            addLog(`You defeated ${enemy.name}!`);
+            const leveled = player.gainExp(enemy.expValue);
+            if (leveled) addLog(`Level Up! You are now LVL ${player.lvl}`);
+            enemies = enemies.filter(e => e !== enemy);
+        }
+    } else {
+        // Movement check
+        if (nx >= 0 && nx < MAP_WIDTH && ny >= 0 && ny < MAP_HEIGHT) {
+            if (map[ny][nx] !== TILE_WALL) {
+                player.x = nx;
+                player.y = ny;
+
+                // Item pickup
+                const itemIdx = items.findIndex(it => it.x === nx && it.y === ny);
+                if (itemIdx !== -1) {
+                    const item = items[itemIdx];
+                    player.inventory.push(item);
+                    addLog(`Picked up ${item.name}!`);
+                    items.splice(itemIdx, 1);
+                }
+
+                // Stairs check
+                if (map[ny][nx] === TILE_STAIRS) {
+                    if (floor >= 3) {
+                        gameState = 'CLEAR';
+                        document.getElementById('overlay-title').textContent = 'CONGRATULATIONS!';
+                        document.getElementById('overlay-msg').textContent = 'You escaped the crypt! Press R to restart.';
+                        document.getElementById('overlay').classList.remove('hidden');
+                    } else {
+                        floor++;
+                        addLog(`Descending to floor ${floor}...`);
+                        generateFloor();
+                    }
+                }
+            }
+        }
+    }
+
+    // Enemy turns
+    enemies.forEach(en => en.move());
+
+    if (player.hp <= 0) {
+        gameState = 'GAMEOVER';
+        document.getElementById('overlay-title').textContent = 'GAME OVER';
+        document.getElementById('overlay-msg').textContent = 'You perished in the dark. Press R to restart.';
+        document.getElementById('overlay').classList.remove('hidden');
+    }
+
+    updateFOV();
+    render();
+}
+
+function useItem(idx) {
+    const item = player.inventory[idx];
+    if (!item) return;
+
+    if (item.type === 0) { // Potion
+        const heal = 10;
+        player.hp = Math.min(player.maxHp, player.hp + heal);
+        addLog(`Used Potion. Healed ${heal} HP.`);
+    } else if (item.type === 1) { // Sword
+        player.atk += 2;
+        addLog(`Equipped Sword. ATK increased by 2!`);
+    }
+
+    player.inventory.splice(idx, 1);
+    render();
+}
+
+window.addEventListener('keydown', e => {
+    if (gameState === 'TITLE') {
+        if (e.key === 'Enter' || e.key === ' ') initGame();
+        return;
+    }
+
+    if (gameState === 'GAMEOVER' || gameState === 'CLEAR') {
+        if (e.key.toLowerCase() === 'r') initGame();
+        return;
+    }
+
+    if (gameState !== 'PLAYING') return;
+
+    // Movement
+    if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'w') { e.preventDefault(); handleTurn(0, -1); }
+    else if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') { e.preventDefault(); handleTurn(0, 1); }
+    else if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') { e.preventDefault(); handleTurn(-1, 0); }
+    else if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') { e.preventDefault(); handleTurn(1, 0); }
+    else if (e.key === 'Enter' || e.key === '>') { 
+        if (map[player.y][player.x] === TILE_STAIRS) handleTurn(0, 0); // Trigger stairs
+    }
+    else if (e.key.toLowerCase() === 'r') {
+        initGame();
+    }
+    else if (e.key >= '1' && e.key <= '9') {
+        const idx = parseInt(e.key) - 1;
+        useItem(idx);
+    }
+});
+
+// Initial render for title screen
+render(); 
+</script>
+</body>
+</html>

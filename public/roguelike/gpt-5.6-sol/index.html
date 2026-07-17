@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>灰灯の地下譜</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070a0f;
+      --panel: #111720;
+      --panel-border: #354355;
+      --text: #d8e0e8;
+      --muted: #8190a0;
+      --accent: #e5c66d;
+      --danger: #e07070;
+      --good: #72c99a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: auto;
+      background:
+        radial-gradient(circle at 50% 0%, #16202c 0, #090d13 45%, #05070a 100%);
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+
+    .page {
+      width: max-content;
+      min-width: 100%;
+      padding: 18px;
+    }
+
+    header {
+      width: 1212px;
+      max-width: calc(100vw - 36px);
+      margin: 0 auto 12px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    h1 {
+      margin: 0;
+      color: #edf2f6;
+      font-size: 22px;
+      letter-spacing: 0.18em;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: 864px 328px;
+      gap: 20px;
+      width: 1212px;
+      margin: 0 auto;
+      align-items: start;
+    }
+
+    .canvas-shell {
+      border: 1px solid #3e4c5e;
+      background: #010306;
+      box-shadow:
+        0 18px 55px rgba(0, 0, 0, 0.55),
+        inset 0 0 30px rgba(100, 140, 170, 0.06);
+    }
+
+    canvas {
+      display: block;
+      width: 864px;
+      height: 504px;
+      background: #010306;
+      image-rendering: pixelated;
+      outline: none;
+    }
+
+    .panel {
+      display: grid;
+      gap: 10px;
+    }
+
+    section {
+      padding: 12px 14px;
+      background: rgba(17, 23, 32, 0.96);
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+
+    section h2 {
+      margin: 0 0 9px;
+      color: #aebdca;
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px 12px;
+      font-size: 14px;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .label {
+      color: var(--muted);
+    }
+
+    .value {
+      color: #f1f4f6;
+      font-weight: 700;
+    }
+
+    #hpValue {
+      color: #88d6a7;
+    }
+
+    #floorValue {
+      color: var(--accent);
+    }
+
+    #stateValue {
+      color: #9ec7e5;
+    }
+
+    .inventory {
+      display: grid;
+      gap: 4px;
+      min-height: 211px;
+    }
+
+    .inventory-slot {
+      min-height: 20px;
+      padding: 3px 6px;
+      overflow: hidden;
+      border-left: 2px solid #344252;
+      background: #0b1017;
+      color: #aab5c0;
+      font-size: 12px;
+      line-height: 1.35;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .inventory-slot.filled {
+      border-left-color: #bc9f55;
+      color: #e5e0ce;
+    }
+
+    .slot-key {
+      display: inline-block;
+      width: 22px;
+      color: #edca6f;
+      font-weight: 700;
+    }
+
+    .log {
+      display: grid;
+      align-content: start;
+      min-height: 112px;
+      gap: 3px;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .log-line {
+      min-height: 16px;
+      color: #bac5cf;
+    }
+
+    .log-line:last-child {
+      color: #f0f3f5;
+    }
+
+    .controls {
+      color: #9ba8b5;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    kbd {
+      display: inline-block;
+      min-width: 22px;
+      padding: 0 5px;
+      border: 1px solid #4b596a;
+      border-bottom-color: #283341;
+      border-radius: 3px;
+      background: #1b2430;
+      color: #e9eef2;
+      font: inherit;
+      text-align: center;
+      box-shadow: 0 1px 0 #05080c;
+    }
+
+    .legend {
+      margin-top: 8px;
+      padding-top: 7px;
+      border-top: 1px solid #283442;
+      color: #7f8d9a;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 1230px) {
+      .page {
+        padding-right: 28px;
+      }
+
+      header,
+      .game-layout {
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>灰灯の地下譜</h1>
+      <div class="subtitle">TURN-BASED DUNGEON EXPLORATION</div>
+    </header>
+
+    <main class="game-layout">
+      <div class="canvas-shell">
+        <canvas id="game" width="864" height="504" tabindex="0" aria-label="ローグライクゲーム画面"></canvas>
+      </div>
+
+      <aside class="panel">
+        <section>
+          <h2>Status</h2>
+          <div class="status-grid">
+            <div class="status-row"><span class="label">HP</span><span class="value" id="hpValue">-</span></div>
+            <div class="status-row"><span class="label">攻撃力</span><span class="value" id="attackValue">-</span></div>
+            <div class="status-row"><span class="label">レベル</span><span class="value" id="levelValue">-</span></div>
+            <div class="status-row"><span class="label">経験値</span><span class="value" id="xpValue">-</span></div>
+            <div class="status-row"><span class="label">現在地</span><span class="value" id="floorValue">- / 3</span></div>
+            <div class="status-row"><span class="label">状態</span><span class="value" id="stateValue">待機中</span></div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Inventory / 数字キーで使用</h2>
+          <div id="inventory" class="inventory"></div>
+        </section>
+
+        <section>
+          <h2>Message Log</h2>
+          <div id="log" class="log"></div>
+        </section>
+
+        <section class="controls">
+          <h2>Controls</h2>
+          <div><kbd>↑↓←→</kbd> / <kbd>WASD</kbd> 移動・攻撃</div>
+          <div><kbd>1</kbd>〜<kbd>9</kbd> アイテム使用</div>
+          <div><kbd>Enter</kbd> / <kbd>&gt;</kbd> 階段を降りる</div>
+          <div><kbd>R</kbd> 新しい迷宮で再開</div>
+          <div class="legend">
+            @ 探索者　s 苔雫　r 牙ネズミ　g 岩殻<br>
+            ! 回復薬　/ 灰鉄の刃　&gt; 下り階段
+          </div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    "use strict";
+
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const hpValue = document.getElementById("hpValue");
+    const attackValue = document.getElementById("attackValue");
+    const levelValue = document.getElementById("levelValue");
+    const xpValue = document.getElementById("xpValue");
+    const floorValue = document.getElementById("floorValue");
+    const stateValue = document.getElementById("stateValue");
+    const inventoryElement = document.getElementById("inventory");
+    const logElement = document.getElementById("log");
+
+    const WIDTH = 48;
+    const HEIGHT = 28;
+    const TILE = 18;
+    const FOV_RADIUS = 9;
+    const MAX_FLOOR = 3;
+
+    let state = "title";
+    let floor = 1;
+    let seed = 1;
+    let map = null;
+    let rooms = [];
+    let explored = [];
+    let visible = [];
+    let stairs = null;
+    let player = null;
+    let enemies = [];
+    let items = [];
+    let messages = [
+      "Enter または Space で探索を開始。",
+      "光の届かない場所は表示されない。",
+      "地下3階の階段を降りれば踏破となる。"
+    ];
+
+    function reseed() {
+      let value = 0;
+      if (window.crypto && window.crypto.getRandomValues) {
+        const data = new Uint32Array(1);
+        window.crypto.getRandomValues(data);
+        value = data[0];
+      } else {
+        value = (Date.now() ^ Math.floor(performance.now() * 100000)) >>> 0;
+      }
+      seed = (value ^ Date.now()) >>> 0;
+      if (seed === 0) seed = 0x6d2b79f5;
+    }
+
+    function random() {
+      seed ^= seed << 13;
+      seed ^= seed >>> 17;
+      seed ^= seed << 5;
+      seed >>>= 0;
+      return seed / 4294967296;
+    }
+
+    function randInt(min, max) {
+      return Math.floor(random() * (max - min + 1)) + min;
+    }
+
+    function addLog(text) {
+      messages.push(text);
+      if (messages.length > 40) messages.shift();
+    }
+
+    function buildDungeon() {
+      let generatedRooms = [];
+
+      do {
+        map = Array.from({ length: HEIGHT }, () => Array(WIDTH).fill("#"));
+        generatedRooms = [];
+
+        const targetRooms = randInt(9, 11);
+        let attempts = 0;
+
+        while (generatedRooms.length < targetRooms && attempts < 350) {
+          attempts++;
+
+          const w = randInt(5, 9);
+          const h = randInt(4, 7);
+          const x = randInt(2, WIDTH - w - 3);
+          const y = randInt(2, HEIGHT - h - 3);
+
+          const overlaps = generatedRooms.some(room =>
+            x - 1 <= room.x + room.w &&
+            x + w + 1 >= room.x &&
+            y - 1 <= room.y + room.h &&
+            y + h + 1 >= room.y
+          );
+
+          if (overlaps) continue;
+
+          const room = {
+            x,
+            y,
+            w,
+            h,
+            cx: x + Math.floor(w / 2),
+            cy: y + Math.floor(h / 2)
+          };
+
+          generatedRooms.push(room);
+
+          for (let ry = y; ry < y + h; ry++) {
+            for (let rx = x; rx < x + w; rx++) {
+              map[ry][rx] = ".";
+            }
+          }
+        }
+      } while (generatedRooms.length < 6);
+
+      rooms = generatedRooms;
+
+      for (let i = 1; i < rooms.length; i++) {
+        const previous = rooms[i - 1];
+        const current = rooms[i];
+
+        if (random() < 0.5) {
+          carveHorizontal(previous.cx, current.cx, previous.cy);
+          carveVertical(previous.cy, current.cy, current.cx);
+        } else {
+          carveVertical(previous.cy, current.cy, previous.cx);
+          carveHorizontal(previous.cx, current.cx, current.cy);
+        }
+      }
+    }
+
+    function carveHorizontal(x1, x2, y) {
+      const start = Math.min(x1, x2);
+      const end = Math.max(x1, x2);
+      for (let x = start; x <= end; x++) map[y][x] = ".";
+    }
+
+    function carveVertical(y1, y2, x) {
+      const start = Math.min(y1, y2);
+      const end = Math.max(y1, y2);
+      for (let y = start; y <= end; y++) map[y][x] = ".";
+    }
+
+    function enemyAt(x, y, except = null) {
+      return enemies.find(enemy => enemy !== except && enemy.x === x && enemy.y === y) || null;
+    }
+
+    function itemAt(x, y) {
+      return items.find(item => item.x === x && item.y === y) || null;
+    }
+
+    function findOpenSpot(minPlayerDistance = 0) {
+      for (let attempt = 0; attempt < 5000; attempt++) {
+        const x = randInt(1, WIDTH - 2);
+        const y = randInt(1, HEIGHT - 2);
+
+        if (map[y][x] !== ".") continue;
+        if (player && player.x === x && player.y === y) continue;
+        if (player && Math.abs(player.x - x) + Math.abs(player.y - y) < minPlayerDistance) continue;
+        if (enemyAt(x, y) || itemAt(x, y)) continue;
+
+        return { x, y };
+      }
+
+      if (minPlayerDistance > 0) return findOpenSpot(0);
+      return null;
+    }
+
+    function createEnemy(type, x, y) {
+      if (type === "s") {
+        return {
+          type: "s",
+          char: "s",
+          name: "苔雫",
+          color: "#75d08b",
+          x,
+          y,
+          hp: 4 + floor * 2 + randInt(0, 2),
+          maxHp: 4 + floor * 2,
+          attack: 1 + floor,
+          xp: 5 + floor * 2,
+          hunts: true,
+          alert: 0
+        };
+      }
+
+      if (type === "r") {
+        return {
+          type: "r",
+          char: "r",
+          name: "牙ネズミ",
+          color: "#d3a274",
+          x,
+          y,
+          hp: 3 + floor * 2 + randInt(0, 2),
+          maxHp: 3 + floor * 2,
+          attack: 2 + floor,
+          xp: 6 + floor * 2,
+          hunts: false,
+          alert: 0
+        };
+      }
+
+      return {
+        type: "g",
+        char: "g",
+        name: "岩殻",
+        color: "#9ba9bd",
+        x,
+        y,
+        hp: 7 + floor * 3 + randInt(0, 2),
+        maxHp: 7 + floor * 3,
+        attack: 1 + floor,
+        xp: 8 + floor * 3,
+        hunts: true,
+        alert: 0
+      };
+    }
+
+    function generateFloor() {
+      buildDungeon();
+
+      enemies = [];
+      items = [];
+
+      const startRoom = rooms[0];
+      const stairRoom = rooms[rooms.length - 1];
+
+      player.x = startRoom.cx;
+      player.y = startRoom.cy;
+
+      stairs = { x: stairRoom.cx, y: stairRoom.cy };
+      map[stairs.y][stairs.x] = ">";
+
+      const enemyCount = 7 + (floor - 1) * 2;
+      const enemyTypes = ["s", "r", "g"];
+
+      for (let i = 0; i < enemyCount; i++) {
+        const spot = findOpenSpot(7);
+        if (!spot) continue;
+        enemies.push(createEnemy(enemyTypes[i % enemyTypes.length], spot.x, spot.y));
+      }
+
+      const itemCount = 4 + floor;
+
+      for (let i = 0; i < itemCount; i++) {
+        const spot = findOpenSpot(0);
+        if (!spot) continue;
+
+        let type;
+        if (i === 0) type = "potion";
+        else if (i === 1) type = "blade";
+        else type = random() < 0.67 ? "potion" : "blade";
+
+        if (type === "potion") {
+          items.push({
+            type,
+            char: "!",
+            name: "回復薬",
+            x: spot.x,
+            y: spot.y,
+            power: 10 + floor * 3,
+            color: "#e97c7c"
+          });
+        } else {
+          items.push({
+            type,
+            char: "/",
+            name: "灰鉄の刃",
+            x: spot.x,
+            y: spot.y,
+            power: floor >= 3 ? 3 : 2,
+            color: "#e0c471"
+          });
+        }
+      }
+
+      explored = Array.from({ length: HEIGHT }, () => Array(WIDTH).fill(false));
+      visible = Array.from({ length: HEIGHT }, () => Array(WIDTH).fill(false));
+      updateFOV();
+    }
+
+    function newGame() {
+      reseed();
+      floor = 1;
+      state = "playing";
+      player = {
+        x: 0,
+        y: 0,
+        hp: 26,
+        maxHp: 26,
+        attack: 4,
+        level: 1,
+        xp: 0,
+        nextXp: 14,
+        inventory: []
+      };
+
+      messages = [];
+      generateFloor();
+      addLog("灰灯を手に、地下1階へ踏み入れた。");
+      addLog("敵のいるマスへ進むと攻撃する。");
+      addLog("黄色い「>」の上で Enter を押すと降りられる。");
+      render();
+      canvas.focus();
+    }
+
+    function lineVisible(x0, y0, x1, y1) {
+      let x = x0;
+      let y = y0;
+      const dx = Math.abs(x1 - x0);
+      const dy = Math.abs(y1 - y0);
+      const sx = x0 < x1 ? 1 : -1;
+      const sy = y0 < y1 ? 1 : -1;
+      let err = dx - dy;
+
+      while (!(x === x1 && y === y1)) {
+        const e2 = err * 2;
+
+        if (e2 > -dy) {
+          err -= dy;
+          x += sx;
+        }
+        if (e2 < dx) {
+          err += dx;
+          y += sy;
+        }
+
+        if (x === x1 && y === y1) return true;
+        if (map[y][x] === "#") return false;
+      }
+
+      return true;
+    }
+
+    function updateFOV() {
+      if (!player || !map) return;
+
+      visible = Array.from({ length: HEIGHT }, () => Array(WIDTH).fill(false));
+
+      for (let y = Math.max(0, player.y - FOV_RADIUS); y <= Math.min(HEIGHT - 1, player.y + FOV_RADIUS); y++) {
+        for (let x = Math.max(0, player.x - FOV_RADIUS); x <= Math.min(WIDTH - 1, player.x + FOV_RADIUS); x++) {
+          const dx = x - player.x;
+          const dy = y - player.y;
+
+          if (dx * dx + dy * dy > FOV_RADIUS * FOV_RADIUS) continue;
+
+          if (lineVisible(player.x, player.y, x, y)) {
+            visible[y][x] = true;
+            explored[y][x] = true;
+          }
+        }
+      }
+    }
+
+    function pickUpItem() {
+      const index = items.findIndex(item => item.x === player.x && item.y === player.y);
+      if (index < 0) return;
+
+      const item = items[index];
+
+      if (player.inventory.length >= 9) {
+        addLog(`${item.name}を見つけたが、荷物がいっぱいだ。`);
+        return;
+      }
+
+      player.inventory.push(item);
+      items.splice(index, 1);
+
+      if (item.type === "potion") {
+        addLog(`${item.name}を拾った。回復量は ${item.power}。`);
+      } else {
+        addLog(`${item.name}を拾った。使用すると攻撃力 +${item.power}。`);
+      }
+    }
+
+    function gainExperience(amount) {
+      player.xp += amount;
+      addLog(`${amount} 経験値を得た。`);
+
+      while (player.xp >= player.nextXp) {
+        player.xp -= player.nextXp;
+        player.level++;
+        player.nextXp = Math.floor(player.nextXp * 1.45 + 2);
+        player.maxHp += 5;
+        player.hp = Math.min(player.maxHp, player.hp + 5);
+        player.attack += 1;
+        addLog(`レベル ${player.level} になった。最大HP +5、攻撃力 +1。`);
+      }
+    }
+
+    function playerAttack(enemy) {
+      const damage = Math.max(1, player.attack + randInt(-1, 1));
+      enemy.hp -= damage;
+      addLog(`${enemy.name}に ${damage} ダメージ。`);
+
+      if (enemy.hp <= 0) {
+        const index = enemies.indexOf(enemy);
+        if (index >= 0) enemies.splice(index, 1);
+        addLog(`${enemy.name}を倒した。`);
+        gainExperience(enemy.xp);
+      }
+    }
+
+    function movePlayer(dx, dy) {
+      const nx = player.x + dx;
+      const ny = player.y + dy;
+
+      if (nx < 0 || ny < 0 || nx >= WIDTH || ny >= HEIGHT || map[ny][nx] === "#") {
+        addLog("壁に阻まれた。");
+        finishTurn();
+        return;
+      }
+
+      const enemy = enemyAt(nx, ny);
+      if (enemy) {
+        playerAttack(enemy);
+        finishTurn();
+        return;
+      }
+
+      player.x = nx;
+      player.y = ny;
+      pickUpItem();
+      finishTurn();
+    }
+
+    function useInventorySlot(index) {
+      const item = player.inventory[index];
+
+      if (!item) {
+        addLog(`${index + 1} 番のスロットは空だ。`);
+        render();
+        return;
+      }
+
+      if (item.type === "potion") {
+        if (player.hp >= player.maxHp) {
+          addLog("HPはすでに満タンだ。");
+          render();
+          return;
+        }
+
+        const before = player.hp;
+        player.hp = Math.min(player.maxHp, player.hp + item.power);
+        const healed = player.hp - before;
+        player.inventory.splice(index, 1);
+        addLog(`${item.name}を使い、HPが ${healed} 回復した。`);
+      } else if (item.type === "blade") {
+        player.attack += item.power;
+        player.inventory.splice(index, 1);
+        addLog(`${item.name}を装備し、攻撃力が ${item.power} 上がった。`);
+      }
+
+      finishTurn();
+    }
+
+    function descendStairs() {
+      if (player.x !== stairs.x || player.y !== stairs.y) {
+        addLog("ここに下り階段はない。");
+        render();
+        return;
+      }
+
+      if (floor >= MAX_FLOOR) {
+        state = "clear";
+        addLog("最深部の階段を降り、灰灯の迷宮を踏破した。");
+        render();
+        return;
+      }
+
+      floor++;
+      const recovered = Math.min(3, player.maxHp - player.hp);
+      player.hp += recovered;
+      generateFloor();
+      addLog(`地下${floor}階へ降りた。敵の気配が強くなる。`);
+      if (recovered > 0) addLog(`短い休息でHPが ${recovered} 回復した。`);
+      render();
+    }
+
+    function finishTurn() {
+      if (state !== "playing") {
+        render();
+        return;
+      }
+
+      updateFOV();
+      enemiesAct();
+
+      if (state === "playing") updateFOV();
+      render();
+    }
+
+    function enemiesAct() {
+      for (const enemy of [...enemies]) {
+        if (state !== "playing" || !enemies.includes(enemy)) break;
+
+        const distance = Math.abs(enemy.x - player.x) + Math.abs(enemy.y - player.y);
+
+        if (distance === 1) {
+          enemyAttack(enemy);
+          if (state !== "playing") break;
+          continue;
+        }
+
+        if (enemy.hunts && visible[enemy.y][enemy.x]) {
+          enemy.alert = 7;
+        } else if (
+          enemy.type === "r" &&
+          distance <= 5 &&
+          lineVisible(enemy.x, enemy.y, player.x, player.y)
+        ) {
+          enemy.alert = 4;
+        }
+
+        let moved = false;
+
+        if (enemy.alert > 0) {
+          const step = findPathStep(enemy);
+          if (step) {
+            enemy.x = step.x;
+            enemy.y = step.y;
+            moved = true;
+          }
+          enemy.alert--;
+        }
+
+        if (!moved && random() < 0.42) {
+          randomEnemyMove(enemy);
+        }
+      }
+    }
+
+    function enemyAttack(enemy) {
+      const damage = Math.max(1, enemy.attack + randInt(-1, 1));
+      player.hp = Math.max(0, player.hp - damage);
+      addLog(`${enemy.name}から ${damage} ダメージ。`);
+
+      if (player.hp <= 0) {
+        state = "gameover";
+        addLog("灰灯が消え、探索者は力尽きた。");
+      }
+    }
+
+    function findPathStep(enemy) {
+      const total = WIDTH * HEIGHT;
+      const start = enemy.y * WIDTH + enemy.x;
+      const goal = player.y * WIDTH + player.x;
+      const previous = new Int32Array(total);
+      previous.fill(-1);
+
+      const queue = new Int32Array(total);
+      let head = 0;
+      let tail = 0;
+
+      queue[tail++] = start;
+      previous[start] = start;
+
+      const directions = [
+        [0, -1],
+        [1, 0],
+        [0, 1],
+        [-1, 0]
+      ];
+
+      while (head < tail) {
+        const current = queue[head++];
+        if (current === goal) break;
+
+        const cx = current % WIDTH;
+        const cy = Math.floor(current / WIDTH);
+
+        for (const [dx, dy] of directions) {
+          const nx = cx + dx;
+          const ny = cy + dy;
+
+          if (nx < 0 || ny < 0 || nx >= WIDTH || ny >= HEIGHT) continue;
+          if (map[ny][nx] === "#") continue;
+
+          const next = ny * WIDTH + nx;
+          if (previous[next] !== -1) continue;
+          if (next !== goal && enemyAt(nx, ny, enemy)) continue;
+
+          previous[next] = current;
+          queue[tail++] = next;
+        }
+      }
+
+      if (previous[goal] === -1) return null;
+
+      let cursor = goal;
+      while (previous[cursor] !== start) {
+        cursor = previous[cursor];
+        if (cursor < 0 || cursor === previous[cursor]) return null;
+      }
+
+      return {
+        x: cursor % WIDTH,
+        y: Math.floor(cursor / WIDTH)
+      };
+    }
+
+    function randomEnemyMove(enemy) {
+      const directions = [
+        [0, -1],
+        [1, 0],
+        [0, 1],
+        [-1, 0]
+      ];
+
+      const offset = randInt(0, 3);
+
+      for (let i = 0; i < directions.length; i++) {
+        const [dx, dy] = directions[(i + offset) % directions.length];
+        const nx = enemy.x + dx;
+        const ny = enemy.y + dy;
+
+        if (nx < 0 || ny < 0 || nx >= WIDTH || ny >= HEIGHT) continue;
+        if (map[ny][nx] === "#") continue;
+        if (player.x === nx && player.y === ny) continue;
+        if (enemyAt(nx, ny, enemy)) continue;
+
+        enemy.x = nx;
+        enemy.y = ny;
+        return;
+      }
+    }
+
+    function drawTitle() {
+      ctx.fillStyle = "#030609";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = "#111c27";
+      ctx.lineWidth = 1;
+
+      for (let x = 0; x < canvas.width; x += 36) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+
+      for (let y = 0; y < canvas.height; y += 36) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      ctx.fillStyle = "#728394";
+      ctx.font = '16px ui-monospace, monospace';
+      ctx.fillText("A TURN-BASED DESCENT", canvas.width / 2, 135);
+
+      ctx.fillStyle = "#edf0e5";
+      ctx.font = 'bold 42px sans-serif';
+      ctx.fillText("灰灯の地下譜", canvas.width / 2, 206);
+
+      ctx.fillStyle = "#d7bd70";
+      ctx.font = 'bold 17px ui-monospace, monospace';
+      ctx.fillText("Enter または Space で開始", canvas.width / 2, 286);
+
+      ctx.fillStyle = "#8795a2";
+      ctx.font = '14px sans-serif';
+      ctx.fillText("光の届く範囲を頼りに、地下3階の最深部を目指せ", canvas.width / 2, 332);
+
+      ctx.fillStyle = "#536170";
+      ctx.font = '13px ui-monospace, monospace';
+      ctx.fillText("@ YOU   s / r / g ENEMY   ! / ITEM   > STAIRS", canvas.width / 2, 390);
+    }
+
+    function drawMap() {
+      ctx.fillStyle = "#010306";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = 'bold 15px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+
+      for (let y = 0; y < HEIGHT; y++) {
+        for (let x = 0; x < WIDTH; x++) {
+          const px = x * TILE;
+          const py = y * TILE;
+
+          if (!explored[y][x]) {
+            ctx.fillStyle = "#010306";
+            ctx.fillRect(px, py, TILE, TILE);
+            continue;
+          }
+
+          const isVisible = visible[y][x];
+          const tile = map[y][x];
+
+          if (tile === "#") {
+            ctx.fillStyle = isVisible ? "#1b2530" : "#090e14";
+            ctx.fillRect(px, py, TILE, TILE);
+            ctx.fillStyle = isVisible ? "#77899a" : "#28333e";
+            ctx.fillText("#", px + TILE / 2, py + TILE / 2 + 1);
+          } else {
+            ctx.fillStyle = isVisible ? "#111a20" : "#060b0f";
+            ctx.fillRect(px, py, TILE, TILE);
+
+            if (tile === ">") {
+              ctx.fillStyle = isVisible ? "#e5c45f" : "#5b502d";
+              ctx.fillText(">", px + TILE / 2, py + TILE / 2 + 1);
+            } else {
+              ctx.fillStyle = isVisible ? "#405663" : "#18242b";
+              ctx.fillText(".", px + TILE / 2, py + TILE / 2 + 1);
+            }
+          }
+        }
+      }
+
+      for (const item of items) {
+        if (!visible[item.y][item.x]) continue;
+        drawEntity(item.char, item.x, item.y, item.color);
+      }
+
+      for (const enemy of enemies) {
+        if (!visible[enemy.y][enemy.x]) continue;
+        drawEntity(enemy.char, enemy.x, enemy.y, enemy.color);
+      }
+
+      drawEntity("@", player.x, player.y, "#f3f6f8");
+
+      if (state === "gameover" || state === "clear") {
+        drawEndOverlay();
+      }
+    }
+
+    function drawEntity(character, x, y, color) {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.38)";
+      ctx.fillRect(x * TILE + 2, y * TILE + 2, TILE - 4, TILE - 4);
+      ctx.fillStyle = color;
+      ctx.fillText(character, x * TILE + TILE / 2, y * TILE + TILE / 2 + 1);
+    }
+
+    function drawEndOverlay() {
+      ctx.fillStyle = "rgba(2, 4, 7, 0.78)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#101720";
+      ctx.fillRect(207, 160, 450, 185);
+      ctx.strokeStyle = state === "clear" ? "#bfa95d" : "#9b5050";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(207, 160, 450, 185);
+
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      if (state === "clear") {
+        ctx.fillStyle = "#ead786";
+        ctx.font = 'bold 34px sans-serif';
+        ctx.fillText("迷宮踏破", canvas.width / 2, 216);
+
+        ctx.fillStyle = "#d8e0e6";
+        ctx.font = '15px sans-serif';
+        ctx.fillText("地下3階の階段を越え、地上への道を見つけた。", canvas.width / 2, 263);
+      } else {
+        ctx.fillStyle = "#e57d7d";
+        ctx.font = 'bold 34px sans-serif';
+        ctx.fillText("探索失敗", canvas.width / 2, 216);
+
+        ctx.fillStyle = "#d8e0e6";
+        ctx.font = '15px sans-serif';
+        ctx.fillText("灰灯は暗闇の中で消えた。", canvas.width / 2, 263);
+      }
+
+      ctx.fillStyle = "#9da9b4";
+      ctx.font = 'bold 14px ui-monospace, monospace';
+      ctx.fillText("R キーで新しい迷宮に再挑戦", canvas.width / 2, 310);
+    }
+
+    function updateHUD() {
+      if (!player) {
+        hpValue.textContent = "-";
+        attackValue.textContent = "-";
+        levelValue.textContent = "-";
+        xpValue.textContent = "-";
+        floorValue.textContent = "- / 3";
+        stateValue.textContent = "待機中";
+      } else {
+        hpValue.textContent = `${player.hp} / ${player.maxHp}`;
+        attackValue.textContent = String(player.attack);
+        levelValue.textContent = String(player.level);
+        xpValue.textContent = `${player.xp} / ${player.nextXp}`;
+        floorValue.textContent = `地下 ${floor} / 3`;
+
+        if (state === "playing") stateValue.textContent = "探索中";
+        else if (state === "gameover") stateValue.textContent = "力尽きた";
+        else if (state === "clear") stateValue.textContent = "踏破";
+        else stateValue.textContent = "待機中";
+
+        hpValue.style.color =
+          player.hp <= player.maxHp * 0.25 ? "#eb7777" :
+          player.hp <= player.maxHp * 0.5 ? "#e8bf6c" :
+          "#88d6a7";
+      }
+
+      inventoryElement.textContent = "";
+
+      for (let i = 0; i < 9; i++) {
+        const slot = document.createElement("div");
+        slot.className = "inventory-slot";
+
+        const key = document.createElement("span");
+        key.className = "slot-key";
+        key.textContent = `${i + 1}.`;
+        slot.appendChild(key);
+
+        const item = player ? player.inventory[i] : null;
+
+        if (!item) {
+          slot.appendChild(document.createTextNode("--"));
+        } else {
+          slot.classList.add("filled");
+          if (item.type === "potion") {
+            slot.appendChild(document.createTextNode(`${item.name} [HP +${item.power}]`));
+          } else {
+            slot.appendChild(document.createTextNode(`${item.name} [攻撃 +${item.power}]`));
+          }
+        }
+
+        inventoryElement.appendChild(slot);
+      }
+
+      logElement.textContent = "";
+      const recent = messages.slice(-6);
+
+      while (recent.length < 6) recent.unshift("");
+
+      for (const message of recent) {
+        const line = document.createElement("div");
+        line.className = "log-line";
+        line.textContent = message;
+        logElement.appendChild(line);
+      }
+    }
+
+    function render() {
+      if (state === "title") drawTitle();
+      else drawMap();
+      updateHUD();
+    }
+
+    window.addEventListener("keydown", event => {
+      const key = event.key;
+      const lower = key.toLowerCase();
+
+      if (
+        ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "Enter", ">"].includes(key) ||
+        ["w", "a", "s", "d", "r"].includes(lower) ||
+        /^[1-9]$/.test(key)
+      ) {
+        event.preventDefault();
+      }
+
+      if (event.repeat) return;
+
+      if (lower === "r") {
+        newGame();
+        return;
+      }
+
+      if (state === "title") {
+        if (key === "Enter" || key === " " || event.code === "Space") {
+          newGame();
+        }
+        return;
+      }
+
+      if (state !== "playing") return;
+
+      if (/^[1-9]$/.test(key)) {
+        useInventorySlot(Number(key) - 1);
+        return;
+      }
+
+      if (key === "ArrowUp" || lower === "w") {
+        movePlayer(0, -1);
+      } else if (key === "ArrowDown" || lower === "s") {
+        movePlayer(0, 1);
+      } else if (key === "ArrowLeft" || lower === "a") {
+        movePlayer(-1, 0);
+      } else if (key === "ArrowRight" || lower === "d") {
+        movePlayer(1, 0);
+      } else if (
+        key === "Enter" ||
+        key === ">" ||
+        (event.code === "Period" && event.shiftKey)
+      ) {
+        descendStairs();
+      }
+    });
+
+    canvas.addEventListener("click", () => canvas.focus());
+
+    render();
+  </script>
+</body>
+</html>

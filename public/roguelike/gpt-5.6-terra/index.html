@@ -1,0 +1,960 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>星煤の地下回廊</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #08100d;
+    --panel: #101b16;
+    --line: #355142;
+    --text: #d8eadb;
+    --muted: #8da996;
+    --accent: #d7c56a;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 50% 0%, #193126 0%, #08100d 56%, #050806 100%);
+    color: var(--text);
+    font-family: ui-monospace, "Cascadia Code", "SFMono-Regular", Menlo, Consolas, monospace;
+    display: flex;
+    justify-content: center;
+    padding: 18px;
+  }
+
+  #gameShell {
+    width: min(980px, 100%);
+  }
+
+  header {
+    border: 1px solid var(--line);
+    background: rgba(10, 23, 17, .92);
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 0 28px rgba(74, 130, 91, .14);
+  }
+
+  h1 {
+    color: #f0df84;
+    font-size: clamp(18px, 3vw, 27px);
+    letter-spacing: .14em;
+    margin: 0 0 7px;
+  }
+
+  #status {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+    gap: 7px;
+    font-size: 13px;
+  }
+
+  .stat {
+    border-left: 3px solid #557b61;
+    background: #0a1510;
+    padding: 5px 8px;
+    min-height: 29px;
+  }
+
+  .label {
+    color: var(--muted);
+    margin-right: 5px;
+  }
+
+  #main {
+    display: grid;
+    grid-template-columns: minmax(0, auto) 190px;
+    gap: 10px;
+    align-items: start;
+  }
+
+  #canvasWrap {
+    position: relative;
+    border: 1px solid #496a56;
+    background: #020503;
+    box-shadow: 0 0 25px rgba(0, 0, 0, .5);
+    overflow: hidden;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 768px;
+    image-rendering: pixelated;
+  }
+
+  #side {
+    display: grid;
+    gap: 10px;
+  }
+
+  .panel {
+    border: 1px solid var(--line);
+    background: rgba(12, 25, 19, .94);
+    padding: 10px;
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .panelTitle {
+    color: #e7d57b;
+    border-bottom: 1px solid #34503d;
+    margin-bottom: 7px;
+    padding-bottom: 4px;
+    font-weight: bold;
+    letter-spacing: .08em;
+  }
+
+  #inventory {
+    min-height: 176px;
+  }
+
+  .slot {
+    color: #bdd8c2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .empty { color: #647a69; }
+
+  #logs {
+    min-height: 142px;
+  }
+
+  .log {
+    margin: 0 0 5px;
+    color: #b9d1bc;
+  }
+
+  .log:first-child { color: #f0df84; }
+
+  #help {
+    color: #a9c6af;
+    font-size: 11px;
+  }
+
+  #overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    background: rgba(2, 7, 4, .79);
+  }
+
+  #overlayCard {
+    max-width: 480px;
+    border: 1px solid #718f68;
+    background: rgba(11, 26, 18, .96);
+    padding: 24px;
+    box-shadow: 0 0 35px rgba(136, 164, 82, .15);
+  }
+
+  #overlayTitle {
+    color: #f1dd78;
+    letter-spacing: .15em;
+    font-size: 25px;
+    margin-bottom: 14px;
+  }
+
+  #overlayText {
+    color: #c4d8c6;
+    line-height: 1.75;
+    font-size: 13px;
+  }
+
+  .key {
+    color: #f1dd78;
+  }
+
+  @media (max-width: 900px) {
+    #main { grid-template-columns: 1fr; }
+    #side { grid-template-columns: 1fr 1fr; }
+    #help { grid-column: 1 / -1; }
+  }
+
+  @media (max-width: 580px) {
+    body { padding: 8px; }
+    #status { grid-template-columns: 1fr 1fr; }
+    #side { grid-template-columns: 1fr; }
+    canvas { min-width: 680px; }
+    #canvasWrap { overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+<div id="gameShell">
+  <header>
+    <h1>星煤の地下回廊</h1>
+    <div id="status"></div>
+  </header>
+
+  <div id="main">
+    <div id="canvasWrap">
+      <canvas id="game" width="768" height="504" aria-label="ダンジョン画面"></canvas>
+      <div id="overlay">
+        <div id="overlayCard">
+          <div id="overlayTitle">星煤の地下回廊</div>
+          <div id="overlayText">
+            光を失った回廊を抜け、地下三階の出口を目指せ。<br><br>
+            <span class="key">Enter / Space</span> で探索開始<br>
+            矢印キー または <span class="key">W A S D</span> で移動<br>
+            <span class="key">1〜9</span> で道具使用、階段で <span class="key">Enter / &gt;</span><br><br>
+            <span class="key">R</span> で新しい地下回廊を生成
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside id="side">
+      <section class="panel">
+        <div class="panelTitle">所持品</div>
+        <div id="inventory"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panelTitle">行動記録</div>
+        <div id="logs"></div>
+      </section>
+
+      <section class="panel" id="help">
+        <div class="panelTitle">操作</div>
+        移動: 矢印 / W A S D<br>
+        使用: 1〜9<br>
+        降りる: Enter または &gt;<br>
+        再生成: R<br><br>
+        記号:<br>
+        @ 探索者　s 泥スライム<br>
+        h 影猟犬　! 回復薬<br>
+        ) 研磨刃　&gt; 階段
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const W = 48;
+  const H = 28;
+  const TILE_W = 16;
+  const TILE_H = 18;
+  const FOV_RADIUS = 8;
+
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const statusEl = document.getElementById("status");
+  const inventoryEl = document.getElementById("inventory");
+  const logsEl = document.getElementById("logs");
+  const overlay = document.getElementById("overlay");
+  const overlayTitle = document.getElementById("overlayTitle");
+  const overlayText = document.getElementById("overlayText");
+
+  let map = [];
+  let rooms = [];
+  let enemies = [];
+  let items = [];
+  let player;
+  let floor = 1;
+  let logs = [];
+  let running = false;
+  let ended = false;
+
+  const dirs = [
+    { x: 0, y: -1 },
+    { x: 0, y: 1 },
+    { x: -1, y: 0 },
+    { x: 1, y: 0 }
+  ];
+
+  function rnd(n) {
+    return Math.floor(Math.random() * n);
+  }
+
+  function choose(arr) {
+    return arr[rnd(arr.length)];
+  }
+
+  function makeTile(type = "wall") {
+    return { type, seen: false, visible: false };
+  }
+
+  function inBounds(x, y) {
+    return x >= 0 && y >= 0 && x < W && y < H;
+  }
+
+  function isFloor(x, y) {
+    return inBounds(x, y) && map[y][x].type === "floor";
+  }
+
+  function addLog(text) {
+    logs.unshift(text);
+    logs = logs.slice(0, 6);
+    updateUI();
+  }
+
+  function rectsOverlap(a, b) {
+    return !(
+      a.x + a.w < b.x ||
+      b.x + b.w < a.x ||
+      a.y + a.h < b.y ||
+      b.y + b.h < a.y
+    );
+  }
+
+  function carveRoom(room) {
+    for (let y = room.y; y < room.y + room.h; y++) {
+      for (let x = room.x; x < room.x + room.w; x++) {
+        map[y][x].type = "floor";
+      }
+    }
+  }
+
+  function carveHorizontal(x1, x2, y) {
+    const from = Math.min(x1, x2);
+    const to = Math.max(x1, x2);
+    for (let x = from; x <= to; x++) {
+      if (inBounds(x, y)) map[y][x].type = "floor";
+    }
+  }
+
+  function carveVertical(y1, y2, x) {
+    const from = Math.min(y1, y2);
+    const to = Math.max(y1, y2);
+    for (let y = from; y <= to; y++) {
+      if (inBounds(x, y)) map[y][x].type = "floor";
+    }
+  }
+
+  function roomCenter(room) {
+    return {
+      x: Math.floor(room.x + room.w / 2),
+      y: Math.floor(room.y + room.h / 2)
+    };
+  }
+
+  function connectRooms(a, b) {
+    const ca = roomCenter(a);
+    const cb = roomCenter(b);
+    if (Math.random() < 0.5) {
+      carveHorizontal(ca.x, cb.x, ca.y);
+      carveVertical(ca.y, cb.y, cb.x);
+    } else {
+      carveVertical(ca.y, cb.y, ca.x);
+      carveHorizontal(ca.x, cb.x, cb.y);
+    }
+  }
+
+  function entityAt(x, y) {
+    return enemies.find(e => e.x === x && e.y === y && e.hp > 0);
+  }
+
+  function itemAt(x, y) {
+    return items.find(i => i.x === x && i.y === y);
+  }
+
+  function randomOpenSpot(extraForbidden = []) {
+    const forbidden = (x, y) => extraForbidden.some(p => p.x === x && p.y === y);
+    const candidates = [];
+
+    for (let y = 1; y < H - 1; y++) {
+      for (let x = 1; x < W - 1; x++) {
+        if (!isFloor(x, y)) continue;
+        if (player && player.x === x && player.y === y) continue;
+        if (map[y][x].stairs) continue;
+        if (entityAt(x, y) || itemAt(x, y)) continue;
+        if (forbidden(x, y)) continue;
+        candidates.push({ x, y });
+      }
+    }
+    return choose(candidates);
+  }
+
+  function generateFloor() {
+    map = Array.from({ length: H }, () =>
+      Array.from({ length: W }, () => makeTile())
+    );
+    rooms = [];
+    enemies = [];
+    items = [];
+
+    let attempts = 0;
+    while (rooms.length < 7 && attempts < 500) {
+      attempts++;
+      const room = {
+        x: 1 + rnd(W - 11),
+        y: 1 + rnd(H - 9),
+        w: 5 + rnd(5),
+        h: 4 + rnd(4)
+      };
+
+      if (room.x + room.w >= W - 1 || room.y + room.h >= H - 1) continue;
+
+      const padded = {
+        x: room.x - 1,
+        y: room.y - 1,
+        w: room.w + 2,
+        h: room.h + 2
+      };
+
+      if (rooms.some(other => rectsOverlap(padded, other))) continue;
+
+      carveRoom(room);
+      if (rooms.length > 0) connectRooms(rooms[rooms.length - 1], room);
+      rooms.push(room);
+    }
+
+    while (rooms.length < 7) {
+      const index = rooms.length;
+      const fallback = {
+        x: 2 + (index % 3) * 14,
+        y: 2 + Math.floor(index / 3) * 8,
+        w: 6,
+        h: 5
+      };
+      carveRoom(fallback);
+      if (rooms.length > 0) connectRooms(rooms[rooms.length - 1], fallback);
+      rooms.push(fallback);
+    }
+
+    const start = roomCenter(rooms[0]);
+    if (!player) {
+      player = {
+        x: start.x,
+        y: start.y,
+        hp: 20,
+        maxHp: 20,
+        atk: 4,
+        level: 1,
+        xp: 0,
+        inventory: []
+      };
+    } else {
+      player.x = start.x;
+      player.y = start.y;
+    }
+
+    const stairRoom = rooms[rooms.length - 1];
+    const stair = roomCenter(stairRoom);
+    map[stair.y][stair.x].stairs = true;
+
+    const enemyCount = 6 + floor * 2;
+    for (let i = 0; i < enemyCount; i++) {
+      const pos = randomOpenSpot();
+      const hunter = i % 3 === 1;
+      if (hunter) {
+        enemies.push({
+          x: pos.x,
+          y: pos.y,
+          type: "hunter",
+          name: "影猟犬",
+          char: "h",
+          hp: 10 + floor * 5,
+          maxHp: 10 + floor * 5,
+          atk: 3 + floor,
+          def: 1,
+          xp: 7 + floor * 3
+        });
+      } else {
+        enemies.push({
+          x: pos.x,
+          y: pos.y,
+          type: "slime",
+          name: "泥スライム",
+          char: "s",
+          hp: 7 + floor * 4,
+          maxHp: 7 + floor * 4,
+          atk: 2 + floor,
+          def: 0,
+          xp: 4 + floor * 3
+        });
+      }
+    }
+
+    const itemCount = 4 + floor;
+    for (let i = 0; i < itemCount; i++) {
+      const pos = randomOpenSpot();
+      const weapon = i % 2 === 1;
+      items.push({
+        x: pos.x,
+        y: pos.y,
+        type: weapon ? "weapon" : "potion",
+        name: weapon ? "研磨刃" : "回復薬",
+        char: weapon ? ")" : "!"
+      });
+    }
+
+    updateFOV();
+    updateUI();
+    draw();
+  }
+
+  function newGame(showStart = false) {
+    floor = 1;
+    player = {
+      x: 0,
+      y: 0,
+      hp: 20,
+      maxHp: 20,
+      atk: 4,
+      level: 1,
+      xp: 0,
+      inventory: []
+    };
+    logs = [
+      "古い灯火を手に、回廊へ足を踏み入れた。",
+      "敵のいるマスへ移動すると攻撃する。",
+      "影猟犬は視界に入れた相手を追う。",
+      "地下三階の階段を降りれば脱出だ。"
+    ];
+    ended = false;
+    generateFloor();
+
+    if (showStart) {
+      running = false;
+      overlay.style.display = "flex";
+      overlayTitle.textContent = "星煤の地下回廊";
+      overlayText.innerHTML =
+        "光を失った回廊を抜け、地下三階の出口を目指せ。<br><br>" +
+        "<span class='key'>Enter / Space</span> で探索開始<br>" +
+        "矢印キー または <span class='key'>W A S D</span> で移動<br>" +
+        "<span class='key'>1〜9</span> で道具使用、階段で <span class='key'>Enter / &gt;</span><br><br>" +
+        "<span class='key'>R</span> で新しい地下回廊を生成";
+    } else {
+      running = true;
+      overlay.style.display = "none";
+    }
+  }
+
+  function bresenhamVisible(x0, y0, x1, y1) {
+    let dx = Math.abs(x1 - x0);
+    let dy = Math.abs(y1 - y0);
+    let sx = x0 < x1 ? 1 : -1;
+    let sy = y0 < y1 ? 1 : -1;
+    let err = dx - dy;
+
+    while (true) {
+      if (!inBounds(x0, y0)) return false;
+      if (x0 === x1 && y0 === y1) return true;
+      if (!(x0 === player.x && y0 === player.y) && map[y0][x0].type === "wall") return false;
+
+      const e2 = 2 * err;
+      if (e2 > -dy) {
+        err -= dy;
+        x0 += sx;
+      }
+      if (e2 < dx) {
+        err += dx;
+        y0 += sy;
+      }
+    }
+  }
+
+  function updateFOV() {
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        map[y][x].visible = false;
+      }
+    }
+
+    for (let dy = -FOV_RADIUS; dy <= FOV_RADIUS; dy++) {
+      for (let dx = -FOV_RADIUS; dx <= FOV_RADIUS; dx++) {
+        const x = player.x + dx;
+        const y = player.y + dy;
+        if (!inBounds(x, y)) continue;
+        if (dx * dx + dy * dy > FOV_RADIUS * FOV_RADIUS) continue;
+        if (bresenhamVisible(player.x, player.y, x, y)) {
+          map[y][x].visible = true;
+          map[y][x].seen = true;
+        }
+      }
+    }
+  }
+
+  function clearLine(x0, y0, x1, y1) {
+    let dx = Math.abs(x1 - x0);
+    let dy = Math.abs(y1 - y0);
+    let sx = x0 < x1 ? 1 : -1;
+    let sy = y0 < y1 ? 1 : -1;
+    let err = dx - dy;
+
+    while (true) {
+      if (x0 === x1 && y0 === y1) return true;
+      if (!(x0 === player.x && y0 === player.y) && map[y0][x0].type === "wall") return false;
+
+      const e2 = 2 * err;
+      if (e2 > -dy) {
+        err -= dy;
+        x0 += sx;
+      }
+      if (e2 < dx) {
+        err += dx;
+        y0 += sy;
+      }
+      if (!inBounds(x0, y0)) return false;
+    }
+  }
+
+  function enemyCanSeePlayer(enemy) {
+    const dx = enemy.x - player.x;
+    const dy = enemy.y - player.y;
+    return dx * dx + dy * dy <= 100 && clearLine(enemy.x, enemy.y, player.x, player.y);
+  }
+
+  function playerAttack(enemy) {
+    const damage = Math.max(1, player.atk + rnd(3) - enemy.def);
+    enemy.hp -= damage;
+    addLog(`${enemy.name}に ${damage} ダメージ。`);
+
+    if (enemy.hp <= 0) {
+      addLog(`${enemy.name}を倒した。経験値 ${enemy.xp}。`);
+      enemies = enemies.filter(e => e !== enemy);
+      player.xp += enemy.xp;
+      levelCheck();
+    }
+  }
+
+  function levelCheck() {
+    while (player.xp >= player.level * 10) {
+      player.xp -= player.level * 10;
+      player.level++;
+      player.maxHp += 6;
+      player.hp = Math.min(player.maxHp, player.hp + 8);
+      player.atk += 2;
+      addLog(`レベル ${player.level}！ 最大HPと攻撃力が上がった。`);
+    }
+  }
+
+  function enemyAttack(enemy) {
+    const damage = Math.max(1, enemy.atk + rnd(2) - Math.floor(player.level / 3));
+    player.hp -= damage;
+    addLog(`${enemy.name}から ${damage} ダメージ。`);
+
+    if (player.hp <= 0) {
+      player.hp = 0;
+      gameOver();
+    }
+  }
+
+  function tryPickup() {
+    const item = itemAt(player.x, player.y);
+    if (!item) return;
+
+    if (player.inventory.length >= 9) {
+      addLog("所持品がいっぱいで拾えない。");
+      return;
+    }
+
+    player.inventory.push({ type: item.type, name: item.name });
+    items = items.filter(i => i !== item);
+    addLog(`${item.name}を拾った。`);
+  }
+
+  function movePlayer(dx, dy) {
+    const nx = player.x + dx;
+    const ny = player.y + dy;
+
+    if (!isFloor(nx, ny)) {
+      addLog("壁に阻まれた。");
+      draw();
+      return;
+    }
+
+    const enemy = entityAt(nx, ny);
+    if (enemy) {
+      playerAttack(enemy);
+      finishPlayerTurn();
+      return;
+    }
+
+    player.x = nx;
+    player.y = ny;
+    tryPickup();
+    finishPlayerTurn();
+  }
+
+  function moveEnemyRandom(enemy) {
+    const options = dirs
+      .map(d => ({ x: enemy.x + d.x, y: enemy.y + d.y }))
+      .filter(p =>
+        isFloor(p.x, p.y) &&
+        !(p.x === player.x && p.y === player.y) &&
+        !entityAt(p.x, p.y)
+      );
+
+    if (options.length) {
+      const move = choose(options);
+      enemy.x = move.x;
+      enemy.y = move.y;
+    }
+  }
+
+  function moveHunter(enemy) {
+    const choices = dirs
+      .map(d => ({ x: enemy.x + d.x, y: enemy.y + d.y }))
+      .filter(p =>
+        isFloor(p.x, p.y) &&
+        !(p.x === player.x && p.y === player.y) &&
+        !entityAt(p.x, p.y)
+      )
+      .sort((a, b) => {
+        const da = Math.abs(a.x - player.x) + Math.abs(a.y - player.y);
+        const db = Math.abs(b.x - player.x) + Math.abs(b.y - player.y);
+        return da - db;
+      });
+
+    if (choices.length) {
+      const currentDistance = Math.abs(enemy.x - player.x) + Math.abs(enemy.y - player.y);
+      const nextDistance = Math.abs(choices[0].x - player.x) + Math.abs(choices[0].y - player.y);
+      if (nextDistance < currentDistance) {
+        enemy.x = choices[0].x;
+        enemy.y = choices[0].y;
+      }
+    }
+  }
+
+  function enemiesTurn() {
+    const turnEnemies = [...enemies];
+
+    for (const enemy of turnEnemies) {
+      if (ended || !enemies.includes(enemy)) break;
+
+      const distance = Math.abs(enemy.x - player.x) + Math.abs(enemy.y - player.y);
+      if (distance === 1) {
+        enemyAttack(enemy);
+        if (ended) break;
+        continue;
+      }
+
+      if (enemy.type === "hunter" && enemyCanSeePlayer(enemy)) {
+        moveHunter(enemy);
+      } else if (enemy.type === "slime" && Math.random() < 0.32) {
+        moveEnemyRandom(enemy);
+      }
+    }
+  }
+
+  function finishPlayerTurn() {
+    if (ended) {
+      draw();
+      return;
+    }
+    enemiesTurn();
+    if (!ended) {
+      updateFOV();
+      updateUI();
+      draw();
+    }
+  }
+
+  function useItem(slot) {
+    const item = player.inventory[slot];
+    if (!item) {
+      addLog(`スロット ${slot + 1} は空だ。`);
+      draw();
+      return;
+    }
+
+    if (item.type === "potion") {
+      if (player.hp >= player.maxHp) {
+        addLog("HPは満タンだ。");
+        draw();
+        return;
+      }
+      const healed = Math.min(10, player.maxHp - player.hp);
+      player.hp += healed;
+      addLog(`回復薬を使い、HPが ${healed} 回復した。`);
+    } else if (item.type === "weapon") {
+      player.atk += 2;
+      addLog(`研磨刃を使い、攻撃力が 2 上がった。`);
+    }
+
+    player.inventory.splice(slot, 1);
+    finishPlayerTurn();
+  }
+
+  function descend() {
+    if (!map[player.y][player.x].stairs) {
+      addLog("ここには降りる階段がない。");
+      draw();
+      return;
+    }
+
+    if (floor >= 3) {
+      clearGame();
+      return;
+    }
+
+    floor++;
+    addLog(`地下 ${floor} 階へ降りた。`);
+    generateFloor();
+    addLog(`地下 ${floor} 階は、さらに深く冷たい。`);
+    updateFOV();
+    updateUI();
+    draw();
+  }
+
+  function gameOver() {
+    ended = true;
+    running = false;
+    updateUI();
+    draw();
+    overlay.style.display = "flex";
+    overlayTitle.textContent = "探索者は倒れた";
+    overlayText.innerHTML =
+      `地下 ${floor} 階で灯火が消えた。<br><br>` +
+      `<span class="key">R</span> で新しい地下回廊に挑戦する`;
+  }
+
+  function clearGame() {
+    ended = true;
+    running = false;
+    updateUI();
+    draw();
+    overlay.style.display = "flex";
+    overlayTitle.textContent = "回廊を踏破した";
+    overlayText.innerHTML =
+      `地下三階の階段の先に、淡い外光が見える。<br>` +
+      `星煤の地下回廊から、あなたは脱出した。<br><br>` +
+      `<span class="key">R</span> で新しい地下回廊を生成する`;
+  }
+
+  function updateUI() {
+    if (!player) return;
+
+    const need = player.level * 10;
+    statusEl.innerHTML = `
+      <div class="stat"><span class="label">HP</span>${player.hp} / ${player.maxHp}</div>
+      <div class="stat"><span class="label">攻撃力</span>${player.atk}</div>
+      <div class="stat"><span class="label">レベル</span>${player.level} <span class="label">XP</span>${player.xp} / ${need}</div>
+      <div class="stat"><span class="label">現在地</span>地下 ${floor} 階</div>
+    `;
+
+    let invHtml = "";
+    for (let i = 0; i < 9; i++) {
+      const item = player.inventory[i];
+      if (item) {
+        invHtml += `<div class="slot">[${i + 1}] ${item.type === "potion" ? "!" : ")"} ${item.name}</div>`;
+      } else {
+        invHtml += `<div class="slot empty">[${i + 1}] --</div>`;
+      }
+    }
+    inventoryEl.innerHTML = invHtml;
+
+    logsEl.innerHTML = logs.map(line => `<p class="log">${line}</p>`).join("");
+  }
+
+  function drawChar(char, x, y, color) {
+    ctx.fillStyle = color;
+    ctx.fillText(char, x * TILE_W + TILE_W / 2, y * TILE_H + TILE_H / 2 + 1);
+  }
+
+  function draw() {
+    ctx.fillStyle = "#020503";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.font = "14px ui-monospace, monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const tile = map[y][x];
+        if (!tile.seen) continue;
+
+        const bright = tile.visible;
+        ctx.fillStyle = bright ? "#182a20" : "#09110e";
+        ctx.fillRect(x * TILE_W, y * TILE_H, TILE_W, TILE_H);
+
+        if (tile.type === "wall") {
+          drawChar("#", x, y, bright ? "#76947c" : "#263b2d");
+        } else {
+          drawChar(".", x, y, bright ? "#4f6b56" : "#1b2b20");
+        }
+
+        if (tile.stairs && bright) {
+          drawChar(">", x, y, "#74ced0");
+        }
+      }
+    }
+
+    for (const item of items) {
+      if (map[item.y][item.x].visible) {
+        drawChar(item.char, item.x, item.y, item.type === "potion" ? "#e69a9a" : "#dfc56e");
+      }
+    }
+
+    for (const enemy of enemies) {
+      if (map[enemy.y][enemy.x].visible) {
+        drawChar(enemy.char, enemy.x, enemy.y, enemy.type === "hunter" ? "#cc81b9" : "#d87869");
+      }
+    }
+
+    drawChar("@", player.x, player.y, "#ffe27d");
+  }
+
+  document.addEventListener("keydown", event => {
+    const key = event.key;
+    const lower = key.toLowerCase();
+    const movementKeys = ["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d"];
+    const controlKey =
+      movementKeys.includes(lower) ||
+      /^[1-9]$/.test(key) ||
+      key === "Enter" ||
+      key === " " ||
+      key === ">" ||
+      (event.code === "Period" && event.shiftKey) ||
+      lower === "r";
+
+    if (controlKey) event.preventDefault();
+    if (event.repeat) return;
+
+    if (lower === "r") {
+      newGame(false);
+      return;
+    }
+
+    if (!running) {
+      if (!ended && (key === "Enter" || key === " ")) {
+        running = true;
+        overlay.style.display = "none";
+        addLog("探索を開始した。");
+        updateFOV();
+        draw();
+      }
+      return;
+    }
+
+    if (/^[1-9]$/.test(key)) {
+      useItem(Number(key) - 1);
+      return;
+    }
+
+    if (key === "Enter" || key === ">" || (event.code === "Period" && event.shiftKey)) {
+      descend();
+      return;
+    }
+
+    if (lower === "arrowup" || lower === "w") movePlayer(0, -1);
+    else if (lower === "arrowdown" || lower === "s") movePlayer(0, 1);
+    else if (lower === "arrowleft" || lower === "a") movePlayer(-1, 0);
+    else if (lower === "arrowright" || lower === "d") movePlayer(1, 0);
+  });
+
+  newGame(true);
+})();
+</script>
+</body>
+</html>

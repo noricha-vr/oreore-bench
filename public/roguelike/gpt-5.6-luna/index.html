@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深層迷宮クロノス</title>
+<style>
+  :root {
+    color-scheme: dark;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background: #080b0f;
+    color: #d7e0e7;
+    font-family: monospace;
+  }
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 18px;
+  }
+  main {
+    width: min(960px, 100%);
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: #050608;
+    border: 2px solid #394652;
+    box-shadow: 0 0 24px #000;
+    image-rendering: pixelated;
+    outline: none;
+  }
+  .note {
+    color: #83909b;
+    text-align: center;
+    font-size: 12px;
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+<main>
+  <canvas id="game" width="960" height="710" tabindex="0"></canvas>
+  <div class="note">キーボード操作専用</div>
+</main>
+
+<script>
+"use strict";
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const TILE = 20;
+const MAP_W = 48;
+const MAP_H = 28;
+const MAP_PIXEL_H = MAP_H * TILE;
+const HUD_H = 150;
+
+let mode = "title";
+let floor = 1;
+let map = [];
+let rooms = [];
+let explored = [];
+let visible = new Set();
+let enemies = [];
+let items = [];
+let stairs = { x: 0, y: 0 };
+let messages = [];
+
+let player = {
+  x: 0,
+  y: 0,
+  hp: 30,
+  maxHp: 30,
+  atk: 5,
+  level: 1,
+  xp: 0,
+  nextXp: 12,
+  inventory: []
+};
+
+const directions = [
+  { dx: 0, dy: -1 },
+  { dx: 0, dy: 1 },
+  { dx: -1, dy: 0 },
+  { dx: 1, dy: 0 }
+];
+
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function keyOf(x, y) {
+  return x + "," + y;
+}
+
+function inBounds(x, y) {
+  return x >= 0 && y >= 0 && x < MAP_W && y < MAP_H;
+}
+
+function isFloor(x, y) {
+  return inBounds(x, y) && map[y][x] !== "#";
+}
+
+function distance(a, b, c, d) {
+  return Math.abs(a - c) + Math.abs(b - d);
+}
+
+function logMessage(text) {
+  messages.push(text);
+  if (messages.length > 12) messages.shift();
+}
+
+function newGame() {
+  floor = 1;
+  player = {
+    x: 0,
+    y: 0,
+    hp: 30,
+    maxHp: 30,
+    atk: 5,
+    level: 1,
+    xp: 0,
+    nextXp: 12,
+    inventory: []
+  };
+  messages = [];
+  mode = "playing";
+  buildFloor();
+  logMessage("迷宮の入口に立った。");
+  logMessage("床の印を探し、敵を倒せ。");
+  logMessage("階段の上で ENTER または >。");
+  render();
+}
+
+function makeRoom(x, y, w, h) {
+  return {
+    x, y, w, h,
+    cx: Math.floor(x + w / 2),
+    cy: Math.floor(y + h / 2)
+  };
+}
+
+function roomOverlaps(room) {
+  for (const other of rooms) {
+    if (
+      room.x < other.x + other.w + 1 &&
+      room.x + room.w + 1 > other.x &&
+      room.y < other.y + other.h + 1 &&
+      room.y + room.h + 1 > other.y
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function carveRoom(room) {
+  for (let y = room.y; y < room.y + room.h; y++) {
+    for (let x = room.x; x < room.x + room.w; x++) {
+      if (inBounds(x, y)) map[y][x] = ".";
+    }
+  }
+}
+
+function carveHorizontal(x1, x2, y) {
+  const start = Math.min(x1, x2);
+  const end = Math.max(x1, x2);
+  for (let x = start; x <= end; x++) {
+    if (inBounds(x, y)) map[y][x] = ".";
+  }
+}
+
+function carveVertical(y1, y2, x) {
+  const start = Math.min(y1, y2);
+  const end = Math.max(y1, y2);
+  for (let y = start; y <= end; y++) {
+    if (inBounds(x, y)) map[y][x] = ".";
+  }
+}
+
+function connectRooms(a, b) {
+  if (Math.random() < 0.5) {
+    carveHorizontal(a.cx, b.cx, a.cy);
+    carveVertical(a.cy, b.cy, b.cx);
+  } else {
+    carveVertical(a.cy, b.cy, a.cx);
+    carveHorizontal(a.cx, b.cx, b.cy);
+  }
+}
+
+function buildFloor() {
+  map = Array.from({ length: MAP_H }, () => Array(MAP_W).fill("#"));
+  rooms = [];
+
+  let attempts = 0;
+  while (rooms.length < 9 && attempts < 5000) {
+    attempts++;
+    const w = randInt(6, 10);
+    const h = randInt(5, 8);
+    const x = randInt(1, MAP_W - w - 2);
+    const y = randInt(1, MAP_H - h - 2);
+    const candidate = makeRoom(x, y, w, h);
+    if (!roomOverlaps(candidate)) {
+      rooms.push(candidate);
+      carveRoom(candidate);
+    }
+  }
+
+  if (rooms.length < 6) {
+    const fallback = [
+      makeRoom(2, 2, 8, 6),
+      makeRoom(14, 2, 8, 6),
+      makeRoom(27, 2, 9, 6),
+      makeRoom(39, 3, 7, 6),
+      makeRoom(7, 14, 9, 7),
+      makeRoom(22, 14, 9, 7),
+      makeRoom(36, 16, 9, 7)
+    ];
+    for (const r of fallback) {
+      if (rooms.length >= 9) break;
+      rooms.push(r);
+      carveRoom(r);
+    }
+  }
+
+  for (let i = 1; i < rooms.length; i++) {
+    connectRooms(rooms[i - 1], rooms[i]);
+  }
+
+  for (let i = 1; i < rooms.length - 1; i++) {
+    if (Math.random() < 0.35) {
+      connectRooms(rooms[i], rooms[randInt(0, rooms.length - 1)]);
+    }
+  }
+
+  const startRoom = rooms[0];
+  const stairRoom = rooms[rooms.length - 1];
+
+  player.x = startRoom.cx;
+  player.y = startRoom.cy;
+  stairs = { x: stairRoom.cx, y: stairRoom.cy };
+
+  explored = Array.from({ length: MAP_H }, () => Array(MAP_W).fill(false));
+  visible = new Set();
+  enemies = [];
+  items = [];
+
+  for (let i = 0; i < 5; i++) {
+    const spot = randomOpenSpot(4);
+    if (!spot) continue;
+    items.push({
+      x: spot.x,
+      y: spot.y,
+      kind: i === 0 || (i === 3 && Math.random() < 0.5) ? "potion" : "weapon",
+      name: i === 0 || (i === 3 && Math.random() < 0.5) ? "回復薬" : "強化刃",
+      glyph: i === 0 || (i === 3 && Math.random() < 0.5) ? "!" : ")"
+    });
+  }
+
+  const enemyCount = 6 + floor;
+  for (let i = 0; i < enemyCount; i++) {
+    const spot = randomOpenSpot(7);
+    if (!spot) continue;
+
+    const hunter = i % 3 === 0;
+    if (hunter) {
+      const hp = 10 + floor * 3 + randInt(0, 3);
+      enemies.push({
+        x: spot.x,
+        y: spot.y,
+        type: "hunter",
+        name: "追跡者",
+        glyph: "h",
+        hp,
+        maxHp: hp,
+        atk: 3 + floor,
+        xp: 7 + floor * 2
+      });
+    } else {
+      const hp = 7 + floor * 2 + randInt(0, 2);
+      enemies.push({
+        x: spot.x,
+        y: spot.y,
+        type: "slime",
+        name: "スライム",
+        glyph: "s",
+        hp,
+        maxHp: hp,
+        atk: 2 + floor,
+        xp: 4 + floor
+      });
+    }
+  }
+}
+
+function randomOpenSpot(minDistance) {
+  for (let i = 0; i < 3000; i++) {
+    const x = randInt(1, MAP_W - 2);
+    const y = randInt(1, MAP_H - 2);
+    if (!isFloor(x, y)) continue;
+    if (x === player.x && y === player.y) continue;
+    if (x === stairs.x && y === stairs.y) continue;
+    if (distance(x, y, player.x, player.y) < minDistance) continue;
+    if (items.some(item => item.x === x && item.y === y)) continue;
+    if (enemies.some(enemy => enemy.x === x && enemy.y === y)) continue;
+    return { x, y };
+  }
+
+  for (let y = 1; y < MAP_H - 1; y++) {
+    for (let x = 1; x < MAP_W - 1; x++) {
+      if (
+        isFloor(x, y) &&
+        !(x === player.x && y === player.y) &&
+        !(x === stairs.x && y === stairs.y) &&
+        !items.some(item => item.x === x && item.y === y) &&
+        !enemies.some(enemy => enemy.x === x && enemy.y === y)
+      ) {
+        return { x, y };
+      }
+    }
+  }
+  return null;
+}
+
+function lineOfSight(x0, y0, x1, y1) {
+  let dx = Math.abs(x1 - x0);
+  let sx = x0 < x1 ? 1 : -1;
+  let dy = -Math.abs(y1 - y0);
+  let sy = y0 < y1 ? 1 : -1;
+  let err = dx + dy;
+
+  while (true) {
+    if (x0 === x1 && y0 === y1) return true;
+    if (!(x0 === player.x && y0 === player.y) && map[y0][x0] === "#") {
+      return false;
+    }
+
+    const e2 = 2 * err;
+    if (e2 >= dy) {
+      err += dy;
+      x0 += sx;
+    }
+    if (e2 <= dx) {
+      err += dx;
+      y0 += sy;
+    }
+
+    if (!inBounds(x0, y0)) return false;
+  }
+}
+
+function computeFov() {
+  visible = new Set();
+  const radius = 10;
+
+  for (let y = Math.max(0, player.y - radius); y <= Math.min(MAP_H - 1, player.y + radius); y++) {
+    for (let x = Math.max(0, player.x - radius); x <= Math.min(MAP_W - 1, player.x + radius); x++) {
+      const dx = x - player.x;
+      const dy = y - player.y;
+      if (dx * dx + dy * dy > radius * radius) continue;
+      if (lineOfSight(player.x, player.y, x, y)) {
+        visible.add(keyOf(x, y));
+        explored[y][x] = true;
+      }
+    }
+  }
+}
+
+function enemyAt(x, y) {
+  return enemies.find(enemy => enemy.x === x && enemy.y === y);
+}
+
+function itemAt(x, y) {
+  return items.find(item => item.x === x && item.y === y);
+}
+
+function playerAttack(enemy) {
+  const damage = Math.max(1, player.atk + randInt(0, 2));
+  enemy.hp -= damage;
+  logMessage(enemy.name + "に " + damage + " ダメージ");
+
+  if (enemy.hp <= 0) {
+    enemies = enemies.filter(e => e !== enemy);
+    player.xp += enemy.xp;
+    logMessage(enemy.name + "を倒した。+" + enemy.xp + " EXP");
+    checkLevelUp();
+  }
+}
+
+function checkLevelUp() {
+  while (player.xp >= player.nextXp) {
+    player.xp -= player.nextXp;
+    player.level++;
+    player.nextXp = Math.floor(player.nextXp * 1.45) + 3;
+    player.maxHp += 5;
+    player.hp = Math.min(player.maxHp, player.hp + 5);
+    player.atk += 1;
+    logMessage("レベル " + player.level + "。最大HPと攻撃力が上がった。");
+  }
+}
+
+function hurtPlayer(damage, source) {
+  player.hp -= damage;
+  logMessage(source + "の攻撃。 " + damage + " ダメージ");
+  if (player.hp <= 0) {
+    player.hp = 0;
+    mode = "gameover";
+    logMessage("力尽きた。R で再挑戦できる。");
+  }
+}
+
+function occupiedByOtherEnemy(x, y, self) {
+  return enemies.some(enemy => enemy !== self && enemy.x === x && enemy.y === y);
+}
+
+function findChaseStep(enemy) {
+  const start = keyOf(enemy.x, enemy.y);
+  const goal = keyOf(player.x, player.y);
+  const queue = [{ x: enemy.x, y: enemy.y }];
+  const previous = new Map();
+  previous.set(start, null);
+
+  while (queue.length) {
+    const current = queue.shift();
+    if (keyOf(current.x, current.y) === goal) break;
+
+    for (const dir of directions) {
+      const nx = current.x + dir.dx;
+      const ny = current.y + dir.dy;
+      const k = keyOf(nx, ny);
+
+      if (!isFloor(nx, ny) || previous.has(k)) continue;
+      if (occupiedByOtherEnemy(nx, ny, enemy)) continue;
+      if (nx === player.x && ny === player.y) {
+        previous.set(k, keyOf(current.x, current.y));
+        continue;
+      }
+
+      previous.set(k, keyOf(current.x, current.y));
+      queue.push({ x: nx, y: ny });
+    }
+  }
+
+  if (!previous.has(goal)) return null;
+
+  let cursor = goal;
+  let before = previous.get(cursor);
+  while (before && before !== start) {
+    cursor = before;
+    before = previous.get(cursor);
+  }
+
+  const parts = cursor.split(",");
+  return { x: Number(parts[0]), y: Number(parts[1]) };
+}
+
+function randomEnemyStep(enemy) {
+  const shuffled = directions.slice().sort(() => Math.random() - 0.5);
+  for (const dir of shuffled) {
+    const nx = enemy.x + dir.dx;
+    const ny = enemy.y + dir.dy;
+    if (!isFloor(nx, ny)) continue;
+    if (nx === player.x && ny === player.y) continue;
+    if (occupiedByOtherEnemy(nx, ny, enemy)) continue;
+    enemy.x = nx;
+    enemy.y = ny;
+    return;
+  }
+}
+
+function enemyTurn() {
+  for (const enemy of enemies.slice()) {
+    if (mode !== "playing") break;
+
+    const adjacent = distance(enemy.x, enemy.y, player.x, player.y) === 1;
+    if (adjacent) {
+      const damage = Math.max(1, enemy.atk + randInt(0, 1));
+      hurtPlayer(damage, enemy.name);
+      continue;
+    }
+
+    const seesPlayer =
+      distance(enemy.x, enemy.y, player.x, player.y) <= 12 &&
+      lineOfSight(enemy.x, enemy.y, player.x, player.y);
+
+    if (enemy.type === "hunter" && seesPlayer) {
+      const step = findChaseStep(enemy);
+      if (step) {
+        enemy.x = step.x;
+        enemy.y = step.y;
+      }
+    } else if (enemy.type === "slime" && Math.random() < 0.24) {
+      randomEnemyStep(enemy);
+    }
+  }
+}
+
+function pickUpItem() {
+  const item = itemAt(player.x, player.y);
+  if (!item) return;
+
+  if (player.inventory.length >= 9) {
+    logMessage("持ち物がいっぱいだ。");
+    return;
+  }
+
+  player.inventory.push({
+    kind: item.kind,
+    name: item.name
+  });
+  items = items.filter(i => i !== item);
+  logMessage(item.name + "を拾った。");
+}
+
+function movePlayer(dx, dy) {
+  if (mode !== "playing") return;
+
+  const nx = player.x + dx;
+  const ny = player.y + dy;
+
+  if (!isFloor(nx, ny)) {
+    logMessage("壁が行く手を阻んでいる。");
+    enemyTurn();
+    render();
+    return;
+  }
+
+  const enemy = enemyAt(nx, ny);
+  if (enemy) {
+    playerAttack(enemy);
+  } else {
+    player.x = nx;
+    player.y = ny;
+    pickUpItem();
+  }
+
+  if (mode === "playing") enemyTurn();
+  render();
+}
+
+function useItem(slot) {
+  if (mode !== "playing") return;
+  const index = slot - 1;
+  const item = player.inventory[index];
+
+  if (!item) {
+    logMessage("そのスロットには何もない。");
+    render();
+    return;
+  }
+
+  player.inventory.splice(index, 1);
+
+  if (item.kind === "potion") {
+    const amount = Math.min(player.maxHp - player.hp, 10 + floor * 2);
+    player.hp += amount;
+    if (amount > 0) {
+      logMessage("回復薬で " + amount + " HP 回復した。");
+    } else {
+      logMessage("回復薬を使ったが、HPは満タンだった。");
+    }
+  } else {
+    const amount = 2 + (floor % 2);
+    player.atk += amount;
+    logMessage("強化刃を使い、攻撃力が " + amount + " 上がった。");
+  }
+
+  enemyTurn();
+  render();
+}
+
+function descend() {
+  if (mode !== "playing") return;
+
+  if (player.x !== stairs.x || player.y !== stairs.y) {
+    logMessage("ここには階段がない。");
+    render();
+    return;
+  }
+
+  if (floor === 3) {
+    logMessage("地下3階の階段を降りた。迷宮制覇！");
+    mode = "clear";
+    render();
+    return;
+  }
+
+  floor++;
+  buildFloor();
+  logMessage("地下" + floor + "階へ降りた。敵の気配が濃い。");
+  render();
+}
+
+function drawText(text, x, y, color, size, align) {
+  ctx.fillStyle = color;
+  ctx.font = (size || 16) + "px monospace";
+  ctx.textAlign = align || "left";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText(text, x, y);
+}
+
+function drawGame() {
+  ctx.fillStyle = "#050608";
+  ctx.fillRect(0, 0, canvas.width, MAP_PIXEL_H);
+
+  for (let y = 0; y < MAP_H; y++) {
+    for (let x = 0; x < MAP_W; x++) {
+      const k = keyOf(x, y);
+      const isVisible = visible.has(k);
+      const wasExplored = explored[y][x];
+
+      if (!isVisible && !wasExplored) continue;
+
+      const wall = map[y][x] === "#";
+      let background;
+      let foreground;
+
+      if (isVisible) {
+        background = wall ? "#26323a" : "#18231f";
+        foreground = wall ? "#71818b" : "#7e9a87";
+      } else {
+        background = wall ? "#111820" : "#101713";
+        foreground = wall ? "#34414a" : "#394d41";
+      }
+
+      ctx.fillStyle = background;
+      ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
+
+      drawText(
+        wall ? "#" : ".",
+        x * TILE + TILE / 2,
+        y * TILE + 15,
+        foreground,
+        15,
+        "center"
+      );
+    }
+  }
+
+  if (explored[stairs.y] && explored[stairs.y][stairs.x]) {
+    drawText(
+      ">",
+      stairs.x * TILE + TILE / 2,
+      stairs.y * TILE + 16,
+      visible.has(keyOf(stairs.x, stairs.y)) ? "#d3c273" : "#665f38",
+      17,
+      "center"
+    );
+  }
+
+  for (const item of items) {
+    if (visible.has(keyOf(item.x, item.y))) {
+      drawText(
+        item.glyph,
+        item.x * TILE + TILE / 2,
+        item.y * TILE + 16,
+        item.kind === "potion" ? "#7fc4d5" : "#d6a85e",
+        17,
+        "center"
+      );
+    }
+  }
+
+  for (const enemy of enemies) {
+    if (visible.has(keyOf(enemy.x, enemy.y))) {
+      drawText(
+        enemy.glyph,
+        enemy.x * TILE + TILE / 2,
+        enemy.y * TILE + 16,
+        enemy.type === "hunter" ? "#df766d" : "#b7c96b",
+        17,
+        "center"
+      );
+    }
+  }
+
+  drawText(
+    "@",
+    player.x * TILE + TILE / 2,
+    player.y * TILE + 16,
+    "#f2f0d0",
+    18,
+    "center"
+  );
+
+  drawHud();
+}
+
+function drawHud() {
+  const y0 = MAP_PIXEL_H;
+  ctx.fillStyle = "#10161c";
+  ctx.fillRect(0, y0, canvas.width, HUD_H);
+  ctx.fillStyle = "#35434e";
+  ctx.fillRect(0, y0, canvas.width, 2);
+
+  const hpColor = player.hp <= player.maxHp * 0.3 ? "#e8756d" : "#9ed39a";
+  drawText(
+    "HP " + player.hp + "/" + player.maxHp,
+    16,
+    y0 + 25,
+    hpColor,
+    16
+  );
+  drawText("LV " + player.level, 180, y0 + 25, "#d8d6a2", 16);
+  drawText("EXP " + player.xp + "/" + player.nextXp, 270, y0 + 25, "#b7c4d4", 16);
+  drawText("ATK " + player.atk, 440, y0 + 25, "#d8a673", 16);
+  drawText("地下 " + floor + "階", 560, y0 + 25, "#d8c67d", 16);
+  drawText("敵 " + enemies.length, 700, y0 + 25, "#c98e8b", 16);
+
+  let inventoryText = "持ち物 ";
+  for (let i = 0; i < 9; i++) {
+    if (player.inventory[i]) {
+      inventoryText += "[" + (i + 1) + "]" + player.inventory[i].name + " ";
+    } else {
+      inventoryText += "[" + (i + 1) + "]-- ";
+    }
+  }
+  drawText(inventoryText, 16, y0 + 49, "#c6d0d6", 13);
+
+  drawText(
+    "矢印/WASD: 移動   1-9: アイテム   ENTER/>: 階段   R: 再生成",
+    16,
+    y0 + 72,
+    "#81909b",
+    13
+  );
+
+  drawText("ログ", 16, y0 + 94, "#d0b879", 13);
+  const recent = messages.slice(-3);
+  for (let i = 0; i < recent.length; i++) {
+    drawText(recent[i], 70, y0 + 94 + i * 18, "#bdc8ca", 13);
+  }
+}
+
+function drawTitle() {
+  ctx.fillStyle = "#070a0e";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = "#33424d";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(24, 24, canvas.width - 48, canvas.height - 48);
+
+  drawText("深層迷宮クロノス", canvas.width / 2, 190, "#d7c477", 34, "center");
+  drawText("TURN-BASED DUNGEON", canvas.width / 2, 225, "#6f8b8d", 15, "center");
+
+  drawText("@  探索者", canvas.width / 2 - 220, 310, "#f2f0d0", 18, "center");
+  drawText("s  スライム", canvas.width / 2, 310, "#b7c96b", 18, "center");
+  drawText("h  追跡者", canvas.width / 2 + 220, 310, "#df766d", 18, "center");
+
+  drawText("部屋と通路からなる迷宮を進み、地下3階を目指せ。", canvas.width / 2, 390, "#aebbc0", 16, "center");
+  drawText("敵を倒して成長し、床のアイテムを活用しよう。", canvas.width / 2, 420, "#aebbc0", 16, "center");
+
+  drawText("ENTER または SPACE で開始", canvas.width / 2, 510, "#e2d18a", 20, "center");
+  drawText("移動: 矢印キー / W A S D    アイテム: 1 - 9    再生成: R", canvas.width / 2, 550, "#72818c", 14, "center");
+}
+
+function drawOverlay() {
+  ctx.fillStyle = "rgba(3, 5, 8, 0.82)";
+  ctx.fillRect(0, 0, canvas.width, MAP_PIXEL_H);
+
+  const clear = mode === "clear";
+  drawText(
+    clear ? "迷宮制覇" : "GAME OVER",
+    canvas.width / 2,
+    220,
+    clear ? "#e0d083" : "#df7770",
+    38,
+    "center"
+  );
+
+  drawText(
+    clear
+      ? "地下3階を越え、深層の謎を踏破した。"
+      : "探索者は迷宮の闇に沈んだ。",
+    canvas.width / 2,
+    275,
+    "#d2d9d5",
+    16,
+    "center"
+  );
+
+  drawText(
+    "到達階: 地下" + floor + "階   レベル: " + player.level,
+    canvas.width / 2,
+    315,
+    "#a9b6bc",
+    15,
+    "center"
+  );
+  drawText("R で新しい迷宮に挑戦", canvas.width / 2, 385, "#d0be78", 19, "center");
+}
+
+function render() {
+  if (mode === "title") {
+    drawTitle();
+    return;
+  }
+
+  computeFov();
+  drawGame();
+
+  if (mode === "gameover" || mode === "clear") {
+    drawOverlay();
+  }
+}
+
+window.addEventListener("keydown", function(event) {
+  const key = event.key;
+  const lower = key.toLowerCase();
+
+  if (lower === "r") {
+    event.preventDefault();
+    newGame();
+    return;
+  }
+
+  if (mode === "title") {
+    if (key === "Enter" || key === " ") {
+      event.preventDefault();
+      newGame();
+    }
+    return;
+  }
+
+  if (mode !== "playing") return;
+
+  if (
+    key === "ArrowUp" ||
+    key === "ArrowDown" ||
+    key === "ArrowLeft" ||
+    key === "ArrowRight" ||
+    ["w", "a", "s", "d", "enter", ">", " "].includes(lower) ||
+    /^[1-9]$/.test(key)
+  ) {
+    event.preventDefault();
+  }
+
+  if (key === "ArrowUp" || lower === "w") {
+    movePlayer(0, -1);
+  } else if (key === "ArrowDown" || lower === "s") {
+    movePlayer(0, 1);
+  } else if (key === "ArrowLeft" || lower === "a") {
+    movePlayer(-1, 0);
+  } else if (key === "ArrowRight" || lower === "d") {
+    movePlayer(1, 0);
+  } else if (/^[1-9]$/.test(key)) {
+    useItem(Number(key));
+  } else if (key === "Enter" || key === ">") {
+    descend();
+  }
+});
+
+canvas.addEventListener("click", () => canvas.focus());
+
+render();
+</script>
+</body>
+</html>

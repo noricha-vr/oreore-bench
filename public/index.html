@@ -1547,7 +1547,15 @@
             { theme: "hasami-shogi", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "スモーク検証PASS。木目盤+ステータスバッジ+ルール折りたたみ付き。467行/14KB。", kind: "html" },
             { theme: "hasami-shogi", model: "grok-4-5",            runner: "grok CLI (single-turn)", note: "スモーク検証PASS。ダーク×市松模様のエレガント盤面+ルール要約footer。541行/14KB。", kind: "html" },
 
-            // roguelike（モデル出力は scripts/gen-html.py 等で追加。検証: node scripts/verify-roguelike.mjs）
+            // roguelike（ターン制ダンジョン RPG。スモーク検証: JSエラー / 移動反映 / 40手連打 / リロードでマップ変化を機械確認）
+            { theme: "roguelike", model: "gemma-4-12b-qat",     runner: "LM Studio API",   note: "context 65536 に拡張して3回目で完走（既定 32768 では reasoning が上限を食い潰し空出力）。ただし初期化時 JS エラー44件で盤面が描画されず黒画面（HP 0/0）。508行/16KB。", kind: "html" },
+            { theme: "roguelike", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",   note: "スモークPASS・JSエラー0。移動・戦闘・HUD が動くローカル勢唯一の完走。メッセージログの更新は乏しくフォグは簡素。496行/15KB。", kind: "html" },
+            { theme: "roguelike", model: "gemma-4-31b",         runner: "LM Studio API",   note: "JSエラー2件（undefined 参照）で verify FAIL。盤面と HUD は出るが敵・アイテムが機能せず体裁が崩れる。503行/16KB。", kind: "html" },
+            { theme: "roguelike", model: "gpt-5.6-sol",         runner: "OpenAI API (reasoning high)", note: "JSエラー0。日本語UI「灰灯の地下譜」。FOV+フォグ・9枠インベントリ・戦闘ログまで揃い完成度は全モデル中最高。1183行/31KB。", kind: "html" },
+            { theme: "roguelike", model: "gpt-5.6-terra",       runner: "OpenAI API (reasoning high)", note: "JSエラー0。「星煤の地下回廊」。記号凡例付きで情報設計が丁寧、フォグは階調表現。960行/23KB。", kind: "html" },
+            { theme: "roguelike", model: "gpt-5.6-luna",        runner: "OpenAI API (reasoning high)", note: "JSエラー0。FOV の明暗が最も明瞭なモノトーン。残り敵数 HUD など独自要素あり。866行/20KB。", kind: "html" },
+            { theme: "roguelike", model: "grok-4-5",            runner: "grok CLI (single-turn)", note: "JSエラー0。英語UI「CRYPT OF HOLLOW EMBER」。戦闘ログ・FOV 階調・階段まで一通り動く。586行/17KB。", kind: "html" },
+            { theme: "roguelike", model: "gemini-3-1-pro",      runner: "AntiGravity CLI (High)", note: "JSエラー0。ミニマルな端末風 UI。基本要素は揃うがフォグなし・ログ更新は控えめ。559行/14KB。", kind: "html" },
 
             // lp-fable5（水彩絵本 LP。スモーク検証: 全ページロード + スクロール走査で JS エラー数を機械確認）
             { theme: "lp-fable5", model: "gemma-4-12b-qat",     runner: "LM Studio API",   note: "JSエラー0。構成は追従するがイラストは簡素な図形寄り。616行/20KB。", kind: "html" },

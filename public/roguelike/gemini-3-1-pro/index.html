@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Dungeon of the Unknown</title>
+<style>
+  body {
+    background-color: #111;
+    color: #eee;
+    font-family: monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0;
+    padding: 20px;
+    user-select: none;
+  }
+  #game-container {
+    display: flex;
+    gap: 20px;
+  }
+  canvas {
+    background-color: #000;
+    border: 1px solid #444;
+  }
+  #sidebar {
+    width: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .panel {
+    background-color: #222;
+    padding: 10px;
+    border: 1px solid #444;
+  }
+  #messages {
+    height: 120px;
+    overflow-y: hidden;
+    display: flex;
+    flex-direction: column-reverse;
+  }
+  .msg {
+    margin: 2px 0;
+    font-size: 14px;
+  }
+  #inventory {
+    min-height: 180px;
+  }
+  .inv-item {
+    margin: 4px 0;
+  }
+  #overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    z-index: 10;
+  }
+  h1 { margin-bottom: 10px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="overlay">
+  <h1 id="overlay-title">Dungeon of the Unknown</h1>
+  <p id="overlay-desc">Enter または Space キーで開始</p>
+</div>
+
+<div id="game-container">
+  <div>
+    <canvas id="gameCanvas" width="800" height="500"></canvas>
+    <div class="panel" id="messages"></div>
+  </div>
+  <div id="sidebar">
+    <div class="panel">
+      <h3>Status</h3>
+      <div id="hud-floor">Floor: 1</div>
+      <div id="hud-level">Level: 1</div>
+      <div id="hud-hp">HP: 30 / 30</div>
+      <div id="hud-atk">ATK: 5</div>
+      <div id="hud-xp">XP: 0 / 10</div>
+    </div>
+    <div class="panel">
+      <h3>Inventory</h3>
+      <div id="inventory"></div>
+      <p style="font-size:12px; color:#aaa; margin-top:10px;">数字キー(1-9)で使用</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLS = 40;
+const ROWS = 25;
+const TILE_SIZE = 20;
+const FOV_RADIUS = 6;
+const MAX_FLOOR = 3;
+
+let state = 'title';
+let map = [];
+let seen = [];
+let visible = [];
+let rooms = [];
+let player = {};
+let enemies = [];
+let items = [];
+let inventory = [];
+let floor = 1;
+let messages = [];
+
+class Rect {
+  constructor(x, y, w, h) {
+    this.x = x; this.y = y;
+    this.w = w; this.h = h;
+  }
+  center() {
+    return { x: Math.floor(this.x + this.w/2), y: Math.floor(this.y + this.h/2) };
+  }
+  intersect(other) {
+    return this.x <= other.x + other.w && this.x + this.w >= other.x &&
+           this.y <= other.y + other.h && this.y + this.h >= other.y;
+  }
+}
+
+const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const dist = (x1, y1, x2, y2) => Math.abs(x1 - x2) + Math.abs(y1 - y2);
+const logMsg = (msg, color = '#eee') => {
+  messages.unshift({ text: msg, color });
+  if (messages.length > 6) messages.pop();
+  renderHUD();
+};
+
+function initPlayer() {
+  player = { x: 0, y: 0, hp: 30, maxHp: 30, atk: 5, level: 1, xp: 0, maxXp: 10 };
+  inventory = [];
+  floor = 1;
+}
+
+function startGame() {
+  initPlayer();
+  messages = [];
+  logMsg("ダンジョンへ足を踏み入れた...", "#aaf");
+  generateFloor();
+  state = 'play';
+  document.getElementById('overlay').classList.add('hidden');
+  render();
+}
+
+function restartGame() {
+  startGame();
+}
+
+function generateFloor() {
+  map = Array(ROWS).fill(0).map(() => Array(COLS).fill('#'));
+  seen = Array(ROWS).fill(0).map(() => Array(COLS).fill(false));
+  visible = Array(ROWS).fill(0).map(() => Array(COLS).fill(false));
+  rooms = [];
+  enemies = [];
+  items = [];
+
+  const MAX_ROOMS = 15;
+  const MIN_SIZE = 4;
+  const MAX_SIZE = 9;
+
+  for (let i = 0; i < MAX_ROOMS; i++) {
+    const w = rand(MIN_SIZE, MAX_SIZE);
+    const h = rand(MIN_SIZE, MAX_SIZE);
+    const x = rand(1, COLS - w - 1);
+    const y = rand(1, ROWS - h - 1);
+    const newRoom = new Rect(x, y, w, h);
+
+    let failed = false;
+    for (let other of rooms) {
+      if (newRoom.intersect(other)) {
+        failed = true; break;
+      }
+    }
+    if (!failed) {
+      createRoom(newRoom);
+      let center = newRoom.center();
+      if (rooms.length === 0) {
+        player.x = center.x;
+        player.y = center.y;
+      } else {
+        let prev = rooms[rooms.length - 1].center();
+        createCorridor(prev.x, prev.y, center.x, center.y);
+      }
+      rooms.push(newRoom);
+    }
+  }
+
+  let lastRoom = rooms[rooms.length - 1].center();
+  map[lastRoom.y][lastRoom.x] = '>';
+
+  populateFloor();
+  updateFOV();
+  render();
+}
+
+function createRoom(room) {
+  for (let y = room.y; y < room.y + room.h; y++) {
+    for (let x = room.x; x < room.x + room.w; x++) {
+      map[y][x] = '.';
+    }
+  }
+}
+
+function createCorridor(x1, y1, x2, y2) {
+  let x = x1, y = y1;
+  while (x !== x2 || y !== y2) {
+    if (Math.random() < 0.5) {
+      if (x < x2) x++; else if (x > x2) x--;
+      else if (y < y2) y++; else if (y > y2) y--;
+    } else {
+      if (y < y2) y++; else if (y > y2) y--;
+      else if (x < x2) x++; else if (x > x2) x--;
+    }
+    map[y][x] = '.';
+  }
+}
+
+function populateFloor() {
+  const numEnemies = rand(5, 8 + floor);
+  const numItems = rand(3, 5);
+
+  let freeSpots = [];
+  for(let y = 1; y < ROWS - 1; y++){
+    for(let x = 1; x < COLS - 1; x++){
+      if(map[y][x] === '.' && (x !== player.x || y !== player.y) && map[y][x] !== '>') {
+        freeSpots.push({x, y});
+      }
+    }
+  }
+  freeSpots.sort(() => Math.random() - 0.5);
+
+  for(let i=0; i<numEnemies && freeSpots.length > 0; i++) {
+    let pt = freeSpots.pop();
+    let isStrong = Math.random() < (0.2 * floor); 
+    let hpMulti = 1 + (floor * 0.3);
+    let atkMulti = 1 + (floor * 0.2);
+    
+    if(isStrong) {
+      enemies.push({ x: pt.x, y: pt.y, hp: Math.floor(20 * hpMulti), atk: Math.floor(5 * atkMulti), char: 'O', name: 'オーク', color: '#3a3', type: 'tracker' });
+    } else {
+      enemies.push({ x: pt.x, y: pt.y, hp: Math.floor(10 * hpMulti), atk: Math.floor(3 * atkMulti), char: 'g', name: 'ゴブリン', color: '#a83', type: 'random' });
+    }
+  }
+
+  for(let i=0; i<numItems && freeSpots.length > 0; i++) {
+    let pt = freeSpots.pop();
+    let type = Math.random() < 0.6 ? 'potion' : 'weapon';
+    if(type === 'potion') {
+      items.push({ x: pt.x, y: pt.y, type: 'potion', char: '!', name: '回復薬', color: '#f55', val: 20 });
+    } else {
+      items.push({ x: pt.x, y: pt.y, type: 'weapon', char: '/', name: '剣', color: '#ccc', val: 2 });
+    }
+  }
+}
+
+function updateFOV() {
+  for(let y=0; y<ROWS; y++) {
+    for(let x=0; x<COLS; x++) {
+      visible[y][x] = false;
+    }
+  }
+  
+  visible[player.y][player.x] = true;
+  seen[player.y][player.x] = true;
+
+  for(let i=0; i<360; i+=1) {
+    let rad = i * Math.PI / 180;
+    let dx = Math.cos(rad);
+    let dy = Math.sin(rad);
+    let ox = player.x + 0.5;
+    let oy = player.y + 0.5;
+    for(let r=0; r<FOV_RADIUS; r++) {
+      let tx = Math.floor(ox);
+      let ty = Math.floor(oy);
+      if(tx < 0 || tx >= COLS || ty < 0 || ty >= ROWS) break;
+      visible[ty][tx] = true;
+      seen[ty][tx] = true;
+      if(map[ty][tx] === '#') break;
+      ox += dx;
+      oy += dy;
+    }
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (state === 'title') {
+    if (e.key === 'Enter' || e.key === ' ') startGame();
+    return;
+  }
+  if (state === 'over' || state === 'clear') {
+    if (e.key === 'r' || e.key === 'R') restartGame();
+    return;
+  }
+  if (state !== 'play') return;
+
+  let dx = 0, dy = 0;
+  let tookTurn = false;
+
+  if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') dy = -1;
+  else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') dy = 1;
+  else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') dx = -1;
+  else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') dx = 1;
+  else if (e.key === 'Enter' || e.key === '>') {
+    if (map[player.y][player.x] === '>') {
+      goDownStairs();
+      return;
+    }
+  }
+  else if (e.key >= '1' && e.key <= '9') {
+    let used = useItem(parseInt(e.key) - 1);
+    if(used) tookTurn = true;
+  }
+
+  if (dx !== 0 || dy !== 0) {
+    let nx = player.x + dx;
+    let ny = player.y + dy;
+    if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS && map[ny][nx] !== '#') {
+      let enemy = enemies.find(en => en.x === nx && en.y === ny && en.hp > 0);
+      if (enemy) {
+        attack(player, enemy);
+      } else {
+        player.x = nx;
+        player.y = ny;
+        pickupItem();
+      }
+      tookTurn = true;
+    }
+  }
+
+  if (tookTurn) {
+    enemiesTurn();
+    updateFOV();
+    render();
+    checkGameState();
+  }
+});
+
+function goDownStairs() {
+  if (floor >= MAX_FLOOR) {
+    state = 'clear';
+    document.getElementById('overlay-title').innerText = "ゲームクリア！";
+    document.getElementById('overlay-desc').innerText = "ダンジョンを踏破した！ Rキーで再スタート";
+    document.getElementById('overlay').classList.remove('hidden');
+  } else {
+    floor++;
+    logMsg(`地下 ${floor} 階へ降りた。`, "#ff0");
+    generateFloor();
+  }
+}
+
+function pickupItem() {
+  let idx = items.findIndex(it => it.x === player.x && it.y === player.y);
+  if (idx !== -1) {
+    if (inventory.length < 9) {
+      let item = items.splice(idx, 1)[0];
+      inventory.push(item);
+      logMsg(`${item.name} を拾った。`, "#fff");
+    } else {
+      logMsg("インベントリがいっぱいで拾えない！", "#aaa");
+    }
+  }
+}
+
+function useItem(index) {
+  if (index >= 0 && index < inventory.length) {
+    let item = inventory.splice(index, 1)[0];
+    if (item.type === 'potion') {
+      player.hp = Math.min(player.maxHp, player.hp + item.val);
+      logMsg(`${item.name}を使用！ HPが${item.val}回復した。`, "#4f4");
+    } else if (item.type === 'weapon') {
+      player.atk += item.val;
+      logMsg(`${item.name}を装備！ 攻撃力が${item.val}上がった。`, "#4f4");
+    }
+    return true;
+  }
+  return false;
+}
+
+function attack(attacker, defender) {
+  let dmg = attacker.atk;
+  defender.hp -= dmg;
+  if (attacker === player) {
+    logMsg(`${defender.name} に ${dmg} のダメージ！`, "#ff4");
+    if (defender.hp <= 0) {
+      logMsg(`${defender.name} を倒した！`, "#fa4");
+      gainXp(10 * floor);
+    }
+  } else {
+    logMsg(`${attacker.name} の攻撃！ ${dmg} のダメージを受けた！`, "#f44");
+  }
+}
+
+function gainXp(amount) {
+  player.xp += amount;
+  if (player.xp >= player.maxXp) {
+    player.level++;
+    player.xp -= player.maxXp;
+    player.maxXp = Math.floor(player.maxXp * 1.5);
+    player.maxHp += 10;
+    player.hp = player.maxHp;
+    player.atk += 2;
+    logMsg(`レベルアップ！ レベル ${player.level} になった！`, "#4ff");
+  }
+}
+
+function enemiesTurn() {
+  for (let enemy of enemies) {
+    if (enemy.hp <= 0) continue;
+    let d = dist(enemy.x, enemy.y, player.x, player.y);
+    if (d === 1) {
+      attack(enemy, player);
+    } else if (visible[enemy.y][enemy.x]) {
+      if (enemy.type === 'tracker') {
+        moveTowards(enemy, player.x, player.y);
+      } else {
+        moveRandom(enemy);
+      }
+    }
+  }
+  enemies = enemies.filter(e => e.hp > 0);
+}
+
+function moveTowards(enemy, tx, ty) {
+  let dx = Math.sign(tx - enemy.x);
+  let dy = Math.sign(ty - enemy.y);
+  
+  if (dx !== 0 && canMove(enemy.x + dx, enemy.y)) {
+    enemy.x += dx;
+  } else if (dy !== 0 && canMove(enemy.x, enemy.y + dy)) {
+    enemy.y += dy;
+  }
+}
+
+function moveRandom(enemy) {
+  let dirs = [[0,-1], [0,1], [-1,0], [1,0]];
+  let dir = dirs[Math.floor(Math.random()*dirs.length)];
+  if(canMove(enemy.x + dir[0], enemy.y + dir[1])) {
+    enemy.x += dir[0];
+    enemy.y += dir[1];
+  }
+}
+
+function canMove(x, y) {
+  if(x<0 || x>=COLS || y<0 || y>=ROWS || map[y][x] === '#') return false;
+  if(x === player.x && y === player.y) return false;
+  for(let e of enemies) {
+    if(e.hp > 0 && e.x === x && e.y === y) return false;
+  }
+  return true;
+}
+
+function checkGameState() {
+  if (player.hp <= 0) {
+    state = 'over';
+    document.getElementById('overlay-title').innerText = "ゲームオーバー";
+    document.getElementById('overlay-desc').innerText = "あなたは死んでしまった... Rキーで再スタート";
+    document.getElementById('overlay').classList.remove('hidden');
+  }
+}
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.font = '20px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  for(let y=0; y<ROWS; y++) {
+    for(let x=0; x<COLS; x++) {
+      if(!seen[y][x]) continue;
+
+      let cx = x * TILE_SIZE + TILE_SIZE/2;
+      let cy = y * TILE_SIZE + TILE_SIZE/2;
+      let isVis = visible[y][x];
+
+      let tile = map[y][x];
+      let color = isVis ? '#fff' : '#333';
+      if(tile === '#') color = isVis ? '#666' : '#111';
+      if(tile === '>') color = isVis ? '#f0f' : '#808';
+
+      ctx.fillStyle = color;
+      ctx.fillText(tile, cx, cy);
+    }
+  }
+
+  for(let item of items) {
+    if(visible[item.y][item.x]) {
+      let cx = item.x * TILE_SIZE + TILE_SIZE/2;
+      let cy = item.y * TILE_SIZE + TILE_SIZE/2;
+      ctx.fillStyle = item.color;
+      ctx.fillText(item.char, cx, cy);
+    }
+  }
+
+  for(let enemy of enemies) {
+    if(visible[enemy.y][enemy.x]) {
+      let cx = enemy.x * TILE_SIZE + TILE_SIZE/2;
+      let cy = enemy.y * TILE_SIZE + TILE_SIZE/2;
+      ctx.fillStyle = enemy.color;
+      ctx.fillText(enemy.char, cx, cy);
+    }
+  }
+
+  let px = player.x * TILE_SIZE + TILE_SIZE/2;
+  let py = player.y * TILE_SIZE + TILE_SIZE/2;
+  ctx.fillStyle = '#0f0';
+  ctx.fillText('@', px, py);
+
+  renderHUD();
+}
+
+function renderHUD() {
+  document.getElementById('hud-floor').innerText = `Floor: ${floor} / ${MAX_FLOOR}`;
+  document.getElementById('hud-level').innerText = `Level: ${player.level}`;
+  document.getElementById('hud-hp').innerText = `HP: ${player.hp} / ${player.maxHp}`;
+  document.getElementById('hud-atk').innerText = `ATK: ${player.atk}`;
+  document.getElementById('hud-xp').innerText = `XP: ${player.xp} / ${player.maxXp}`;
+
+  const invDiv = document.getElementById('inventory');
+  invDiv.innerHTML = '';
+  if (inventory.length === 0) {
+    invDiv.innerHTML = '<div class="inv-item" style="color:#666">- なし -</div>';
+  } else {
+    inventory.forEach((item, i) => {
+      let d = document.createElement('div');
+      d.className = 'inv-item';
+      d.style.color = item.color;
+      d.innerText = `[${i+1}] ${item.name}`;
+      invDiv.appendChild(d);
+    });
+  }
+
+  const msgDiv = document.getElementById('messages');
+  msgDiv.innerHTML = '';
+  messages.forEach(m => {
+    let d = document.createElement('div');
+    d.className = 'msg';
+    d.style.color = m.color;
+    d.innerText = m.text;
+    msgDiv.appendChild(d);
+  });
+}
+</script>
+</body>
+</html>
