@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NISHIBI | 西日</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Noto+Serif+JP:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #F2E8CF;
+            --text-main: #3D2C1F;
+            --accent-orange: #D69D68;
+            --accent-terracotta: #A5724B;
+            --accent-dark: #1A0E08;
+            --white: #FFFFFF;
+            --font-head: 'Cormorant Garamond', serif;
+            --font-body: 'Noto Serif JP', serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.8;
+            font-weight: 400;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3 {
+            font-family: var(--font-head);
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        a {
+            color: var(--text-main);
+            text-decoration: none;
+            transition: opacity 0.3s ease;
+        }
+
+        a:hover {
+            opacity: 0.7;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        section {
+            padding: 6rem 0;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Hero */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: stretch;
+            padding-top: 2rem;
+        }
+
+        .hero-content {
+            text-align: center;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            margin-bottom: 3rem;
+            opacity: 0.7;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--text-main);
+            color: var(--bg-color);
+            padding: 1rem 2.5rem;
+            font-family: var(--font-head);
+            font-size: 1.2rem;
+            border-radius: 0;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-orange);
+            opacity: 1;
+        }
+
+        /* Philosophy */
+        .philosophy {
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .philosophy p {
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Services */
+        .services {
+            background-color: var(--accent-dark);
+            color: var(--bg-color);
+        }
+
+        .services h2 {
+            text-align: center;
+        }
+
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .service-card {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 2.5rem;
+            border-top: 1px solid var(--accent-terracotta);
+        }
+
+        .service-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+        }
+
+        .service-price {
+            font-family: var(--font-head);
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .service-features {
+            font-size: 0.95rem;
+            opacity: 0.8;
+        }
+
+        /* Science */
+        .science {
+            background-color: var(--bg-color);
+            text-align: center;
+        }
+
+        .science-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+        }
+
+        .science-item {
+            border-bottom: 1px solid var(--text-main);
+            padding-bottom: 1.5rem;
+        }
+
+        .data-value {
+            font-family: var(--font-head);
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Studio */
+        .studio {
+            background-color: var(--accent-terracotta);
+            color: var(--bg-color);
+        }
+
+        .studio-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        .studio-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .studio-item h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Testimonials */
+        .testimonials {
+            background-color: var(--bg-color);
+        }
+
+        .testimonial-grid {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .testimonial {
+            border-left: 2px solid var(--text-main);
+            padding-left: 1.5rem;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            margin-top: 1rem;
+            font-style: normal;
+            font-size: 0.95rem;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: var(--text-main);
+            color: var(--bg-color);
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        .footer-brand {
+            font-family: var(--font-head);
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .studio-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .science-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Reveal Animation */
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <section class="hero">
+        <div class="container hero-content">
+            <h1 class="hero-title">NISHIBI</h1>
+            <p class="hero-subtitle">太陽が沈むその瞬間、肌を余白に委ねる。</p>
+            <a href="#philosophy" class="btn">体験を願う</a>
+        </div>
+    </section>
+
+    <section class="philosophy" id="philosophy">
+        <div class="container">
+            <h2>哲学的な選択</h2>
+            <p>東の光は始まりを告げる。しかし、真実の輝きは西に留まる。このプロジェクトは、機械的な UV 照射ではなく、太陽が最も静かな時を授ける「西日の余韻」を人間に帰すことを目的とする。</p>
+            <p>紫外線の強度は時間帯において変化する。夕暮れの光量は、自然な生物リズムを調整し、メラニン細胞の活性を穏やかに刺激する。この現象は、太陽と地の縁に触れることで得られる独自の美意識である。</p>
+        </div>
+    </section>
+
+    <section class="services">
+        <div class="container">
+            <h2>プラン</h2>
+            <div class="service-grid">
+                <div class="service-card">
+                    <h3>黄金時間</h3>
+                    <p class="service-price">1 回 25,000 円</p>
+                    <p class="service-features">17:00 - 18:30<br>太陽のエネルギーが最も高密度な時間帯。</p>
+                </div>
+                <div class="service-card">
+                    <h3>茜時間</h3>
+                    <p class="service-price">1 回 30,000 円</p>
+                    <p class="service-features">19:00 - 20:00<br>夕日が雲に染まる、最も詩的な時間帯。</p>
+                </div>
+                <div class="service-card">
+                    <h3>残光時間</h3>
+                    <p class="service-price">1 回 40,000 円</p>
+                    <p class="service-features">20:30 - 21:30<br>夜明け前の余韻、静寂と光の共鳴。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="science">
+        <div class="container">
+            <h2>科学的な検証</h2>
+            <div class="science-grid">
+                <div class="science-item">
+                    <p>紫外線指数 (UVI)</p>
+                    <div class="data-value">2.3 - 3.0</div>
+                    <p>自然光による皮膚の保護層維持</p>
+                </div>
+                <div class="science-item">
+                    <p>メラニン生成率</p>
+                    <div class="data-value">+15%</div>
+                    <p>西日特有の波長によるメラニン産生</p>
+                </div>
+                <div class="science-item">
+                    <p>体温管理</p>
+                    <div class="data-value">-0.3°C</div>
+                    <p>静穏な空間による体温安定化</p>
+                </div>
+                <div class="science-item">
+                    <p>コルチゾール</p>
+                    <div class="data-value">-10%</div>
+                    <p>夕日によるストレスホルモンの緩和</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="studio">
+        <div class="container">
+            <h2>スタジオ</h2>
+            <div class="studio-grid">
+                <div class="studio-item">
+                    <h3>南西向き全面窓</h3>
+                    <p>日射が直接進入する構造。</p>
+                </div>
+                <div class="studio-item">
+                    <h3>無垢材の内装</h3>
+                    <p>天然の木材が光を反射する。</p>
+                </div>
+                <div class="studio-item">
+                    <h3>無音空間</h3>
+                    <p>静寂が美しさを強調する。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="testimonials">
+        <div class="container">
+            <h2>検証</h2>
+            <div class="testimonial-grid">
+                <div class="testimonial">
+                    <p>「西日という概念は、単なる日焼けの代わりではなく、時間そのものを体感する体験でした。非常に洗練られた空間です。」</p>
+                    <div class="testimonial-author">建築家 森田 太郎</div>
+                </div>
+                <div class="testimonial">
+                    <p>「UV 機器による化学反応ではなく、太陽の物理的な振動を肌で感じる。それは何より清冽な感覚でした。」</p>
+                    <div class="testimonial-author">デザイナー 山本 美咲</div>
+                </div>
+                <div class="testimonial">
+                    <p>「夜の光が重なる瞬間、自分自身が自然の一部分に溶け込むことを実感した。高い価格に見合う価値です。」</p>
+                    <div class="testimonial-author">作家 鈴木 由美</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-brand">NISHIBI</div>
+            <p style="font-size: 0.9rem; margin-bottom: 1.5rem;">東京都千代田区大手町 1-2-3, Floor 4</p>
+            <div class="footer-links">
+                <a href="#">Instagram</a>
+                <a href="#">Twitter</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, observerOptions);
+
+            const sections = document.querySelectorAll('section');
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+        });
+    </script>
+</body>
+</html>

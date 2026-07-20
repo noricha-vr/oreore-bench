@@ -1,0 +1,88 @@
+
+
+{
+  "triage": [
+    {
+      "pr": 105,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": ["セキュリティ脆弱性 #92 の解決（トークン移動）", "テストあり、CI 通過、レビュー承認済み"],
+      "actions": ["すぐにマージする", "旧リンクの 24 時間維持期間を監視"],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 101,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": ["セキュリティ対策 #90 の解決（レート制限追加）", "テストあり、CI 通過、レビュー承認済み"],
+      "actions": ["すぐにマージする", "ログ監視を継続"],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 104,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": ["依存パッケージ固定方針への違反（バージョン固定解除）", "サプライチェーン攻撃防止のルール違反"],
+      "actions": ["PR を閉じる、または依存固定に戻す", "locked のリセットを不要にする"],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 109,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": ["#93 で解決済み（docs/setup.md 改訂）", "README と重複の構成あり"],
+      "actions": ["PR を閉じる", "README 更新は既に完了済みのため不要"],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 103,
+      "verdict": "fix",
+      "confidence": "medium",
+      "reasons": ["broad except で例外を静かにする（silent failure）", "エラーハンドリングポリシー違反"],
+      "actions": ["`except Exception: pass` を削除または適切にログ出力する", "API 失敗時のエラーコードを把握して処理する"],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 107,
+      "verdict": "fix",
+      "confidence": "medium",
+      "reasons": ["CI 失敗（`test_deadline_dst_boundary`）", "flaky テストの要因不明"],
+      "actions": ["CI 失敗原因を調査", "テストを修正するか再実行する"],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 102,
+      "verdict": "fix",
+      "confidence": "medium",
+      "reasons": ["テストなし（新規機能や修正に Test 必須）", "reviewer の指摘（所有者絞り込み不足）未対応"],
+      "actions": ["テストを追加する", "owner 絞り込みロジックを実装して再レビュー"],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 106,
+      "verdict": "hold",
+      "confidence": "medium",
+      "reasons": ["変更が非常に大規模（42 ファイル）", "レビュー側で分割要求あり、作者は拒否"],
+      "actions": ["分割の提案を再検討するか、作者に分割の必要性を説明する", "優先度を上げるか、別の PR で分割"],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 108,
+      "verdict": "hold",
+      "confidence": "medium",
+      "reasons": ["Issue #94 の結論未決（分離の是非）", "大規模 refactor かつ意図が不明確"],
+      "actions": ["Issue #94 の議論を待機する", "作者に分離の是非を明確にする"],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 110,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": ["機能追加（CSV エクスポート）", "テストあり、CI 通過、レビュー承認済み"],
+      "actions": ["すぐにマージする", "StreamingHttpResponse 検討の nit を追う"],
+      "risk_if_merged": "low"
+    }
+  ],
+  "priority_order": [105, 101, 104, 109, 103, 107, 102, 106, 108, 110],
+  "summary": "セキュリティ関連の #90/#92 対応 PR が優先でマージ。依存固定方針違反 (#104, #109) は閉じる。CI 失敗 (#107) とテスト欠如 (#102) は修正を要す。大規模変更（#106, #108）は待ち状態。"
+}

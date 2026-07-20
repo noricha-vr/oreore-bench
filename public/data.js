@@ -494,6 +494,31 @@ window.MODELS = {
                     { label: "公式 Model Card", href: "https://storage.googleapis.com/deepmind-media/Model-Cards/Gemini-3-1-Pro-Model-Card.pdf" }
                 ]
             },
+            "agents-a1-4b": {
+                label: "Agents A1 4B",
+                provider: "InternScience",
+                type: "local",
+                color: "#4F46E5",
+                colorDark: "#312E81",
+                release: "2026-07-14",
+                size: "4B",
+                context: "256K tokens",
+                output: "32K tokens（今回の上限）",
+                quantization: "MLX 4-bit",
+                runtime: "LM Studio",
+                stats: [
+                    { value: "4B", label: "パラメータ", note: "InternScience 公称" },
+                    { value: "4-bit", label: "量子化", note: "MLX" },
+                    { value: "256K", label: "コンテキスト", note: "公式モデルカード" },
+                    { value: "32K", label: "今回の出力上限", note: "LM Studio" }
+                ],
+                strengths: "小型モデルながら、PRレビュー判定では10件を完走し85%一致。静的なLPも短時間で構成できた。",
+                weaknesses: "長い推論で出力枠を使い切りやすい。今回のゲーム3本と流体表現は動作検証で破綻し、抽出課題2本も完走できなかった。",
+                links: [
+                    { label: "Hugging Face", href: "https://huggingface.co/InternScience/Agents-A1-4B" },
+                    { label: "MLX 4-bit", href: "https://huggingface.co/wcamon/Agents-A1-4B-MLX-4bit" }
+                ]
+            },
             "kimi-k3": {
                 label: "Kimi K3",
                 provider: "Moonshot AI",
@@ -614,3 +639,15 @@ window.ENTRIES = [
             { theme: "pr-triage", model: "grok-4-5",            runner: "grok CLI (single-turn)", note: "✅ スキーマ準拠 PASS。正解キー一致 90%。設計議論が未決着の PR を hold でなく close と断定したのが唯一の非一致。", kind: "json" }
         ];
 
+window.ENTRIES.push(
+    { theme: "lp-nishibi", model: "agents-a1-4b", runner: "LM Studio API", note: "37秒。6セクションを表示できるが、内容が上部に偏り大きな空白が残る。", kind: "html" },
+    { theme: "othello", model: "agents-a1-4b", runner: "LM Studio API", note: "49秒。盤面は出るが、有効手が0で進行不能。", kind: "html" },
+    { theme: "hasami-shogi", model: "agents-a1-4b", runner: "LM Studio API", note: "118秒。基本移動とCPU応答は動くが、null.r参照のJavaScriptエラーが1件。", kind: "html" },
+    { theme: "roguelike", model: "agents-a1-4b", runner: "LM Studio API", note: "70秒。canvasは出るが、JavaScriptエラー2件で移動できない。", kind: "html" },
+    { theme: "lp-fable5", model: "agents-a1-4b", runner: "LM Studio API", note: "69秒。全7セクションを描画し、スクロールを完走。JavaScriptエラー0。", kind: "html" },
+    { theme: "suminagashi", model: "agents-a1-4b", runner: "LM Studio API", note: "128秒。canvasは出るが、例外で描画が変化しない。", kind: "html" },
+    { theme: "phoenix-lp", model: "agents-a1-4b", runner: "LM Studio API", note: "69秒。canvasは出るが、構文エラーでスクロール演出が動かない。", kind: "html" },
+    { theme: "extract-questions", model: "agents-a1-4b", runner: "LM Studio API", note: "FAIL。再試行後も空配列。", kind: "json" },
+    { theme: "extract-questions-v2", model: "agents-a1-4b", runner: "LM Studio API", note: "FAIL。32Kを使い切り回答なし。", kind: "json" },
+    { theme: "pr-triage", model: "agents-a1-4b", runner: "LM Studio API", note: "PASS。10件を完走し85%。", kind: "json" }
+);

@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "theme": "hasami-shogi",
+  "model": "agents-a1-4b",
+  "model_id": "wcamon/agents-a1-4b-mlx-4bit",
+  "harness": "lmstudio-api",
+  "reasoning_effort": "unknown",
+  "attempts": 1,
+  "generated_at": "2026-07-20T06:06:33Z",
+  "generated_at_source": "measured",
+  "sampling": {
+    "temperature": "default",
+    "max_tokens": "default",
+    "top_p": "default"
+  },
+  "system_prompt": "harness-default",
+  "post_processing": "none",
+  "runtime": {
+    "engine": "lmstudio",
+    "quantization": "mlx-4bit",
+    "api": "openai-compat"
+  },
+  "usage": {
+    "estimated": false,
+    "method": "api-usage",
+    "prompt_tokens": 973,
+    "completion_tokens": 16878
+  },
+  "cost": {
+    "estimated": true,
+    "usd": null,
+    "actual_usd": 0,
+    "prompt_usd_per_mtok": null,
+    "completion_usd_per_mtok": null,
+    "pricing_source": "local-no-reference",
+    "pricing_model": null,
+    "pricing_fetched_at": null
+  }
+}
