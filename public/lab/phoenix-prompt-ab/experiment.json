@@ -5,7 +5,7 @@
   "model": "claude-fable-5 (claude CLI headless / effort high / ハーネス隔離)",
   "purpose": "不死鳥LP「HIBANA」のベンチ用プロンプトを、1ショット品質が上がる方向へ5ラウンドのA/Bで改善する。各ラウンドで現チャンピオン(A)と仮説を1つ足したチャレンジャー(B)を同条件で生成し、6シーンのスクリーンショット比較で勝者を決定。勝者プロンプトが次ラウンドのチャンピオンになる。",
   "constraints": "R1-3: Canvas 2D 縛り（ベンチ現行と同条件）/ R4: Three.js r0.160 解禁 / R5: Three.js + 露出規律。生成はすべて run-clean-cli.sh によるハーネス隔離（個人 CLAUDE.md / skills 遮断、サブスク認証のみ）",
-  "conclusion": "最終チャンピオンは「H1 craft語彙 + H3 実装技法の直書き」を足した Canvas 2D 版（PROMPT-final.md）。効いた仮説は (1) H1: AI slop の禁止列挙・タイポ数値・grain/vignette などの craft 語彙、(2) H3: 加算合成・放射グラデ・残像・ベジェシルエット+輪郭パーティクルの2層モチーフ指定（最大の品質ジャンプ）。効かなかったのは H2: XML 構造化+rubric 自己照合（ラベル衝突を防げず悪化）と H4/H5: Three.js（Bloom 白飛び→露出規律で暗部シーンは実験中最高になったが明色シーンが乳白化し総合で2Dに届かず）。Three.js は多ショット前提なら有望。ベンチへの反映は別途判断。",
+  "conclusion": "AI 判定の最終チャンピオンは「H1 craft語彙 + H3 実装技法の直書き」を足した Canvas 2D 版（PROMPT-final.md）。効いた仮説は (1) H1: AI slop の禁止列挙・タイポ数値・grain/vignette などの craft 語彙、(2) H3: 加算合成・放射グラデ・残像・ベジェシルエット+輪郭パーティクルの2層モチーフ指定（最大の品質ジャンプ）。効かなかったのは H2: XML 構造化+rubric 自己照合（ラベル衝突を防げず悪化）と H4/H5: Three.js（静止スクショ判定では Bloom 白飛び・乳白化が減点）。【追記 2026-07-20】作者の目視（実機でスクロール）では R4 の Three.js 版（r4b）が全バージョン中最良だった。シーンごと静止画1枚の判定では GPU パーティクルや Bloom の脈動といった動的品質を評価できず、AI 判定が実体験と乖離した。次回以降はシーンあたり複数フレーム＋遷移中間の撮影（または動画）で判定する。",
   "finalPromptPath": "PROMPT-final.md",
   "rounds": [
     {
