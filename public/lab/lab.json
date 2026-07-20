@@ -5,7 +5,7 @@
       "title": "phoenix プロンプト A/B 改善実験",
       "date": "2026-07-20",
       "summary": "不死鳥LPのプロンプトを5ラウンド×A/B=10生成で改善。勝ち筋は craft 語彙 + Canvas 技法の直書き。Three.js は露出制御が壁で2Dに届かず（露出規律で急改善・有望）。モデルは Claude Fable 5 固定・ハーネス隔離。",
-      "status": "completed",
+      "status": "done",
       "tags": ["prompt-engineering", "phoenix-lp", "claude-fable-5"]
     }
   ]
