@@ -6,8 +6,8 @@
   "harness": "openrouter-api",
   "reasoning_effort": "high",
   "attempts": 1,
-  "generated_at": null,
-  "generated_at_source": "unknown",
+  "generated_at": "2026-07-20T10:20:39+09:00",
+  "generated_at_source": "git-first-commit",
   "sampling": {
     "temperature": "default",
     "max_tokens": "default",
@@ -15,5 +15,22 @@
   },
   "system_prompt": "harness-default",
   "post_processing": "none",
-  "runtime": null
+  "runtime": null,
+  "usage": {
+    "estimated": false,
+    "method": "api-usage",
+    "prompt_tokens": 1819,
+    "completion_tokens": 15466,
+    "note": "OpenRouter API 実測。completion に reasoning 3914 tokens を含む"
+  },
+  "cost": {
+    "estimated": false,
+    "usd": 0.237447,
+    "actual_usd": null,
+    "prompt_usd_per_mtok": 3.0,
+    "completion_usd_per_mtok": 15.0,
+    "pricing_source": "openrouter",
+    "pricing_model": "moonshotai/kimi-k3",
+    "pricing_fetched_at": "2026-07-17"
+  }
 }

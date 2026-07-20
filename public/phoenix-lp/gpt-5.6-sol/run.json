@@ -6,8 +6,8 @@
   "harness": "codex-exec",
   "reasoning_effort": "high",
   "attempts": 1,
-  "generated_at": null,
-  "generated_at_source": "unknown",
+  "generated_at": "2026-07-20T10:20:39+09:00",
+  "generated_at_source": "git-first-commit",
   "sampling": {
     "temperature": "default",
     "max_tokens": "default",
@@ -15,5 +15,22 @@
   },
   "system_prompt": "harness-default",
   "post_processing": "none",
-  "runtime": null
+  "runtime": null,
+  "usage": {
+    "estimated": true,
+    "method": "tiktoken-o200k_base-proxy",
+    "prompt_tokens": 1643,
+    "completion_tokens": 37460,
+    "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+  },
+  "cost": {
+    "estimated": true,
+    "usd": 1.132015,
+    "actual_usd": null,
+    "prompt_usd_per_mtok": 5.0,
+    "completion_usd_per_mtok": 30.0,
+    "pricing_source": "openrouter",
+    "pricing_model": "openai/gpt-5.6-sol",
+    "pricing_fetched_at": "2026-07-17"
+  }
 }

@@ -6,8 +6,8 @@
   "harness": "lmstudio-api",
   "reasoning_effort": "none",
   "attempts": 1,
-  "generated_at": null,
-  "generated_at_source": "unknown",
+  "generated_at": "2026-07-20T10:20:39+09:00",
+  "generated_at_source": "git-first-commit",
   "sampling": {
     "temperature": "default",
     "max_tokens": "default",
@@ -19,5 +19,22 @@
     "engine": "lmstudio",
     "quantization": "q4_k_m",
     "api": "openai-compat"
+  },
+  "usage": {
+    "estimated": true,
+    "method": "tiktoken-o200k_base-proxy",
+    "prompt_tokens": 1643,
+    "completion_tokens": 5169,
+    "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+  },
+  "cost": {
+    "estimated": true,
+    "usd": 0.003204,
+    "actual_usd": 0,
+    "prompt_usd_per_mtok": 0.22,
+    "completion_usd_per_mtok": 0.55,
+    "pricing_source": "openrouter-reference",
+    "pricing_model": "google/gemma-4-31b-it",
+    "pricing_fetched_at": "2026-07-17"
   }
 }
