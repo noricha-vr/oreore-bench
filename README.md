@@ -205,11 +205,15 @@ Claude Code 上で `Agent` ツール（`subagent_type=implementer`, `model=opus`
 
 ### 4. デプロイ
 
+main への push で GitHub Actions（`.github/workflows/deploy.yml`）が wrangler デプロイを実行する。
+Pages プロジェクトは Direct Upload 型のため Cloudflare 側の Git 連携は使えない（Actions 経由が正）。
+Secrets: `CLOUDFLARE_API_TOKEN`（Pages:編集のみ）/ `CLOUDFLARE_ACCOUNT_ID`。
+
+手動デプロイ（Actions が使えない時のフォールバック）:
+
 ```bash
 wrangler pages deploy public/ --project-name=oreore-bench --branch=main
 ```
-
-GitHub に push すれば Cloudflare Pages 側でも自動デプロイされる構成。
 
 ## ルール
 
