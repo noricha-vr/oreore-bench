@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "theme": "phoenix-lp",
+  "model": "gpt-5.6-terra",
+  "model_id": "gpt-5.6-terra",
+  "harness": "codex-exec",
+  "reasoning_effort": "high",
+  "attempts": 1,
+  "generated_at": null,
+  "generated_at_source": "unknown",
+  "sampling": {
+    "temperature": "default",
+    "max_tokens": "default",
+    "top_p": "default"
+  },
+  "system_prompt": "harness-default",
+  "post_processing": "none",
+  "runtime": null
+}

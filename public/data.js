@@ -581,17 +581,17 @@ window.ENTRIES = [
 
             // phoenix-lp（不死鳥スクロール没入型 LP「HIBANA」。単一 index.html + Canvas 2D 縛り。
             // スモーク検証: ページロード + Canvas 存在 + スクロールで描画変化 + JS エラー数を機械確認）
-            { theme: "phoenix-lp", model: "gemma-4-12b-qat",     runner: "LM Studio API", note: "生成待ち（未検証）。", kind: "html" },
-            { theme: "phoenix-lp", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API", note: "生成待ち（未検証）。", kind: "html" },
-            { theme: "phoenix-lp", model: "gemma-4-31b",         runner: "LM Studio API", note: "生成待ち（未検証）。", kind: "html" },
-            { theme: "phoenix-lp", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "生成待ち（未検証）。", kind: "html" },
-            { theme: "phoenix-lp", model: "grok-4-5",            runner: "OpenRouter API", note: "生成待ち（未検証）。", kind: "html" },
-            { theme: "phoenix-lp", model: "claude-fable-5",      runner: "claude CLI headless (effort high)", note: "生成待ち（未検証）。", kind: "html" },
-            { theme: "phoenix-lp", model: "gpt-5.6-luna",        runner: "OpenAI API (reasoning high)", note: "生成待ち（未検証）。", kind: "html" },
-            { theme: "phoenix-lp", model: "gpt-5.6-terra",       runner: "OpenAI API (reasoning high)", note: "生成待ち（未検証）。", kind: "html" },
-            { theme: "phoenix-lp", model: "gpt-5.6-sol",         runner: "OpenAI API (reasoning high)", note: "生成待ち（未検証）。", kind: "html" },
-            { theme: "phoenix-lp", model: "gemini-3-1-pro",      runner: "AntiGravity CLI (High)", note: "生成待ち（未検証）。", kind: "html" },
-            { theme: "phoenix-lp", model: "kimi-k3",             runner: "OpenRouter API (reasoning high)", note: "生成待ち（未検証）。", kind: "html" },
+            { theme: "phoenix-lp", model: "gemma-4-12b-qat",     runner: "LM Studio API", note: "1ショット551行/20KB。6シーン構成とスクロール遷移は動くが、初期化時 JS エラー1件（i is not defined）。所要2分10秒。", kind: "html" },
+            { theme: "phoenix-lp", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API", note: "1ショット369行/16KB。canvas は出るがスクロールで描画が変化せず、JS エラー1件（undefined の x 参照）。所要55秒。", kind: "html" },
+            { theme: "phoenix-lp", model: "gemma-4-31b",         runner: "LM Studio API", note: "1ショット536行/20KB。ロード・canvas・スクロール遷移OK、JSエラー0。所要6分9秒。", kind: "html" },
+            { theme: "phoenix-lp", model: "claude-opus-4-8",     runner: "claude CLI headless (effort high)", note: "1ショット432行/20KB。6シーン遷移・JSエラー0。所要2分6秒と最速級。", kind: "html" },
+            { theme: "phoenix-lp", model: "grok-4-5",            runner: "OpenRouter API (reasoning high)", note: "1ショット1638行/52KB。スクロール遷移・JSエラー0。completion 18196 tok。", kind: "html" },
+            { theme: "phoenix-lp", model: "claude-fable-5",      runner: "claude CLI headless (effort high)", note: "1ショット675行/32KB。6シーン遷移・JSエラー0。所要7分7秒。", kind: "html" },
+            { theme: "phoenix-lp", model: "gpt-5.6-luna",        runner: "codex exec (reasoning high)", note: "1ショット3234行/92KB。スクロール遷移・JSエラー0。所要5分6秒。", kind: "html" },
+            { theme: "phoenix-lp", model: "gpt-5.6-terra",       runner: "codex exec (reasoning high)", note: "1ショット1526行/56KB。スクロール遷移・JSエラー0。所要3分26秒。", kind: "html" },
+            { theme: "phoenix-lp", model: "gpt-5.6-sol",         runner: "codex exec (reasoning high)", note: "1ショット4144行/128KB と最大ボリューム。スクロール遷移・JSエラー0。所要6分8秒。", kind: "html" },
+            { theme: "phoenix-lp", model: "gemini-3-1-pro",      runner: "AntiGravity CLI (High)", note: "1ショット866行/28KB。スクロール遷移・JSエラー0。所要3分46秒。", kind: "html" },
+            { theme: "phoenix-lp", model: "kimi-k3",             runner: "OpenRouter API (reasoning high)", note: "1ショット807行/32KB。スクロール遷移・JSエラー0。completion 15466 tok。", kind: "html" },
 
             // extract-questions（20 問入力、基本サイズ、全モデル PASS = 実運用サイズは全モデル対応可の証拠）
             { theme: "extract-questions", model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。20 件抽出、最軽量でも 本番運用スキーマを完全に満たす。", kind: "json" },

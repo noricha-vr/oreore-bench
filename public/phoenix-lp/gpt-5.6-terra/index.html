@@ -1,0 +1,1526 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f2ecf5" />
+  <title>HIBANA — a living reference</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Shippori+Mincho:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --dawn-bg: #f2ecf5;
+      --dawn-wing: #b9a6e0;
+      --orb: #e8f0a8;
+      --flame: #ff7a2f;
+      --ember: #ffb36b;
+      --night: #0a1030;
+      --feather: #7fb8ff;
+      --sunset: #c23a1f;
+      --ink: #2a2438;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: auto; background: var(--night); }
+    body {
+      margin: 0;
+      min-height: 900vh;
+      overflow-x: hidden;
+      color: var(--ink);
+      background: var(--dawn-bg);
+      font-family: "Shippori Mincho", serif;
+    }
+
+    canvas, .scene, .grain, .ui { position: fixed; inset: 0; }
+    #world {
+      z-index: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .grain {
+      z-index: 4;
+      pointer-events: none;
+      opacity: .16;
+      mix-blend-mode: soft-light;
+      background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.65'/%3E%3C/svg%3E");
+    }
+
+    .scene {
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0;
+      transform: translate3d(0, 24px, 0);
+      will-change: opacity, transform;
+      transition: opacity .35s linear;
+    }
+
+    .scene-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      padding: 7vh 6vw;
+    }
+
+    .copy {
+      position: absolute;
+      font-family: "Cormorant Garamond", "Shippori Mincho", serif;
+      font-size: clamp(1.45rem, 3.2vw, 2.72rem);
+      line-height: 1.42;
+      letter-spacing: .04em;
+      font-weight: 400;
+    }
+
+    .copy i { font-weight: 500; }
+    .copy .line {
+      display: block;
+      width: max-content;
+      max-width: 88vw;
+      opacity: 0;
+      transform: translate3d(0, 18px, 0);
+      filter: blur(5px);
+      transition:
+        opacity .75s cubic-bezier(.2,.75,.22,1),
+        transform .75s cubic-bezier(.2,.75,.22,1),
+        filter .75s ease;
+    }
+
+    .scene.active .copy .line {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+      filter: blur(0);
+    }
+
+    .scene.active .copy .line:nth-child(1) { transition-delay: .06s; }
+    .scene.active .copy .line:nth-child(2) { transition-delay: .14s; }
+    .scene.active .copy .line:nth-child(3) { transition-delay: .23s; }
+    .scene.active .copy .line:nth-child(4) { transition-delay: .32s; }
+    .scene.active .copy .line:nth-child(5) { transition-delay: .41s; }
+    .scene.active .copy .line:nth-child(6) { transition-delay: .50s; }
+
+    .dawn-copy {
+      top: 28%;
+      right: 8vw;
+      color: #40384f;
+      text-shadow: 0 2px 25px rgba(255,255,255,.45);
+    }
+    .dawn-copy .line:nth-child(2) { margin-left: 2.2vw; }
+    .dawn-copy .line:nth-child(3) { margin-left: 5.8vw; }
+    .dawn-copy .line:nth-child(4) { margin-left: 9.6vw; }
+
+    .rise-copy {
+      left: 50%;
+      top: 39%;
+      color: #fff1df;
+      transform: translateX(-50%);
+      text-align: center;
+      font-size: clamp(2.8rem, 8.5vw, 8rem);
+      letter-spacing: .18em;
+      white-space: nowrap;
+      text-shadow: 0 0 40px rgba(135,34,15,.3);
+    }
+    .rise-copy .line:nth-child(2) {
+      margin-left: .7em;
+      filter: blur(2px);
+      opacity: .65 !important;
+      font-size: .42em;
+      letter-spacing: .12em;
+    }
+
+    .halo-copy {
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -51%);
+      color: rgba(255,255,250,.92);
+      font-size: clamp(10rem, 29vw, 27rem);
+      line-height: .75;
+      letter-spacing: -.1em;
+      text-shadow: 0 0 30px rgba(255,255,255,.68), 0 0 110px rgba(255,229,166,.7);
+      mix-blend-mode: screen;
+    }
+    .halo-copy .line { width: auto; }
+
+    .feather-notes {
+      position: absolute;
+      top: 20%;
+      color: rgba(189,215,255,.75);
+      font-family: "Shippori Mincho", serif;
+      font-size: clamp(.68rem, .9vw, .84rem);
+      line-height: 2.1;
+      letter-spacing: .16em;
+      writing-mode: vertical-rl;
+      opacity: .7;
+    }
+    .feather-notes.left { left: 8vw; }
+    .feather-notes.right { right: 9vw; transform: rotate(180deg); }
+    .feather-copy {
+      left: 50%;
+      bottom: 10%;
+      transform: translateX(-50%);
+      width: 90vw;
+      color: #e2ecff;
+      text-align: center;
+      font-size: clamp(1.45rem, 3.2vw, 2.7rem);
+      text-shadow: 0 0 24px rgba(100,172,255,.28);
+    }
+    .feather-copy .line:nth-child(2) { margin: .2em auto 0; opacity: .65; font-size: .82em; }
+
+    .crystal-copy {
+      left: 8vw;
+      top: 18%;
+      color: rgba(230,240,255,.94);
+      font-size: clamp(1.4rem, 3vw, 2.5rem);
+      text-shadow: 0 0 24px rgba(102,157,255,.25);
+    }
+    .crystal-copy .line:nth-child(2) { margin-left: 2.3vw; }
+
+    .finale-copy {
+      left: 50%;
+      bottom: 9%;
+      transform: translateX(-50%);
+      width: 90vw;
+      text-align: center;
+      color: #fff0db;
+      font-size: clamp(1.55rem, 3.8vw, 3.15rem);
+      text-shadow: 0 2px 26px rgba(79,16,16,.72);
+    }
+    .finale-copy .line:nth-child(2) { margin: .05em auto 0; font-size: .82em; }
+
+    .crystal-stage {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      perspective: 1000px;
+      pointer-events: auto;
+    }
+    .crystal {
+      --size: clamp(100px, 15vw, 220px);
+      position: absolute;
+      width: var(--size);
+      height: var(--size);
+      transform-style: preserve-3d;
+      animation: drift 10s ease-in-out infinite alternate, spin 15s linear infinite;
+      filter: drop-shadow(0 0 18px rgba(120,178,255,.24));
+      transition: filter .4s ease;
+    }
+    .crystal:hover { filter: drop-shadow(0 0 34px rgba(196,109,255,.65)); }
+    .crystal.c1 { left: 54%; top: 27%; --size: clamp(130px, 19vw, 270px); animation-delay: -2s, -5s; }
+    .crystal.c2 { left: 69%; top: 53%; --size: clamp(80px, 11vw, 165px); animation-delay: -4s, -9s; animation-duration: 8s, 12s; }
+    .crystal.c3 { left: 40%; top: 62%; --size: clamp(65px, 8vw, 120px); animation-delay: -1s, -3s; animation-duration: 11s, 18s; }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(193,230,255,.78);
+      background:
+        linear-gradient(135deg, rgba(117,198,255,.22), rgba(232,158,255,.05) 35%, rgba(255,235,178,.25)),
+        linear-gradient(45deg, transparent 43%, rgba(255,255,255,.55) 50%, transparent 56%);
+      box-shadow: inset 0 0 22px rgba(99,184,255,.21), 0 0 1px rgba(255,255,255,.7);
+      backface-visibility: visible;
+    }
+    .face:nth-child(1) { transform: translateZ(calc(var(--size) / 2)); }
+    .face:nth-child(2) { transform: rotateY(180deg) translateZ(calc(var(--size) / 2)); }
+    .face:nth-child(3) { transform: rotateY(90deg) translateZ(calc(var(--size) / 2)); }
+    .face:nth-child(4) { transform: rotateY(-90deg) translateZ(calc(var(--size) / 2)); }
+    .face:nth-child(5) { transform: rotateX(90deg) translateZ(calc(var(--size) / 2)); }
+    .face:nth-child(6) { transform: rotateX(-90deg) translateZ(calc(var(--size) / 2)); }
+
+    @keyframes spin {
+      from { transform: rotateX(-18deg) rotateY(0deg) rotateZ(10deg); }
+      to { transform: rotateX(342deg) rotateY(360deg) rotateZ(370deg); }
+    }
+    @keyframes drift {
+      from { margin-top: -12px; margin-left: -10px; }
+      to { margin-top: 15px; margin-left: 12px; }
+    }
+
+    .ui {
+      z-index: 10;
+      pointer-events: none;
+      font-family: "Zen Kaku Gothic New", sans-serif;
+      font-weight: 300;
+      letter-spacing: .12em;
+      font-size: .75rem;
+      color: rgba(46,38,59,.82);
+      transition: color .6s ease;
+    }
+    .ui.night { color: rgba(235,241,255,.86); }
+
+    .brand {
+      position: absolute;
+      top: 5.2vh;
+      left: 5.6vw;
+      display: flex;
+      align-items: center;
+      gap: .58rem;
+      font-size: .92rem;
+      letter-spacing: .19em;
+    }
+    .bird {
+      width: 19px;
+      height: 19px;
+      overflow: visible;
+      filter: drop-shadow(0 2px 4px rgba(91,154,255,.25));
+    }
+    .brand sup {
+      align-self: flex-start;
+      margin: -.22em 0 0 .25em;
+      font-size: .51rem;
+      letter-spacing: .06em;
+      opacity: .7;
+    }
+    nav {
+      position: absolute;
+      right: 5.6vw;
+      top: 5.6vh;
+      display: flex;
+      gap: clamp(1rem, 2.4vw, 2.6rem);
+    }
+    nav span { opacity: .87; white-space: nowrap; }
+
+    .progress {
+      position: absolute;
+      left: 50%;
+      bottom: 5.2vh;
+      width: min(31vw, 320px);
+      height: 1px;
+      transform: translateX(-50%);
+      background: currentColor;
+      opacity: .3;
+      overflow: visible;
+    }
+    .progress::after {
+      content: "";
+      position: absolute;
+      top: -1px;
+      left: 0;
+      width: var(--progress, 0%);
+      height: 3px;
+      background: currentColor;
+      box-shadow: 0 0 8px currentColor;
+      transition: width .1s linear;
+    }
+
+    .sound {
+      position: absolute;
+      left: 5.6vw;
+      bottom: 4.4vh;
+      width: 42px;
+      height: 42px;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      opacity: 0;
+      transform: scale(.75);
+      transition: opacity .8s ease, transform .8s ease;
+    }
+    .sound.show { opacity: .76; transform: scale(1); }
+    .sound::before, .sound::after {
+      content: "";
+      position: absolute;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      inset: 8px;
+      opacity: .55;
+    }
+    .sound::after { inset: 14px; opacity: .9; }
+
+    .chapter {
+      position: absolute;
+      right: 5.7vw;
+      bottom: 5vh;
+      font-size: .62rem;
+      opacity: .58;
+      letter-spacing: .2em;
+    }
+
+    @media (max-width: 680px) {
+      body { min-height: 900vh; }
+      .dawn-copy { right: 6vw; top: 26%; }
+      .feather-notes { font-size: .58rem; }
+      .feather-notes.left { left: 5vw; }
+      .feather-notes.right { right: 5vw; }
+      nav { gap: .85rem; font-size: .64rem; }
+      .crystal-copy { top: 13%; }
+      .crystal.c1 { left: 49%; top: 30%; }
+      .crystal.c2 { left: 66%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .crystal { animation: none; }
+      .copy .line, .scene { transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="world" aria-hidden="true"></canvas>
+
+  <section class="scene dawn active" data-scene="0" aria-label="Dawn">
+    <div class="scene-inner">
+      <div class="copy dawn-copy">
+        <span class="line">what guides us</span>
+        <span class="line">through <i>change</i>,</span>
+        <span class="line"><i>reinvention</i>,</span>
+        <span class="line">and the <i>unknown</i>—</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene rise" data-scene="1" aria-label="Rise">
+    <div class="scene-inner">
+      <div class="copy rise-copy">
+        <span class="line">再生である。</span>
+        <span class="line">again, becoming</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene halo" data-scene="2" aria-label="Halo">
+    <div class="scene-inner">
+      <div class="copy halo-copy"><span class="line">音</span></div>
+    </div>
+  </section>
+
+  <section class="scene feather" data-scene="3" aria-label="Feather">
+    <div class="scene-inner">
+      <div class="feather-notes left">羽根は、<br>降りながら<br>空を記憶する。</div>
+      <div class="feather-notes right">微かな熱が<br>心の輪郭を<br>照らしていく。</div>
+      <div class="copy feather-copy">
+        <span class="line">don't just <i>speak</i> to us. they <i>stimulate</i> us.</span>
+        <span class="line">light <i>becomes</i> 私、flare。</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene crystal" data-scene="4" aria-label="Crystal">
+    <div class="scene-inner">
+      <div class="copy crystal-copy">
+        <span class="line">a fragment of</span>
+        <span class="line"><i>tomorrow</i>, held in light.</span>
+      </div>
+      <div class="crystal-stage">
+        <div class="crystal c1" aria-hidden="true"><i class="face"></i><i class="face"></i><i class="face"></i><i class="face"></i><i class="face"></i><i class="face"></i></div>
+        <div class="crystal c2" aria-hidden="true"><i class="face"></i><i class="face"></i><i class="face"></i><i class="face"></i><i class="face"></i><i class="face"></i></div>
+        <div class="crystal c3" aria-hidden="true"><i class="face"></i><i class="face"></i><i class="face"></i><i class="face"></i><i class="face"></i><i class="face"></i></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene finale" data-scene="5" aria-label="Finale">
+    <div class="scene-inner">
+      <div class="copy finale-copy">
+        <span class="line"><i>feel</i> their heat.</span>
+        <span class="line">焔と <i>interact</i> with。</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="grain"></div>
+
+  <div class="ui" id="ui">
+    <div class="brand">
+      <svg class="bird" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path d="M4 17c5-8 10-8 14-5 2-4 5-6 10-6-3 4-4 7-3 10 2 1 4 3 5 5-5-1-8-1-11 1-4 4-10 3-14-5Z" fill="#72aaf4"/>
+        <path d="M8 18c5-2 9-1 14 2-3 2-7 3-11 1" stroke="#d9ebff" stroke-width="1.3" stroke-linecap="round"/>
+        <circle cx="20.5" cy="12.4" r="1.05" fill="#0a3977"/>
+      </svg>
+      <span>HIBANA</span><sup>Sept. 29</sup>
+    </div>
+    <nav><span>作品</span><span>思想</span><span>接続</span></nav>
+    <div class="sound" id="sound" aria-label="Sound visualisation"></div>
+    <div class="progress" id="progress"></div>
+    <div class="chapter" id="chapter">I — DAWN</div>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const canvas = document.getElementById("world");
+      const ctx = canvas.getContext("2d", { alpha: false });
+      const scenes = [...document.querySelectorAll(".scene")];
+      const ui = document.getElementById("ui");
+      const progress = document.getElementById("progress");
+      const sound = document.getElementById("sound");
+      const chapter = document.getElementById("chapter");
+      const names = ["I — DAWN", "II — RISE", "III — HALO", "IV — FEATHER", "V — CRYSTAL", "VI — FINALE"];
+      const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const density = reduce ? .25 : 1;
+
+      let W = innerWidth, H = innerHeight, DPR = Math.min(devicePixelRatio || 1, 2);
+      let scrollTarget = 0, scrollSmooth = 0, scenePos = 0, last = performance.now();
+      let activeIndex = -1;
+      const rand = (a = 1, b = 0) => Math.random() * (a - b) + b;
+      const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+      const lerp = (a, b, t) => a + (b - a) * t;
+
+      function resize() {
+        W = innerWidth; H = innerHeight; DPR = Math.min(devicePixelRatio || 1, 2);
+        canvas.width = W * DPR; canvas.height = H * DPR;
+        canvas.style.width = W + "px"; canvas.style.height = H + "px";
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      }
+      addEventListener("resize", resize, { passive: true });
+      addEventListener("scroll", () => { scrollTarget = scrollY; }, { passive: true });
+      resize();
+
+      const motes = Array.from({ length: Math.floor(140 * density) }, () => ({
+        x: rand(), y: rand(), r: rand(2.2, .25), drift: rand(.8, .15), phase: rand(Math.PI * 2),
+        hue: rand(70, 10)
+      }));
+      const embers = Array.from({ length: Math.floor(210 * density) }, () => ({
+        x: rand(), y: rand(), seed: rand(1000), size: rand(3.4, .45), speed: rand(1.2, .18)
+      }));
+      const stars = Array.from({ length: Math.floor(160 * density) }, () => ({
+        x: rand(), y: rand(), a: rand(.8, .15), r: rand(1.6, .25), tw: rand(5, 1)
+      }));
+
+      function alphaFor(i, p) {
+        return clamp(1 - Math.abs(p - i) / .9);
+      }
+
+      function bgFill(color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      function radial(x, y, r, stops) {
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        stops.forEach(s => g.addColorStop(s[0], s[1]));
+        return g;
+      }
+
+      function line(x1, y1, x2, y2, color, width, blur = 0) {
+        ctx.save();
+        ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineCap = "round";
+        ctx.shadowBlur = blur; ctx.shadowColor = color;
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawDawn(t, a) {
+        ctx.save(); ctx.globalAlpha = a;
+        bgFill("#f2ecf5");
+        const lavender = radial(W * .18, H * .67, W * .65, [
+          [0, "rgba(184,165,224,.53)"], [.37, "rgba(202,183,229,.2)"], [1, "rgba(242,236,245,0)"]
+        ]);
+        ctx.fillStyle = lavender; ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = radial(W * .62, H * .17, W * .3, [[0, "rgba(232,240,168,.95)"], [.21, "rgba(237,235,184,.44)"], [1, "rgba(242,236,245,0)"]]);
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.save();
+        ctx.translate(W * .09, H * .67);
+        ctx.rotate(-.28);
+        for (let i = 0; i < 20; i++) {
+          const y = -i * H * .028 + Math.sin(t * .0005 + i) * 9;
+          ctx.strokeStyle = `rgba(157,127,207,${.045 + i * .007})`;
+          ctx.lineWidth = 8 + i * .75;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(-W * .08, H * .22);
+          ctx.bezierCurveTo(W * .08, H * .04 + y, W * .17, -H * .13 + y, W * .46, -H * .49 + y * .12);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        motes.forEach((m, i) => {
+          const x = m.x * W + Math.sin(t * .0005 * m.drift + m.phase) * 22;
+          const y = m.y * H + Math.cos(t * .0004 * m.drift + m.phase) * 17;
+          ctx.fillStyle = `hsla(${m.hue + 210}, 55%, 74%, .20)`;
+          ctx.beginPath(); ctx.arc(x, y, m.r, 0, Math.PI * 2); ctx.fill();
+        });
+        ctx.restore();
+      }
+
+      function phoenixShape(cx, cy, scale, hot, t, silhouette = false) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        const flap = Math.sin(t * .003) * .12;
+        ctx.globalCompositeOperation = silhouette ? "source-over" : "lighter";
+
+        for (const side of [-1, 1]) {
+          for (let i = 0; i < 17; i++) {
+            const f = i / 16;
+            const ang = side * (-.18 - f * 1.32 + flap * (1 - f));
+            const len = scale * (1.1 - f * .28) * (1 + Math.sin(t * .002 + i) * .035);
+            const sx = side * scale * .11;
+            const sy = scale * .02;
+            const ex = Math.cos(ang) * len;
+            const ey = Math.sin(ang) * len + scale * .16;
+            const g = ctx.createLinearGradient(sx, sy, ex, ey);
+            if (silhouette) {
+              g.addColorStop(0, "rgba(28,17,39,.95)");
+              g.addColorStop(1, "rgba(33,18,48,.08)");
+            } else {
+              g.addColorStop(0, `rgba(255,${155 + i * 3},58,${.84 - f * .35})`);
+              g.addColorStop(.45, `rgba(255,${92 + i * 3},32,${.55 - f * .2})`);
+              g.addColorStop(1, "rgba(255,220,131,.03)");
+            }
+            ctx.strokeStyle = g;
+            ctx.lineWidth = scale * (.09 - f * .045);
+            ctx.lineCap = "round";
+            ctx.shadowBlur = hot ? 18 : 0;
+            ctx.shadowColor = "#ff7a2f";
+            ctx.beginPath(); ctx.moveTo(sx, sy);
+            ctx.quadraticCurveTo(side * scale * (.42 + f * .22), -scale * (.14 + f * .33), ex, ey);
+            ctx.stroke();
+          }
+        }
+
+        ctx.fillStyle = silhouette ? "rgba(20,12,34,.95)" : "rgba(255,185,87,.94)";
+        ctx.shadowBlur = silhouette ? 0 : 20; ctx.shadowColor = "#ff7a2f";
+        ctx.beginPath();
+        ctx.ellipse(0, -scale * .02, scale * .11, scale * .44, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(0, -scale * .42);
+        ctx.quadraticCurveTo(scale * .09, -scale * .57, scale * .13, -scale * .64);
+        ctx.quadraticCurveTo(0, -scale * .59, -scale * .03, -scale * .45);
+        ctx.fill();
+
+        for (let i = 0; i < 5; i++) {
+          const sx = (i - 2) * scale * .05;
+          line(sx, scale * .31, sx * 1.8 + Math.sin(t * .002 + i) * scale * .06, scale * (.68 + i * .05),
+            silhouette ? "rgba(23,14,37,.65)" : `rgba(255,108,38,${.55 - i * .07})`, scale * .035, hot ? 9 : 0);
+        }
+        ctx.restore();
+      }
+
+      function drawRise(t, a) {
+        ctx.save(); ctx.globalAlpha = a;
+        const g = ctx.createLinearGradient(0, 0, W, H);
+        g.addColorStop(0, "#b74639"); g.addColorStop(.52, "#ef6f47"); g.addColorStop(1, "#f7b069");
+        ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = radial(W * .52, H * .77, W * .56, [[0, "rgba(255,237,152,.77)"], [.22, "rgba(255,139,61,.34)"], [1, "rgba(208,57,42,0)"]]);
+        ctx.fillRect(0, 0, W, H);
+
+        phoenixShape(W * .5, H * (1.04 - .025 * Math.sin(t * .001)), Math.min(W, H) * .56, true, t);
+
+        embers.forEach(e => {
+          const rise = ((t * .00011 * e.speed + e.y) % 1);
+          const x = e.x * W + Math.sin(rise * 12 + e.seed) * 38 * (1 - rise);
+          const y = H * (1 - rise);
+          ctx.fillStyle = `rgba(255,${170 + (e.seed % 60)},83,${.15 + (1 - rise) * .45})`;
+          ctx.beginPath(); ctx.arc(x, y, e.size * (1 - rise * .5), 0, Math.PI * 2); ctx.fill();
+        });
+        ctx.restore();
+      }
+
+      function drawHalo(t, a) {
+        ctx.save(); ctx.globalAlpha = a;
+        const cx = W * .5, cy = H * .46;
+        bgFill("#8b657d");
+        for (let i = 8; i >= 0; i--) {
+          const r = Math.max(W, H) * (.12 + i * .14) + Math.sin(t * .0005 + i) * 8;
+          const hue = 10 + i * 29;
+          ctx.fillStyle = radial(cx, cy, r, [
+            [0, `hsla(${hue},86%,78%,.10)`],
+            [.58, `hsla(${hue + 55},89%,68%,.16)`],
+            [1, `hsla(${hue + 110},74%,56%,0)`]
+          ]);
+          ctx.fillRect(0, 0, W, H);
+        }
+        ctx.fillStyle = radial(cx, cy, Math.max(W, H) * .55, [[0, "rgba(255,255,236,.96)"], [.14, "rgba(255,230,177,.83)"], [.44, "rgba(232,158,224,.31)"], [1, "rgba(93,60,144,0)"]]);
+        ctx.fillRect(0, 0, W, H);
+        phoenixShape(cx, H * .57, Math.min(W, H) * .48, false, t, true);
+        ctx.restore();
+      }
+
+      function drawFeather(t, a, crystal = false) {
+        ctx.save(); ctx.globalAlpha = a;
+        const g = ctx.createLinearGradient(0, 0, 0, H);
+        g.addColorStop(0, "#07112f"); g.addColorStop(.62, "#0a1030"); g.addColorStop(1, "#10194a");
+        ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+        stars.forEach(s => {
+          const pulse = .5 + .5 * Math.sin(t * .001 * s.tw + s.x * 20);
+          ctx.fillStyle = `rgba(158,198,255,${s.a * pulse})`;
+          ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2); ctx.fill();
+        });
+
+        if (!crystal) {
+          const x = W * .5 + Math.sin(t * .0006) * W * .08;
+          const y = ((t * .065) % (H * 1.3)) - H * .22;
+          for (let i = 0; i < 10; i++) {
+            line(x + i * 2 - 9, y - i * 20, x + i * 1.1 - 4, y + 70,
+              `rgba(90,174,255,${.025 + i * .008})`, 1.8, 10);
+          }
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(.43 + Math.sin(t * .001) * .18);
+          ctx.shadowBlur = 28; ctx.shadowColor = "#78bcff";
+          const fg = ctx.createLinearGradient(-10, -80, 16, 90);
+          fg.addColorStop(0, "rgba(238,252,255,.96)");
+          fg.addColorStop(.48, "rgba(102,183,255,.82)");
+          fg.addColorStop(1, "rgba(56,91,211,.16)");
+          ctx.fillStyle = fg;
+          ctx.beginPath();
+          ctx.moveTo(0, -82);
+          ctx.bezierCurveTo(28, -38, 25, 29, 0, 94);
+          ctx.bezierCurveTo(-11, 36, -20, -25, 0, -82);
+          ctx.fill();
+          ctx.strokeStyle = "rgba(244,255,255,.82)"; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(0, -76); ctx.quadraticCurveTo(2, 20, 0, 87); ctx.stroke();
+          ctx.restore();
+        } else {
+          ctx.fillStyle = radial(W * .64, H * .5, W * .43, [[0, "rgba(93,154,255,.16)"], [.45, "rgba(108,55,194,.08)"], [1, "rgba(10,16,48,0)"]]);
+          ctx.fillRect(0, 0, W, H);
+          for (let i = 0; i < 20; i++) {
+            const x = (i / 19) * W;
+            line(x, H, W * .58, H * .38, "rgba(110,187,255,.035)", 1, 4);
+          }
+        }
+        ctx.restore();
+      }
+
+      function drawFinale(t, a) {
+        ctx.save(); ctx.globalAlpha = a;
+        const horizon = H * .61;
+        const sky = ctx.createLinearGradient(0, 0, 0, horizon);
+        sky.addColorStop(0, "#541f3e"); sky.addColorStop(.43, "#c23a1f"); sky.addColorStop(1, "#f08c4d");
+        ctx.fillStyle = sky; ctx.fillRect(0, 0, W, horizon);
+        ctx.fillStyle = radial(W * .49, H * .38, W * .34, [[0, "rgba(255,235,159,.77)"], [.31, "rgba(255,157,69,.28)"], [1, "rgba(255,91,36,0)"]]);
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.fillStyle = "#371935";
+        ctx.beginPath(); ctx.moveTo(0, horizon + 45);
+        for (let x = 0; x <= W; x += W / 10) {
+          const peak = horizon - rand(10, 90) - Math.sin(x * .015) * 22;
+          ctx.lineTo(x + W / 20, peak); ctx.lineTo(x + W / 10, horizon + 43);
+        }
+        ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.fill();
+
+        const water = ctx.createLinearGradient(0, horizon, 0, H);
+        water.addColorStop(0, "#4a1d37"); water.addColorStop(1, "#120d2b");
+        ctx.fillStyle = water; ctx.fillRect(0, horizon, W, H - horizon);
+
+        const cx = W * .5, cy = H * .48;
+        phoenixShape(cx, cy, Math.min(W, H) * .47, true, t);
+        ctx.save();
+        ctx.translate(cx, horizon * 2 - cy + 35);
+        ctx.scale(1, -0.52);
+        ctx.globalAlpha = .31;
+        phoenixShape(0, 0, Math.min(W, H) * .47, false, t, false);
+        ctx.restore();
+
+        for (let i = 0; i < 65 * density; i++) {
+          const y = horizon + ((i * 37 + t * .025) % (H - horizon));
+          const width = 4 + ((i * 17) % 80);
+          const x = cx + Math.sin(i * 12.3) * W * .3;
+          line(x - width, y, x + width, y, `rgba(255,${90 + i % 110},68,${.05 + (i % 8) * .01})`, 1.2, 3);
+        }
+        ctx.restore();
+      }
+
+      function render(t) {
+        const maxScroll = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+        scrollTarget = Math.min(scrollTarget, maxScroll);
+        scrollSmooth += (scrollTarget - scrollSmooth) * (reduce ? 1 : .08);
+        scenePos = clamp((scrollSmooth / maxScroll) * 6, 0, 5.999);
+        const p = scenePos;
+        const weights = Array.from({ length: 6 }, (_, i) => alphaFor(i, p));
+        const sum = weights.reduce((x, y) => x + y, 0) || 1;
+        for (let i = 0; i < 6; i++) weights[i] /= sum;
+
+        ctx.clearRect(0, 0, W, H);
+        drawDawn(t, weights[0]);
+        drawRise(t, weights[1]);
+        drawHalo(t, weights[2]);
+        drawFeather(t, weights[3], false);
+        drawFeather(t, weights[4], true);
+        drawFinale(t, weights[5]);
+
+        const nearest = Math.round(p);
+        scenes.forEach((scene, i) => {
+          const d = Math.abs(p - i);
+          scene.style.opacity = clamp(1 - d / .66);
+          scene.style.transform = `translate3d(0, ${Math.min(28, d * 32)}px, 0)`;
+          scene.classList.toggle("active", i === nearest);
+        });
+
+        if (nearest !== activeIndex) {
+          activeIndex = nearest;
+          chapter.textContent = names[nearest];
+          ui.classList.toggle("night", nearest >= 3);
+          sound.classList.toggle("show", nearest >= 3);
+          document.documentElement.style.background = nearest >= 3 ? "#0a1030" : nearest === 5 ? "#4d1e38" : "#f2ecf5";
+        }
+
+        progress.style.setProperty("--progress", `${(p / 5.999) * 100}%`);
+        last = t;
+        requestAnimationFrame(render);
+      }
+
+      requestAnimationFrame(render);
+    })();
+  </script>
+</body>
+</html>
+```
+tokens used
+19,517
+```html
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f2ecf5" />
+  <title>HIBANA — a living reference</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Shippori+Mincho:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --dawn-bg: #f2ecf5;
+      --dawn-wing: #b9a6e0;
+      --orb: #e8f0a8;
+      --flame: #ff7a2f;
+      --ember: #ffb36b;
+      --night: #0a1030;
+      --feather: #7fb8ff;
+      --sunset: #c23a1f;
+      --ink: #2a2438;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: auto; background: var(--night); }
+    body {
+      margin: 0;
+      min-height: 900vh;
+      overflow-x: hidden;
+      color: var(--ink);
+      background: var(--dawn-bg);
+      font-family: "Shippori Mincho", serif;
+    }
+
+    canvas, .scene, .grain, .ui { position: fixed; inset: 0; }
+    #world {
+      z-index: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .grain {
+      z-index: 4;
+      pointer-events: none;
+      opacity: .16;
+      mix-blend-mode: soft-light;
+      background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.65'/%3E%3C/svg%3E");
+    }
+
+    .scene {
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0;
+      transform: translate3d(0, 24px, 0);
+      will-change: opacity, transform;
+      transition: opacity .35s linear;
+    }
+
+    .scene-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      padding: 7vh 6vw;
+    }
+
+    .copy {
+      position: absolute;
+      font-family: "Cormorant Garamond", "Shippori Mincho", serif;
+      font-size: clamp(1.45rem, 3.2vw, 2.72rem);
+      line-height: 1.42;
+      letter-spacing: .04em;
+      font-weight: 400;
+    }
+
+    .copy i { font-weight: 500; }
+    .copy .line {
+      display: block;
+      width: max-content;
+      max-width: 88vw;
+      opacity: 0;
+      transform: translate3d(0, 18px, 0);
+      filter: blur(5px);
+      transition:
+        opacity .75s cubic-bezier(.2,.75,.22,1),
+        transform .75s cubic-bezier(.2,.75,.22,1),
+        filter .75s ease;
+    }
+
+    .scene.active .copy .line {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+      filter: blur(0);
+    }
+
+    .scene.active .copy .line:nth-child(1) { transition-delay: .06s; }
+    .scene.active .copy .line:nth-child(2) { transition-delay: .14s; }
+    .scene.active .copy .line:nth-child(3) { transition-delay: .23s; }
+    .scene.active .copy .line:nth-child(4) { transition-delay: .32s; }
+    .scene.active .copy .line:nth-child(5) { transition-delay: .41s; }
+    .scene.active .copy .line:nth-child(6) { transition-delay: .50s; }
+
+    .dawn-copy {
+      top: 28%;
+      right: 8vw;
+      color: #40384f;
+      text-shadow: 0 2px 25px rgba(255,255,255,.45);
+    }
+    .dawn-copy .line:nth-child(2) { margin-left: 2.2vw; }
+    .dawn-copy .line:nth-child(3) { margin-left: 5.8vw; }
+    .dawn-copy .line:nth-child(4) { margin-left: 9.6vw; }
+
+    .rise-copy {
+      left: 50%;
+      top: 39%;
+      color: #fff1df;
+      transform: translateX(-50%);
+      text-align: center;
+      font-size: clamp(2.8rem, 8.5vw, 8rem);
+      letter-spacing: .18em;
+      white-space: nowrap;
+      text-shadow: 0 0 40px rgba(135,34,15,.3);
+    }
+    .rise-copy .line:nth-child(2) {
+      margin-left: .7em;
+      filter: blur(2px);
+      opacity: .65 !important;
+      font-size: .42em;
+      letter-spacing: .12em;
+    }
+
+    .halo-copy {
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -51%);
+      color: rgba(255,255,250,.92);
+      font-size: clamp(10rem, 29vw, 27rem);
+      line-height: .75;
+      letter-spacing: -.1em;
+      text-shadow: 0 0 30px rgba(255,255,255,.68), 0 0 110px rgba(255,229,166,.7);
+      mix-blend-mode: screen;
+    }
+    .halo-copy .line { width: auto; }
+
+    .feather-notes {
+      position: absolute;
+      top: 20%;
+      color: rgba(189,215,255,.75);
+      font-family: "Shippori Mincho", serif;
+      font-size: clamp(.68rem, .9vw, .84rem);
+      line-height: 2.1;
+      letter-spacing: .16em;
+      writing-mode: vertical-rl;
+      opacity: .7;
+    }
+    .feather-notes.left { left: 8vw; }
+    .feather-notes.right { right: 9vw; transform: rotate(180deg); }
+    .feather-copy {
+      left: 50%;
+      bottom: 10%;
+      transform: translateX(-50%);
+      width: 90vw;
+      color: #e2ecff;
+      text-align: center;
+      font-size: clamp(1.45rem, 3.2vw, 2.7rem);
+      text-shadow: 0 0 24px rgba(100,172,255,.28);
+    }
+    .feather-copy .line:nth-child(2) { margin: .2em auto 0; opacity: .65; font-size: .82em; }
+
+    .crystal-copy {
+      left: 8vw;
+      top: 18%;
+      color: rgba(230,240,255,.94);
+      font-size: clamp(1.4rem, 3vw, 2.5rem);
+      text-shadow: 0 0 24px rgba(102,157,255,.25);
+    }
+    .crystal-copy .line:nth-child(2) { margin-left: 2.3vw; }
+
+    .finale-copy {
+      left: 50%;
+      bottom: 9%;
+      transform: translateX(-50%);
+      width: 90vw;
+      text-align: center;
+      color: #fff0db;
+      font-size: clamp(1.55rem, 3.8vw, 3.15rem);
+      text-shadow: 0 2px 26px rgba(79,16,16,.72);
+    }
+    .finale-copy .line:nth-child(2) { margin: .05em auto 0; font-size: .82em; }
+
+    .crystal-stage {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      perspective: 1000px;
+      pointer-events: auto;
+    }
+    .crystal {
+      --size: clamp(100px, 15vw, 220px);
+      position: absolute;
+      width: var(--size);
+      height: var(--size);
+      transform-style: preserve-3d;
+      animation: drift 10s ease-in-out infinite alternate, spin 15s linear infinite;
+      filter: drop-shadow(0 0 18px rgba(120,178,255,.24));
+      transition: filter .4s ease;
+    }
+    .crystal:hover { filter: drop-shadow(0 0 34px rgba(196,109,255,.65)); }
+    .crystal.c1 { left: 54%; top: 27%; --size: clamp(130px, 19vw, 270px); animation-delay: -2s, -5s; }
+    .crystal.c2 { left: 69%; top: 53%; --size: clamp(80px, 11vw, 165px); animation-delay: -4s, -9s; animation-duration: 8s, 12s; }
+    .crystal.c3 { left: 40%; top: 62%; --size: clamp(65px, 8vw, 120px); animation-delay: -1s, -3s; animation-duration: 11s, 18s; }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(193,230,255,.78);
+      background:
+        linear-gradient(135deg, rgba(117,198,255,.22), rgba(232,158,255,.05) 35%, rgba(255,235,178,.25)),
+        linear-gradient(45deg, transparent 43%, rgba(255,255,255,.55) 50%, transparent 56%);
+      box-shadow: inset 0 0 22px rgba(99,184,255,.21), 0 0 1px rgba(255,255,255,.7);
+      backface-visibility: visible;
+    }
+    .face:nth-child(1) { transform: translateZ(calc(var(--size) / 2)); }
+    .face:nth-child(2) { transform: rotateY(180deg) translateZ(calc(var(--size) / 2)); }
+    .face:nth-child(3) { transform: rotateY(90deg) translateZ(calc(var(--size) / 2)); }
+    .face:nth-child(4) { transform: rotateY(-90deg) translateZ(calc(var(--size) / 2)); }
+    .face:nth-child(5) { transform: rotateX(90deg) translateZ(calc(var(--size) / 2)); }
+    .face:nth-child(6) { transform: rotateX(-90deg) translateZ(calc(var(--size) / 2)); }
+
+    @keyframes spin {
+      from { transform: rotateX(-18deg) rotateY(0deg) rotateZ(10deg); }
+      to { transform: rotateX(342deg) rotateY(360deg) rotateZ(370deg); }
+    }
+    @keyframes drift {
+      from { margin-top: -12px; margin-left: -10px; }
+      to { margin-top: 15px; margin-left: 12px; }
+    }
+
+    .ui {
+      z-index: 10;
+      pointer-events: none;
+      font-family: "Zen Kaku Gothic New", sans-serif;
+      font-weight: 300;
+      letter-spacing: .12em;
+      font-size: .75rem;
+      color: rgba(46,38,59,.82);
+      transition: color .6s ease;
+    }
+    .ui.night { color: rgba(235,241,255,.86); }
+
+    .brand {
+      position: absolute;
+      top: 5.2vh;
+      left: 5.6vw;
+      display: flex;
+      align-items: center;
+      gap: .58rem;
+      font-size: .92rem;
+      letter-spacing: .19em;
+    }
+    .bird {
+      width: 19px;
+      height: 19px;
+      overflow: visible;
+      filter: drop-shadow(0 2px 4px rgba(91,154,255,.25));
+    }
+    .brand sup {
+      align-self: flex-start;
+      margin: -.22em 0 0 .25em;
+      font-size: .51rem;
+      letter-spacing: .06em;
+      opacity: .7;
+    }
+    nav {
+      position: absolute;
+      right: 5.6vw;
+      top: 5.6vh;
+      display: flex;
+      gap: clamp(1rem, 2.4vw, 2.6rem);
+    }
+    nav span { opacity: .87; white-space: nowrap; }
+
+    .progress {
+      position: absolute;
+      left: 50%;
+      bottom: 5.2vh;
+      width: min(31vw, 320px);
+      height: 1px;
+      transform: translateX(-50%);
+      background: currentColor;
+      opacity: .3;
+      overflow: visible;
+    }
+    .progress::after {
+      content: "";
+      position: absolute;
+      top: -1px;
+      left: 0;
+      width: var(--progress, 0%);
+      height: 3px;
+      background: currentColor;
+      box-shadow: 0 0 8px currentColor;
+      transition: width .1s linear;
+    }
+
+    .sound {
+      position: absolute;
+      left: 5.6vw;
+      bottom: 4.4vh;
+      width: 42px;
+      height: 42px;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      opacity: 0;
+      transform: scale(.75);
+      transition: opacity .8s ease, transform .8s ease;
+    }
+    .sound.show { opacity: .76; transform: scale(1); }
+    .sound::before, .sound::after {
+      content: "";
+      position: absolute;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      inset: 8px;
+      opacity: .55;
+    }
+    .sound::after { inset: 14px; opacity: .9; }
+
+    .chapter {
+      position: absolute;
+      right: 5.7vw;
+      bottom: 5vh;
+      font-size: .62rem;
+      opacity: .58;
+      letter-spacing: .2em;
+    }
+
+    @media (max-width: 680px) {
+      body { min-height: 900vh; }
+      .dawn-copy { right: 6vw; top: 26%; }
+      .feather-notes { font-size: .58rem; }
+      .feather-notes.left { left: 5vw; }
+      .feather-notes.right { right: 5vw; }
+      nav { gap: .85rem; font-size: .64rem; }
+      .crystal-copy { top: 13%; }
+      .crystal.c1 { left: 49%; top: 30%; }
+      .crystal.c2 { left: 66%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .crystal { animation: none; }
+      .copy .line, .scene { transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="world" aria-hidden="true"></canvas>
+
+  <section class="scene dawn active" data-scene="0" aria-label="Dawn">
+    <div class="scene-inner">
+      <div class="copy dawn-copy">
+        <span class="line">what guides us</span>
+        <span class="line">through <i>change</i>,</span>
+        <span class="line"><i>reinvention</i>,</span>
+        <span class="line">and the <i>unknown</i>—</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene rise" data-scene="1" aria-label="Rise">
+    <div class="scene-inner">
+      <div class="copy rise-copy">
+        <span class="line">再生である。</span>
+        <span class="line">again, becoming</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene halo" data-scene="2" aria-label="Halo">
+    <div class="scene-inner">
+      <div class="copy halo-copy"><span class="line">音</span></div>
+    </div>
+  </section>
+
+  <section class="scene feather" data-scene="3" aria-label="Feather">
+    <div class="scene-inner">
+      <div class="feather-notes left">羽根は、<br>降りながら<br>空を記憶する。</div>
+      <div class="feather-notes right">微かな熱が<br>心の輪郭を<br>照らしていく。</div>
+      <div class="copy feather-copy">
+        <span class="line">don't just <i>speak</i> to us. they <i>stimulate</i> us.</span>
+        <span class="line">light <i>becomes</i> 私、flare。</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene crystal" data-scene="4" aria-label="Crystal">
+    <div class="scene-inner">
+      <div class="copy crystal-copy">
+        <span class="line">a fragment of</span>
+        <span class="line"><i>tomorrow</i>, held in light.</span>
+      </div>
+      <div class="crystal-stage">
+        <div class="crystal c1" aria-hidden="true"><i class="face"></i><i class="face"></i><i class="face"></i><i class="face"></i><i class="face"></i><i class="face"></i></div>
+        <div class="crystal c2" aria-hidden="true"><i class="face"></i><i class="face"></i><i class="face"></i><i class="face"></i><i class="face"></i><i class="face"></i></div>
+        <div class="crystal c3" aria-hidden="true"><i class="face"></i><i class="face"></i><i class="face"></i><i class="face"></i><i class="face"></i><i class="face"></i></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene finale" data-scene="5" aria-label="Finale">
+    <div class="scene-inner">
+      <div class="copy finale-copy">
+        <span class="line"><i>feel</i> their heat.</span>
+        <span class="line">焔と <i>interact</i> with。</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="grain"></div>
+
+  <div class="ui" id="ui">
+    <div class="brand">
+      <svg class="bird" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path d="M4 17c5-8 10-8 14-5 2-4 5-6 10-6-3 4-4 7-3 10 2 1 4 3 5 5-5-1-8-1-11 1-4 4-10 3-14-5Z" fill="#72aaf4"/>
+        <path d="M8 18c5-2 9-1 14 2-3 2-7 3-11 1" stroke="#d9ebff" stroke-width="1.3" stroke-linecap="round"/>
+        <circle cx="20.5" cy="12.4" r="1.05" fill="#0a3977"/>
+      </svg>
+      <span>HIBANA</span><sup>Sept. 29</sup>
+    </div>
+    <nav><span>作品</span><span>思想</span><span>接続</span></nav>
+    <div class="sound" id="sound" aria-label="Sound visualisation"></div>
+    <div class="progress" id="progress"></div>
+    <div class="chapter" id="chapter">I — DAWN</div>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const canvas = document.getElementById("world");
+      const ctx = canvas.getContext("2d", { alpha: false });
+      const scenes = [...document.querySelectorAll(".scene")];
+      const ui = document.getElementById("ui");
+      const progress = document.getElementById("progress");
+      const sound = document.getElementById("sound");
+      const chapter = document.getElementById("chapter");
+      const names = ["I — DAWN", "II — RISE", "III — HALO", "IV — FEATHER", "V — CRYSTAL", "VI — FINALE"];
+      const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const density = reduce ? .25 : 1;
+
+      let W = innerWidth, H = innerHeight, DPR = Math.min(devicePixelRatio || 1, 2);
+      let scrollTarget = 0, scrollSmooth = 0, scenePos = 0, last = performance.now();
+      let activeIndex = -1;
+      const rand = (a = 1, b = 0) => Math.random() * (a - b) + b;
+      const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+      const lerp = (a, b, t) => a + (b - a) * t;
+
+      function resize() {
+        W = innerWidth; H = innerHeight; DPR = Math.min(devicePixelRatio || 1, 2);
+        canvas.width = W * DPR; canvas.height = H * DPR;
+        canvas.style.width = W + "px"; canvas.style.height = H + "px";
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      }
+      addEventListener("resize", resize, { passive: true });
+      addEventListener("scroll", () => { scrollTarget = scrollY; }, { passive: true });
+      resize();
+
+      const motes = Array.from({ length: Math.floor(140 * density) }, () => ({
+        x: rand(), y: rand(), r: rand(2.2, .25), drift: rand(.8, .15), phase: rand(Math.PI * 2),
+        hue: rand(70, 10)
+      }));
+      const embers = Array.from({ length: Math.floor(210 * density) }, () => ({
+        x: rand(), y: rand(), seed: rand(1000), size: rand(3.4, .45), speed: rand(1.2, .18)
+      }));
+      const stars = Array.from({ length: Math.floor(160 * density) }, () => ({
+        x: rand(), y: rand(), a: rand(.8, .15), r: rand(1.6, .25), tw: rand(5, 1)
+      }));
+
+      function alphaFor(i, p) {
+        return clamp(1 - Math.abs(p - i) / .9);
+      }
+
+      function bgFill(color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      function radial(x, y, r, stops) {
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        stops.forEach(s => g.addColorStop(s[0], s[1]));
+        return g;
+      }
+
+      function line(x1, y1, x2, y2, color, width, blur = 0) {
+        ctx.save();
+        ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineCap = "round";
+        ctx.shadowBlur = blur; ctx.shadowColor = color;
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawDawn(t, a) {
+        ctx.save(); ctx.globalAlpha = a;
+        bgFill("#f2ecf5");
+        const lavender = radial(W * .18, H * .67, W * .65, [
+          [0, "rgba(184,165,224,.53)"], [.37, "rgba(202,183,229,.2)"], [1, "rgba(242,236,245,0)"]
+        ]);
+        ctx.fillStyle = lavender; ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = radial(W * .62, H * .17, W * .3, [[0, "rgba(232,240,168,.95)"], [.21, "rgba(237,235,184,.44)"], [1, "rgba(242,236,245,0)"]]);
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.save();
+        ctx.translate(W * .09, H * .67);
+        ctx.rotate(-.28);
+        for (let i = 0; i < 20; i++) {
+          const y = -i * H * .028 + Math.sin(t * .0005 + i) * 9;
+          ctx.strokeStyle = `rgba(157,127,207,${.045 + i * .007})`;
+          ctx.lineWidth = 8 + i * .75;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(-W * .08, H * .22);
+          ctx.bezierCurveTo(W * .08, H * .04 + y, W * .17, -H * .13 + y, W * .46, -H * .49 + y * .12);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        motes.forEach((m, i) => {
+          const x = m.x * W + Math.sin(t * .0005 * m.drift + m.phase) * 22;
+          const y = m.y * H + Math.cos(t * .0004 * m.drift + m.phase) * 17;
+          ctx.fillStyle = `hsla(${m.hue + 210}, 55%, 74%, .20)`;
+          ctx.beginPath(); ctx.arc(x, y, m.r, 0, Math.PI * 2); ctx.fill();
+        });
+        ctx.restore();
+      }
+
+      function phoenixShape(cx, cy, scale, hot, t, silhouette = false) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        const flap = Math.sin(t * .003) * .12;
+        ctx.globalCompositeOperation = silhouette ? "source-over" : "lighter";
+
+        for (const side of [-1, 1]) {
+          for (let i = 0; i < 17; i++) {
+            const f = i / 16;
+            const ang = side * (-.18 - f * 1.32 + flap * (1 - f));
+            const len = scale * (1.1 - f * .28) * (1 + Math.sin(t * .002 + i) * .035);
+            const sx = side * scale * .11;
+            const sy = scale * .02;
+            const ex = Math.cos(ang) * len;
+            const ey = Math.sin(ang) * len + scale * .16;
+            const g = ctx.createLinearGradient(sx, sy, ex, ey);
+            if (silhouette) {
+              g.addColorStop(0, "rgba(28,17,39,.95)");
+              g.addColorStop(1, "rgba(33,18,48,.08)");
+            } else {
+              g.addColorStop(0, `rgba(255,${155 + i * 3},58,${.84 - f * .35})`);
+              g.addColorStop(.45, `rgba(255,${92 + i * 3},32,${.55 - f * .2})`);
+              g.addColorStop(1, "rgba(255,220,131,.03)");
+            }
+            ctx.strokeStyle = g;
+            ctx.lineWidth = scale * (.09 - f * .045);
+            ctx.lineCap = "round";
+            ctx.shadowBlur = hot ? 18 : 0;
+            ctx.shadowColor = "#ff7a2f";
+            ctx.beginPath(); ctx.moveTo(sx, sy);
+            ctx.quadraticCurveTo(side * scale * (.42 + f * .22), -scale * (.14 + f * .33), ex, ey);
+            ctx.stroke();
+          }
+        }
+
+        ctx.fillStyle = silhouette ? "rgba(20,12,34,.95)" : "rgba(255,185,87,.94)";
+        ctx.shadowBlur = silhouette ? 0 : 20; ctx.shadowColor = "#ff7a2f";
+        ctx.beginPath();
+        ctx.ellipse(0, -scale * .02, scale * .11, scale * .44, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(0, -scale * .42);
+        ctx.quadraticCurveTo(scale * .09, -scale * .57, scale * .13, -scale * .64);
+        ctx.quadraticCurveTo(0, -scale * .59, -scale * .03, -scale * .45);
+        ctx.fill();
+
+        for (let i = 0; i < 5; i++) {
+          const sx = (i - 2) * scale * .05;
+          line(sx, scale * .31, sx * 1.8 + Math.sin(t * .002 + i) * scale * .06, scale * (.68 + i * .05),
+            silhouette ? "rgba(23,14,37,.65)" : `rgba(255,108,38,${.55 - i * .07})`, scale * .035, hot ? 9 : 0);
+        }
+        ctx.restore();
+      }
+
+      function drawRise(t, a) {
+        ctx.save(); ctx.globalAlpha = a;
+        const g = ctx.createLinearGradient(0, 0, W, H);
+        g.addColorStop(0, "#b74639"); g.addColorStop(.52, "#ef6f47"); g.addColorStop(1, "#f7b069");
+        ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = radial(W * .52, H * .77, W * .56, [[0, "rgba(255,237,152,.77)"], [.22, "rgba(255,139,61,.34)"], [1, "rgba(208,57,42,0)"]]);
+        ctx.fillRect(0, 0, W, H);
+
+        phoenixShape(W * .5, H * (1.04 - .025 * Math.sin(t * .001)), Math.min(W, H) * .56, true, t);
+
+        embers.forEach(e => {
+          const rise = ((t * .00011 * e.speed + e.y) % 1);
+          const x = e.x * W + Math.sin(rise * 12 + e.seed) * 38 * (1 - rise);
+          const y = H * (1 - rise);
+          ctx.fillStyle = `rgba(255,${170 + (e.seed % 60)},83,${.15 + (1 - rise) * .45})`;
+          ctx.beginPath(); ctx.arc(x, y, e.size * (1 - rise * .5), 0, Math.PI * 2); ctx.fill();
+        });
+        ctx.restore();
+      }
+
+      function drawHalo(t, a) {
+        ctx.save(); ctx.globalAlpha = a;
+        const cx = W * .5, cy = H * .46;
+        bgFill("#8b657d");
+        for (let i = 8; i >= 0; i--) {
+          const r = Math.max(W, H) * (.12 + i * .14) + Math.sin(t * .0005 + i) * 8;
+          const hue = 10 + i * 29;
+          ctx.fillStyle = radial(cx, cy, r, [
+            [0, `hsla(${hue},86%,78%,.10)`],
+            [.58, `hsla(${hue + 55},89%,68%,.16)`],
+            [1, `hsla(${hue + 110},74%,56%,0)`]
+          ]);
+          ctx.fillRect(0, 0, W, H);
+        }
+        ctx.fillStyle = radial(cx, cy, Math.max(W, H) * .55, [[0, "rgba(255,255,236,.96)"], [.14, "rgba(255,230,177,.83)"], [.44, "rgba(232,158,224,.31)"], [1, "rgba(93,60,144,0)"]]);
+        ctx.fillRect(0, 0, W, H);
+        phoenixShape(cx, H * .57, Math.min(W, H) * .48, false, t, true);
+        ctx.restore();
+      }
+
+      function drawFeather(t, a, crystal = false) {
+        ctx.save(); ctx.globalAlpha = a;
+        const g = ctx.createLinearGradient(0, 0, 0, H);
+        g.addColorStop(0, "#07112f"); g.addColorStop(.62, "#0a1030"); g.addColorStop(1, "#10194a");
+        ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+        stars.forEach(s => {
+          const pulse = .5 + .5 * Math.sin(t * .001 * s.tw + s.x * 20);
+          ctx.fillStyle = `rgba(158,198,255,${s.a * pulse})`;
+          ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2); ctx.fill();
+        });
+
+        if (!crystal) {
+          const x = W * .5 + Math.sin(t * .0006) * W * .08;
+          const y = ((t * .065) % (H * 1.3)) - H * .22;
+          for (let i = 0; i < 10; i++) {
+            line(x + i * 2 - 9, y - i * 20, x + i * 1.1 - 4, y + 70,
+              `rgba(90,174,255,${.025 + i * .008})`, 1.8, 10);
+          }
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(.43 + Math.sin(t * .001) * .18);
+          ctx.shadowBlur = 28; ctx.shadowColor = "#78bcff";
+          const fg = ctx.createLinearGradient(-10, -80, 16, 90);
+          fg.addColorStop(0, "rgba(238,252,255,.96)");
+          fg.addColorStop(.48, "rgba(102,183,255,.82)");
+          fg.addColorStop(1, "rgba(56,91,211,.16)");
+          ctx.fillStyle = fg;
+          ctx.beginPath();
+          ctx.moveTo(0, -82);
+          ctx.bezierCurveTo(28, -38, 25, 29, 0, 94);
+          ctx.bezierCurveTo(-11, 36, -20, -25, 0, -82);
+          ctx.fill();
+          ctx.strokeStyle = "rgba(244,255,255,.82)"; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(0, -76); ctx.quadraticCurveTo(2, 20, 0, 87); ctx.stroke();
+          ctx.restore();
+        } else {
+          ctx.fillStyle = radial(W * .64, H * .5, W * .43, [[0, "rgba(93,154,255,.16)"], [.45, "rgba(108,55,194,.08)"], [1, "rgba(10,16,48,0)"]]);
+          ctx.fillRect(0, 0, W, H);
+          for (let i = 0; i < 20; i++) {
+            const x = (i / 19) * W;
+            line(x, H, W * .58, H * .38, "rgba(110,187,255,.035)", 1, 4);
+          }
+        }
+        ctx.restore();
+      }
+
+      function drawFinale(t, a) {
+        ctx.save(); ctx.globalAlpha = a;
+        const horizon = H * .61;
+        const sky = ctx.createLinearGradient(0, 0, 0, horizon);
+        sky.addColorStop(0, "#541f3e"); sky.addColorStop(.43, "#c23a1f"); sky.addColorStop(1, "#f08c4d");
+        ctx.fillStyle = sky; ctx.fillRect(0, 0, W, horizon);
+        ctx.fillStyle = radial(W * .49, H * .38, W * .34, [[0, "rgba(255,235,159,.77)"], [.31, "rgba(255,157,69,.28)"], [1, "rgba(255,91,36,0)"]]);
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.fillStyle = "#371935";
+        ctx.beginPath(); ctx.moveTo(0, horizon + 45);
+        for (let x = 0; x <= W; x += W / 10) {
+          const peak = horizon - rand(10, 90) - Math.sin(x * .015) * 22;
+          ctx.lineTo(x + W / 20, peak); ctx.lineTo(x + W / 10, horizon + 43);
+        }
+        ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.fill();
+
+        const water = ctx.createLinearGradient(0, horizon, 0, H);
+        water.addColorStop(0, "#4a1d37"); water.addColorStop(1, "#120d2b");
+        ctx.fillStyle = water; ctx.fillRect(0, horizon, W, H - horizon);
+
+        const cx = W * .5, cy = H * .48;
+        phoenixShape(cx, cy, Math.min(W, H) * .47, true, t);
+        ctx.save();
+        ctx.translate(cx, horizon * 2 - cy + 35);
+        ctx.scale(1, -0.52);
+        ctx.globalAlpha = .31;
+        phoenixShape(0, 0, Math.min(W, H) * .47, false, t, false);
+        ctx.restore();
+
+        for (let i = 0; i < 65 * density; i++) {
+          const y = horizon + ((i * 37 + t * .025) % (H - horizon));
+          const width = 4 + ((i * 17) % 80);
+          const x = cx + Math.sin(i * 12.3) * W * .3;
+          line(x - width, y, x + width, y, `rgba(255,${90 + i % 110},68,${.05 + (i % 8) * .01})`, 1.2, 3);
+        }
+        ctx.restore();
+      }
+
+      function render(t) {
+        const maxScroll = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+        scrollTarget = Math.min(scrollTarget, maxScroll);
+        scrollSmooth += (scrollTarget - scrollSmooth) * (reduce ? 1 : .08);
+        scenePos = clamp((scrollSmooth / maxScroll) * 6, 0, 5.999);
+        const p = scenePos;
+        const weights = Array.from({ length: 6 }, (_, i) => alphaFor(i, p));
+        const sum = weights.reduce((x, y) => x + y, 0) || 1;
+        for (let i = 0; i < 6; i++) weights[i] /= sum;
+
+        ctx.clearRect(0, 0, W, H);
+        drawDawn(t, weights[0]);
+        drawRise(t, weights[1]);
+        drawHalo(t, weights[2]);
+        drawFeather(t, weights[3], false);
+        drawFeather(t, weights[4], true);
+        drawFinale(t, weights[5]);
+
+        const nearest = Math.round(p);
+        scenes.forEach((scene, i) => {
+          const d = Math.abs(p - i);
+          scene.style.opacity = clamp(1 - d / .66);
+          scene.style.transform = `translate3d(0, ${Math.min(28, d * 32)}px, 0)`;
+          scene.classList.toggle("active", i === nearest);
+        });
+
+        if (nearest !== activeIndex) {
+          activeIndex = nearest;
+          chapter.textContent = names[nearest];
+          ui.classList.toggle("night", nearest >= 3);
+          sound.classList.toggle("show", nearest >= 3);
+          document.documentElement.style.background = nearest >= 3 ? "#0a1030" : nearest === 5 ? "#4d1e38" : "#f2ecf5";
+        }
+
+        progress.style.setProperty("--progress", `${(p / 5.999) * 100}%`);
+        last = t;
+        requestAnimationFrame(render);
+      }
+
+      requestAnimationFrame(render);
+    })();
+  </script>
+</body>
+</html>

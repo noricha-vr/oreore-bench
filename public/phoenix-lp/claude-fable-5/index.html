@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HIBANA — a phoenix scrolls through the night</title>
+<meta name="description" content="スクロールで物語が進む、不死鳥の没入型 LP。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Shippori+Mincho:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --dawn-bg:#f2ecf5; --dawn-wing:#b9a6e0; --orb:#e8f0a8; --flame:#ff7a2f;
+  --ember:#ffb36b; --night:#0a1030; --feather:#7fb8ff; --sunset:#c23a1f; --ink:#2a2438;
+  --serif:'Cormorant Garamond',serif;
+  --jp:'Shippori Mincho',serif;
+  --ui:'Zen Kaku Gothic New',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:auto}
+body{background:var(--night);color:var(--ink);font-family:var(--ui);overflow-x:hidden}
+::selection{background:rgba(255,122,47,.35)}
+
+/* ---------- layers ---------- */
+.layer{position:fixed;inset:0;will-change:opacity,transform}
+.bg{z-index:1;opacity:0}
+#fx{position:fixed;inset:0;z-index:2;pointer-events:none}
+.fg{z-index:3;opacity:0;pointer-events:none}
+.vignette{position:fixed;inset:0;z-index:4;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 48%,transparent 55%,rgba(8,6,20,.28) 100%)}
+.spacer{height:900vh}
+
+/* ---------- chrome ---------- */
+.chrome{position:fixed;z-index:10;color:var(--ink);transition:color .8s ease}
+body.dark .chrome{color:#e9e4f4}
+.brand{top:4vh;left:6vw;display:flex;align-items:center;gap:.7rem}
+.brand .bird{width:26px;height:26px;flex:none}
+.brand .name{font-family:var(--serif);font-style:italic;font-weight:500;
+  font-size:1.15rem;letter-spacing:.22em}
+.brand .date{font-size:.62rem;letter-spacing:.3em;opacity:.55;margin-top:.15rem;font-weight:300}
+.brand .stack{display:flex;flex-direction:column;line-height:1.2}
+nav.chrome{top:4.4vh;right:6vw;display:flex;gap:2.2rem}
+nav.chrome a{color:inherit;text-decoration:none;font-weight:300;font-size:.75rem;
+  letter-spacing:.32em;opacity:.75;transition:opacity .3s}
+nav.chrome a:hover{opacity:1}
+.progress{left:50%;bottom:22px;transform:translateX(-50%);width:min(30vw,320px);height:2px;
+  background:rgba(128,120,150,.28);border-radius:2px;overflow:hidden}
+body.dark .progress{background:rgba(210,215,255,.18)}
+.progress i{display:block;height:100%;width:100%;transform:scaleX(0);transform-origin:0 50%;
+  background:linear-gradient(90deg,var(--dawn-wing),var(--ember),var(--flame))}
+.soundring{left:6vw;bottom:5vh;width:46px;height:46px;border-radius:50%;
+  border:1px solid currentColor;opacity:0;display:grid;place-items:center;
+  transition:opacity 1s ease}
+.soundring::before{content:"";position:absolute;inset:5px;border-radius:50%;
+  border:1px dashed currentColor;opacity:.6;animation:ringspin 14s linear infinite}
+.soundring::after{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;
+  animation:pulse 2.4s ease-in-out infinite}
+@keyframes ringspin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(.55);opacity:.45}}
+
+/* ---------- text system ---------- */
+.poem{font-family:var(--serif);font-style:italic;font-weight:400;
+  font-size:clamp(1.4rem,3.2vw,2.6rem);line-height:1.5;letter-spacing:.04em}
+.w{display:inline-block;opacity:0;
+  transform:translateY(calc(var(--sy,0px) + 26px));
+  transition:opacity .9s ease,transform 1s cubic-bezier(.19,1,.22,1)}
+.in .w{opacity:1;transform:translateY(var(--sy,0px));
+  transition-delay:calc(var(--i,0)*75ms)}
+.em{font-weight:500}
+.jp{font-family:var(--jp);font-style:normal}
+
+/* ---------- scene 1 : dawn ---------- */
+.bg.s1{background:
+  radial-gradient(ellipse 60% 70% at 24% 52%,rgba(185,166,224,.5),transparent 70%),
+  radial-gradient(circle 24vmin at 52% 26%,rgba(232,240,168,.85),rgba(232,240,168,.25) 55%,transparent 75%),
+  radial-gradient(ellipse at 80% 80%,#efe7f2,transparent 60%),
+  var(--dawn-bg)}
+.orb{position:absolute;left:52%;top:26%;width:20vmin;height:20vmin;margin:-10vmin;
+  border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(240,246,190,.95),rgba(232,240,168,.4) 55%,transparent 72%);
+  filter:blur(6px);animation:orbbreathe 6s ease-in-out infinite}
+@keyframes orbbreathe{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.12);opacity:1}}
+.fg.s1 .poem{position:absolute;right:8vw;top:34%;max-width:44vw;text-align:left;color:var(--ink)}
+.fg.s1 .em{color:#7a5fb8}
+.fg.s1 .line{display:block}
+
+/* ---------- scene 2 : rise ---------- */
+.bg.s2{background:linear-gradient(180deg,#160c26 0%,#341430 42%,#6e2431 72%,#a24327 100%)}
+.fg.s2 .wrap{position:absolute;left:50%;top:40%;transform:translateX(-50%);text-align:center}
+.fg.s2 .pre{font-size:clamp(.95rem,1.6vw,1.25rem);color:rgba(255,214,180,.8);letter-spacing:.1em}
+.fg.s2 h2{font-family:var(--jp);font-weight:500;font-style:normal;
+  font-size:clamp(2.8rem,7.5vw,5.4rem);letter-spacing:.14em;margin-top:1.6rem;
+  color:#ffe9d4;text-shadow:0 0 44px rgba(255,122,47,.55)}
+.fg.s2 .bl{filter:blur(5px);opacity:.75}
+.fg.s2 .post{margin-top:1.8rem;font-size:clamp(.85rem,1.3vw,1.05rem);color:rgba(255,190,150,.6);letter-spacing:.14em}
+
+/* ---------- scene 3 : halo ---------- */
+.bg.s3{background:
+  radial-gradient(circle at 50% 42%,#fff8ea 0%,#ffeccb 14%,#fbcdd9 28%,#d5c6ef 42%,#a3bbea 56%,#5e5f9e 72%,#232a54 88%,#141a3a 100%)}
+.bg.s3 .sil{position:absolute;left:50%;top:42%;width:min(72vw,760px);transform:translate(-50%,-52%);opacity:.82}
+.bg.s3 .sil path{fill:#241d3a}
+.fg.s3 .oto{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);
+  font-family:var(--jp);font-weight:600;font-style:normal;
+  font-size:clamp(8rem,24vw,17rem);color:#241d3a;
+  text-shadow:0 0 70px rgba(255,244,220,.95),0 0 24px rgba(255,255,255,.6);
+  animation:flick 5.5s steps(1,end) infinite}
+@keyframes flick{0%,100%{opacity:.94}8%{opacity:.42}11%{opacity:.88}37%{opacity:.6}41%{opacity:.92}68%{opacity:.35}72%{opacity:.9}}
+.fg.s3 .cap{position:absolute;left:50%;top:72%;transform:translateX(-50%);text-align:center;
+  color:rgba(250,244,255,.85)}
+.fg.s3 .cap .en{font-family:var(--serif);font-style:italic;font-size:clamp(1rem,1.8vw,1.4rem);letter-spacing:.08em}
+.fg.s3 .cap .ja{display:block;margin-top:.7rem;font-family:var(--jp);font-size:.78rem;letter-spacing:.5em;opacity:.7}
+
+/* ---------- scene 4 : feather ---------- */
+.bg.s4{background:
+  radial-gradient(ellipse at 50% 30%,#111a44 0%,var(--night) 55%,#060a22 100%)}
+.fg.s4 .vtxt{position:absolute;top:26%;writing-mode:vertical-rl;font-family:var(--jp);
+  font-size:.82rem;letter-spacing:.42em;line-height:2.3;color:rgba(196,212,250,.72)}
+.fg.s4 .vl{left:9vw}
+.fg.s4 .vr{right:9vw;top:34%}
+.fg.s4 .poem{position:absolute;left:50%;bottom:12%;transform:translateX(-50%);
+  width:max-content;max-width:88vw;text-align:center;color:#dfe9ff}
+.fg.s4 .poem .line{display:block}
+.fg.s4 .em{color:var(--feather)}
+.fg.s4 .l2{margin-top:.5rem;color:#f2f6ff}
+
+/* ---------- scene 5 : crystal ---------- */
+.bg.s5{background:
+  radial-gradient(ellipse at 62% 46%,#141e50 0%,var(--night) 52%,#070b24 100%)}
+.fg.s5 .cubes{position:absolute;inset:0;perspective:1100px}
+.cubewrap{position:absolute;pointer-events:auto;transition:transform .4s ease;
+  transform:translate(-50%,-50%)}
+.live .cubewrap:hover{animation:wobble .8s ease-in-out infinite}
+@keyframes wobble{0%,100%{transform:translate(-50%,-50%) rotate(0deg) scale(1.05)}
+  25%{transform:translate(-50%,-52%) rotate(1.6deg) scale(1.07)}
+  75%{transform:translate(-50%,-49%) rotate(-1.6deg) scale(1.06)}}
+.cubewrap::before{content:"";position:absolute;inset:-38%;border-radius:50%;
+  background:conic-gradient(from 0deg,rgba(255,150,150,.14),rgba(255,220,140,.12),rgba(150,255,200,.12),rgba(140,190,255,.16),rgba(210,150,255,.14),rgba(255,150,150,.14));
+  filter:blur(26px);animation:ringspin 22s linear infinite}
+.cube3d{position:relative;width:var(--s);height:var(--s);transform-style:preserve-3d;
+  animation:cubespin var(--t) linear infinite}
+.c2 .cube3d{animation-direction:reverse}
+@keyframes cubespin{from{transform:rotateX(-20deg) rotateY(0deg)}to{transform:rotateX(-20deg) rotateY(360deg)}}
+.face{position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(127,184,255,.12),rgba(255,255,255,.03) 42%,rgba(185,166,224,.14));
+  border:1px solid rgba(178,215,255,.4);
+  box-shadow:inset 0 0 26px rgba(127,184,255,.16)}
+.face.f1{transform:translateZ(calc(var(--s)/2))}
+.face.f2{transform:rotateY(180deg) translateZ(calc(var(--s)/2))}
+.face.f3{transform:rotateY(90deg) translateZ(calc(var(--s)/2))}
+.face.f4{transform:rotateY(-90deg) translateZ(calc(var(--s)/2))}
+.face.f5{transform:rotateX(90deg) translateZ(calc(var(--s)/2))}
+.face.f6{transform:rotateX(-90deg) translateZ(calc(var(--s)/2))}
+.c1{left:60%;top:38%;--s:118px;--t:17s}
+.c2{left:75%;top:58%;--s:80px;--t:11s}
+.c3{left:49%;top:66%;--s:56px;--t:9s}
+.fg.s5 .cap{position:absolute;left:9vw;top:32%;color:#dfe9ff}
+.fg.s5 .cap h3{font-family:var(--jp);font-weight:500;font-size:clamp(1.6rem,3vw,2.4rem);letter-spacing:.3em}
+.fg.s5 .cap .en{display:block;margin-top:1.2rem;font-family:var(--serif);font-style:italic;
+  font-size:clamp(1rem,1.6vw,1.3rem);color:rgba(196,212,250,.8)}
+.fg.s5 .cap .hint{display:block;margin-top:2rem;font-size:.7rem;letter-spacing:.3em;opacity:.5;font-weight:300}
+
+/* ---------- scene 6 : finale ---------- */
+.bg.s6{background:linear-gradient(180deg,#2a1030 0%,#5e1c2a 30%,var(--sunset) 52%,#e8722f 66%,#f5a24a 68%,#3a1420 69%)}
+.bg.s6 .sun{position:absolute;left:50%;top:52%;width:60vmin;height:36vmin;transform:translate(-50%,-50%);
+  background:radial-gradient(ellipse,rgba(255,190,110,.55),transparent 70%);filter:blur(10px)}
+.bg.s6 .mtn{position:absolute;left:0;right:0;top:54%;height:14.2%;background:#1b0c1e;
+  clip-path:polygon(0 100%,0 66%,7% 42%,15% 60%,25% 30%,35% 56%,45% 40%,54% 62%,63% 32%,73% 58%,83% 44%,91% 62%,100% 50%,100% 100%)}
+.bg.s6 .mtn2{position:absolute;left:0;right:0;top:59%;height:9.2%;background:#2c1226;
+  clip-path:polygon(0 100%,0 70%,10% 48%,20% 68%,32% 44%,44% 66%,56% 50%,68% 70%,80% 52%,90% 68%,100% 58%,100% 100%)}
+.bg.s6 .water{position:absolute;left:0;right:0;top:68%;bottom:0;
+  background:linear-gradient(180deg,#8a2a16 0%,#521827 34%,#1c0a1c 90%)}
+.bg.s6 .water::after{content:"";position:absolute;left:50%;top:0;width:70%;height:80%;
+  transform:translateX(-50%);
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,140,60,.42),transparent 70%);
+  filter:blur(14px);animation:shimmer 4.5s ease-in-out infinite}
+@keyframes shimmer{0%,100%{opacity:.85}50%{opacity:.55}}
+.fg.s6 .glass{position:absolute;left:0;right:0;top:68%;bottom:0;
+  backdrop-filter:blur(4px) saturate(1.25);-webkit-backdrop-filter:blur(4px) saturate(1.25);
+  background:linear-gradient(180deg,rgba(255,150,70,.06),rgba(10,5,15,.22))}
+.fg.s6 .poem{position:absolute;left:50%;bottom:8%;transform:translateX(-50%);
+  width:max-content;max-width:88vw;text-align:center;color:#ffe6c8;
+  text-shadow:0 0 30px rgba(194,58,31,.7)}
+.fg.s6 .em{color:#ffd28e}
+
+@media (max-width:760px){
+  .fg.s1 .poem{max-width:80vw;right:6vw}
+  .fg.s4 .vr{display:none}
+  .c1{--s:84px}.c2{--s:58px}.c3{--s:42px}
+  nav.chrome{gap:1.1rem}
+}
+@media (prefers-reduced-motion: reduce){
+  .orb,.oto,.soundring::before,.soundring::after,.cube3d,.cubewrap::before,
+  .bg.s6 .water::after,.live .cubewrap:hover{animation:none !important}
+  .w{transition:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ======== backgrounds (z1) ======== -->
+<div class="layer bg s1"><div class="orb"></div></div>
+<div class="layer bg s2"></div>
+<div class="layer bg s3">
+  <svg class="sil" viewBox="0 0 600 300" aria-hidden="true">
+    <path d="M300 214 C 286 172 292 138 300 104 C 308 138 314 172 300 214 Z
+             M300 142 C 240 88 148 66 36 94 C 118 104 160 124 206 150
+             C 160 148 118 156 88 172 C 150 169 202 173 246 187
+             C 220 197 205 212 198 231 C 231 212 266 201 300 199
+             C 334 201 369 212 402 231 C 395 212 380 197 354 187
+             C 398 173 450 169 512 172 C 482 156 440 148 394 150
+             C 440 124 482 104 564 94 C 452 66 360 88 300 142 Z"/>
+  </svg>
+</div>
+<div class="layer bg s4"></div>
+<div class="layer bg s5"></div>
+<div class="layer bg s6">
+  <div class="sun"></div><div class="mtn"></div><div class="mtn2"></div><div class="water"></div>
+</div>
+
+<canvas id="fx"></canvas>
+
+<!-- ======== foregrounds (z3) ======== -->
+<div class="layer fg s1">
+  <div class="poem">
+    <span class="line"><span class="w" style="--i:0;--sy:0px">what</span>
+      <span class="w" style="--i:1;--sy:12px">guides</span>
+      <span class="w" style="--i:2;--sy:5px">us</span>
+      <span class="w" style="--i:3;--sy:18px">through</span></span>
+    <span class="line"><span class="w em" style="--i:4;--sy:8px">change,</span>
+      <span class="w em" style="--i:5;--sy:24px">reinvention,</span></span>
+    <span class="line"><span class="w" style="--i:6;--sy:4px">and</span>
+      <span class="w" style="--i:7;--sy:14px">the</span>
+      <span class="w em" style="--i:8;--sy:28px">unknown</span>
+      <span class="w" style="--i:9;--sy:20px">—</span></span>
+  </div>
+</div>
+
+<div class="layer fg s2">
+  <div class="wrap">
+    <p class="poem pre">
+      <span class="w" style="--i:0;--sy:0px">it</span>
+      <span class="w" style="--i:1;--sy:8px">is</span>
+      <span class="w" style="--i:2;--sy:3px">not</span>
+      <span class="w" style="--i:3;--sy:12px">an</span>
+      <span class="w em" style="--i:4;--sy:18px">ending</span>
+      <span class="w" style="--i:5;--sy:14px">—</span>
+    </p>
+    <h2>
+      <span class="w" style="--i:6;--sy:0px">再</span><span class="w" style="--i:7;--sy:10px">生</span><span class="w bl" style="--i:8;--sy:4px">で</span><span class="w bl" style="--i:9;--sy:16px">あ</span><span class="w" style="--i:10;--sy:8px">る</span><span class="w" style="--i:11;--sy:22px">。</span>
+    </h2>
+    <p class="poem post">
+      <span class="w" style="--i:12;--sy:0px">rebirth,</span>
+      <span class="w" style="--i:13;--sy:8px">again</span>
+      <span class="w" style="--i:14;--sy:3px">and</span>
+      <span class="w em" style="--i:15;--sy:12px">again.</span>
+    </p>
+  </div>
+</div>
+
+<div class="layer fg s3">
+  <div class="oto w" style="--i:0;--sy:0px">音</div>
+  <div class="cap">
+    <span class="en">
+      <span class="w" style="--i:1;--sy:0px">halo</span>
+      <span class="w" style="--i:2;--sy:8px">—</span>
+      <span class="w" style="--i:3;--sy:3px">where</span>
+      <span class="w em" style="--i:4;--sy:14px">light</span>
+      <span class="w" style="--i:5;--sy:6px">learns</span>
+      <span class="w" style="--i:6;--sy:16px">to</span>
+      <span class="w em" style="--i:7;--sy:22px">sing</span>
+    </span>
+    <span class="ja"><span class="w" style="--i:8;--sy:0px">光が歌をおぼえる場所</span></span>
+  </div>
+</div>
+
+<div class="layer fg s4">
+  <div class="vtxt vl"><span class="w" style="--i:0;--sy:0px">一枚の羽根は、落下しながら光を纏う。</span><span class="w" style="--i:2;--sy:10px">重力は敵ではなく、輝きの条件である。</span></div>
+  <div class="vtxt vr"><span class="w" style="--i:1;--sy:0px">夜の底で、青は最も遠くまで届く色になる。</span><span class="w" style="--i:3;--sy:10px">羽根は、問いのかたちをしている。</span></div>
+  <div class="poem">
+    <span class="line">
+      <span class="w" style="--i:4;--sy:0px">don't</span>
+      <span class="w" style="--i:5;--sy:10px">just</span>
+      <span class="w em" style="--i:6;--sy:18px">speak</span>
+      <span class="w" style="--i:7;--sy:6px">to</span>
+      <span class="w" style="--i:8;--sy:12px">us.</span>
+      <span class="w" style="--i:9;--sy:2px">they</span>
+      <span class="w em" style="--i:10;--sy:22px">stimulate</span>
+      <span class="w" style="--i:11;--sy:8px">us.</span>
+    </span>
+    <span class="line l2">
+      <span class="w" style="--i:12;--sy:0px">light</span>
+      <span class="w em" style="--i:13;--sy:14px">becomes</span>
+      <span class="w jp" style="--i:14;--sy:6px">私、</span><span class="w em" style="--i:15;--sy:20px">flare。</span>
+    </span>
+  </div>
+</div>
+
+<div class="layer fg s5">
+  <div class="cap">
+    <h3><span class="w" style="--i:0;--sy:0px">結晶</span></h3>
+    <span class="en">
+      <span class="w" style="--i:1;--sy:0px">a</span>
+      <span class="w" style="--i:2;--sy:8px">practice</span>
+      <span class="w" style="--i:3;--sy:2px">in</span>
+      <span class="w em" style="--i:4;--sy:14px">trapping</span>
+      <span class="w" style="--i:5;--sy:6px">the</span>
+      <span class="w em" style="--i:6;--sy:18px">light</span>
+    </span>
+    <span class="hint"><span class="w" style="--i:7;--sy:0px">HOVER TO DISTURB</span></span>
+  </div>
+  <div class="cubes">
+    <div class="cubewrap c1"><div class="cube3d">
+      <div class="face f1"></div><div class="face f2"></div><div class="face f3"></div>
+      <div class="face f4"></div><div class="face f5"></div><div class="face f6"></div>
+    </div></div>
+    <div class="cubewrap c2"><div class="cube3d">
+      <div class="face f1"></div><div class="face f2"></div><div class="face f3"></div>
+      <div class="face f4"></div><div class="face f5"></div><div class="face f6"></div>
+    </div></div>
+    <div class="cubewrap c3"><div class="cube3d">
+      <div class="face f1"></div><div class="face f2"></div><div class="face f3"></div>
+      <div class="face f4"></div><div class="face f5"></div><div class="face f6"></div>
+    </div></div>
+  </div>
+</div>
+
+<div class="layer fg s6">
+  <div class="glass"></div>
+  <div class="poem">
+    <span class="w em" style="--i:0;--sy:0px">feel</span>
+    <span class="w" style="--i:1;--sy:10px">their</span>
+    <span class="w" style="--i:2;--sy:4px">heat.</span>
+    <span class="w jp" style="--i:3;--sy:16px">焔と</span>
+    <span class="w em" style="--i:4;--sy:24px">interact</span>
+    <span class="w" style="--i:5;--sy:12px">with。</span>
+  </div>
+</div>
+
+<div class="vignette"></div>
+
+<!-- ======== chrome (z10) ======== -->
+<header class="chrome brand">
+  <svg class="bird" viewBox="0 0 32 32" aria-hidden="true">
+    <path d="M6 20c0-6 5-11 11-11 4 0 7 2.5 8 6l4 1.6-4 1.7C24.4 24 20.6 27 15.5 27c-3.4 0-6.6-1.3-9.5-3.6l5-1.2C8.6 21.7 6.9 21 6 20z" fill="#6fa8e8"/>
+    <path d="M13 18.4c3-1 5.1-3.6 5.6-7.2-3.9.3-6.8 3.1-7.4 6.6z" fill="#4d86cc"/>
+    <circle cx="21.6" cy="13.4" r="1.1" fill="#101a33"/>
+  </svg>
+  <div class="stack">
+    <span class="name">HIBANA</span>
+    <span class="date">SEPT. 29</span>
+  </div>
+</header>
+<nav class="chrome">
+  <a href="#" data-goto="1">作品</a>
+  <a href="#" data-goto="3">思想</a>
+  <a href="#" data-goto="5">接続</a>
+</nav>
+<div class="chrome progress"><i id="pbar"></i></div>
+<div class="chrome soundring" id="soundring" aria-hidden="true"></div>
+
+<div class="spacer"></div>
+
+<script>
+(() => {
+'use strict';
+const RM  = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const D   = RM ? 0.25 : 1;
+const N   = 6;
+const MAX = Math.floor(1500 * D);
+
+const cvs = document.getElementById('fx');
+const ctx = cvs.getContext('2d');
+let vw = 0, vh = 0;
+function resize(){
+  vw = innerWidth; vh = innerHeight;
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  cvs.width = vw * dpr; cvs.height = vh * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+addEventListener('resize', resize, {passive: true});
+resize();
+
+/* ---- pre-rendered sprites ---- */
+function sprite(stops){
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const g = c.getContext('2d');
+  const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  for (const [o, col] of stops) grad.addColorStop(o, col);
+  g.fillStyle = grad; g.fillRect(0, 0, 64, 64);
+  return c;
+}
+const SPR = {
+  lav:    sprite([[0,'rgba(185,166,224,.55)'],[.55,'rgba(185,166,224,.18)'],[1,'rgba(185,166,224,0)']]),
+  mote:   sprite([[0,'rgba(232,240,168,.6)'],[1,'rgba(232,240,168,0)']]),
+  yellow: sprite([[0,'rgba(255,238,176,1)'],[.35,'rgba(255,179,107,.75)'],[1,'rgba(255,122,47,0)']]),
+  orange: sprite([[0,'rgba(255,179,107,.95)'],[.4,'rgba(255,122,47,.6)'],[1,'rgba(194,58,31,0)']]),
+  red:    sprite([[0,'rgba(255,112,58,.85)'],[.5,'rgba(194,58,31,.4)'],[1,'rgba(110,20,20,0)']]),
+  blue:   sprite([[0,'rgba(212,236,255,.95)'],[.4,'rgba(127,184,255,.5)'],[1,'rgba(127,184,255,0)']]),
+  white:  sprite([[0,'rgba(255,255,255,.9)'],[1,'rgba(255,255,255,0)']])
+};
+
+/* ---- particle system ---- */
+const P = [];
+function spawn(o){
+  if (P.length >= MAX) return;
+  P.push(Object.assign({vx:0, vy:0, g:0, amp:1, sin:false, blend:'lighter',
+                        mir:false, hue:0, drag:1, dot:false, spr:'white'}, o, {max:o.life}));
+}
+function num(c){ return Math.floor(c) + (Math.random() < c - Math.floor(c) ? 1 : 0); }
+const R  = Math.random;
+const RC = () => (Math.random() - 0.5) * 2;
+const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+
+/* ---- emitters (one per scene) ---- */
+function emitDawn(a, t){
+  let n = num(2.4 * a * D);
+  while (n--){
+    const s = R();
+    spawn({ x: vw*(0.08 + 0.30*s) + RC()*34,
+            y: vh*(0.58 - 0.30*Math.sin(s*Math.PI)) + RC()*46,
+            vx: RC()*0.12, vy: -0.06 - R()*0.1,
+            life: 220 + R()*160, size: 30 + R()*66,
+            spr:'lav', blend:'source-over', amp:0.5, sin:true, scene:0 });
+  }
+  n = num(0.5 * a * D);
+  while (n--){
+    spawn({ x: R()*vw, y: R()*vh, vx: RC()*0.15, vy: -0.1 - R()*0.15,
+            life: 160 + R()*120, size: 2 + R()*4,
+            spr:'mote', blend:'source-over', amp:0.7, sin:true, scene:0 });
+  }
+}
+
+function emitRise(a, t, d){
+  const prog = clamp01(d);
+  const at   = RM ? 0 : t;
+  const flap = Math.sin(at * 7);
+  const cx = vw*0.5 + Math.sin(prog*9) * vw*0.05;
+  const cy = vh*(1.08 - 0.8*prog);
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.globalAlpha = 0.45 * a;
+  ctx.drawImage(SPR.orange, cx-90, cy-90, 180, 180);
+  ctx.globalAlpha = 1;
+  let n = num(7 * a * D);
+  while (n--){
+    const r = R();
+    spawn({ x: cx + RC()*14, y: cy + RC()*20,
+            vx: RC()*0.6, vy: -(0.6 + r*1.6),
+            life: 40 + R()*36, size: 6 + r*14,
+            spr:'flame', scene:1 });
+  }
+  for (const side of [-1, 1]){
+    let m = num(4 * a * D);
+    while (m--){
+      const q = R();
+      spawn({ x: cx + side*q*(vw*0.07 + flap*vw*0.035),
+              y: cy - q*30*flap + q*12,
+              vx: side*0.2 + RC()*0.2, vy: 0.4 + R()*1.1,
+              life: 44 + R()*40, size: 3 + q*8,
+              spr:'orange', amp:0.8, scene:1 });
+    }
+  }
+}
+
+function emitHalo(a){
+  const cx = vw*0.5, cy = vh*0.42;
+  let n = num(6 * a * D);
+  while (n--){
+    const ang = R()*6.283, rad = vh*(0.10 + R()*0.16);
+    const c = Math.cos(ang), s = Math.sin(ang);
+    const sp = 0.15 + R()*0.5;
+    spawn({ x: cx + c*rad, y: cy + s*rad*0.85,
+            vx: c*sp, vy: s*sp*0.85,
+            life: 70 + R()*70, size: 0.8 + R()*1.8,
+            dot:true, hue: Math.floor(R()*360), amp:0.9, sin:true, scene:2 });
+  }
+}
+
+function emitFeather(a, t){
+  const at = RM ? 0.4 : t;
+  const ft = (at * 0.12) % 1.35;
+  const fy = (ft - 0.12) * vh;
+  const fx = vw*0.5 + Math.sin(at*1.1) * vw*0.05;
+  const rot = Math.sin(at*1.1 + 1) * 0.5;
+  let n = num(5 * a * D);
+  while (n--){
+    const r = R();
+    spawn({ x: fx + RC()*4, y: fy - r*12,
+            vx: RC()*0.2, vy: -0.25 - R()*0.5,
+            life: 60 + R()*70, size: 3 + r*8,
+            spr:'blue', amp:0.7, sin:true, scene:3 });
+  }
+  n = num(0.5 * a * D);
+  while (n--){
+    spawn({ x: fx + RC()*vw*0.06, y: R()*fy,
+            vx: RC()*0.1, vy: -0.1,
+            life: 40 + R()*50, size: 1.5 + R()*2.5,
+            spr:'white', amp:0.8, sin:true, scene:3 });
+  }
+  if (fy > -40 && fy < vh + 40){
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.85 * a;
+    ctx.drawImage(SPR.blue, fx-46, fy-46, 92, 92);
+    ctx.save();
+    ctx.translate(fx, fy); ctx.rotate(rot);
+    ctx.fillStyle = 'rgba(232,245,255,.95)';
+    ctx.beginPath(); ctx.ellipse(0, 0, 3.6, 15, 0, 0, 6.283); ctx.fill();
+    ctx.fillStyle = 'rgba(127,184,255,.6)';
+    ctx.beginPath(); ctx.ellipse(0, 2, 1.4, 10, 0, 0, 6.283); ctx.fill();
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+}
+
+function emitCrystal(a){
+  let n = num(0.6 * a * D);
+  while (n--){
+    spawn({ x: R()*vw, y: R()*vh, vx: RC()*0.12, vy: -0.08 - R()*0.12,
+            life: 150 + R()*130, size: 1.5 + R()*3.5,
+            spr:'blue', amp:0.5, sin:true, scene:4 });
+  }
+  n = num(0.3 * a * D);
+  while (n--){
+    spawn({ x: R()*vw, y: R()*vh, life: 26 + R()*26, size: 1 + R()*2,
+            spr:'white', amp:0.9, sin:true, scene:4 });
+  }
+}
+
+function emitFinale(a, t, d){
+  const at = RM ? 0 : t;
+  const sc = 0.6 + clamp01(d)*0.8;
+  const cx = vw*0.5, baseY = vh*0.54, span = vw*0.18*sc;
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.globalAlpha = 0.35 * a;
+  ctx.drawImage(SPR.red, cx-130, baseY-110, 260, 220);
+  ctx.globalAlpha = 1;
+  let n = num(15 * a * D);
+  while (n--){
+    const tt = RC(), ax = Math.abs(tt), r = R();
+    spawn({ x: cx + tt*span,
+            y: baseY - Math.pow(ax, 1.25)*vh*0.20*sc + Math.sin(at*6 + tt*4)*5,
+            vx: tt*0.5 + RC()*0.3,
+            vy: -(0.7 + r*1.8) * (1.5 - ax*0.8),
+            life: 34 + R()*40, size: (5 + r*13) * (1.15 - ax*0.5),
+            spr:'flame', mir:true, scene:5 });
+  }
+  n = num(4 * a * D);
+  while (n--){
+    spawn({ x: cx + RC()*24, y: baseY + R()*20,
+            vx: RC()*0.4, vy: -(1 + R()*2),
+            life: 40 + R()*40, size: 9 + R()*15,
+            spr:'flame', mir:true, scene:5 });
+  }
+  n = num(1.6 * a * D);
+  while (n--){
+    spawn({ x: cx + RC()*span*0.8, y: baseY - R()*vh*0.1,
+            vx: RC()*0.5, vy: -(2 + R()*2.4),
+            life: 60 + R()*60, size: 1.5 + R()*2.5,
+            spr:'yellow', amp:0.9, scene:5 });
+  }
+}
+
+const EMIT = [emitDawn, emitRise, emitHalo, emitFeather, emitCrystal, emitFinale];
+
+/* ---- DOM refs ---- */
+const bgs = Array.from(document.querySelectorAll('.bg'));
+const fgs = Array.from(document.querySelectorAll('.fg'));
+const pbar = document.getElementById('pbar');
+const soundring = document.getElementById('soundring');
+const body = document.body;
+
+document.querySelectorAll('[data-goto]').forEach(el => {
+  el.addEventListener('click', e => {
+    e.preventDefault();
+    const i = +el.dataset.goto;
+    scrollTo({ top: (i + 0.35) * 1.5 * vh, behavior: RM ? 'auto' : 'smooth' });
+  });
+});
+
+/* ---- main loop ---- */
+let target = scrollY, smooth = scrollY;
+addEventListener('scroll', () => { target = scrollY; }, {passive: true});
+
+const alphas = new Array(N).fill(0);
+const start = performance.now();
+
+function frame(now){
+  const t = (now - start) / 1000;
+  smooth += (target - smooth) * (RM ? 1 : 0.08);
+  if (Math.abs(target - smooth) < 0.1) smooth = target;
+
+  const maxScroll = Math.max(1, document.documentElement.scrollHeight - vh);
+  const p = Math.min(Math.max(smooth / (vh * 1.5), 0), N - 0.001);
+
+  /* scene layers */
+  for (let i = 0; i < N; i++){
+    let d = p - i;
+    let dc = d;
+    if (i === 0 && dc < 0.5) dc = 0.5;
+    if (i === N - 1 && dc > 0.5) dc = 0.5;
+    const e = Math.abs(dc - 0.5);
+    const abg = clamp01((0.68 - e) / 0.25);
+    const afg = clamp01((0.55 - e) / 0.20);
+    alphas[i] = abg;
+
+    bgs[i].style.opacity = abg.toFixed(3);
+    bgs[i].style.visibility = abg > 0.005 ? 'visible' : 'hidden';
+
+    const dv = Math.min(Math.max(d, -0.5), 1.5);
+    fgs[i].style.opacity = afg.toFixed(3);
+    fgs[i].style.visibility = afg > 0.005 ? 'visible' : 'hidden';
+    fgs[i].style.transform = 'translate3d(0,' + ((0.5 - dv) * (RM ? 0 : 60)).toFixed(1) + 'px,0)';
+
+    if (afg > 0.55){ fgs[i].classList.add('in'); if (i === 4) fgs[i].classList.add('live'); }
+    else if (afg < 0.03){ fgs[i].classList.remove('in'); if (i === 4) fgs[i].classList.remove('live'); }
+  }
+
+  body.classList.toggle('dark', p > 0.85);
+  pbar.style.transform = 'scaleX(' + (smooth / maxScroll).toFixed(4) + ')';
+  soundring.style.opacity = clamp01((p - 2.6) / 0.5).toFixed(2);
+
+  /* particles */
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1;
+  ctx.clearRect(0, 0, vw, vh);
+
+  for (let i = 0; i < N; i++){
+    if (alphas[i] > 0.02) EMIT[i](alphas[i], t, p - i);
+  }
+
+  const WY = vh * 0.68;
+  let curBlend = null;
+  for (let i = P.length - 1; i >= 0; i--){
+    const q = P[i];
+    q.life--;
+    if (q.life <= 0 || alphas[q.scene] < 0.005){
+      P[i] = P[P.length - 1]; P.pop(); continue;
+    }
+    q.vy += q.g; q.vx *= q.drag; q.vy *= q.drag;
+    q.x += q.vx; q.y += q.vy;
+
+    const lr = q.life / q.max;
+    const al = alphas[q.scene] * q.amp * (q.sin ? Math.sin(Math.PI * lr) : lr);
+    if (al <= 0.004) continue;
+
+    if (q.blend !== curBlend){ ctx.globalCompositeOperation = q.blend; curBlend = q.blend; }
+
+    if (q.dot){
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = 'hsla(' + q.hue + ',85%,72%,' + al.toFixed(3) + ')';
+      ctx.beginPath(); ctx.arc(q.x, q.y, q.size, 0, 6.283); ctx.fill();
+      continue;
+    }
+    let img;
+    if (q.spr === 'flame') img = lr > 0.6 ? SPR.yellow : lr > 0.3 ? SPR.orange : SPR.red;
+    else img = SPR[q.spr];
+    const s = q.size;
+    ctx.globalAlpha = al;
+    ctx.drawImage(img, q.x - s, q.y - s, s*2, s*2);
+    if (q.mir){
+      const my = 2*WY - q.y;
+      if (my < vh + 40){
+        ctx.globalAlpha = al * 0.25;
+        ctx.drawImage(img, q.x - s*0.9, my - s*0.7, s*1.8, s*1.4);
+      }
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

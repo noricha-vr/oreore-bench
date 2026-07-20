@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HIBANA - Scroll Immersive Experience</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Shippori+Mincho&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --dawn-bg: #f2ecf5;
+      --dawn-wing: #b9a6e0;
+      --orb: #e8f0a8;
+      --flame: #ff7a2f;
+      --ember: #ffb36b;
+      --night: #0a1030;
+      --feather: #7fb8ff;
+      --sunset: #c23a1f;
+      --ink: #2a2438;
+    }
+
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--dawn-bg);
+      color: #ffffff;
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+      overscroll-behavior: none;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Scroll Spacer */
+    .scroll-spacer {
+      height: 900vh;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: -1;
+    }
+
+    /* Canvas */
+    #bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* UI Overlay */
+    .ui-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 3vw 5vw;
+      box-sizing: border-box;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      z-index: 100;
+      mix-blend-mode: difference;
+      pointer-events: none;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-size: 1.1rem;
+      letter-spacing: 0.15em;
+      pointer-events: auto;
+      cursor: default;
+    }
+
+    .logo .date {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 0.9rem;
+      opacity: 0.7;
+      margin-left: 1rem;
+    }
+
+    .nav {
+      display: flex;
+      gap: 2.5rem;
+      font-size: 0.85rem;
+      letter-spacing: 0.15em;
+      pointer-events: auto;
+    }
+
+    .nav a {
+      color: #fff;
+      text-decoration: none;
+      opacity: 0.6;
+      transition: opacity 0.4s ease;
+      position: relative;
+    }
+
+    .nav a:hover {
+      opacity: 1;
+    }
+
+    .nav a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0%;
+      height: 1px;
+      background: #fff;
+      transition: width 0.4s ease;
+    }
+
+    .nav a:hover::after {
+      width: 100%;
+    }
+
+    .progress-bar {
+      position: fixed;
+      bottom: 4vw;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 15vw;
+      min-width: 150px;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.2);
+      z-index: 100;
+      mix-blend-mode: difference;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: #fff;
+      transform-origin: left;
+      transition: width 0.1s linear;
+    }
+
+    .sound-ring {
+      position: fixed;
+      bottom: 4vw;
+      left: 5vw;
+      width: 44px;
+      height: 44px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      z-index: 100;
+      mix-blend-mode: difference;
+      opacity: 0;
+      transition: opacity 1.2s ease, background-color 0.4s ease;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    .sound-ring::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 10px;
+      height: 10px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.4s ease;
+    }
+
+    .sound-ring:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .sound-ring:hover::after {
+      transform: translate(-50%, -50%) scale(0.8);
+    }
+
+    body[data-scene="3"] .sound-ring,
+    body[data-scene="4"] .sound-ring,
+    body[data-scene="5"] .sound-ring {
+      opacity: 1;
+    }
+
+    /* Scene Container */
+    .scenes-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .scene {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      will-change: opacity, transform;
+    }
+
+    /* Typography Utilities */
+    .poem-text {
+      font-family: 'Cormorant Garamond', 'Shippori Mincho', serif;
+      font-size: clamp(1.4rem, 3.2vw, 2.6rem);
+      line-height: 1.5;
+      letter-spacing: 0.04em;
+    }
+
+    .poem-text i {
+      font-style: italic;
+      font-weight: 500;
+    }
+
+    /* Scene 0 */
+    #scene-0 .poem-text {
+      color: var(--ink);
+      position: absolute;
+      top: 45%;
+      right: 12vw;
+      text-align: left;
+    }
+
+    #scene-0 .poem-text span {
+      display: block;
+      opacity: 0;
+      transform: translateY(25px);
+      transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .scene.active #scene-0 .poem-text span {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .scene.active #scene-0 .poem-text span:nth-child(1) { transition-delay: 0.1s; }
+    .scene.active #scene-0 .poem-text span:nth-child(2) { transition-delay: 0.2s; margin-left: 1.5em; }
+    .scene.active #scene-0 .poem-text span:nth-child(3) { transition-delay: 0.3s; margin-left: 3em; }
+    .scene.active #scene-0 .poem-text span:nth-child(4) { transition-delay: 0.4s; margin-left: 4.5em; }
+
+    /* Scene 1 */
+    #scene-1 .center-abs {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      text-align: center;
+    }
+
+    .jp-title {
+      font-family: 'Shippori Mincho', serif;
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      font-weight: 400;
+      letter-spacing: 0.3em;
+      color: rgba(255, 255, 255, 0.9);
+      opacity: 0;
+      filter: blur(12px);
+      transform: scale(0.9);
+      transition: all 1.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .scene.active .jp-title {
+      opacity: 1;
+      filter: blur(0px);
+      transform: scale(1);
+    }
+
+    /* Scene 2 */
+    #scene-2 .center-abs {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .giant-char {
+      font-family: 'Shippori Mincho', serif;
+      font-size: clamp(10rem, 25vw, 20rem);
+      font-weight: 400;
+      color: #ffffff;
+      opacity: 0;
+      transition: opacity 1s ease;
+      line-height: 1;
+      margin: 0;
+    }
+
+    .scene.active .giant-char {
+      animation: flicker 5s infinite alternate;
+    }
+
+    @keyframes flicker {
+      0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 0.95; text-shadow: 0 0 30px rgba(255,255,255,0.4); }
+      20%, 24%, 55% { opacity: 0.3; text-shadow: none; }
+    }
+
+    /* Scene 3 */
+    .vertical-text {
+      font-family: 'Shippori Mincho', serif;
+      font-size: clamp(0.85rem, 1.2vw, 1rem);
+      letter-spacing: 0.2em;
+      line-height: 2.2;
+      writing-mode: vertical-rl;
+      position: absolute;
+      top: 25%;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .vertical-text.left { left: 12vw; transition-delay: 0.2s; }
+    .vertical-text.right { right: 12vw; transition-delay: 0.4s; }
+
+    .scene.active .vertical-text {
+      opacity: 0.6;
+      transform: translateY(0);
+    }
+
+    .staggered-bottom {
+      position: absolute;
+      bottom: 15vh;
+      left: 0;
+      width: 100%;
+      text-align: center;
+    }
+
+    .staggered-bottom span {
+      display: block;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 1s ease, transform 1s ease;
+    }
+
+    .scene.active .staggered-bottom span:nth-child(1) { transition-delay: 0.4s; opacity: 1; transform: translateY(0); }
+    .scene.active .staggered-bottom span:nth-child(2) { transition-delay: 0.6s; opacity: 1; transform: translateY(0); }
+
+    /* Scene 4 - Crystal */
+    .crystal-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 1px; height: 1px;
+      transform-style: preserve-3d;
+      perspective: 1200px;
+      pointer-events: auto;
+    }
+
+    .crystal {
+      position: absolute;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.01));
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.25);
+      box-shadow: inset 0 0 20px rgba(255,255,255,0.05), 0 10px 40px rgba(0,0,0,0.5);
+      transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.4s, box-shadow 0.4s;
+    }
+
+    .crystal:nth-child(1) {
+      top: -8vw; left: -12vw; width: 18vw; height: 18vw; max-width: 250px; max-height: 250px;
+      transform: translate3d(-10vw, -5vw, 0) rotateX(45deg) rotateY(45deg);
+      animation: crystalFloat1 10s infinite alternate ease-in-out;
+    }
+    
+    .crystal:nth-child(2) {
+      top: 5vw; left: 8vw; width: 10vw; height: 10vw; max-width: 150px; max-height: 150px;
+      transform: translate3d(5vw, 5vw, -50px) rotateX(20deg) rotateY(70deg);
+      animation: crystalFloat2 12s infinite alternate-reverse ease-in-out;
+    }
+
+    .crystal:nth-child(3) {
+      top: -12vw; left: 6vw; width: 6vw; height: 6vw; max-width: 100px; max-height: 100px;
+      transform: translate3d(8vw, -10vw, 50px) rotateX(60deg) rotateY(10deg);
+      animation: crystalFloat3 15s infinite alternate ease-in-out;
+    }
+
+    .crystal:hover {
+      transform: scale(1.1) rotateX(0deg) rotateY(0deg) !important;
+      border-color: rgba(255,255,255,0.8);
+      box-shadow: 0 0 50px rgba(127, 184, 255, 0.3);
+      z-index: 20;
+    }
+
+    @keyframes crystalFloat1 { 0% { margin-top: 0; } 100% { margin-top: -30px; } }
+    @keyframes crystalFloat2 { 0% { margin-top: 0; } 100% { margin-top: -20px; } }
+    @keyframes crystalFloat3 { 0% { margin-top: 0; } 100% { margin-top: -40px; } }
+
+    /* Scene 5 */
+    .finale-text {
+      position: absolute;
+      bottom: 28vh;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transition-delay: 0.3s;
+    }
+
+    .scene.active .finale-text {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .finale-text.reflection {
+      bottom: 12vh;
+      transform: scaleY(-1) translateY(-20px);
+      filter: blur(5px);
+      opacity: 0;
+      color: var(--flame);
+      transition-delay: 0.4s;
+    }
+
+    .scene.active .finale-text.reflection {
+      opacity: 0.3;
+      transform: scaleY(-1) translateY(0);
+    }
+
+    /* Accessibility / Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      .giant-char, .crystal {
+        animation: none !important;
+      }
+      .scene {
+        transition-duration: 0.1s !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="scroll-spacer"></div>
+
+  <canvas id="bg-canvas"></canvas>
+
+  <header class="ui-header">
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M22 4s-4 2-6 2c-2 0-4-2-6-2S4 4 4 4s2 4 2 6c0 4 4 8 6 8s6-4 6-8c0-2 2-6 2-6z"/>
+      </svg>
+      <span>HIBANA</span>
+      <span class="date">Sept. 29</span>
+    </div>
+    <nav class="nav">
+      <a href="#">作品</a>
+      <a href="#">思想</a>
+      <a href="#">接続</a>
+    </nav>
+  </header>
+
+  <div class="progress-bar">
+    <div class="progress-fill"></div>
+  </div>
+
+  <div class="sound-ring"></div>
+
+  <div class="scenes-container">
+    <!-- Scene 0: Dawn -->
+    <div class="scene" id="scene-0">
+       <div class="poem-text">
+         <span>what guides us through</span>
+         <span><i>change</i>,</span>
+         <span><i>reinvention</i>,</span>
+         <span>and the <i>unknown</i>—</span>
+       </div>
+    </div>
+    
+    <!-- Scene 1: Rise -->
+    <div class="scene" id="scene-1">
+      <div class="center-abs">
+        <h2 class="jp-title">再<span style="filter: blur(3px); opacity: 0.8;">生</span>であ<span style="filter: blur(2px);">る</span>。</h2>
+      </div>
+    </div>
+    
+    <!-- Scene 2: Halo -->
+    <div class="scene" id="scene-2">
+      <div class="center-abs">
+        <h1 class="giant-char">音</h1>
+      </div>
+    </div>
+    
+    <!-- Scene 3: Feather -->
+    <div class="scene" id="scene-3">
+      <div class="vertical-text left">
+         <p>静寂の中に<br>落ちる一羽の<br>青い光。</p>
+      </div>
+      <div class="vertical-text right">
+         <p>暗闇を裂き<br>新たな波紋を<br>呼び覚ます。</p>
+      </div>
+      <div class="poem-text staggered-bottom">
+        <span>don't just <i>speak</i> to us. they <i>stimulate</i> us.</span>
+        <span style="margin-top: 0.5em; margin-left: 2em;">light <i>becomes</i> 私、flare。</span>
+      </div>
+    </div>
+    
+    <!-- Scene 4: Crystal -->
+    <div class="scene" id="scene-4">
+      <div class="crystal-container">
+        <div class="crystal"></div>
+        <div class="crystal"></div>
+        <div class="crystal"></div>
+      </div>
+    </div>
+    
+    <!-- Scene 5: Finale -->
+    <div class="scene" id="scene-5">
+      <div class="poem-text finale-text">
+        <span><i>feel</i> their heat. 焔と <i>interact</i> with。</span>
+      </div>
+      <div class="poem-text finale-text reflection">
+        <span><i>feel</i> their heat. 焔と <i>interact</i> with。</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d', { alpha: false });
+    const scenes = document.querySelectorAll('.scene');
+    const progressFill = document.querySelector('.progress-fill');
+    
+    const TOTAL_SCENES = 6;
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    let scrollY = 0;
+    let targetScrollY = 0;
+    let progress = 0;
+    let time = 0;
+    let isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Background colors for interpolation
+    const bgColors = [
+      [242, 236, 245], // 0: Dawn (#f2ecf5)
+      [26, 20, 35],    // 1: Rise (Dark ink)
+      [15, 15, 25],    // 2: Halo (Darker)
+      [10, 16, 48],    // 3: Night (#0a1030)
+      [10, 16, 48],    // 4: Crystal (Night)
+      [194, 58, 31]    // 5: Sunset base (#c23a1f)
+    ];
+
+    function getBgColor(idxF) {
+      let i = Math.floor(idxF);
+      let next = Math.min(i + 1, bgColors.length - 1);
+      let t = idxF - i;
+      let r = bgColors[i][0] + (bgColors[next][0] - bgColors[i][0]) * t;
+      let g = bgColors[i][1] + (bgColors[next][1] - bgColors[i][1]) * t;
+      let b = bgColors[i][2] + (bgColors[next][2] - bgColors[i][2]) * t;
+      return `rgb(${Math.floor(r)},${Math.floor(g)},${Math.floor(b)})`;
+    }
+
+    class Particle {
+      constructor(type, x, y, vx, vy, life, color, size) {
+        this.type = type;
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.life = life;
+        this.maxLife = life;
+        this.color = color;
+        this.size = size;
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life--;
+        if (this.type === 'flame' || this.type === 'beam' || this.type === 'wing') {
+          this.size *= 0.95;
+        }
+      }
+      draw(ctx) {
+        let alpha = Math.max(0, this.life / this.maxLife);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    let particles = [];
+
+    function updateDOM(sceneIdxF) {
+      progressFill.style.width = `${progress * 100}%`;
+      
+      let currentScene = Math.floor(sceneIdxF + 0.5);
+      document.body.setAttribute('data-scene', currentScene);
+      
+      scenes.forEach((scene, i) => {
+        let dist = Math.abs(sceneIdxF - i);
+        let alpha = 1 - Math.min(dist, 1);
+        let smoothAlpha = alpha * alpha * (3 - 2 * alpha);
+        
+        let ty = (i - sceneIdxF) * 80;
+        
+        scene.style.opacity = smoothAlpha;
+        scene.style.transform = `translateY(${ty}px)`;
+        
+        if (dist < 0.4) {
+          if (!scene.classList.contains('active')) scene.classList.add('active');
+        } else {
+          if (scene.classList.contains('active')) scene.classList.remove('active');
+        }
+      });
+    }
+
+    function drawScene0(idxF) {
+      let alpha = 1 - idxF;
+      if (alpha <= 0) return;
+      
+      ctx.globalAlpha = alpha;
+      ctx.globalCompositeOperation = 'source-over';
+      
+      // Glow Orb
+      let orbX = width * 0.6;
+      let orbY = height * 0.35;
+      let grad = ctx.createRadialGradient(orbX, orbY, 0, orbX, orbY, Math.min(width, height) * 0.5);
+      grad.addColorStop(0, 'rgba(232, 240, 168, 0.6)');
+      grad.addColorStop(1, 'rgba(232, 240, 168, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, width, height);
+
+      // Watercolor wing stroke
+      ctx.fillStyle = 'rgba(185, 166, 224, 0.12)';
+      for(let i = 0; i < 60; i++) {
+        let t = time * 0.4 + i * 0.08;
+        let x = width * 0.15 + Math.sin(t) * 40 + (i * 3);
+        let y = height * 0.85 - (i * 15) + Math.cos(t * 1.5) * 20;
+        let s = 50 + Math.sin(t * 2) * 25 + (60 - i) * 0.5;
+        ctx.beginPath();
+        ctx.arc(x, y, s, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawScene1(idxF) {
+      let alpha = 1 - Math.abs(idxF - 1);
+      if (alpha <= 0) return;
+      
+      let pRate = isReducedMotion ? 0.25 : 1;
+      if (alpha > 0.1 && Math.random() < pRate) {
+        let numP = Math.floor(4 * alpha);
+        for(let i=0; i<numP; i++) {
+          let py = height - (idxF * height * 0.5);
+          let px = width / 2;
+          let flap = Math.sin(time * 5);
+          let wx = px + (Math.random() - 0.5) * width * 0.4 * Math.abs(flap);
+          let wy = py + Math.random() * 40 + Math.abs(wx - px) * 0.4;
+          
+          particles.push(new Particle('wing', wx, wy, 
+            (Math.random()-0.5)*2, Math.random()*1.5, 
+            Math.random()*40 + 20, 
+            Math.random() > 0.4 ? '#ff7a2f' : '#ffb36b', 
+            Math.random()*6 + 2
+          ));
+        }
+      }
+    }
+
+    function drawScene2(idxF) {
+      let alpha = 1 - Math.abs(idxF - 2);
+      if (alpha <= 0) return;
+      
+      ctx.globalAlpha = alpha;
+      ctx.globalCompositeOperation = 'source-over';
+      
+      let cx = width / 2;
+      let cy = height / 2;
+      
+      let g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(width, height) * 0.55);
+      g.addColorStop(0, 'rgba(255, 255, 255, 1)');
+      g.addColorStop(0.15, 'rgba(255, 200, 100, 0.8)');
+      g.addColorStop(0.4, 'rgba(100, 180, 255, 0.3)');
+      g.addColorStop(1, 'rgba(15, 15, 25, 0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, width, height);
+      
+      ctx.globalAlpha = alpha * 0.95;
+      ctx.fillStyle = '#050508';
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + height * 0.2);
+      ctx.quadraticCurveTo(cx - width*0.15, cy - height*0.05, cx - width*0.35, cy - height*0.15);
+      ctx.quadraticCurveTo(cx - width*0.25, cy + height*0.1, cx - width*0.05, cy + height*0.25);
+      ctx.quadraticCurveTo(cx + width*0.25, cy + height*0.1, cx + width*0.35, cy - height*0.15);
+      ctx.quadraticCurveTo(cx + width*0.15, cy - height*0.05, cx, cy + height*0.2);
+      ctx.fill();
+    }
+
+    function drawScene3(idxF) {
+      let alpha = 0;
+      if (idxF > 2 && idxF < 5) {
+        if (idxF < 3) alpha = idxF - 2;
+        else if (idxF > 4) alpha = 5 - idxF;
+        else alpha = 1;
+      }
+      if (alpha <= 0) return;
+      
+      ctx.globalAlpha = alpha;
+      ctx.globalCompositeOperation = 'screen';
+      
+      let fx = width / 2 + Math.sin(time) * 120;
+      let fy = (time * 180) % (height + 200) - 100;
+      
+      let g = ctx.createRadialGradient(fx, fy, 0, fx, fy, 160);
+      g.addColorStop(0, 'rgba(127, 184, 255, 0.5)');
+      g.addColorStop(1, 'rgba(127, 184, 255, 0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, width, height);
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(fx, fy, 3, 20, Math.sin(time * 2) * 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      
+      let pRate = isReducedMotion ? 0.25 : 1;
+      if (Math.random() < 0.4 * pRate) {
+        particles.push(new Particle('beam', fx + (Math.random()-0.5)*8, fy - 15, 
+          Math.sin(time)*0.3, -2 - Math.random()*2, 
+          45, '#7fb8ff', Math.random()*2.5 + 1));
+      }
+    }
+
+    function drawScene5(idxF) {
+      let alpha = Math.max(0, Math.min(1, idxF - 4));
+      if (alpha <= 0) return;
+      
+      ctx.globalAlpha = alpha;
+      ctx.globalCompositeOperation = 'source-over';
+      
+      // Sunset Sky
+      let skyG = ctx.createLinearGradient(0, 0, 0, height * 0.7);
+      skyG.addColorStop(0, `rgba(194, 58, 31, ${alpha})`);
+      skyG.addColorStop(1, `rgba(42, 36, 56, ${alpha})`);
+      ctx.fillStyle = skyG;
+      ctx.fillRect(0, 0, width, height * 0.7);
+      
+      // Water
+      let waterG = ctx.createLinearGradient(0, height * 0.7, 0, height);
+      waterG.addColorStop(0, `rgba(20, 15, 30, ${alpha})`);
+      waterG.addColorStop(1, `rgba(10, 5, 15, ${alpha})`);
+      ctx.fillStyle = waterG;
+      ctx.fillRect(0, height * 0.7, width, height * 0.3);
+      
+      // Mountains
+      ctx.fillStyle = `rgba(17, 13, 20, ${alpha})`;
+      ctx.beginPath();
+      ctx.moveTo(0, height * 0.7);
+      ctx.lineTo(width * 0.15, height * 0.52);
+      ctx.lineTo(width * 0.35, height * 0.65);
+      ctx.lineTo(width * 0.65, height * 0.45);
+      ctx.lineTo(width * 0.85, height * 0.6);
+      ctx.lineTo(width, height * 0.5);
+      ctx.lineTo(width, height * 0.7);
+      ctx.fill();
+      
+      // Phoenix Flames Emitter
+      let px = width / 2;
+      let py = height * 0.55;
+      
+      let pRate = isReducedMotion ? 0.25 : 1;
+      if (Math.random() > (1 - alpha * pRate)) {
+        for(let i=0; i<3; i++) {
+           let t = Math.random();
+           let lx = px - t * width * 0.3; 
+           let ly = py - Math.sin(t * Math.PI) * (height * 0.22);
+           particles.push(new Particle('flame', lx, ly, (Math.random()-0.5)*1.5, -1-Math.random()*2, 45, '#ff7a2f', Math.random()*8+3));
+           
+           let rx = px + t * width * 0.3;
+           let ry = py - Math.sin(t * Math.PI) * (height * 0.22);
+           particles.push(new Particle('flame', rx, ry, (Math.random()-0.5)*1.5, -1-Math.random()*2, 45, '#ff7a2f', Math.random()*8+3));
+           
+           particles.push(new Particle('flame', px + (Math.random()-0.5)*50, py + (Math.random()-0.5)*60, 0, -3-Math.random()*2, 55, '#ffb36b', Math.random()*12+4));
+        }
+      }
+      
+      // Water Reflection
+      let refG = ctx.createRadialGradient(px, height * 0.75, 0, px, height * 0.75, width * 0.35);
+      refG.addColorStop(0, `rgba(255, 122, 47, ${alpha * 0.45})`);
+      refG.addColorStop(1, `rgba(255, 122, 47, 0)`);
+      ctx.fillStyle = refG;
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillRect(0, height * 0.7, width, height * 0.3);
+    }
+
+    function updateCanvas(idxF) {
+      ctx.fillStyle = getBgColor(idxF);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillRect(0, 0, width, height);
+      
+      ctx.globalCompositeOperation = 'screen';
+      
+      drawScene0(idxF);
+      drawScene1(idxF);
+      drawScene2(idxF);
+      drawScene3(idxF);
+      drawScene5(idxF);
+      
+      ctx.globalCompositeOperation = 'screen';
+      for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.update();
+        p.draw(ctx);
+        if (p.life <= 0 || p.size <= 0.2) {
+          particles.splice(i, 1);
+        }
+      }
+      
+      if (particles.length > 400) {
+        particles.splice(0, particles.length - 400);
+      }
+      
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    function loop() {
+      scrollY += (targetScrollY - scrollY) * 0.08;
+      
+      let maxScroll = document.body.scrollHeight - height;
+      if (maxScroll <= 0) maxScroll = 1;
+      progress = Math.max(0, Math.min(1, scrollY / maxScroll));
+      
+      let sceneIndexFloat = progress * (TOTAL_SCENES - 1);
+      
+      if (isReducedMotion) {
+        time = scrollY * 0.005;
+      } else {
+        time = performance.now() * 0.001;
+      }
+      
+      updateDOM(sceneIndexFloat);
+      updateCanvas(sceneIndexFloat);
+      
+      requestAnimationFrame(loop);
+    }
+
+    window.addEventListener('scroll', () => {
+      targetScrollY = window.scrollY;
+    }, { passive: true });
+
+    window.addEventListener('resize', () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    });
+
+    // Start loop
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
