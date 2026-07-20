@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HIBANA — 不死鳥スクロール</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,400;1,500&family=Shippori+Mincho:wght@400;500&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --dawn-bg:#f2ecf5; --dawn-wing:#b9a6e0; --orb:#e8f0a8; --flame:#ff7a2f;
+  --ember:#ffb36b; --night:#0a1030; --feather:#7fb8ff; --sunset:#c23a1f; --ink:#2a2438;
+  --serif:'Cormorant Garamond',serif;
+  --jp:'Shippori Mincho',serif;
+  --ui:'Zen Kaku Gothic New',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--night);font-family:var(--ui);font-weight:300;overflow-x:hidden}
+#track{height:900vh}
+
+/* ---------- scenes ---------- */
+.scene{position:fixed;inset:0;opacity:0;visibility:hidden;pointer-events:none;overflow:hidden}
+.layer{position:absolute;inset:-24vh 0;will-change:transform}
+.l-fg{display:block}
+
+#s0 .l-bg{background:
+  linear-gradient(155deg,
+    color-mix(in srgb, var(--orb) 20%, var(--dawn-bg)) 0%,
+    var(--dawn-bg) 45%,
+    color-mix(in srgb, var(--dawn-wing) 32%, var(--dawn-bg)) 100%)}
+.orb{position:absolute;left:52%;top:22%;width:22vmin;height:22vmin;border-radius:50%;
+  background:radial-gradient(circle,
+    color-mix(in srgb, var(--orb) 92%, white) 0%,
+    color-mix(in srgb, var(--orb) 60%, transparent) 42%,
+    transparent 70%);
+  animation:breathe 7s ease-in-out infinite}
+@keyframes breathe{50%{transform:scale(1.14);opacity:.8}}
+
+#s1 .l-bg{background:linear-gradient(180deg,
+  color-mix(in srgb, var(--ink) 80%, var(--flame)) 0%,
+  color-mix(in srgb, var(--flame) 42%, var(--ink)) 55%,
+  color-mix(in srgb, var(--ember) 52%, var(--flame)) 100%)}
+
+#s2 .l-bg{background:
+  radial-gradient(circle at 50% 46%,
+    hsla(52,90%,86%,.95) 0%,
+    hsla(22,85%,80%,.55) 16%,
+    hsla(335,70%,82%,.42) 28%,
+    hsla(262,68%,82%,.38) 40%,
+    hsla(202,74%,82%,.34) 52%,
+    hsla(152,58%,84%,.28) 64%,
+    transparent 78%),
+  var(--dawn-bg)}
+
+#s3 .l-bg,#s4 .l-bg{background:
+  radial-gradient(ellipse at 50% 28%,
+    color-mix(in srgb, var(--feather) 11%, var(--night)),
+    var(--night) 72%)}
+
+#s5 .l-bg{background:linear-gradient(180deg,
+  color-mix(in srgb, var(--ink) 62%, var(--sunset)) 0%,
+  var(--sunset) 44%,
+  color-mix(in srgb, var(--ember) 62%, var(--sunset)) 70%,
+  var(--ember) 78%,
+  color-mix(in srgb, var(--sunset) 55%, var(--night)) 79%,
+  color-mix(in srgb, var(--night) 88%, black) 100%)}
+.mtn{position:absolute;left:-4%;right:-4%;bottom:21vh;height:24vh;
+  background:color-mix(in srgb, var(--ink) 82%, var(--night));
+  clip-path:polygon(0 100%,0 64%,8% 48%,16% 68%,26% 34%,36% 58%,45% 42%,55% 62%,64% 30%,75% 56%,84% 44%,92% 62%,100% 52%,100% 100%)}
+.water{position:absolute;left:0;right:0;bottom:-24vh;height:46vh;
+  background:linear-gradient(180deg,
+    color-mix(in srgb, var(--sunset) 45%, var(--night)) 0%,
+    color-mix(in srgb, var(--night) 90%, black) 100%)}
+.wglow{position:absolute;left:50%;bottom:-14vh;width:70vmin;height:26vh;transform:translateX(-50%);
+  background:radial-gradient(ellipse at 50% 0%,
+    color-mix(in srgb, var(--ember) 55%, transparent) 0%,
+    color-mix(in srgb, var(--flame) 25%, transparent) 45%,
+    transparent 75%);
+  filter:blur(14px);animation:shimmer 5s ease-in-out infinite}
+@keyframes shimmer{50%{opacity:.62;transform:translateX(-50%) scaleX(1.08)}}
+
+/* ---------- typography ---------- */
+.poem{font-family:var(--serif);font-style:italic;font-weight:400;
+  font-size:clamp(1.4rem,3.2vw,2.6rem);line-height:1.5;letter-spacing:.04em;color:var(--ink)}
+.poem.head{font-size:clamp(1.9rem,4vw,3.4rem);letter-spacing:-0.02em}
+.poem .w{display:inline-block;opacity:0;
+  transform:translateY(calc(var(--ty,0em) + .7em));
+  transition:opacity .9s cubic-bezier(.22,.6,.2,1),transform 1.15s cubic-bezier(.22,.6,.2,1);
+  transition-delay:0s}
+.scene.in .poem .w{opacity:1;transform:translateY(var(--ty,0em));transition-delay:var(--d,0s)}
+.poem .em{font-weight:500;font-size:1.14em}
+
+#s0 .poem{position:absolute;right:8vw;top:33vh;max-width:44vw;text-align:left}
+#s0 .poem .em{color:color-mix(in srgb, var(--dawn-wing) 55%, var(--ink))}
+
+#s1 .l-fg{display:flex;align-items:center;justify-content:center}
+.saisei{font-family:var(--jp);font-weight:500;font-style:normal;
+  font-size:clamp(2.6rem,7vw,5.4rem);letter-spacing:.14em;
+  color:color-mix(in srgb, var(--ember) 32%, white);
+  text-shadow:0 0 40px color-mix(in srgb, var(--flame) 45%, transparent)}
+.saisei .w{transform:translateY(calc(var(--ty,0em) + .5em))}
+.saisei .veil{filter:blur(5px);opacity:.9}
+
+#s2 .l-fg{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh}
+.oto{font-family:var(--jp);font-style:normal;font-weight:500;
+  font-size:clamp(8rem,22vw,15rem);line-height:1;color:var(--ink);
+  animation:otoflicker 5.5s ease-in-out infinite}
+@keyframes otoflicker{
+  0%,100%{opacity:.92}8%{opacity:.42}12%{opacity:.86}
+  40%{opacity:.95}54%{opacity:.5}59%{opacity:.9}}
+#s2 .cap{font-family:var(--serif);font-style:italic;font-size:clamp(.95rem,1.4vw,1.2rem);
+  letter-spacing:.12em;color:color-mix(in srgb, var(--ink) 72%, var(--dawn-bg))}
+
+.vtext{position:absolute;writing-mode:vertical-rl;font-family:var(--jp);font-style:normal;
+  font-size:.8rem;line-height:2.3;letter-spacing:.34em;
+  color:color-mix(in srgb, var(--feather) 55%, white);
+  opacity:0;transform:translateY(14px);
+  transition:opacity 1.4s ease,transform 1.4s ease}
+.scene.in .vtext{opacity:.85;transform:none}
+.vtext.vl{left:7vw;top:16vh;transition-delay:.5s}
+.vtext.vr{right:7vw;top:24vh;transition-delay:.9s}
+#s3 .bottomset{position:absolute;left:0;right:0;bottom:12vh;text-align:center}
+#s3 .poem{color:color-mix(in srgb, var(--feather) 45%, white);font-size:clamp(1.3rem,2.6vw,2.1rem)}
+#s3 .poem+.poem{margin-top:1.2vh}
+#s3 .poem .em{color:var(--feather)}
+#s3 .jpw{font-family:var(--jp);font-style:normal;font-size:.92em}
+
+#s4 .cubes{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  gap:9vw;pointer-events:auto}
+.cubewrap{--hz:60px;width:120px;height:120px;perspective:900px;
+  transition:transform .7s cubic-bezier(.3,.7,.3,1)}
+.cubewrap:hover{transform:translateY(-12px) rotate(3deg) scale(1.07)}
+.cw2{--hz:84px;width:168px;height:168px}
+.cube{position:relative;width:100%;height:100%;transform-style:preserve-3d;
+  animation:spin 26s linear infinite}
+.cw2 .cube{animation-duration:36s;animation-direction:reverse}
+.cw3 .cube{animation-duration:20s}
+@keyframes spin{from{transform:rotateX(-18deg) rotateY(0)}to{transform:rotateX(342deg) rotateY(720deg)}}
+.face{position:absolute;inset:0;border:1px solid;
+  border-image:linear-gradient(135deg,var(--feather),var(--ember),var(--dawn-wing)) 1;
+  background:linear-gradient(135deg,
+    color-mix(in srgb, var(--feather) 12%, transparent),
+    color-mix(in srgb, var(--dawn-wing) 4%, transparent) 55%,
+    color-mix(in srgb, var(--ember) 10%, transparent))}
+.f1{transform:translateZ(var(--hz))}
+.f2{transform:rotateY(180deg) translateZ(var(--hz))}
+.f3{transform:rotateY(90deg) translateZ(var(--hz))}
+.f4{transform:rotateY(-90deg) translateZ(var(--hz))}
+.f5{transform:rotateX(90deg) translateZ(var(--hz))}
+.f6{transform:rotateX(-90deg) translateZ(var(--hz))}
+#s4 .cap{position:absolute;left:0;right:0;bottom:13vh;text-align:center;
+  font-family:var(--jp);font-size:.8rem;letter-spacing:.3em;
+  color:color-mix(in srgb, var(--feather) 40%, white);
+  opacity:0;transition:opacity 1.6s ease .6s}
+.scene.in .cap{opacity:.75}
+
+#s5 .l-fg{display:block}
+#s5 .poem{position:absolute;left:0;right:0;bottom:26vh;text-align:center;
+  color:color-mix(in srgb, var(--ember) 45%, white);
+  text-shadow:0 0 30px color-mix(in srgb, var(--flame) 40%, transparent)}
+#s5 .poem .jpw{font-family:var(--jp);font-style:normal;font-size:.92em}
+
+/* ---------- canvas / overlays ---------- */
+#fx{position:fixed;inset:0;z-index:40;pointer-events:none}
+#vignette{position:fixed;inset:0;z-index:55;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 50%,transparent 52%,
+    color-mix(in srgb, var(--ink) 30%, transparent) 100%)}
+#grain{position:fixed;inset:-60px;z-index:60;pointer-events:none;opacity:.05;
+  mix-blend-mode:overlay;background-size:140px 140px;
+  animation:grainmove .6s steps(4) infinite}
+@keyframes grainmove{
+  0%{transform:translate(0,0)}25%{transform:translate(-34px,18px)}
+  50%{transform:translate(22px,-28px)}75%{transform:translate(-12px,-14px)}
+  100%{transform:translate(0,0)}}
+
+/* ---------- persistent UI ---------- */
+#ui{position:fixed;inset:0;z-index:80;pointer-events:none;
+  mix-blend-mode:difference;color:#e9e5dc}
+#uihead{position:absolute;top:0;left:0;right:0;display:flex;
+  justify-content:space-between;align-items:flex-start;padding:2rem 3rem}
+#logo{display:flex;align-items:baseline;gap:.8rem;padding-left:30px}
+#logo .lt{font-family:var(--serif);font-weight:500;font-size:.95rem;letter-spacing:.4em}
+#logo .ld{font-family:var(--serif);font-style:italic;font-size:.75rem;letter-spacing:.1em;opacity:.75}
+#ui nav{display:flex;gap:2.4rem;pointer-events:auto}
+#ui nav a{font-size:.76rem;letter-spacing:.28em;text-decoration:none;color:inherit;
+  cursor:pointer;opacity:.85;transition:opacity .4s}
+#ui nav a:hover{opacity:1}
+#pbar{position:absolute;bottom:1.5rem;left:50%;transform:translateX(-50%);
+  width:min(30vw,280px);height:1px;background:rgba(255,255,255,.22)}
+#pbar i{display:block;height:100%;background:currentColor;
+  transform:scaleX(0);transform-origin:left}
+#sring{position:absolute;left:3rem;bottom:2.4rem;width:46px;height:46px;opacity:0}
+#sring svg{width:100%;height:100%;animation:srot 16s linear infinite}
+@keyframes srot{to{transform:rotate(360deg)}}
+#sring .bars{position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;gap:3px}
+#sring .bars i{width:2px;background:currentColor;animation:eq 1.1s ease-in-out infinite}
+#sring .bars i:nth-child(1){height:8px}
+#sring .bars i:nth-child(2){height:14px;animation-delay:.2s}
+#sring .bars i:nth-child(3){height:9px;animation-delay:.45s}
+@keyframes eq{50%{transform:scaleY(.4)}}
+#bird{position:fixed;left:3rem;top:1.95rem;z-index:81;pointer-events:none;
+  color:var(--feather);filter:drop-shadow(0 0 6px color-mix(in srgb, var(--feather) 55%, transparent))}
+
+@media (prefers-reduced-motion:reduce){
+  .orb,.wglow,.oto,#grain,#sring svg,#sring .bars i,.cube{animation:none!important}
+  .poem .w,.vtext,.cap{transition-duration:.25s!important}
+}
+</style>
+</head>
+<body>
+<div id="track"></div>
+
+<!-- Scene 1 : Dawn -->
+<section class="scene" id="s0">
+  <div class="layer l-bg"></div>
+  <div class="layer l-mid"><div class="orb"></div></div>
+  <div class="layer l-fg">
+    <p class="poem head stagger">
+      <span class="w">what</span> <span class="w">guides</span> <span class="w">us</span> <span class="w">through</span><br>
+      <span class="w em">change,</span> <span class="w em">reinvention,</span><br>
+      <span class="w">and</span> <span class="w">the</span> <span class="w em">unknown&mdash;</span>
+    </p>
+  </div>
+</section>
+
+<!-- Scene 2 : Rise -->
+<section class="scene" id="s1">
+  <div class="layer l-bg"></div>
+  <div class="layer l-fg">
+    <h2 class="poem saisei stagger"><span class="w">再</span><span class="w">生</span><span class="w veil">で</span><span class="w">あ</span><span class="w">る</span><span class="w">。</span></h2>
+  </div>
+</section>
+
+<!-- Scene 3 : Halo -->
+<section class="scene" id="s2">
+  <div class="layer l-bg"></div>
+  <div class="layer l-fg">
+    <div class="oto">音</div>
+    <p class="cap poem stagger"><span class="w">when</span> <span class="w">wings</span> <span class="w">open,</span> <span class="w">light</span> <span class="w em">rings.</span></p>
+  </div>
+</section>
+
+<!-- Scene 4 : Feather -->
+<section class="scene" id="s3">
+  <div class="layer l-bg"></div>
+  <div class="layer l-mid">
+    <div class="vtext vl">一枚の羽根は<br>夜を測る振り子。<br>落下は終わりではなく<br>次の火への助走。</div>
+    <div class="vtext vr">青白い光の筋は<br>記憶の残像。<br>静けさの中でだけ<br>聴こえる周波数がある。</div>
+  </div>
+  <div class="layer l-fg">
+    <div class="bottomset">
+      <p class="poem stagger"><span class="w">don't</span> <span class="w">just</span> <span class="w em">speak</span> <span class="w">to</span> <span class="w">us.</span> <span class="w">they</span> <span class="w em">stimulate</span> <span class="w">us.</span></p>
+      <p class="poem stagger"><span class="w">light</span> <span class="w em">becomes</span> <span class="w jpw">私、</span><span class="w em">flare。</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- Scene 5 : Crystal -->
+<section class="scene" id="s4">
+  <div class="layer l-bg"></div>
+  <div class="layer l-mid">
+    <div class="cubes">
+      <div class="cubewrap cw1"><div class="cube">
+        <i class="face f1"></i><i class="face f2"></i><i class="face f3"></i><i class="face f4"></i><i class="face f5"></i><i class="face f6"></i>
+      </div></div>
+      <div class="cubewrap cw2"><div class="cube">
+        <i class="face f1"></i><i class="face f2"></i><i class="face f3"></i><i class="face f4"></i><i class="face f5"></i><i class="face f6"></i>
+      </div></div>
+      <div class="cubewrap cw3"><div class="cube">
+        <i class="face f1"></i><i class="face f2"></i><i class="face f3"></i><i class="face f4"></i><i class="face f5"></i><i class="face f6"></i>
+      </div></div>
+    </div>
+  </div>
+  <div class="layer l-fg"><p class="cap">結晶に触れると、光は屈折する。</p></div>
+</section>
+
+<!-- Scene 6 : Finale -->
+<section class="scene" id="s5">
+  <div class="layer l-bg"></div>
+  <div class="layer l-mid"><div class="mtn"></div><div class="water"></div><div class="wglow"></div></div>
+  <div class="layer l-fg">
+    <p class="poem stagger"><span class="w em">feel</span> <span class="w">their</span> <span class="w">heat.</span> <span class="w jpw">焔と</span> <span class="w em">interact</span> <span class="w">with。</span></p>
+  </div>
+</section>
+
+<canvas id="fx"></canvas>
+<div id="vignette"></div>
+<div id="grain"></div>
+
+<svg id="bird" viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true">
+  <path d="M3 18 C4 12 8 8.2 12.8 8 C13.8 5.6 16.2 4.4 18.4 5.4 L21 4.4 L19.8 7 C20.6 8.1 21 9.5 20.8 10.9 C19.8 16.4 14.6 20 8.6 19.4 L3.6 21 Z"/>
+  <path d="M9 13 C11 11 14 10.6 16 11.4 C14.4 13.8 11.6 14.6 9 13 Z" fill="rgba(255,255,255,.35)"/>
+  <circle cx="17.6" cy="7.4" r=".8" fill="rgba(255,255,255,.9)"/>
+</svg>
+
+<div id="ui">
+  <div id="uihead">
+    <div id="logo"><span class="lt">HIBANA</span><span class="ld">Sept. 29</span></div>
+    <nav>
+      <a data-goto="3">作品</a>
+      <a data-goto="2">思想</a>
+      <a data-goto="5">接続</a>
+    </nav>
+  </div>
+  <div id="pbar"><i></i></div>
+  <div id="sring">
+    <svg viewBox="0 0 46 46" fill="none">
+      <circle cx="23" cy="23" r="21" stroke="currentColor" stroke-width="1"
+        stroke-dasharray="4 7" opacity=".8"/>
+    </svg>
+    <div class="bars"><i></i><i></i><i></i></div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+const $=(s,r)=> (r||document).querySelector(s);
+const $$=(s,r)=>[...(r||document).querySelectorAll(s)];
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const ss=(a,b,x)=>{x=clamp((x-a)/(b-a),0,1);return x*x*(3-2*x)};
+const eo=x=>1-Math.pow(1-x,3);
+
+/* ---- staggered stair text: --ty offsets + center-out delays ---- */
+$$('.stagger').forEach(el=>{
+  const ws=$$('.w',el);
+  const mid=(ws.length-1)/2;
+  [...ws.keys()].sort((a,b)=>Math.abs(a-mid)-Math.abs(b-mid))
+    .forEach((idx,rank)=>ws[idx].style.setProperty('--d',(rank*(reduce?0:75))+'ms'));
+  ws.forEach((w,i)=>w.style.setProperty('--ty',(((i*53)%7-3)*0.09).toFixed(2)+'em'));
+});
+
+/* ---- grain texture ---- */
+(function(){
+  const c=document.createElement('canvas');c.width=c.height=140;
+  const g=c.getContext('2d'),id=g.createImageData(140,140),d=id.data;
+  for(let i=0;i<d.length;i+=4){const v=(Math.random()*255)|0;d[i]=d[i+1]=d[i+2]=v;d[i+3]=255}
+  g.putImageData(id,0,0);
+  $('#grain').style.backgroundImage='url('+c.toDataURL()+')';
+})();
+
+/* ---- canvas setup (retina) ---- */
+const cv=$('#fx'),ctx=cv.getContext('2d');
+let W=0,H=0,dpr=1,trackH=0;
+function resize(){
+  dpr=Math.min(2,window.devicePixelRatio||1);
+  W=innerWidth;H=innerHeight;
+  cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  trackH=$('#track').offsetHeight;
+}
+resize();addEventListener('resize',resize);
+const waterY=()=>H*0.78;
+
+/* ---- glow sprites: radial gradient, opaque center -> transparent edge ---- */
+function hexRGB(c){return [parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)]}
+function glow(c){
+  const s=document.createElement('canvas');s.width=s.height=64;
+  const g=s.getContext('2d'),[r,gg,b]=hexRGB(c);
+  const rg=g.createRadialGradient(32,32,0,32,32,32);
+  rg.addColorStop(0,'rgba('+r+','+gg+','+b+',1)');
+  rg.addColorStop(0.28,'rgba('+r+','+gg+','+b+',0.5)');
+  rg.addColorStop(1,'rgba('+r+','+gg+','+b+',0)');
+  g.fillStyle=rg;g.fillRect(0,0,64,64);return s;
+}
+function glowH(h){
+  const s=document.createElement('canvas');s.width=s.height=64;
+  const g=s.getContext('2d');
+  const rg=g.createRadialGradient(32,32,0,32,32,32);
+  rg.addColorStop(0,'hsla('+h+',76%,72%,1)');
+  rg.addColorStop(0.3,'hsla('+h+',76%,72%,0.5)');
+  rg.addColorStop(1,'hsla('+h+',76%,72%,0)');
+  g.fillStyle=rg;g.fillRect(0,0,64,64);return s;
+}
+const SPR={
+  lav:glow('#b9a6e0'),orb:glow('#e8f0a8'),flame:glow('#ff7a2f'),
+  ember:glow('#ffb36b'),blue:glow('#7fb8ff'),white:glow('#eef6ff')
+};
+const RAINBOW=Array.from({length:12},(_,i)=>glowH(i*30));
+
+/* ---- particle pool (fixed length + alive flag) ---- */
+const MAX=reduce?520:2100;
+const P=[];for(let i=0;i<MAX;i++)P.push({on:false});
+let pc=0;
+function spawn(o){
+  let n=MAX;
+  while(n--){pc=(pc+1)%MAX;if(!P[pc].on)break}
+  const p=P[pc];
+  p.on=true;p.x=o.x;p.y=o.y;p.vx=o.vx||0;p.vy=o.vy||0;
+  p.tl=p.life=o.life||1;p.sz=o.sz||8;p.spr=o.spr;
+  p.comp=o.comp||'lighter';p.g=o.g||0;
+  p.dr=o.dr==null?1:o.dr;p.a0=o.a0==null?1:o.a0;
+  p.mir=!!o.mir;p.gr=o.gr||0;
+}
+/* flow field: layered sines -> angle; no straight-line particles */
+function flowA(x,y,t){
+  return (Math.sin(x*0.0016+t*0.35)+Math.sin(y*0.0021-t*0.28)+0.6*Math.sin((x+y)*0.0009+t*0.5))*1.7;
+}
+function drawParticles(dt,t){
+  const wy2=waterY()*2;
+  for(let i=0;i<MAX;i++){
+    const p=P[i];if(!p.on)continue;
+    p.life-=dt;if(p.life<=0){p.on=false;continue}
+    const a=flowA(p.x,p.y,t),k=dt*60;
+    p.vx+=Math.cos(a)*p.dr*0.06*k;
+    p.vy+=(Math.sin(a)*p.dr*0.06+p.g)*k;
+    p.vx*=0.985;p.vy*=0.985;
+    p.x+=p.vx*k;p.y+=p.vy*k;
+    const lr=p.life/p.tl;
+    const al=p.a0*Math.min(1,(1-lr)*5)*lr;
+    if(al<=0.004)continue;
+    const s=p.sz*(1+p.gr*(1-lr));
+    ctx.globalCompositeOperation=p.comp;
+    ctx.globalAlpha=al;
+    ctx.drawImage(p.spr,p.x-s/2,p.y-s/2,s,s);
+    if(p.mir&&p.y<waterY()){
+      ctx.globalAlpha=al*0.26;
+      ctx.drawImage(p.spr,p.x-s/2,wy2-p.y-s*0.3,s,s*0.6);
+    }
+  }
+  ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+}
+
+/* ---- bezier helpers + phoenix / feather / wing silhouettes ---- */
+function bz(a,b,c,d,u){const v=1-u;return v*v*v*a+3*v*v*u*b+3*v*u*u*c+u*u*u*d}
+function wingPoint(dir,fl,spread,u){
+  const wy=-55-fl*35,tipX=95*spread,tipY=-15-fl*50;
+  return [bz(dir*5,dir*40,dir*tipX*0.75,dir*tipX,u),bz(-26,wy,tipY-25,tipY,u)];
+}
+function drawPhoenix(g,x,y,s,fl,alpha,spread,mode){
+  g.save();g.translate(x,y);g.scale(s,s);g.globalAlpha=alpha;
+  let fill;
+  if(mode==='ink')fill='#2a2438';
+  else{
+    const lg=g.createLinearGradient(0,-70,0,140);
+    lg.addColorStop(0,'#ffb36b');lg.addColorStop(0.5,'#ff7a2f');lg.addColorStop(1,'#c23a1f');
+    fill=lg;
+  }
+  g.fillStyle=fill;
+  g.beginPath();
+  g.moveTo(0,-38);
+  g.bezierCurveTo(10,-30,12,-6,7,18);
+  g.bezierCurveTo(4,30,-4,30,-7,18);
+  g.bezierCurveTo(-12,-6,-10,-30,0,-38);g.fill();
+  g.beginPath();g.arc(0,-42,7,0,6.2832);g.fill();
+  g.beginPath();g.moveTo(4,-46);g.lineTo(16,-41);g.lineTo(4,-38);g.closePath();g.fill();
+  g.beginPath();g.moveTo(-2,-48);g.quadraticCurveTo(-10,-62,-2,-64);
+  g.quadraticCurveTo(-4,-56,2,-49);g.closePath();g.fill();
+  const wy=-55-fl*35,tipX=95*spread,tipY=-15-fl*50;
+  for(const dir of [1,-1]){
+    g.beginPath();
+    g.moveTo(dir*5,-26);
+    g.bezierCurveTo(dir*40,wy,dir*tipX*0.75,tipY-25,dir*tipX,tipY);
+    g.bezierCurveTo(dir*tipX*0.8,tipY+18,dir*55,-6+fl*8,dir*30,6);
+    g.quadraticCurveTo(dir*14,8,dir*5,-8);
+    g.closePath();g.fill();
+  }
+  for(const q of [[-10,95],[0,122],[10,95]]){
+    const dx=q[0],len=q[1],sw=Math.sin(fl*6+dx)*6;
+    g.beginPath();
+    g.moveTo(dx*0.4,24);
+    g.quadraticCurveTo(dx*2.2,24+len*0.5,dx*3+sw,24+len);
+    g.quadraticCurveTo(dx*1.5,24+len*0.55,dx*0.4-3*(dx>=0?1:-1),26);
+    g.closePath();g.fill();
+  }
+  g.restore();
+}
+function drawFeather(g,x,y,s,rot,alpha){
+  g.save();g.translate(x,y);g.rotate(rot);g.scale(s,s);
+  g.globalCompositeOperation='lighter';g.globalAlpha=alpha;
+  const grad=g.createLinearGradient(0,-42,0,44);
+  grad.addColorStop(0,'rgba(238,246,255,0.95)');
+  grad.addColorStop(1,'rgba(127,184,255,0.15)');
+  g.fillStyle=grad;
+  g.beginPath();
+  g.moveTo(0,-42);
+  g.bezierCurveTo(14,-26,16,6,4,40);
+  g.quadraticCurveTo(0,44,-4,40);
+  g.bezierCurveTo(-16,6,-14,-26,0,-42);g.fill();
+  g.strokeStyle='rgba(255,255,255,0.9)';g.lineWidth=1.6;
+  g.beginPath();g.moveTo(0,-40);g.quadraticCurveTo(1,0,0,46);g.stroke();
+  g.restore();
+}
+function drawWingStroke(g,x,y,s,t,alpha){
+  g.save();g.translate(x,y);g.rotate(-0.35);g.scale(s,s);
+  g.globalCompositeOperation='multiply';g.globalAlpha=alpha;
+  g.fillStyle='#b9a6e0';
+  for(let k=0;k<3;k++){
+    const w=Math.sin(t*0.5+k*2)*4;
+    g.beginPath();
+    g.moveTo(-90,20+k*16);
+    g.bezierCurveTo(-40,-30+w-k*10,40,-46+w-k*8,110,-10+k*14);
+    g.bezierCurveTo(50,-8+w-k*4,-30,4+k*8,-90,20+k*16);
+    g.fill();
+  }
+  g.restore();
+}
+
+/* ---- scroll (lerp smoothed; DOM writes only inside rAF) ---- */
+let target=scrollY,smooth=scrollY;
+addEventListener('scroll',()=>{target=scrollY},{passive:true});
+$$('#ui nav a').forEach(a=>a.addEventListener('click',e=>{
+  e.preventDefault();
+  const i=+a.dataset.goto;
+  scrollTo({top:(i+0.5)/6*Math.max(1,trackH-H),behavior:'auto'});
+}));
+
+const scenes=$$('.scene');
+const S=scenes.map(el=>({
+  el,bg:$('.l-bg',el),mid:$('.l-mid',el),fg:$('.l-fg',el)
+}));
+const bar=$('#pbar i'),sring=$('#sring');
+
+/* ---- per-scene emitters (accumulator based; stop when scene inactive) ---- */
+const acc=new Float32Array(8);
+function emit(i,rate,dt,fn){acc[i]+=rate*dt;while(acc[i]>=1){acc[i]--;fn()}}
+const R=reduce?0.25:1;
+
+function sceneFx(os,p,t,dt){
+  const vmin=Math.min(W,H);
+
+  /* 1 Dawn — watercolor wing bleed + orb sparks */
+  if(os[0]>0.02){
+    const sc=vmin/520*2.2,wx=W*0.24,wy0=H*0.46;
+    drawWingStroke(ctx,wx,wy0,sc,t,0.028*os[0]);
+    const ca=Math.cos(-0.35),sa=Math.sin(-0.35);
+    emit(0,48*R*os[0],dt,()=>{
+      const u=Math.random(),k=(Math.random()*3)|0;
+      const lx=bz(-90,-40,40,110,u),ly=bz(20+k*16,-30-k*10,-46-k*8,-10+k*14,u);
+      spawn({x:wx+(lx*ca-ly*sa)*sc,y:wy0+(lx*sa+ly*ca)*sc,
+        vx:(Math.random()-0.5)*0.3,vy:(Math.random()-0.5)*0.3,
+        life:2.5+Math.random()*2,sz:26+Math.random()*44,
+        spr:SPR.lav,comp:'multiply',dr:0.35,a0:0.13});
+    });
+    const ox=W*0.52+vmin*0.11,oy=H*0.22+vmin*0.11;
+    emit(1,14*R*os[0],dt,()=>{
+      const a=Math.random()*6.2832,r=Math.random()*H*0.08;
+      spawn({x:ox+Math.cos(a)*r,y:oy+Math.sin(a)*r,vy:-0.15,
+        life:2+Math.random()*1.5,sz:5+Math.random()*8,spr:SPR.orb,dr:0.5,a0:0.7});
+    });
+  }
+
+  /* 2 Rise — phoenix climbs, ember tail */
+  if(os[1]>0.02){
+    const d1=clamp(p-1,0,1),sc=vmin/430;
+    const px=W*0.5+Math.sin(t*0.9)*W*0.04;
+    const py=H*(1.15-0.8*eo(d1))+Math.sin(t*2.2)*8;
+    const fl=Math.sin(t*(reduce?1.5:6.5))*0.5+0.5;
+    drawPhoenix(ctx,px,py,sc,fl,os[1],1,'fire');
+    emit(2,240*R*os[1],dt,()=>{
+      const dir=Math.random()<0.5?1:-1,u=0.25+Math.random()*0.75;
+      const q=wingPoint(dir,fl,1,u);
+      spawn({x:px+q[0]*sc,y:py+q[1]*sc,
+        vx:(Math.random()-0.5)*0.6,vy:0.8+Math.random()*1.2,
+        life:0.9+Math.random()*0.9,sz:8+Math.random()*16,
+        spr:Math.random()<0.6?SPR.flame:SPR.ember,dr:1.1,a0:0.8,gr:-0.5});
+    });
+  }
+
+  /* 3 Halo — backlit silhouette + rainbow ring */
+  if(os[2]>0.02){
+    const sc=vmin/300;
+    drawPhoenix(ctx,W/2,H*0.52,sc,0.55+Math.sin(t*1.4)*0.12,0.92*os[2],1.25,'ink');
+    emit(3,85*R*os[2],dt,()=>{
+      const a=Math.random()*6.2832,r=vmin*(0.30+Math.random()*0.06);
+      spawn({x:W/2+Math.cos(a)*r,y:H*0.46+Math.sin(a)*r*0.9,
+        vx:Math.cos(a)*0.25,vy:Math.sin(a)*0.25,
+        life:1.8+Math.random()*1.4,sz:6+Math.random()*10,
+        spr:RAINBOW[(Math.random()*12)|0],dr:0.4,a0:0.5});
+    });
+  }
+
+  /* 4 Feather — endless fall, light beam behind */
+  if(os[3]>0.02){
+    const cyc=(t*0.11)%1;
+    const fx=W*0.5+Math.sin(t*1.2)*W*0.04,fy=H*(-0.18+1.35*cyc);
+    drawFeather(ctx,fx,fy,vmin/540*1.6,Math.sin(t*1.6)*0.28,0.9*os[3]);
+    emit(4,150*R*os[3],dt,()=>{
+      spawn({x:fx+(Math.random()-0.5)*14,y:fy+(Math.random()-0.5)*30,
+        vx:(Math.random()-0.5)*0.2,vy:-0.25-Math.random()*0.3,
+        life:1.6+Math.random()*1.2,sz:5+Math.random()*10,
+        spr:Math.random()<0.35?SPR.white:SPR.blue,dr:0.45,a0:0.65});
+    });
+  }
+
+  /* 5 Crystal — sparse drifting dust */
+  if(os[4]>0.02){
+    emit(5,20*R*os[4],dt,()=>{
+      spawn({x:Math.random()*W,y:Math.random()*H,
+        vx:(Math.random()-0.5)*0.15,vy:(Math.random()-0.5)*0.15,
+        life:3+Math.random()*2.5,sz:4+Math.random()*7,
+        spr:SPR.blue,dr:0.35,a0:0.3});
+    });
+  }
+
+  /* 6 Finale — burning phoenix + water reflection */
+  if(os[5]>0.02){
+    const d5=clamp(p-5,0,1);
+    const sc=vmin/260*(0.92+0.18*eo(d5));
+    const px=W*0.5,py=H*0.5;
+    const fl=0.75+Math.sin(t*(reduce?0.8:2.4))*0.1;
+    ctx.save();
+    ctx.translate(0,2*waterY());ctx.scale(1,-0.55);
+    drawPhoenix(ctx,px,waterY()*2/0.55-((2*waterY()-py)/0.55)+py*0,fl,0,0,1,'fire');
+    ctx.restore();
+    /* mirrored ghost drawn directly */
+    ctx.save();
+    ctx.translate(px,2*waterY()-py);ctx.scale(1,-0.55);ctx.translate(-px,-py);
+    drawPhoenix(ctx,px,py,sc,fl,0.1*os[5],1.35,'fire');
+    ctx.restore();
+    drawPhoenix(ctx,px,py,sc,fl,0.95*os[5],1.35,'fire');
+    emit(6,320*R*os[5],dt,()=>{
+      const dir=Math.random()<0.5?1:-1,u=Math.random();
+      const q=wingPoint(dir,fl,1.35,u);
+      const r=Math.random();
+      spawn({x:px+q[0]*sc,y:py+q[1]*sc,
+        vx:(Math.random()-0.5)*0.5+dir*0.2,vy:-0.9-Math.random()*1.6,
+        life:0.9+Math.random(),sz:9+Math.random()*18,
+        spr:r<0.55?SPR.flame:(r<0.85?SPR.ember:SPR.white),
+        dr:1.5,a0:0.85,gr:-0.55,mir:true});
+    });
+  }
+}
+
+/* ---- single rAF drives everything ---- */
+let tPrev=performance.now();
+function frame(now){
+  const dt=Math.min(0.05,(now-tPrev)/1000);tPrev=now;
+  const t=now/1000;
+  smooth+=(target-smooth)*(reduce?0.3:0.08);
+  const denom=Math.max(1,trackH-H);
+  const p=clamp(smooth/denom*6,0,6);
+  const os=[];
+  for(let i=0;i<6;i++){
+    const s=S[i],d=p-i;
+    let o=1;
+    if(i>0)o*=ss(-0.24,0.04,d);      /* ~0.3s crossfade overlap: */
+    if(i<5)o*=1-ss(0.97,1.24,d);     /* neighbours coexist briefly */
+    os[i]=o;
+    const st=s.el.style;
+    st.opacity=o.toFixed(3);
+    st.visibility=o>0.012?'visible':'hidden';
+    if(o>0.35)s.el.classList.add('in');
+    else if(o<0.05)s.el.classList.remove('in');
+    if(o>0.012){
+      const sh=d-0.5;
+      if(s.bg)s.bg.style.transform='translate3d(0,'+(-sh*4.2).toFixed(2)+'vh,0)';
+      if(s.mid)s.mid.style.transform='translate3d(0,'+(-sh*7).toFixed(2)+'vh,0)';
+      if(s.fg)s.fg.style.transform='translate3d(0,'+(-sh*14).toFixed(2)+'vh,0)';
+    }
+  }
+  /* trail dissolve — no clearRect; old frames melt away each tick */
+  ctx.globalCompositeOperation='destination-out';
+  ctx.fillStyle='rgba(0,0,0,0.07)';
+  ctx.fillRect(0,0,W,H);
+  ctx.globalCompositeOperation='source-over';
+
+  sceneFx(os,p,t,dt);
+  drawParticles(dt,t);
+
+  bar.style.transform='scaleX('+(p/6).toFixed(4)+')';
+  sring.style.opacity=ss(2.7,3.2,p).toFixed(2);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

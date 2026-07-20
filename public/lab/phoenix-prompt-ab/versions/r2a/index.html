@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HIBANA — a phoenix scroll</title>
+<meta name="description" content="scroll-driven immersive story of a phoenix — dawn, rise, halo, feather, crystal, finale">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Shippori+Mincho:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --dawn-bg:#f2ecf5; --dawn-wing:#b9a6e0; --orb:#e8f0a8; --flame:#ff7a2f;
+  --ember:#ffb36b;   --night:#0a1030;     --feather:#7fb8ff; --sunset:#c23a1f;
+  --ink:#2a2438;
+  --ui:var(--ink);
+  --serif:'Cormorant Garamond',serif;
+  --jp:'Shippori Mincho',serif;
+  --uif:'Zen Kaku Gothic New',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--dawn-bg);color:var(--ink);font-family:var(--serif);overflow-x:hidden}
+body.dark{--ui:color-mix(in srgb,#ffffff 85%,var(--feather))}
+#track{height:940vh}
+
+/* ---------- scenes ---------- */
+.scene{position:fixed;inset:0;opacity:0;visibility:hidden;pointer-events:none;overflow:hidden;z-index:1;will-change:opacity,transform}
+.layer{position:absolute;inset:-84px 0;will-change:transform}
+.layer.txt{inset:0}
+
+.s-dawn .bg{background:
+  radial-gradient(120vmax 90vmax at 76% 16%, color-mix(in srgb,var(--orb) 15%,transparent), transparent 55%),
+  linear-gradient(155deg, color-mix(in srgb,var(--dawn-bg) 68%,#ffffff) 0%, var(--dawn-bg) 46%, color-mix(in srgb,var(--dawn-wing) 26%,var(--dawn-bg)) 100%)}
+.s-rise .bg{background:
+  linear-gradient(180deg, color-mix(in srgb,var(--dawn-bg) 74%,var(--ember)) 0%,
+  color-mix(in srgb,var(--ember) 40%,#ffffff) 52%,
+  color-mix(in srgb,var(--flame) 34%,#ffffff) 100%)}
+.s-halo .bg{background:
+  radial-gradient(circle at 50% 44%, #fff6ea 0%, #ffeccc 14%, #ffd9d2 26%, #f4d3ee 38%,
+  #d9d6f7 50%, #cfe6f4 61%, #d5eedd 72%, #eeeadf 84%, var(--dawn-bg) 100%)}
+.s-feather .bg,.s-crystal .bg{background:
+  radial-gradient(110vmax 70vmax at 50% 112%, color-mix(in srgb,var(--feather) 13%,var(--night)), var(--night) 62%),
+  var(--night)}
+.s-finale .bg{background:
+  linear-gradient(180deg, color-mix(in srgb,var(--night) 52%,var(--sunset)) 0%,
+  var(--sunset) 42%, color-mix(in srgb,var(--flame) 55%,var(--ember)) 66%,
+  color-mix(in srgb,var(--ember) 68%,#ffffff) 74%,
+  color-mix(in srgb,var(--sunset) 50%,var(--night)) 74.4%,
+  color-mix(in srgb,var(--night) 84%,var(--sunset)) 100%)}
+.mtn{position:absolute;background:color-mix(in srgb,var(--night) 72%,var(--sunset))}
+.m1{left:-4%;width:58%;height:15vh;top:calc(59vh + 84px);
+  clip-path:polygon(0 100%,7% 58%,17% 80%,29% 28%,42% 70%,55% 10%,68% 64%,81% 40%,92% 76%,100% 100%)}
+.m2{right:-4%;width:52%;height:11vh;top:calc(63vh + 84px);background:color-mix(in srgb,var(--night) 58%,var(--sunset));
+  clip-path:polygon(0 100%,10% 62%,22% 84%,36% 34%,50% 74%,63% 18%,77% 68%,89% 44%,100% 100%)}
+.water{position:absolute;left:0;right:0;top:calc(74vh + 84px);bottom:0;
+  background:linear-gradient(180deg, color-mix(in srgb,var(--ember) 42%,var(--sunset)) 0%,
+  color-mix(in srgb,var(--sunset) 44%,var(--night)) 34%, color-mix(in srgb,var(--night) 86%,var(--sunset)) 100%)}
+.water::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;
+  background:color-mix(in srgb,var(--ember) 70%,#ffffff);opacity:.5;filter:blur(1px)}
+
+/* ---------- typography ---------- */
+.poem{font-style:italic;font-weight:400;font-size:clamp(1.4rem,3.2vw,2.6rem);line-height:1.5;letter-spacing:.04em}
+.poem .it{font-weight:500}
+.poem .jpw{font-family:var(--jp);font-style:normal;letter-spacing:.1em}
+.stagger span{display:inline-block;opacity:0;transform:translateY(calc(var(--ty,0px) + 26px));
+  transition:opacity .9s ease,transform 1.15s cubic-bezier(.19,1,.22,1)}
+.scene.in .stagger span{opacity:1;transform:translateY(var(--ty,0px))}
+.fade{opacity:0;transform:translateY(16px);transition:opacity 1.3s ease .45s,transform 1.3s ease .45s}
+.scene.in .fade{opacity:1;transform:none}
+
+.slabel{position:absolute;font-family:var(--uif);font-weight:300;font-size:.75rem;letter-spacing:.42em;
+  text-transform:uppercase;color:color-mix(in srgb,var(--ink) 52%,transparent)}
+.s-feather .slabel,.s-crystal .slabel,.s-finale .slabel{color:color-mix(in srgb,#ffffff 58%,transparent)}
+
+/* scene 1 dawn */
+.sl-dawn{right:7vw;top:20vh}
+.dawn-poem{position:absolute;right:7vw;top:27vh;text-align:right;max-width:46rem;color:var(--ink)}
+.dawn-poem .it{color:color-mix(in srgb,var(--dawn-wing) 62%,var(--ink))}
+.dawn-poem .big{font-size:clamp(3rem,8vw,6.2rem);letter-spacing:-.02em;line-height:1.15}
+
+/* scene 2 rise */
+.sl-rise{left:50%;transform:translateX(-50%);top:25vh}
+.rise-txt{position:absolute;left:50%;top:40vh;transform:translateX(-50%);white-space:nowrap;
+  font-family:var(--jp);font-weight:500;font-size:clamp(2.6rem,7.4vw,5.2rem);letter-spacing:.14em;
+  color:color-mix(in srgb,var(--sunset) 55%,var(--ink))}
+.rise-txt .bl{filter:blur(.12em);opacity:.9}
+
+/* scene 3 halo */
+.sl-halo{left:7vw;top:20vh}
+.sil{position:absolute;inset:0;display:grid;place-items:center;opacity:0;transition:opacity 1.8s ease .2s}
+.s-halo.in .sil{opacity:.85}
+.sil svg{width:min(74vw,880px);transform-origin:center;animation:breathe 8s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+.oto{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);line-height:1;
+  font-family:var(--jp);font-weight:600;font-size:clamp(8rem,26vmin,17rem);color:var(--ink)}
+.s-halo.in .oto span{animation:otoflk 4.6s 1.7s infinite}
+@keyframes otoflk{0%,30%,36%,57%,63%,100%{opacity:1}32%,34%{opacity:.5}59%,61%{opacity:.75}86%{opacity:.9}}
+
+/* scene 4 feather */
+.sl-fea{left:50%;transform:translateX(-50%);bottom:27vh}
+.vtxt{position:absolute;writing-mode:vertical-rl;font-family:var(--jp);font-weight:400;
+  font-size:.82rem;letter-spacing:.3em;line-height:2.3;
+  color:color-mix(in srgb,#ffffff 70%,var(--feather))}
+.vl{left:9vw;top:18vh}
+.vr{right:9vw;top:34vh}
+.feather-poem{position:absolute;left:0;right:0;bottom:9vh;text-align:center;
+  color:color-mix(in srgb,#ffffff 80%,var(--feather));
+  text-shadow:0 0 26px color-mix(in srgb,var(--feather) 30%,transparent)}
+.feather-poem .it{color:var(--feather)}
+.feather-poem .p1{font-size:clamp(1.2rem,2.4vw,1.9rem)}
+.feather-poem .p2{font-size:clamp(1.5rem,3.2vw,2.6rem);margin-top:1.1rem}
+
+/* scene 5 crystal */
+.sl-cry{left:12vw;top:24vh}
+.cw{position:absolute;perspective:900px;pointer-events:auto}
+.cw1{left:23%;top:34%;width:128px;height:128px;--hs:64px}
+.cw2{left:60%;top:22%;width:92px;height:92px;--hs:46px}
+.cw3{left:67%;top:58%;width:70px;height:70px;--hs:35px}
+.wob{width:100%;height:100%}
+.cw:hover .wob{animation:wob .9s ease}
+@keyframes wob{0%,100%{transform:none}30%{transform:rotate(2.4deg) translateY(-5px)}65%{transform:rotate(-1.8deg) translateY(2px)}}
+.cube{position:absolute;inset:0;transform-style:preserve-3d;animation:spin 16s linear infinite}
+.cw2 .cube{animation-duration:23s;animation-direction:reverse}
+.cw3 .cube{animation-duration:12s}
+@keyframes spin{from{transform:rotateX(-16deg) rotateY(0)}to{transform:rotateX(-16deg) rotateY(360deg)}}
+.face{position:absolute;inset:0;border:1px solid;
+  border-image:linear-gradient(135deg,
+    color-mix(in srgb,var(--feather) 80%,transparent),
+    color-mix(in srgb,var(--dawn-wing) 70%,transparent),
+    color-mix(in srgb,var(--ember) 60%,transparent)) 1;
+  background:linear-gradient(150deg, color-mix(in srgb,var(--feather) 10%,transparent),
+    transparent 45%, color-mix(in srgb,var(--dawn-wing) 9%,transparent));
+  box-shadow:inset 0 0 26px color-mix(in srgb,var(--feather) 12%,transparent)}
+.f1{transform:rotateY(0) translateZ(var(--hs))}
+.f2{transform:rotateY(90deg) translateZ(var(--hs))}
+.f3{transform:rotateY(180deg) translateZ(var(--hs))}
+.f4{transform:rotateY(270deg) translateZ(var(--hs))}
+.f5{transform:rotateX(90deg) translateZ(var(--hs))}
+.f6{transform:rotateX(-90deg) translateZ(var(--hs))}
+.cry-cap{position:absolute;left:0;right:0;bottom:16vh;text-align:center;
+  font-size:clamp(1.2rem,2.2vw,1.8rem);color:color-mix(in srgb,#ffffff 74%,var(--feather))}
+.cry-cap .it{color:var(--feather)}
+
+/* scene 6 finale */
+.sl-fin{left:50%;transform:translateX(-50%);bottom:25vh}
+.fin-poem{position:absolute;left:0;right:0;bottom:13vh;text-align:center;
+  font-size:clamp(1.5rem,3.2vw,2.6rem);color:color-mix(in srgb,#ffffff 86%,var(--ember));
+  text-shadow:0 0 28px color-mix(in srgb,var(--flame) 40%,transparent)}
+.fin-poem .it{color:var(--ember)}
+.fin-cred{position:absolute;left:0;right:0;bottom:6.5vh;text-align:center;
+  font-family:var(--uif);font-weight:300;font-size:.75rem;letter-spacing:.5em;
+  color:color-mix(in srgb,#ffffff 62%,transparent)}
+
+/* ---------- overlays / chrome ---------- */
+#fx{position:fixed;inset:0;z-index:20;pointer-events:none}
+.vig{position:fixed;inset:0;z-index:24;pointer-events:none;
+  background:radial-gradient(120% 92% at 50% 46%, transparent 58%, color-mix(in srgb,var(--ink) 26%,transparent) 100%)}
+#grain{position:fixed;inset:-100%;z-index:55;pointer-events:none;opacity:.05;
+  mix-blend-mode:overlay;background-repeat:repeat;animation:gr .8s steps(1) infinite}
+@keyframes gr{0%{transform:translate(0,0)}12%{transform:translate(-6%,4%)}25%{transform:translate(3%,-5%)}
+  37%{transform:translate(-4%,-7%)}50%{transform:translate(7%,3%)}62%{transform:translate(-6%,-2%)}
+  75%{transform:translate(4%,6%)}87%{transform:translate(-3%,2%)}100%{transform:translate(0,0)}}
+
+.brand{position:fixed;top:2.2rem;left:2.4rem;z-index:40;display:flex;gap:.75rem;align-items:center}
+.bird{width:26px;height:26px;flex:none}
+.brand-t{display:flex;flex-direction:column;gap:.15rem}
+.logo{font-family:var(--serif);font-weight:500;font-size:.95rem;letter-spacing:.42em;color:var(--ui);transition:color .8s}
+.date{font-family:var(--uif);font-weight:300;font-size:.75rem;letter-spacing:.3em;
+  color:color-mix(in srgb,var(--ui) 62%,transparent);transition:color .8s}
+#nav{position:fixed;top:2.4rem;right:2.6rem;z-index:40;display:flex;gap:2.2rem}
+#nav button{all:unset;cursor:pointer;font-family:var(--uif);font-weight:300;font-size:.78rem;
+  letter-spacing:.34em;color:var(--ui);opacity:.72;transition:opacity .3s,color .8s;
+  text-underline-offset:7px}
+#nav button:hover{opacity:1;text-decoration:underline solid 1px}
+#prog{position:fixed;bottom:1.6rem;left:50%;transform:translateX(-50%);z-index:40;
+  width:min(30vw,320px);height:2px;border-radius:2px;overflow:hidden;
+  background:color-mix(in srgb,var(--ui) 18%,transparent);transition:background .8s}
+#prog i{display:block;height:100%;transform:scaleX(0);transform-origin:0 50%;
+  background:linear-gradient(90deg,var(--dawn-wing),var(--ember),var(--flame))}
+#sound{position:fixed;left:2.4rem;bottom:1.8rem;z-index:40;width:54px;text-align:center;
+  color:var(--ui);opacity:0;transform:translateY(12px);transition:opacity 1s ease,transform 1s ease,color .8s}
+#sound.on{opacity:1;transform:none}
+#sound svg{width:52px;height:52px;display:block;margin:0 auto}
+#sound .arc{transform-origin:center;animation:rot 8s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+#sound span{display:block;margin-top:.3rem;font-family:var(--uif);font-weight:300;
+  font-size:.75rem;letter-spacing:.3em}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<div id="track"></div>
+
+<!-- 01 dawn -->
+<section class="scene s-dawn" aria-label="dawn">
+  <div class="layer bg" data-depth="0.3"></div>
+  <div class="layer" data-depth="0.5"></div>
+  <div class="layer txt" data-depth="1">
+    <p class="slabel sl-dawn fade">01 — dawn</p>
+    <p class="poem dawn-poem stagger">
+      <span style="--ty:2px">what</span>
+      <span style="--ty:16px">guides</span>
+      <span style="--ty:7px">us</span>
+      <span style="--ty:22px">through</span><br>
+      <span class="it" style="--ty:34px">change,</span>
+      <span class="it" style="--ty:12px">reinvention,</span><br>
+      <span style="--ty:24px">and</span>
+      <span style="--ty:38px">the</span><br>
+      <span class="it big" style="--ty:14px">unknown—</span>
+    </p>
+  </div>
+</section>
+
+<!-- 02 rise -->
+<section class="scene s-rise" aria-label="rise">
+  <div class="layer bg" data-depth="0.3"></div>
+  <div class="layer" data-depth="0.5"></div>
+  <div class="layer txt" data-depth="1">
+    <p class="slabel sl-rise fade">02 — rise</p>
+    <p class="rise-txt stagger">
+      <span style="--ty:0px">再</span><span style="--ty:12px">生</span><span class="bl" style="--ty:5px">で</span><span style="--ty:18px">あ</span><span style="--ty:9px">る</span><span style="--ty:22px">。</span>
+    </p>
+  </div>
+</section>
+
+<!-- 03 halo -->
+<section class="scene s-halo" aria-label="halo">
+  <div class="layer bg" data-depth="0.3"></div>
+  <div class="layer" data-depth="0.5">
+    <div class="sil">
+      <svg viewBox="0 0 640 340" fill="var(--ink)" aria-hidden="true">
+        <g opacity=".92">
+          <path id="wingL" d="M320 190 C288 128 210 92 88 84 C146 106 182 122 204 142
+            C152 138 112 146 76 166 C140 168 186 178 216 194 C172 202 142 218 120 244
+            C186 228 238 220 272 224 C254 242 244 258 240 278 C272 254 298 236 320 228 Z"/>
+          <use href="#wingL" transform="translate(640,0) scale(-1,1)"/>
+          <path d="M320 158 C306 176 302 200 310 236 C315 262 320 280 320 296
+            C320 280 325 262 330 236 C338 200 334 176 320 158 Z"/>
+          <circle cx="320" cy="148" r="13"/>
+          <path d="M312 138 c-6 -10 -4 -20 4 -26 M328 138 c6 -10 4 -20 -4 -26"
+            fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <div class="layer txt" data-depth="1">
+    <p class="slabel sl-halo fade">03 — halo</p>
+    <p class="oto stagger"><span>音</span></p>
+  </div>
+</section>
+
+<!-- 04 feather -->
+<section class="scene s-feather" aria-label="feather">
+  <div class="layer bg" data-depth="0.3"></div>
+  <div class="layer" data-depth="0.5"></div>
+  <div class="layer txt" data-depth="1">
+    <p class="slabel sl-fea fade">04 — feather</p>
+    <div class="vtxt vl fade">一枚の羽根は記憶の器。<br>落下は終わりではなく、<br>光の航跡を書き残すこと。</div>
+    <div class="vtxt vr fade">夜の底で羽根は燃えない。<br>ただ青く発光し、触れられない<br>温度を、私たちは音で聴く。</div>
+    <div class="feather-poem">
+      <p class="poem p1 stagger">
+        <span>don't</span> <span>just</span> <span class="it">speak</span> <span>to</span> <span>us.</span>
+        <span>they</span> <span class="it">stimulate</span> <span>us.</span>
+      </p>
+      <p class="poem p2 stagger" data-wave="620">
+        <span>light</span> <span class="it">becomes</span> <span class="jpw">私、</span><span class="it">flare</span><span class="jpw">。</span>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- 05 crystal -->
+<section class="scene s-crystal" aria-label="crystal">
+  <div class="layer bg" data-depth="0.3"></div>
+  <div class="layer" data-depth="0.5">
+    <div class="cw cw1"><div class="wob"><div class="cube">
+      <i class="face f1"></i><i class="face f2"></i><i class="face f3"></i><i class="face f4"></i><i class="face f5"></i><i class="face f6"></i>
+    </div></div></div>
+    <div class="cw cw2"><div class="wob"><div class="cube">
+      <i class="face f1"></i><i class="face f2"></i><i class="face f3"></i><i class="face f4"></i><i class="face f5"></i><i class="face f6"></i>
+    </div></div></div>
+    <div class="cw cw3"><div class="wob"><div class="cube">
+      <i class="face f1"></i><i class="face f2"></i><i class="face f3"></i><i class="face f4"></i><i class="face f5"></i><i class="face f6"></i>
+    </div></div></div>
+  </div>
+  <div class="layer txt" data-depth="1">
+    <p class="slabel sl-cry fade">05 — crystal</p>
+    <p class="poem cry-cap stagger"><span class="it">prism</span><span> — </span><span class="jpw">思想の結晶</span></p>
+  </div>
+</section>
+
+<!-- 06 finale -->
+<section class="scene s-finale" aria-label="finale">
+  <div class="layer bg" data-depth="0.3"></div>
+  <div class="layer" data-depth="0.5">
+    <div class="mtn m1"></div><div class="mtn m2"></div><div class="water"></div>
+  </div>
+  <div class="layer txt" data-depth="1">
+    <p class="slabel sl-fin fade">06 — finale</p>
+    <p class="poem fin-poem stagger">
+      <span class="it">feel</span> <span>their</span> <span>heat.</span>
+      <span class="jpw">焔と</span> <span class="it">interact</span> <span>with</span><span class="jpw">。</span>
+    </p>
+    <p class="fin-cred fade">HIBANA — Sept. 29</p>
+  </div>
+</section>
+
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="vig" aria-hidden="true"></div>
+
+<header class="brand">
+  <svg class="bird" viewBox="0 0 32 32" aria-hidden="true">
+    <path d="M6 20c1-8 9-12 15-9l7-3-4.5 5.5C25 20 19 25.5 12 24.5c-1.6-.2-3-.8-4.2-1.7L4 26l2.5-4.3C6.1 21.2 6 20.6 6 20Z" fill="var(--feather)"/>
+    <path d="M12 15.5c2.5-2 6-1.8 7.5.7-2.2 1.6-5.6 1.4-7.5-.7Z" fill="color-mix(in srgb,var(--night) 55%,var(--feather))"/>
+    <circle cx="21.5" cy="12" r="1" fill="var(--night)"/>
+  </svg>
+  <div class="brand-t"><span class="logo">HIBANA</span><span class="date">Sept. 29</span></div>
+</header>
+<nav id="nav">
+  <button data-go="3">作品</button>
+  <button data-go="4">思想</button>
+  <button data-go="5">接続</button>
+</nav>
+<div id="prog"><i></i></div>
+<div id="sound" aria-hidden="true">
+  <svg viewBox="0 0 52 52">
+    <circle cx="26" cy="26" r="21" fill="none" stroke="currentColor" stroke-width="1" opacity=".28"/>
+    <circle class="arc" cx="26" cy="26" r="21" fill="none" stroke="currentColor" stroke-width="1.4"
+      stroke-dasharray="26 106" stroke-linecap="round"/>
+  </svg>
+  <span>sound</span>
+</div>
+<div id="grain" aria-hidden="true"></div>
+
+<script>
+(()=>{'use strict';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const DENS=RM?0.25:1, LERP=RM?0.22:0.08;
+const cvs=$('#fx'), ctx=cvs.getContext('2d');
+const scenes=$$('.scene'), progI=$('#prog i'), soundEl=$('#sound');
+let W=0,H=0,unit=1,maxP=5;
+
+function resize(){
+  W=innerWidth;H=innerHeight;
+  const dpr=Math.min(devicePixelRatio||1,1.5);
+  cvs.width=Math.round(W*dpr);cvs.height=Math.round(H*dpr);
+  cvs.style.width=W+'px';cvs.style.height=H+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  unit=H*1.5;
+  maxP=Math.max(1,(document.body.scrollHeight-H)/unit);
+}
+addEventListener('resize',resize);resize();
+
+/* stagger delays: center-out, 78ms steps */
+$$('.stagger').forEach(el=>{
+  const sp=[...el.querySelectorAll('span')], c=(sp.length-1)/2, base=+(el.dataset.wave||0);
+  sp.forEach((s,i)=>s.style.transitionDelay=(base+Math.abs(i-c)*78)+'ms');
+});
+
+/* grain tile */
+(()=>{
+  const g=document.createElement('canvas');g.width=g.height=160;
+  const gx=g.getContext('2d'), id=gx.createImageData(160,160), d=id.data;
+  for(let i=0;i<d.length;i+=4){const v=Math.random()*255|0;d[i]=d[i+1]=d[i+2]=v;d[i+3]=255;}
+  gx.putImageData(id,0,0);
+  $('#grain').style.backgroundImage=`url(${g.toDataURL()})`;
+})();
+
+/* ---------- palette + glow sprites ---------- */
+const C={wing:[185,166,224],orb:[232,240,168],flame:[255,122,47],ember:[255,179,107],
+  feather:[127,184,255],sunset:[194,58,31],white:[255,250,242]};
+const rgba=(c,a)=>`rgba(${c[0]},${c[1]},${c[2]},${a})`;
+function makeGlow(c,soft){
+  const s=document.createElement('canvas');s.width=s.height=64;
+  const x=s.getContext('2d'),g=x.createRadialGradient(32,32,0,32,32,32);
+  g.addColorStop(0,rgba(c,1));g.addColorStop(soft?0.4:0.22,rgba(c,.55));g.addColorStop(1,rgba(c,0));
+  x.fillStyle=g;x.fillRect(0,0,64,64);return s;
+}
+const SPR={wing:makeGlow(C.wing,1),orb:makeGlow(C.orb),flame:makeGlow(C.flame),
+  ember:makeGlow(C.ember),feather:makeGlow(C.feather),white:makeGlow(C.white),sunset:makeGlow(C.sunset)};
+const RAINBOW=[...Array(12)].map((_,i)=>{ /* scene-3 exception: prismatic hues */
+  const s=document.createElement('canvas');s.width=s.height=64;
+  const x=s.getContext('2d'),h=i*30,g=x.createRadialGradient(32,32,0,32,32,32);
+  g.addColorStop(0,`hsla(${h},85%,80%,1)`);g.addColorStop(.3,`hsla(${h},85%,70%,.55)`);g.addColorStop(1,`hsla(${h},85%,70%,0)`);
+  x.fillStyle=g;x.fillRect(0,0,64,64);return s;
+});
+
+/* ---------- particle system (single pool, one rAF) ---------- */
+const PT=[], MAX=Math.round(700*DENS);
+function spawn(o){
+  if(PT.length>=MAX)return;
+  PT.push(Object.assign({age:0,vx:0,vy:0,g:0,grow:0,alpha:1,blend:'lighter',
+    spr:SPR.flame,streak:0,mir:0,drag:1},o));
+}
+const count=r=>{const n=Math.floor(r);return n+(Math.random()<r-n?1:0);};
+function stepParticles(dt){
+  const f=dt*60;
+  for(let i=PT.length-1;i>=0;i--){
+    const p=PT[i];p.age+=dt;
+    if(p.age>=p.life){PT.splice(i,1);continue;}
+    p.vy+=p.g*f;
+    const dr=Math.pow(p.drag,f);p.vx*=dr;p.vy*=dr;
+    p.x+=p.vx*f;p.y+=p.vy*f;
+  }
+}
+function drawParticles(){
+  const yw=H*0.74;
+  for(const b of ['multiply','source-over','lighter']){
+    ctx.globalCompositeOperation=b;
+    for(const p of PT){
+      if(p.blend!==b)continue;
+      const k=p.age/p.life;
+      const a=Math.max(0,Math.min(1,p.alpha*(k<0.18?k/0.18:(1-k)/0.82)));
+      const s=p.size*(1+p.grow*k);
+      ctx.globalAlpha=a;
+      if(p.streak)ctx.drawImage(p.spr,p.x-s*3,p.y-s*.3,s*6,s*.6);
+      else ctx.drawImage(p.spr,p.x-s,p.y-s,s*2,s*2);
+      if(p.mir){const y2=yw*2-p.y;if(y2>yw){ctx.globalAlpha=a*0.25;ctx.drawImage(p.spr,p.x-s*1.4,y2-s*.9,s*2.8,s*1.8);}}
+    }
+  }
+  ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+}
+
+/* ---------- per-scene emitters (stopped when scene inactive) ---------- */
+function dawn(o,t,time){
+  const ox=W*0.55,oy=H*0.28,pr=1+0.06*Math.sin(time*0.0016);
+  ctx.globalCompositeOperation='lighter';
+  const R=Math.min(W,H)*0.11*pr;
+  ctx.globalAlpha=o*.9;ctx.drawImage(SPR.orb,ox-R,oy-R,R*2,R*2);
+  const R2=R*2.4;ctx.globalAlpha=o*.4;ctx.drawImage(SPR.orb,ox-R2,oy-R2,R2*2,R2*2);
+  ctx.globalAlpha=1;
+  for(let n=count(0.7*o*DENS);n--;)spawn({x:ox+(Math.random()-.5)*R*2.6,y:oy+(Math.random()-.5)*R*2.6,
+    vx:(Math.random()-.5)*.2,vy:-0.25-Math.random()*.3,size:1.2+Math.random()*1.8,
+    life:2.5+Math.random()*2,alpha:.8,spr:Math.random()<.5?SPR.orb:SPR.white});
+  for(let n=count(1.5*o*DENS);n--;){ // watercolor wing stroke, left side
+    const s=Math.random(),u=1-s;
+    const x=u*u*W*0.04+2*u*s*W*0.10+s*s*W*0.34;
+    const y=u*u*H*0.80+2*u*s*H*0.34+s*s*H*0.14;
+    spawn({x:x+(Math.random()-.5)*W*0.05,y:y+(Math.random()-.5)*H*0.05,
+      vx:(Math.random()-.5)*.12,vy:(Math.random()-.5)*.12,size:26+Math.random()*46,grow:.8,
+      life:5+Math.random()*4,alpha:.055+Math.random()*.04,blend:'multiply',
+      spr:Math.random()<.75?SPR.wing:SPR.feather});
+  }
+}
+function rise(o,t,time){
+  const ease=1-Math.pow(1-t,2);
+  const bx=W*(0.5+0.055*Math.sin(time*0.0005));
+  const by=H*(1.08-0.82*ease)+Math.sin(time*0.0022)*12;
+  const flap=RM?0:Math.sin(time*0.0085);
+  ctx.globalCompositeOperation='lighter';
+  ctx.globalAlpha=o*.55;ctx.drawImage(SPR.ember,bx-110,by-110,220,220);
+  ctx.globalAlpha=o*.9;
+  for(const d of[-1,1]){
+    const tipX=bx+d*(70+18*Math.abs(flap)),tipY=by-16-flap*46;
+    const g=ctx.createLinearGradient(bx,by,tipX,tipY);
+    g.addColorStop(0,rgba(C.flame,.85));g.addColorStop(1,rgba(C.ember,.06));
+    ctx.fillStyle=g;ctx.beginPath();
+    ctx.moveTo(bx,by-6);
+    ctx.quadraticCurveTo(bx+d*38,by-26-flap*30,tipX,tipY);
+    ctx.quadraticCurveTo(bx+d*44,by+8-flap*8,bx,by+10);
+    ctx.closePath();ctx.fill();
+    for(let n=count(2.2*o*DENS);n--;)spawn({x:tipX+(Math.random()-.5)*10,y:tipY+(Math.random()-.5)*10,
+      vx:(Math.random()-.5)*.5-d*.2,vy:.5+Math.random()*1.1,size:2+Math.random()*3.4,
+      life:1+Math.random()*1.4,alpha:.85,drag:.985,spr:Math.random()<.5?SPR.flame:SPR.ember});
+  }
+  const gb=ctx.createLinearGradient(bx,by-22,bx,by+26);
+  gb.addColorStop(0,rgba(C.white,.9));gb.addColorStop(.5,rgba(C.ember,.85));gb.addColorStop(1,rgba(C.flame,.2));
+  ctx.fillStyle=gb;ctx.beginPath();ctx.ellipse(bx,by,9,22,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=rgba(C.white,.9);ctx.beginPath();ctx.arc(bx,by-26,6,0,Math.PI*2);ctx.fill();
+  for(let n=count(3.5*o*DENS);n--;){
+    const r=Math.random();
+    spawn({x:bx+(Math.random()-.5)*10,y:by+22+Math.random()*8,vx:(Math.random()-.5)*.3,
+      vy:.8+Math.random()*1.3,size:2.4+Math.random()*3.6,life:1.2+Math.random()*1.6,alpha:.8,drag:.985,
+      spr:r<.3?SPR.sunset:(r<.65?SPR.flame:SPR.ember)});
+  }
+  ctx.globalAlpha=1;
+}
+function halo(o,time){
+  const cx=W*.5,cy=H*.45,r0=Math.min(W,H)*.19;
+  for(let n=count(3.2*o*DENS);n--;){
+    const a=Math.random()*Math.PI*2,r=r0*(.85+Math.random()*.5),sp=.25+Math.random()*.75;
+    const hi=(Math.floor(a/(Math.PI*2)*12+time*.0003)%12+12)%12;
+    spawn({x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r*.9,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp*.9,
+      size:1.2+Math.random()*2.4,life:2+Math.random()*2.5,alpha:.7,drag:.995,spr:RAINBOW[hi]});
+  }
+}
+function feather(o,t,time){
+  const cyc=(time%11000)/11000;
+  const fy=-90+cyc*(H+220);
+  const fx=W*.5+Math.sin(cyc*Math.PI*4)*W*.045;
+  const rot=Math.sin(cyc*Math.PI*4+1.2)*.45;
+  for(let n=count(2.6*o*DENS);n--;)spawn({x:fx+(Math.random()-.5)*7,y:fy-6-Math.random()*14,
+    vx:(Math.random()-.5)*.08,vy:-.12-Math.random()*.18,size:1.4+Math.random()*2.2,
+    life:1.6+Math.random()*1.4,alpha:.8,drag:.99,spr:Math.random()<.6?SPR.feather:SPR.white});
+  if(Math.random()<.5*o*DENS)spawn({x:fx,y:fy-20-Math.random()*30,vy:-.05,size:14+Math.random()*14,
+    life:1.4,alpha:.1,spr:SPR.feather});
+  ctx.save();ctx.translate(fx,fy);ctx.rotate(rot);
+  ctx.globalCompositeOperation='lighter';
+  ctx.globalAlpha=o*.5;ctx.drawImage(SPR.feather,-64,-64,128,128);
+  ctx.globalAlpha=o*.95;
+  const g=ctx.createLinearGradient(0,-34,0,34);
+  g.addColorStop(0,rgba(C.white,.95));g.addColorStop(1,rgba(C.feather,.55));
+  ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(0,-34);
+  ctx.quadraticCurveTo(13,-8,4,28);ctx.quadraticCurveTo(0,35,-4,28);ctx.quadraticCurveTo(-13,-8,0,-34);
+  ctx.closePath();ctx.fill();
+  ctx.strokeStyle=rgba(C.white,.8);ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,-36);ctx.lineTo(0,36);ctx.stroke();
+  ctx.restore();ctx.globalAlpha=1;
+}
+function crystal(o){
+  for(let n=count(.5*o*DENS);n--;)spawn({x:Math.random()*W,y:Math.random()*H,
+    vx:(Math.random()-.5)*.12,vy:-.06-Math.random()*.12,size:.9+Math.random()*1.6,
+    life:4+Math.random()*4,alpha:.5,spr:Math.random()<.7?SPR.feather:SPR.wing});
+}
+function finale(o,t,time){
+  const cx=W*.5,baseY=H*.56,yw=H*.74;
+  const wp=(s,d)=>({x:cx+d*(16+s*W*.27),
+    y:baseY-H*(.03+.27*Math.pow(s,1.25))+Math.sin(s*9+time*.002)*6});
+  for(let n=count(11*o*DENS);n--;){
+    let x,y,vx;
+    if(Math.random()<.72){
+      const s=Math.random(),d=Math.random()<.5?-1:1,p=wp(s,d);
+      x=p.x+(Math.random()-.5)*14;y=p.y+Math.random()*H*.05*(1-s*.6);
+      vx=(Math.random()-.5)*.4+d*s*.25;
+    }else{x=cx+(Math.random()-.5)*26;y=baseY+Math.random()*H*.1;vx=(Math.random()-.5)*.3;}
+    const r=Math.random();
+    spawn({x,y,vx,vy:-(.7+Math.random()*1.7),g:-.004,size:2.6+Math.random()*4.6,
+      life:.8+Math.random()*1.1,alpha:.9,mir:1,drag:.98,
+      spr:r<.18?SPR.white:(r<.55?SPR.ember:(r<.9?SPR.flame:SPR.sunset))});
+  }
+  ctx.globalCompositeOperation='lighter';
+  const R=H*.13;ctx.globalAlpha=o*.8;ctx.drawImage(SPR.ember,cx-R,baseY-R*1.2,R*2,R*2);
+  const R2=H*.05;ctx.globalAlpha=o*.9;ctx.drawImage(SPR.white,cx-R2,baseY-R2*1.1,R2*2,R2*2);
+  ctx.globalAlpha=o*.25;ctx.drawImage(SPR.ember,cx-R,2*yw-baseY-R*.6,R*2,R*1.4);
+  ctx.globalAlpha=o*.16;ctx.strokeStyle=rgba(C.ember,1);ctx.lineWidth=9;ctx.lineCap='round';ctx.lineJoin='round';
+  for(const d of[-1,1]){ctx.beginPath();for(let i=0;i<=14;i++){const p=wp(i/14,d);i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);}ctx.stroke();}
+  for(let n=count(1.6*o*DENS);n--;)spawn({x:cx+(Math.random()-.5)*W*.5,y:yw+Math.random()*H*.2,
+    vx:(Math.random()-.5)*.4,size:3+Math.random()*5,life:1.2+Math.random()*1.4,alpha:.22,streak:1,
+    spr:Math.random()<.6?SPR.ember:SPR.flame});
+  ctx.globalAlpha=1;
+}
+const STARS=[...Array(90)].map(()=>({x:Math.random(),y:Math.random()*.8,
+  s:.6+Math.random()*1.4,p:Math.random()*6.28,f:.5+Math.random()}));
+function stars(a,time){
+  ctx.globalCompositeOperation='lighter';
+  for(const st of STARS){
+    const tw=.35+.65*Math.pow(Math.sin(time*.001*st.f+st.p)*.5+.5,2);
+    ctx.globalAlpha=a*.55*tw;const s=st.s*2;
+    ctx.drawImage(SPR.feather,st.x*W-s,st.y*H-s,s*2,s*2);
+  }
+  ctx.globalAlpha=1;
+}
+
+/* ---------- scroll + render loop ---------- */
+let target=scrollY,cur=scrollY,last=performance.now();
+addEventListener('scroll',()=>{target=scrollY},{passive:true});
+const FW=0.28;
+function op(P,i){
+  if(P<i)return Math.max(0,1-(i-P)/FW);
+  if(P>i+1)return Math.max(0,1-(P-i-1)/FW);
+  return 1;
+}
+function loop(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  cur+=(target-cur)*LERP;
+  if(Math.abs(target-cur)<.1)cur=target;
+  const P=cur/unit;
+  ctx.clearRect(0,0,W,H);
+  const ops=[];
+  scenes.forEach((el,i)=>{
+    const o=op(P,i);ops[i]=o;
+    if(o<=.001){el.style.visibility='hidden';el.classList.remove('in');return;}
+    el.style.visibility='visible';
+    el.style.opacity=o.toFixed(3);
+    const drift=Math.max(-.75,Math.min(.75,P-(i+.5)));
+    el.style.transform=`scale(${(1+drift*.035).toFixed(4)})`;
+    if(o>.4)el.classList.add('in');else if(o<.05)el.classList.remove('in');
+    for(const L of el.children){
+      const d=+L.dataset.depth||0;if(!d)continue;
+      L.style.transform=`translateY(${((i+.5-P)*d*90).toFixed(1)}px)`;
+    }
+  });
+  document.body.classList.toggle('dark',P>3.02);
+  soundEl.classList.toggle('on',P>2.92);
+  progI.style.transform=`scaleX(${Math.min(1,Math.max(0,P/maxP)).toFixed(4)})`;
+  const nightA=Math.max(ops[3]||0,ops[4]||0);
+  if(nightA>.02)stars(nightA,now);
+  const lt=i=>Math.min(1,Math.max(0,P-i));
+  if(ops[0]>.02)dawn(ops[0],lt(0),now);
+  if(ops[1]>.02)rise(ops[1],lt(1),now);
+  if(ops[2]>.02)halo(ops[2],now);
+  if(ops[3]>.02)feather(ops[3],lt(3),now);
+  if(ops[4]>.02)crystal(ops[4]);
+  if(ops[5]>.02)finale(ops[5],lt(5),now);
+  stepParticles(dt);
+  drawParticles();
+  requestAnimationFrame(loop);
+}
+$$('#nav button').forEach(b=>b.addEventListener('click',()=>{
+  window.scrollTo({top:(+b.dataset.go+.12)*unit,behavior:RM?'auto':'smooth'});
+}));
+requestAnimationFrame(t=>{last=t;requestAnimationFrame(loop)});
+})();
+</script>
+</body>
+</html>

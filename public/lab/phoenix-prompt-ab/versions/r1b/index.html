@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HIBANA — 焔の航跡</title>
+<meta name="description" content="不死鳥スクロール没入型 LP。水彩の夜明けから焔のフィナーレまで、6つの情景を貫く。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;1,400;1,500&family=Shippori+Mincho:wght@400;500&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --dawn-bg:#f2ecf5; --dawn-wing:#b9a6e0; --orb:#e8f0a8; --flame:#ff7a2f;
+  --ember:#ffb36b; --night:#0a1030; --feather:#7fb8ff; --sunset:#c23a1f; --ink:#2a2438;
+  --serif:'Cormorant Garamond',serif;
+  --mincho:'Shippori Mincho',serif;
+  --goth:'Zen Kaku Gothic New',sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:auto}
+body{margin:0;background:var(--dawn-bg);color:var(--ink);font-family:var(--goth);
+  overflow-x:hidden;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
+::selection{background:color-mix(in srgb,var(--flame) 35%,transparent)}
+#space{height:900vh}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ---------- scenes ---------- */
+.scene{position:fixed;inset:0;z-index:1;opacity:0;visibility:hidden;
+  pointer-events:none;overflow:hidden;will-change:opacity}
+.layer{position:absolute;inset:-44px 0;will-change:transform}
+#fx{position:fixed;inset:0;z-index:2;pointer-events:none}
+.stext{position:fixed;inset:0;z-index:3;opacity:0;visibility:hidden;
+  pointer-events:none;will-change:opacity}
+.fg{position:absolute;inset:0;will-change:transform}
+
+/* backgrounds — token-only palette */
+.bg0{background:linear-gradient(160deg,
+  color-mix(in srgb,var(--dawn-bg) 90%,var(--orb)) 0%,
+  var(--dawn-bg) 44%,
+  color-mix(in srgb,var(--dawn-bg) 74%,var(--dawn-wing)) 100%)}
+.bg1{background:linear-gradient(175deg,
+  color-mix(in srgb,var(--dawn-bg) 72%,var(--ember)) 0%,
+  color-mix(in srgb,var(--ember) 60%,var(--dawn-bg)) 40%,
+  color-mix(in srgb,var(--ember) 68%,var(--flame)) 72%,
+  color-mix(in srgb,var(--flame) 70%,var(--sunset)) 100%)}
+.bg2{background:radial-gradient(circle at 50% 46%,
+  color-mix(in srgb,white 55%,var(--orb)) 0%,
+  color-mix(in srgb,var(--orb) 58%,var(--dawn-bg)) 13%,
+  color-mix(in srgb,var(--ember) 44%,var(--dawn-bg)) 25%,
+  color-mix(in srgb,var(--flame) 26%,var(--dawn-bg)) 34%,
+  color-mix(in srgb,var(--dawn-wing) 46%,var(--dawn-bg)) 46%,
+  color-mix(in srgb,var(--feather) 38%,var(--dawn-bg)) 58%,
+  color-mix(in srgb,var(--orb) 22%,var(--dawn-bg)) 71%,
+  var(--dawn-bg) 90%)}
+.bg3,.bg4{background:linear-gradient(180deg,
+  color-mix(in srgb,var(--night) 82%,var(--feather)) 0%,
+  var(--night) 50%,
+  color-mix(in srgb,var(--night) 86%,black) 100%)}
+.bg5{background:linear-gradient(180deg,
+  color-mix(in srgb,var(--ink) 58%,var(--sunset)) 0%,
+  color-mix(in srgb,var(--sunset) 76%,var(--ink)) 28%,
+  var(--sunset) 52%,
+  color-mix(in srgb,var(--sunset) 52%,var(--ember)) 66%,
+  color-mix(in srgb,var(--night) 52%,var(--sunset)) 66.4%,
+  color-mix(in srgb,var(--night) 82%,var(--sunset)) 100%)}
+
+.orb{position:absolute;left:50%;top:27%;width:36vmin;height:36vmin;
+  transform:translate(-50%,-50%);border-radius:50%;filter:blur(6px);opacity:.9;
+  background:radial-gradient(circle,
+    color-mix(in srgb,var(--orb) 88%,white) 0%,
+    color-mix(in srgb,var(--orb) 52%,var(--dawn-bg)) 36%,
+    transparent 70%);
+  animation:pulse 7s ease-in-out infinite alternate}
+@keyframes pulse{from{transform:translate(-50%,-50%) scale(.94)}to{transform:translate(-50%,-50%) scale(1.07)}}
+
+.mtn{position:absolute;left:0;right:0;bottom:34%;height:11%;
+  background:color-mix(in srgb,var(--ink) 78%,var(--night));
+  clip-path:polygon(0 100%,0 60%,8% 46%,16% 72%,27% 28%,38% 66%,47% 42%,58% 74%,68% 36%,79% 62%,88% 48%,100% 66%,100% 100%)}
+.mtn.ref{bottom:auto;top:66%;transform:scaleY(-1);opacity:.26;filter:blur(4px)}
+.water{position:absolute;left:0;right:0;top:66%;bottom:0;
+  background:linear-gradient(180deg,
+    color-mix(in srgb,var(--sunset) 34%,var(--night)) 0%,
+    color-mix(in srgb,var(--night) 84%,var(--sunset)) 60%,
+    color-mix(in srgb,var(--night) 92%,black) 100%)}
+.waterlines{position:absolute;inset:0;opacity:.5;
+  background:repeating-linear-gradient(180deg,
+    transparent 0 9px,
+    color-mix(in srgb,var(--ember) 7%,transparent) 9px 10px,
+    transparent 10px 23px);
+  animation:drift 9s linear infinite}
+@keyframes drift{to{transform:translateY(23px)}}
+
+/* ---------- typography ---------- */
+.chap{font-size:.75rem;font-weight:300;letter-spacing:.34em;opacity:0;
+  margin:0 0 2.2rem;transition:opacity 1.2s .15s}
+.stext.in .chap{opacity:.55}
+.poem{font-family:var(--serif);font-style:italic;font-weight:400;margin:0;
+  font-size:clamp(1.4rem,3.2vw,2.6rem);line-height:1.5;letter-spacing:.04em}
+.cap{font-family:var(--serif);font-style:italic;margin:1.4rem 0 0;
+  font-size:clamp(.95rem,1.4vw,1.15rem);letter-spacing:.1em;opacity:.78}
+.jp{font-family:var(--mincho);font-style:normal;font-weight:400}
+.acc{font-weight:500}
+.big{font-size:2.4em;letter-spacing:-.02em;line-height:1.12}
+.big2{font-size:1.9em;letter-spacing:-.02em;line-height:1.15}
+.jp-big{font-family:var(--mincho);font-weight:500;margin:1rem 0 0;
+  font-size:clamp(2.6rem,8.5vw,6.2rem);letter-spacing:.08em;line-height:1.3}
+.oto{font-family:var(--mincho);font-weight:500;margin:.4rem 0;line-height:1;
+  font-size:clamp(7rem,23vw,15rem);color:var(--dawn-bg);
+  text-shadow:0 0 6vmin color-mix(in srgb,var(--orb) 65%,transparent),
+              0 0 1.4vmin color-mix(in srgb,white 55%,transparent);
+  animation:blink 5.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}12%{opacity:.88}18%{opacity:.42}24%{opacity:.96}54%{opacity:.55}72%{opacity:1}}
+.haze{animation:haze 6.5s ease-in-out infinite alternate}
+@keyframes haze{from{filter:blur(.5px)}to{filter:blur(7px)}}
+
+/* staggered word reveal */
+.w{display:inline-block;opacity:0;
+  transform:translateY(calc(var(--ty,0em) + .85em));
+  transition:transform 1.15s cubic-bezier(.16,1,.3,1) var(--d,0s),
+             opacity 1.15s ease var(--d,0s)}
+.stext.in .w{opacity:1;transform:translateY(var(--ty,0em))}
+
+/* per-scene text colors */
+.stext[data-i="0"]{color:var(--ink)}
+.stext[data-i="0"] .acc{color:color-mix(in srgb,var(--dawn-wing) 58%,var(--ink))}
+.stext[data-i="1"]{color:color-mix(in srgb,var(--ink) 84%,var(--sunset))}
+.stext[data-i="1"] .jp-big{color:var(--ink)}
+.stext[data-i="2"]{color:var(--ink)}
+.stext[data-i="3"],.stext[data-i="4"],.stext[data-i="5"]{color:color-mix(in srgb,var(--dawn-bg) 88%,var(--feather))}
+.stext[data-i="3"] .acc,.stext[data-i="4"] .acc{color:var(--feather)}
+.stext[data-i="5"] .acc{color:var(--ember)}
+.stext[data-i="5"] .poem{text-shadow:0 2px 34px color-mix(in srgb,var(--night) 55%,transparent)}
+
+/* scene layouts */
+.blk0{position:absolute;right:8vw;top:30%;text-align:right;max-width:52vw}
+.blkC{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);text-align:center;width:max-content;max-width:88vw}
+.chap-tl{position:absolute;left:8vw;top:14vh;margin:0}
+.vtext{position:absolute;writing-mode:vertical-rl;font-family:var(--mincho);
+  font-size:max(.78rem,11px);line-height:2.35;letter-spacing:.18em;
+  color:color-mix(in srgb,var(--dawn-bg) 78%,var(--feather));
+  opacity:0;transition:opacity 1.8s .5s}
+.stext.in .vtext{opacity:.8}
+.vl{left:9vw;top:18%;height:52vh}
+.vr{right:9vw;top:30%;height:50vh}
+.blkB{position:absolute;left:50%;bottom:11vh;transform:translateX(-50%);
+  text-align:center;width:max-content;max-width:88vw}
+
+/* crystals */
+.cbox{position:absolute;perspective:900px;pointer-events:auto;
+  transition:transform .55s cubic-bezier(.3,1.7,.4,1)}
+.cbox:hover{transform:translateY(-10px) rotate(4deg) scale(1.05)}
+.flt{animation:bob 7s ease-in-out infinite alternate}
+@keyframes bob{from{transform:translateY(-8px)}to{transform:translateY(8px)}}
+.cube{width:var(--cs);height:var(--cs);position:relative;
+  transform-style:preserve-3d;animation:spin var(--sp,17s) linear infinite}
+@keyframes spin{from{transform:rotateX(0) rotateY(0)}to{transform:rotateX(360deg) rotateY(720deg)}}
+.cube i{position:absolute;inset:0;display:block;border:1px solid transparent;
+  border-image:linear-gradient(125deg,var(--feather),var(--dawn-wing) 35%,var(--ember) 68%,var(--orb)) 1;
+  background:linear-gradient(140deg,
+    color-mix(in srgb,var(--feather) 13%,transparent),
+    color-mix(in srgb,var(--dawn-wing) 6%,transparent) 55%,transparent);
+  box-shadow:inset 0 0 26px color-mix(in srgb,var(--feather) 12%,transparent)}
+.cube i:nth-child(1){transform:translateZ(calc(var(--cs)/2))}
+.cube i:nth-child(2){transform:rotateY(90deg) translateZ(calc(var(--cs)/2))}
+.cube i:nth-child(3){transform:rotateY(180deg) translateZ(calc(var(--cs)/2))}
+.cube i:nth-child(4){transform:rotateY(270deg) translateZ(calc(var(--cs)/2))}
+.cube i:nth-child(5){transform:rotateX(90deg) translateZ(calc(var(--cs)/2))}
+.cube i:nth-child(6){transform:rotateX(-90deg) translateZ(calc(var(--cs)/2))}
+.b1{--cs:clamp(90px,13vmin,150px);--sp:19s;left:26%;top:32%}
+.b2{--cs:clamp(64px,9vmin,104px);--sp:14s;right:24%;top:50%}
+.b3{--cs:clamp(42px,6vmin,68px);--sp:11s;right:35%;top:22%}
+
+/* ---------- finish layers ---------- */
+.vig{position:fixed;inset:0;z-index:7;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 50%,transparent 56%,
+    rgba(10,16,48,.13) 82%,rgba(10,16,48,.32) 100%)}
+#grain{position:fixed;inset:-120px;z-index:8;pointer-events:none;
+  opacity:.05;mix-blend-mode:overlay;animation:gshift .7s steps(1,end) infinite}
+@keyframes gshift{0%{transform:translate(0,0)}25%{transform:translate(-48px,28px)}
+  50%{transform:translate(26px,-40px)}75%{transform:translate(-20px,-16px)}}
+
+/* ---------- persistent UI ---------- */
+.ui{position:fixed;inset:0;z-index:10;pointer-events:none;
+  color:var(--ink);transition:color .9s}
+body.dark .ui{color:var(--dawn-bg)}
+.brand{position:absolute;top:4vh;left:6vw;display:flex;align-items:center;gap:.6rem}
+.brand svg{width:20px;height:20px;fill:var(--feather);flex:none}
+.logo{font-family:var(--serif);font-style:italic;font-weight:500;
+  font-size:1.25rem;letter-spacing:.14em}
+.date{font-size:.75rem;font-weight:300;letter-spacing:.24em;opacity:.6;margin-left:.2rem}
+nav{position:absolute;top:4.4vh;right:6vw;display:flex;gap:2.4rem;pointer-events:auto}
+nav a{font-size:.75rem;font-weight:300;letter-spacing:.3em;cursor:pointer;
+  opacity:.72;transition:opacity .3s;position:relative;padding-bottom:4px}
+nav a::after{content:"";position:absolute;left:0;bottom:0;height:1px;width:100%;
+  background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .4s}
+nav a:hover{opacity:1}
+nav a:hover::after{transform:scaleX(1)}
+.progress{position:fixed;left:50%;bottom:3.4vh;transform:translateX(-50%);
+  z-index:10;width:26vw;height:1px;color:var(--ink);transition:color .9s;
+  background:color-mix(in srgb,currentColor 24%,transparent)}
+body.dark .progress{color:var(--dawn-bg)}
+.progress i{display:block;height:100%;background:var(--flame);
+  transform:scaleX(0);transform-origin:left}
+.sring{position:fixed;left:6vw;bottom:5vh;width:46px;height:46px;z-index:10;
+  color:var(--dawn-bg);opacity:0;transform:translateY(14px);
+  transition:opacity 1.4s,transform 1.4s;pointer-events:none}
+.sring.on{opacity:.85;transform:none}
+.sring svg{width:100%;height:100%;overflow:visible}
+.sring .c1{fill:none;stroke:currentColor;stroke-width:1;opacity:.4}
+.sring .c2{fill:none;stroke:currentColor;stroke-width:1;stroke-dasharray:3 7;
+  transform-origin:center;animation:ringspin 14s linear infinite}
+@keyframes ringspin{to{transform:rotate(360deg)}}
+
+@media (prefers-reduced-motion:reduce){
+  .orb,.haze,.oto,.cube,.flt,.sring .c2,#grain,.waterlines{animation:none!important}
+  .w{transition-duration:.35s}
+}
+@media (max-width:640px){
+  .vl{left:6vw}.vr{right:6vw}
+  .blk0{right:6vw;max-width:74vw}
+  .progress{width:44vw}
+}
+</style>
+</head>
+<body>
+<h1 class="sr-only">HIBANA — 不死鳥スクロール没入体験</h1>
+
+<!-- scene backdrops -->
+<div class="scene" data-i="0"><div class="layer bg bg0"></div><div class="layer mid"><div class="orb"></div></div></div>
+<div class="scene" data-i="1"><div class="layer bg bg1"></div><div class="layer mid"></div></div>
+<div class="scene" data-i="2"><div class="layer bg bg2"></div><div class="layer mid"></div></div>
+<div class="scene" data-i="3"><div class="layer bg bg3"></div><div class="layer mid"></div></div>
+<div class="scene" data-i="4"><div class="layer bg bg4"></div><div class="layer mid"></div></div>
+<div class="scene" data-i="5"><div class="layer bg bg5"></div>
+  <div class="layer mid"><div class="water"><div class="waterlines"></div></div><div class="mtn"></div><div class="mtn ref"></div></div>
+</div>
+
+<canvas id="fx"></canvas>
+
+<!-- scene text planes -->
+<section class="stext" data-i="0"><div class="fg">
+  <div class="blk0">
+    <p class="chap">01&ensp;·&ensp;夜明け — DAWN</p>
+    <p class="poem lines">
+      <span class="w" style="--ty:.04em">what</span> <span class="w" style="--ty:.3em">guides</span> <span class="w" style="--ty:.14em">us</span><br>
+      <span class="w" style="--ty:0em">through</span> <span class="w acc" style="--ty:.42em">change,</span><br>
+      <span class="w acc" style="--ty:-.12em">reinvention,</span><br>
+      <span class="w" style="--ty:.08em">and</span> <span class="w" style="--ty:.24em">the</span> <span class="w acc big" style="--ty:.42em">unknown</span><span class="w" style="--ty:.42em">&thinsp;—</span>
+    </p>
+  </div>
+</div></section>
+
+<section class="stext" data-i="1"><div class="fg">
+  <div class="blkC">
+    <p class="chap">02&ensp;·&ensp;上昇 — RISE</p>
+    <p class="poem lines" style="font-size:clamp(1rem,1.8vw,1.4rem)">
+      <span class="w" style="--ty:.1em">not</span> <span class="w" style="--ty:.28em">an</span> <span class="w" style="--ty:0em">ending,</span> <span class="w" style="--ty:.2em">it</span> <span class="w" style="--ty:.34em">is</span></p>
+    <h2 class="jp-big lines" style="margin-top:1.4rem">
+      <span class="w" style="--ty:.05em">再</span><span class="w haze" style="--ty:-.04em">生</span><span class="w" style="--ty:.1em">で</span><span class="w" style="--ty:.02em">あ</span><span class="w" style="--ty:.12em">る</span><span class="w" style="--ty:.05em">。</span></h2>
+  </div>
+</div></section>
+
+<section class="stext" data-i="2"><div class="fg">
+  <div class="blkC" style="top:47%">
+    <p class="chap">03&ensp;·&ensp;光背 — HALO</p>
+    <h2 class="oto lines"><span class="w">音</span></h2>
+    <p class="cap lines">
+      <span class="w" style="--ty:.1em">the</span> <span class="w acc" style="--ty:.3em">sound</span> <span class="w" style="--ty:.05em">of</span> <span class="w" style="--ty:.22em">wings,</span> <span class="w jp" style="--ty:.12em">逆光のなかで</span></p>
+  </div>
+</div></section>
+
+<section class="stext" data-i="3"><div class="fg">
+  <p class="chap chap-tl">04&ensp;·&ensp;落羽 — FEATHER</p>
+  <div class="vtext vl">一枚の羽根が、夜の底へ<br>光の尾を曳いて落ちてゆく。<br>速度はやがて言葉になる。</div>
+  <div class="vtext vr">羽根は誰のものでもない。<br>ただ落ちる軌跡だけが、<br>この夜の署名である。</div>
+  <div class="blkB">
+    <p class="poem lines">
+      <span class="w" style="--ty:.08em">don't</span> <span class="w" style="--ty:.24em">just</span> <span class="w acc" style="--ty:-.1em">speak</span> <span class="w" style="--ty:.14em">to</span> <span class="w" style="--ty:.3em">us.</span><br>
+      <span class="w" style="--ty:.05em">they</span> <span class="w acc big2" style="--ty:.28em">stimulate</span> <span class="w" style="--ty:.1em">us.</span><br>
+      <span class="w" style="--ty:.18em">light</span> <span class="w acc" style="--ty:0em">becomes</span> <span class="w jp" style="--ty:.3em">私、</span><span class="w acc" style="--ty:.14em">flare。</span>
+    </p>
+  </div>
+</div></section>
+
+<section class="stext" data-i="4"><div class="fg">
+  <p class="chap chap-tl">05&ensp;·&ensp;結晶 — CRYSTAL</p>
+  <div class="cbox b1"><div class="flt"><div class="cube"><i></i><i></i><i></i><i></i><i></i><i></i></div></div></div>
+  <div class="cbox b2"><div class="flt" style="animation-delay:-3s"><div class="cube"><i></i><i></i><i></i><i></i><i></i><i></i></div></div></div>
+  <div class="cbox b3"><div class="flt" style="animation-delay:-5s"><div class="cube"><i></i><i></i><i></i><i></i><i></i><i></i></div></div></div>
+  <div class="blkB" style="bottom:13vh">
+    <p class="cap lines">
+      <span class="w jp" style="--ty:.14em">凍った</span> <span class="w acc" style="--ty:0em">light,</span> <span class="w jp" style="--ty:.26em">まだ燃えている</span></p>
+  </div>
+</div></section>
+
+<section class="stext" data-i="5"><div class="fg">
+  <p class="chap chap-tl">06&ensp;·&ensp;焔 — FINALE</p>
+  <div class="blkB" style="bottom:9vh">
+    <p class="poem lines">
+      <span class="w acc" style="--ty:.1em">feel</span> <span class="w" style="--ty:.28em">their</span> <span class="w big2" style="--ty:-.06em">heat.</span><br>
+      <span class="w jp" style="--ty:.16em">焔と</span> <span class="w acc big2" style="--ty:.02em">interact</span> <span class="w" style="--ty:.26em">with</span><span class="w jp" style="--ty:.26em">。</span>
+    </p>
+  </div>
+</div></section>
+
+<div class="vig"></div>
+<div id="grain"></div>
+
+<!-- persistent UI -->
+<div class="ui">
+  <div class="brand">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13c2.6-4.4 6.4-6.6 10-5.6-.9.7-1.5 1.6-1.7 2.5 2.6-1.2 5.9-1.2 9.7.4-1.6.3-2.7.9-3.4 1.8-2.9 3.5-7.3 4.4-10.4 2.6-1.4.9-2.4 2.2-2.9 3.8-.6-2 0-4 1.4-5.5-1-.1-1.9 0-2.7 0z"/></svg>
+    <span class="logo">HIBANA</span><span class="date">Sept.&thinsp;29</span>
+  </div>
+  <nav><a data-t="3">作品</a><a data-t="1">思想</a><a data-t="5">接続</a></nav>
+</div>
+<div class="progress"><i id="pfill"></i></div>
+<div class="sring" id="sring">
+  <svg viewBox="0 0 46 46" aria-hidden="true">
+    <circle class="c1" cx="23" cy="23" r="21"/>
+    <circle class="c2" cx="23" cy="23" r="14"/>
+    <circle cx="23" cy="23" r="2" fill="currentColor"/>
+  </svg>
+</div>
+
+<div id="space"></div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- tokens (mirror of CSS custom properties) ---------- */
+var C={dawnbg:'#f2ecf5',wing:'#b9a6e0',orb:'#e8f0a8',flame:'#ff7a2f',
+       ember:'#ffb36b',night:'#0a1030',feather:'#7fb8ff',sunset:'#c23a1f',ink:'#2a2438'};
+function hx(h){return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
+function mix(a,b,t){var A=hx(a),B=hx(b);
+  return 'rgb('+Math.round(A[0]+(B[0]-A[0])*t)+','+Math.round(A[1]+(B[1]-A[1])*t)+','+Math.round(A[2]+(B[2]-A[2])*t)+')';}
+function rgba(col,a){
+  if(col[0]==='#'){var v=hx(col);return 'rgba('+v[0]+','+v[1]+','+v[2]+','+a+')';}
+  return col.replace('rgb(','rgba(').replace(')',','+a+')');}
+function clamp(v,a,b){return v<a?a:(v>b?b:v);}
+function sm(t){return t*t*(3-2*t);}
+
+var RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+var DEN=RM?0.25:1, MAX=RM?140:520, LERP=RM?0.25:0.08;
+
+/* ---------- grain ---------- */
+(function(){
+  var g=document.createElement('canvas');g.width=g.height=140;
+  var gc=g.getContext('2d'),id=gc.createImageData(140,140),d=id.data;
+  for(var i=0;i<d.length;i+=4){var v=(120+Math.random()*135)|0;d[i]=d[i+1]=d[i+2]=v;d[i+3]=255;}
+  gc.putImageData(id,0,0);
+  document.getElementById('grain').style.backgroundImage='url('+g.toDataURL()+')';
+})();
+
+/* ---------- word stagger: center-out delays ---------- */
+document.querySelectorAll('.lines').forEach(function(box){
+  var ws=box.querySelectorAll('.w'),c=(ws.length-1)/2;
+  ws.forEach(function(el,i){el.style.setProperty('--d',(Math.abs(i-c)*78).toFixed(0)+'ms');});
+});
+
+/* ---------- canvas setup ---------- */
+var cv=document.getElementById('fx'),ctx=cv.getContext('2d');
+var w=0,h=0,dpr=1,WY=0;
+function resize(){
+  w=innerWidth;h=innerHeight;dpr=Math.min(devicePixelRatio||1,1.75);
+  cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);
+  cv.style.width=w+'px';cv.style.height=h+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  WY=h*0.66;
+}
+resize();
+addEventListener('resize',resize,{passive:true});
+
+/* soft round sprites */
+var spr={};
+function sprite(col){
+  if(spr[col])return spr[col];
+  var c=document.createElement('canvas');c.width=c.height=64;
+  var g=c.getContext('2d'),r=g.createRadialGradient(32,32,0,32,32,32);
+  r.addColorStop(0,rgba(col,1));r.addColorStop(0.35,rgba(col,0.55));r.addColorStop(1,rgba(col,0));
+  g.fillStyle=r;g.fillRect(0,0,64,64);
+  spr[col]=c;return c;
+}
+
+/* ---------- particles: one pool, one rAF ---------- */
+var P=[];
+function emit(p){
+  if(P.length>=MAX)return;
+  p.vx=p.vx||0;p.vy=p.vy||0;p.g=p.g||0;p.dr=(p.dr==null)?1:p.dr;
+  p.comp=p.comp||'source-over';p.mirror=!!p.mirror;p.grow=p.grow||0;
+  p.a=(p.a==null)?1:p.a;p.life=p.max;
+  P.push(p);
+}
+function rate(n){n*=DEN;var k=Math.floor(n);if(Math.random()<n-k)k++;return k;}
+function stepParticles(){
+  for(var i=P.length-1;i>=0;i--){
+    var p=P[i];
+    p.x+=p.vx;p.y+=p.vy;p.vy+=p.g;p.vx*=p.dr;p.vy*=p.dr;
+    p.size+=p.grow;p.life--;
+    if(p.life<=0||p.size<=0.4){P.splice(i,1);continue;}
+    var k=p.life/p.max, born=Math.min(1,(p.max-p.life)/8), al=p.a*k*born;
+    var im=sprite(p.col),s=p.size;
+    ctx.globalCompositeOperation=p.comp;
+    ctx.globalAlpha=al;
+    ctx.drawImage(im,p.x-s,p.y-s,s*2,s*2);
+    if(p.mirror){
+      var my=2*WY-p.y;
+      ctx.globalAlpha=al*0.24;
+      ctx.drawImage(im,p.x-s*1.35,my-s*0.8,s*2.7,s*1.6);
+    }
+  }
+  ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+}
+
+/* ---------- phoenix geometry ---------- */
+function wingPath(sd,L){
+  ctx.moveTo(0,-4);
+  ctx.bezierCurveTo(sd*26,-34-26*L,sd*86,-58-55*L,sd*148,-36-78*L);
+  ctx.quadraticCurveTo(sd*126,-14-46*L,sd*110,-18-34*L);
+  ctx.quadraticCurveTo(sd*104,-2-20*L,sd*86,-4-14*L);
+  ctx.quadraticCurveTo(sd*78,10-6*L,sd*56,8);
+  ctx.quadraticCurveTo(sd*44,22,sd*24,20);
+  ctx.quadraticCurveTo(sd*10,16,0,10);
+}
+function wingPoint(sd,L,t,x,y,s){
+  var p0x=0,p0y=-4,p1x=26,p1y=-34-26*L,p2x=86,p2y=-58-55*L,p3x=148,p3y=-36-78*L,u=1-t;
+  var bx=u*u*u*p0x+3*u*u*t*p1x+3*u*t*t*p2x+t*t*t*p3x;
+  var by=u*u*u*p0y+3*u*u*t*p1y+3*u*t*t*p2y+t*t*t*p3y;
+  return {x:x+sd*bx*s,y:y+by*s};
+}
+function drawBird(x,y,s,L,ct,cb,alpha){
+  ctx.save();ctx.translate(x,y);ctx.scale(s,s);ctx.globalAlpha=alpha;
+  var g=ctx.createLinearGradient(0,-120,0,110);
+  g.addColorStop(0,ct);g.addColorStop(1,cb);
+  ctx.fillStyle=g;ctx.strokeStyle=g;
+  var sides=[-1,1],i;
+  for(i=0;i<2;i++){ctx.beginPath();wingPath(sides[i],L);ctx.closePath();ctx.fill();}
+  ctx.beginPath();ctx.ellipse(0,8,11,27,0,0,6.2832);ctx.fill();
+  ctx.beginPath();ctx.arc(0,-27,8,0,6.2832);ctx.fill();
+  ctx.beginPath();ctx.moveTo(3,-31);ctx.lineTo(15,-26);ctx.lineTo(4,-23);ctx.closePath();ctx.fill();
+  ctx.lineWidth=3.2;ctx.lineCap='round';
+  for(i=0;i<2;i++){var sd=sides[i];
+    ctx.beginPath();ctx.moveTo(sd*4,30);ctx.quadraticCurveTo(sd*18,64,sd*9,102);ctx.stroke();}
+  ctx.restore();ctx.globalAlpha=1;
+}
+
+/* ---------- scene 1: watercolor wing blobs ---------- */
+var WB0=[[0.05,0.74],[0.11,0.50],[0.20,0.30],[0.35,0.20]];
+var WB1=[[0.07,0.82],[0.15,0.68],[0.26,0.55],[0.42,0.50]];
+function bezN(Pt,t){var u=1-t;
+  return [u*u*u*Pt[0][0]+3*u*u*t*Pt[1][0]+3*u*t*t*Pt[2][0]+t*t*t*Pt[3][0],
+          u*u*u*Pt[0][1]+3*u*u*t*Pt[1][1]+3*u*t*t*Pt[2][1]+t*t*t*Pt[3][1]];}
+var blobs=[];
+for(var bi=0;bi<46;bi++){
+  blobs.push({t:Math.random(),br:Math.random()<0.6?0:1,
+    jx:(Math.random()-0.5)*70,jy:(Math.random()-0.5)*55,
+    r:26+Math.random()*55,a:0.03+Math.random()*0.035,ph:Math.random()*6.28});
+}
+function scDawn(op,t,time){
+  var im=sprite(C.wing),k;
+  ctx.globalCompositeOperation='multiply';
+  for(k=0;k<blobs.length;k++){
+    var b=blobs[k],p=bezN(b.br?WB1:WB0,b.t);
+    var x=p[0]*w+b.jx+Math.sin(time*0.4+b.ph)*5;
+    var y=p[1]*h+b.jy+Math.cos(time*0.33+b.ph)*4;
+    var s=b.r*(Math.min(w,h)/820)+14;
+    ctx.globalAlpha=b.a*op;
+    ctx.drawImage(im,x-s,y-s,s*2,s*2);
+  }
+  ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+  if(op>0.4){
+    for(k=0;k<rate(0.32);k++)emit({x:Math.random()*w*0.42,y:h*(0.18+Math.random()*0.62),
+      vx:0.15+Math.random()*0.25,vy:-0.1-Math.random()*0.2,
+      max:140+Math.random()*80,size:5+Math.random()*9,col:C.wing,comp:'multiply',a:0.13});
+    for(k=0;k<rate(0.22);k++)emit({x:w*0.5+(Math.random()-0.5)*w*0.13,y:h*0.29+(Math.random()-0.5)*h*0.1,
+      vx:(Math.random()-0.5)*0.2,vy:-0.15-Math.random()*0.25,
+      max:120,size:3+Math.random()*5,col:mix(C.orb,C.ink,0.25),comp:'multiply',a:0.2});
+  }
+}
+
+/* ---------- scene 2: rise ---------- */
+function scRise(op,t,time){
+  var tt=clamp(t/0.8,0,1),e=1-Math.pow(1-tt,3);
+  var px=w*0.5+Math.sin(time*0.9)*w*0.015;
+  var py=h*1.15-h*0.8*e+Math.sin(time*2.1)*8;
+  var flap=Math.sin(time*(RM?2:6.5)),L=0.55+flap*0.4;
+  var s=Math.min(w,h)/640;
+  drawBird(px,py,s,L,mix(C.ember,C.dawnbg,0.15),mix(C.flame,C.sunset,0.35),0.92*op);
+  if(op>0.4){
+    var sides=[-1,1],i,k;
+    for(i=0;i<2;i++){
+      var tip=wingPoint(sides[i],L,1,px,py,s);
+      for(k=0;k<rate(1.4);k++)emit({x:tip.x+(Math.random()-0.5)*14,y:tip.y+(Math.random()-0.5)*10,
+        vx:-sides[i]*(0.2+Math.random()*0.4),vy:0.5+Math.random()*0.9,
+        max:50+Math.random()*50,size:4+Math.random()*7,grow:-0.06,
+        col:Math.random()<0.5?C.ember:C.flame,comp:'lighter',a:0.5});
+    }
+    for(k=0;k<rate(1.2);k++)emit({x:px+(Math.random()-0.5)*12,y:py+38*s,
+      vx:(Math.random()-0.5)*0.3,vy:0.8+Math.random()*1.2,
+      max:60+Math.random()*40,size:5+Math.random()*7,grow:-0.05,
+      col:C.flame,comp:'lighter',a:0.45});
+  }
+}
+
+/* ---------- scene 3: halo silhouette ---------- */
+var HALOC=[C.ember,C.orb,C.feather,C.wing,mix(C.flame,C.dawnbg,0.35)];
+function scHalo(op,t,time){
+  var cx=w*0.5,cy=h*0.5,br=1+Math.sin(time*1.3)*0.015;
+  drawBird(cx,cy+h*0.03,(Math.min(w,h)/520)*br,1.05+Math.sin(time*1.3)*0.05,
+    mix(C.ink,C.night,0.35),mix(C.ink,C.night,0.6),0.85*op);
+  if(op>0.4){
+    for(var k=0;k<rate(1.1);k++){
+      var a=Math.random()*6.2832,r=Math.min(w,h)*(0.16+Math.random()*0.1);
+      emit({x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r*0.9,
+        vx:Math.cos(a)*(0.3+Math.random()*0.5),vy:Math.sin(a)*(0.3+Math.random()*0.5)-0.15,
+        max:90+Math.random()*70,size:2.5+Math.random()*5,
+        col:HALOC[(Math.random()*HALOC.length)|0],a:0.55});
+    }
+  }
+}
+
+/* ---------- scene 4: falling feather ---------- */
+function drawFeather(x,y,rot,op){
+  ctx.save();ctx.translate(x,y);ctx.rotate(rot);
+  var fs=Math.min(w,h)/900+0.6;ctx.scale(fs,fs);
+  ctx.globalAlpha=0.92*op;
+  var g=ctx.createLinearGradient(0,-46,0,46);
+  g.addColorStop(0,rgba(C.dawnbg,0.92));g.addColorStop(1,rgba(C.feather,0.75));
+  ctx.fillStyle=g;
+  ctx.beginPath();ctx.moveTo(0,-46);
+  ctx.quadraticCurveTo(13,-8,9,40);ctx.quadraticCurveTo(4,46,0,44);
+  ctx.quadraticCurveTo(-4,46,-9,40);ctx.quadraticCurveTo(-13,-8,0,-46);ctx.fill();
+  ctx.strokeStyle=rgba(C.dawnbg,0.9);ctx.lineWidth=1.6;
+  ctx.beginPath();ctx.moveTo(0,-46);ctx.quadraticCurveTo(1,0,0,52);ctx.stroke();
+  ctx.strokeStyle=rgba(C.night,0.45);ctx.lineWidth=1;
+  var cuts=[[-1,-10],[1,2],[-1,14],[1,24]];
+  for(var i=0;i<cuts.length;i++){var bx=cuts[i][0],by=cuts[i][1];
+    ctx.beginPath();ctx.moveTo(0,by);ctx.quadraticCurveTo(bx*6,by+4,bx*10,by+9);ctx.stroke();}
+  ctx.restore();ctx.globalAlpha=1;
+}
+function scFeather(op,t,time){
+  var prog=RM?0.42:((time%8)/8);
+  var fy=(-0.12+1.24*prog)*h;
+  var fx=w*0.5+Math.sin(prog*12.56+1.2)*w*0.05;
+  var rot=Math.sin(prog*12.56)*0.45+0.25;
+  ctx.globalCompositeOperation='lighter';ctx.globalAlpha=0.5*op;
+  var gs=70;ctx.drawImage(sprite(C.feather),fx-gs,fy-gs,gs*2,gs*2);
+  ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;
+  drawFeather(fx,fy,rot,op);
+  if(op>0.4){
+    for(var k=0;k<rate(2.2);k++)emit({x:fx+(Math.random()-0.5)*10,y:fy+(Math.random()-0.5)*10,
+      vx:(Math.random()-0.5)*0.25,vy:-(0.5+Math.random()*1.1),
+      max:70+Math.random()*70,size:2.5+Math.random()*5,grow:-0.02,
+      col:Math.random()<0.7?C.feather:mix(C.feather,C.dawnbg,0.6),comp:'lighter',a:0.5});
+  }
+}
+
+/* ---------- scene 5: crystal dust ---------- */
+function scCrystal(op){
+  if(op>0.4){
+    for(var k=0;k<rate(0.18);k++)emit({x:Math.random()*w,y:Math.random()*h,
+      vx:(Math.random()-0.5)*0.15,vy:-(0.05+Math.random()*0.15),
+      max:200+Math.random()*100,size:1.5+Math.random()*2.5,
+      col:Math.random()<0.5?C.feather:C.wing,comp:'lighter',a:0.4});
+  }
+}
+
+/* ---------- scene 6: burning phoenix + reflection ---------- */
+function scFinale(op,t,time){
+  var cx=w*0.5,cy=h*0.40;
+  var L=1.2+Math.sin(time*1.6)*0.06,s=Math.min(w,h)/430;
+  ctx.save();
+  ctx.translate(0,WY);ctx.scale(1,-0.55);ctx.translate(0,-WY);
+  drawBird(cx,cy,s,L,C.flame,C.sunset,0.16*op);
+  ctx.restore();
+  ctx.globalCompositeOperation='lighter';ctx.globalAlpha=0.35*op;
+  var gr=Math.min(w,h)*0.34;
+  ctx.drawImage(sprite(C.flame),cx-gr,cy-gr,gr*2,gr*2);
+  ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;
+  drawBird(cx,cy,s,L,C.ember,C.flame,0.95*op);
+  if(op>0.4){
+    var sides=[-1,1],i,k;
+    for(i=0;i<2;i++){
+      for(k=0;k<rate(2.6);k++){
+        var bt=0.12+Math.random()*0.88,pp=wingPoint(sides[i],L,bt,cx,cy,s);
+        emit({x:pp.x,y:pp.y,vx:sides[i]*Math.random()*0.5,vy:-(0.6+Math.random()*1.6),g:-0.008,
+          max:45+Math.random()*55,size:5+Math.random()*10,grow:-0.09,
+          col:bt<0.4?mix(C.orb,C.ember,0.5):(Math.random()<0.6?C.flame:C.ember),
+          comp:'lighter',a:0.55,mirror:true});
+      }
+    }
+    for(k=0;k<rate(1.6);k++)emit({x:cx+(Math.random()-0.5)*16,y:cy+20+(Math.random()-0.5)*20,
+      vx:(Math.random()-0.5)*0.3,vy:-(1+Math.random()*1.6),
+      max:50+Math.random()*40,size:6+Math.random()*10,grow:-0.1,
+      col:mix(C.orb,C.ember,0.35),comp:'lighter',a:0.6,mirror:true});
+  }
+}
+
+/* ---------- scroll choreography ---------- */
+var scenes=Array.prototype.slice.call(document.querySelectorAll('.scene'));
+var texts=Array.prototype.slice.call(document.querySelectorAll('.stext'));
+var bgL=scenes.map(function(s){return s.querySelector('.bg');});
+var midL=scenes.map(function(s){return s.querySelector('.mid');});
+var fgL=texts.map(function(s){return s.querySelector('.fg');});
+var pfill=document.getElementById('pfill');
+var sring=document.getElementById('sring');
+
+function sOp(i,f){
+  var W=0.28,o=1;
+  if(i>0)o*=sm(clamp((f-(i-W))/W,0,1));
+  if(i<5)o*=1-sm(clamp((f-(i+1-W))/W,0,1));
+  return o;
+}
+
+document.querySelectorAll('nav a').forEach(function(a){
+  a.addEventListener('click',function(){
+    scrollTo({top:(+a.dataset.t)*1.5*h,behavior:RM?'auto':'smooth'});
+  });
+});
+
+var target=scrollY,cur=scrollY;
+addEventListener('scroll',function(){target=scrollY;},{passive:true});
+
+var scFns=[scDawn,scRise,scHalo,scFeather,scCrystal,scFinale];
+
+function frame(now){
+  requestAnimationFrame(frame);
+  var time=now/1000;
+  cur+=(target-cur)*LERP;
+  if(Math.abs(target-cur)<0.05)cur=target;
+  var f=Math.min(cur/(h*1.5),5.45);
+
+  pfill.style.transform='scaleX('+clamp(cur/(8*h),0,1).toFixed(4)+')';
+  document.body.classList.toggle('dark',f>2.72);
+  sring.classList.toggle('on',f>2.6);
+
+  ctx.clearRect(0,0,w,h);
+  for(var i=0;i<6;i++){
+    var op=sOp(i,f),vis=op>0.001;
+    var sc=scenes[i],tx=texts[i];
+    sc.style.opacity=op.toFixed(3);tx.style.opacity=op.toFixed(3);
+    sc.style.visibility=vis?'visible':'hidden';
+    tx.style.visibility=vis?'visible':'hidden';
+    if(op>0.3)tx.classList.add('in');
+    else if(op<0.02)tx.classList.remove('in');
+    if(vis){
+      var t=f-i,sh=0.5-clamp(t,-0.5,1.5);
+      if(bgL[i])bgL[i].style.transform='translate3d(0,'+(sh*0.3*80).toFixed(1)+'px,0)';
+      if(midL[i])midL[i].style.transform='translate3d(0,'+(sh*0.5*80).toFixed(1)+'px,0)';
+      fgL[i].style.transform='translate3d(0,'+(sh*80).toFixed(1)+'px,0)';
+      if(op>0.02)scFns[i](op,t,time);
+    }
+  }
+  stepParticles();
+}
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
