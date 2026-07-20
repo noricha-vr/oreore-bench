@@ -14,7 +14,9 @@ set -euo pipefail
 
 RUNNER=$1; MODEL=$2; PROMPT_MD=$3; OUT=$4; LOG=$5
 WORK=$(mktemp -d)
-trap 'rm -rf "$WORK"' EXIT
+CODEX_CLEAN=""
+# auth.json の一時コピーを異常終了時にも確実に消す（trap に両方登録）
+trap 'rm -rf "$WORK" "${CODEX_CLEAN:-}"' EXIT
 
 PROMPT="$(cat "$PROMPT_MD")
 
@@ -29,15 +31,17 @@ case "$RUNNER" in
     ;;
   codex)
     CODEX_CLEAN=$(mktemp -d)
+    chmod 700 "$CODEX_CLEAN"
     cp "$HOME/.codex/auth.json" "$CODEX_CLEAN/"
+    chmod 600 "$CODEX_CLEAN/auth.json"
     (cd "$WORK" && CODEX_HOME="$CODEX_CLEAN" codex exec --skip-git-repo-check \
       -c model_reasoning_effort=high --model "$MODEL" "$PROMPT") >"$LOG" 2>&1
-    rm -rf "$CODEX_CLEAN"
     ;;
   agy)
     (cd "$WORK" && agy --print "$PROMPT" --model "$MODEL" --print-timeout 30m) >"$LOG" 2>&1
     ;;
   openrouter)
+    : "${OPENROUTER_API_KEY:?OPENROUTER_API_KEY required}"
     jq -n --arg model "$MODEL" --arg prompt "$PROMPT" \
       '{model: $model, reasoning: {effort: "high"}, max_tokens: 65000, stream: false,
         messages: [{role: "user", content: $prompt}]}' > "$WORK/req.json"
