@@ -1,0 +1,30 @@
+name: Deploy to Cloudflare Pages
+
+# oreore-bench の Pages プロジェクトは Direct Upload 型で Git 連携に変換できないため、
+# push トリガーの Actions から wrangler で本番デプロイする（2026-07-20 導入）。
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy public/ to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3.14.1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy public/ --project-name=oreore-bench --branch=main
+
+      - name: Verify deployment
+        run: |
+          sleep 20
+          code=$(curl -s -o /dev/null -w "%{http_code}" https://oreore-bench.pages.dev/)
+          echo "top page: $code"
+          test "$code" = "200"
