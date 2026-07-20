@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab — OreOre-Bench</title>
+    <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%232563eb'/><text x='16' y='22' text-anchor='middle' font-family='sans-serif' font-size='18' font-weight='700' fill='white'>O</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="./lab.css">
+</head>
+<body>
+    <header>
+        <div class="container header-inner">
+            <a href="../" class="brand-link">OreOre-Bench</a>
+            <nav class="header-nav">
+                <a href="../" class="nav-link"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> ベンチ一覧</a>
+                <a href="https://github.com/noricha-vr/oreore-bench" target="_blank" rel="noopener noreferrer" class="nav-link">GitHub</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container hero-inner">
+                <span class="hero-eyebrow"><i class="fa-solid fa-flask" aria-hidden="true"></i> Lab</span>
+                <h1>実験記録</h1>
+                <p class="hero-desc">
+                    ベンチマーク本体とは別に、プロンプト改善やモデル設定などの試行を公開記録します。
+                    各実験の仮説・A/B 比較・判定を1ページで振り返れます。
+                </p>
+            </div>
+        </section>
+
+        <section>
+            <div class="container">
+                <div id="experiments-grid" class="experiments-grid">
+                    <!-- experiments will be populated by JS -->
+                </div>
+                <div id="experiments-empty" class="empty-state" style="display:none;">
+                    <p><i class="fa-solid fa-inbox" aria-hidden="true"></i></p>
+                    <p>まだ実験がありません。</p>
+                </div>
+                <div id="experiments-error" class="empty-state" style="display:none;">
+                    <p><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></p>
+                    <p>実験レジストリを読み込めませんでした（lab.json 未配置または不正）。</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <div>&copy; 2026 OreOre-Bench</div>
+            <div>
+                <a href="https://github.com/noricha-vr/oreore-bench" target="_blank" rel="noopener noreferrer" class="nav-link">GitHub</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // HTML エスケープ (lab.json 由来の値を innerHTML に入れる前に必ず通す)
+        function escapeHtml(s) {
+            if (s === null || s === undefined) return '';
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // status → 日本語ラベル
+        const STATUS_LABEL = {
+            running: '進行中',
+            done: '完了',
+            draft: '下書き',
+            archived: 'アーカイブ'
+        };
+
+        function renderExperiments(experiments) {
+            const grid = document.getElementById('experiments-grid');
+            const empty = document.getElementById('experiments-empty');
+            grid.innerHTML = '';
+
+            if (!Array.isArray(experiments) || experiments.length === 0) {
+                grid.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+            grid.style.display = '';
+            empty.style.display = 'none';
+
+            // 日付降順で表示 (最新の実験を上に)
+            const sorted = [...experiments].sort((a, b) => {
+                return String(b.date || '').localeCompare(String(a.date || ''));
+            });
+
+            sorted.forEach(exp => {
+                const slug = escapeHtml(exp.slug);
+                const status = (exp.status && STATUS_LABEL[exp.status]) ? exp.status : 'draft';
+                const statusLabel = STATUS_LABEL[status];
+                const tags = Array.isArray(exp.tags) ? exp.tags : [];
+                const tagsHtml = tags.map(t => `<span class="exp-tag">${escapeHtml(t)}</span>`).join('');
+
+                const card = document.createElement('a');
+                card.className = 'exp-card';
+                card.href = `./${encodeURIComponent(exp.slug)}/review.html`;
+                card.innerHTML = `
+                    <div class="exp-card-head">
+                        <h3 class="exp-card-title">${escapeHtml(exp.title || slug)}</h3>
+                        <span class="status-badge status-${status}">${escapeHtml(statusLabel)}</span>
+                    </div>
+                    <div class="exp-card-date">${escapeHtml(exp.date || '')}</div>
+                    <p class="exp-card-summary">${escapeHtml(exp.summary || '')}</p>
+                    ${tagsHtml ? `<div class="exp-card-tags">${tagsHtml}</div>` : ''}
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function showError() {
+            document.getElementById('experiments-grid').style.display = 'none';
+            document.getElementById('experiments-empty').style.display = 'none';
+            document.getElementById('experiments-error').style.display = 'block';
+        }
+
+        // lab.json 取得。失敗 (404 / 壊れた JSON / file://) はエラー表示。
+        fetch('./lab.json', { cache: 'no-cache' })
+            .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
+            .then(data => {
+                if (!data || typeof data !== 'object' || !Array.isArray(data.experiments)) {
+                    throw new Error('lab.json shape invalid (expected { experiments: [...] })');
+                }
+                renderExperiments(data.experiments);
+            })
+            .catch(err => {
+                console.error('[lab.json] load failed:', err.message);
+                showError();
+            });
+    </script>
+</body>
+</html>
