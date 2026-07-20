@@ -121,7 +121,7 @@ oreore-bench/
 
 ### enum / 規約
 
-- `harness`: `lmstudio-api` / `gptme-lmstudio` / `claude-agent-sdk` / `claude-cli-headless` / `grok-cli` / `openai-api` / `openrouter-api` / `antigravity-cli` / `unknown`
+- `harness`: `lmstudio-api` / `gptme-lmstudio` / `claude-agent-sdk` / `claude-cli-headless` / `grok-cli` / `openai-api` / `openrouter-api` / `antigravity-cli` / `codex-exec` / `unknown`
 - `reasoning_effort`: `none` / `low` / `medium` / `high` / `unknown`
 - `system_prompt`: `none` / `harness-default` / `custom` / `unknown` — **ラベルのみ。本文は絶対に記録しない**（公開配信されるためプライバシー保護。`validate-runs.mjs` で enum 外を必ず失敗させる）
 - `"unknown"` = 復元不能、`"default"` = 既定に任せた、`"none"` = 明示的に無し。確定値のみ数値で書く
