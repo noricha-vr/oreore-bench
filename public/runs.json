@@ -1255,6 +1255,414 @@
       "pricing_fetched_at": "2026-07-16"
     }
   },
+  "phoenix-lp/claude-fable-5": {
+    "schema_version": 1,
+    "theme": "phoenix-lp",
+    "model": "claude-fable-5",
+    "model_id": "claude-fable-5",
+    "harness": "claude-cli-headless",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-20T10:20:39+09:00",
+    "generated_at_source": "git-first-commit",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": true,
+      "method": "tiktoken-o200k_base-proxy",
+      "prompt_tokens": 1643,
+      "completion_tokens": 11216,
+      "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": 0.57723,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 10.0,
+      "completion_usd_per_mtok": 50.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "anthropic/claude-fable-5",
+      "pricing_fetched_at": "2026-07-17"
+    }
+  },
+  "phoenix-lp/claude-opus-4-8": {
+    "schema_version": 1,
+    "theme": "phoenix-lp",
+    "model": "claude-opus-4-8",
+    "model_id": "claude-opus-4-8",
+    "harness": "claude-cli-headless",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-20T10:20:39+09:00",
+    "generated_at_source": "git-first-commit",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": true,
+      "method": "tiktoken-o200k_base-proxy",
+      "prompt_tokens": 1643,
+      "completion_tokens": 7138,
+      "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": 0.186665,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 5.0,
+      "completion_usd_per_mtok": 25.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "anthropic/claude-opus-4.8",
+      "pricing_fetched_at": "2026-07-17"
+    }
+  },
+  "phoenix-lp/gemini-3-1-pro": {
+    "schema_version": 1,
+    "theme": "phoenix-lp",
+    "model": "gemini-3-1-pro",
+    "model_id": "gemini-3-1-pro",
+    "harness": "antigravity-cli",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-20T10:20:39+09:00",
+    "generated_at_source": "git-first-commit",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": true,
+      "method": "tiktoken-o200k_base-proxy",
+      "prompt_tokens": 1643,
+      "completion_tokens": 8129,
+      "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": 0.100834,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 2.0,
+      "completion_usd_per_mtok": 12.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "google/gemini-3.1-pro-preview",
+      "pricing_fetched_at": "2026-07-17"
+    }
+  },
+  "phoenix-lp/gemma-4-12b-qat": {
+    "schema_version": 1,
+    "theme": "phoenix-lp",
+    "model": "gemma-4-12b-qat",
+    "model_id": "gemma-4-12b-qat",
+    "harness": "lmstudio-api",
+    "reasoning_effort": "none",
+    "attempts": 1,
+    "generated_at": "2026-07-20T10:20:39+09:00",
+    "generated_at_source": "git-first-commit",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "lmstudio",
+      "quantization": "qat-4bit",
+      "api": "openai-compat"
+    },
+    "usage": {
+      "estimated": true,
+      "method": "tiktoken-o200k_base-proxy",
+      "prompt_tokens": 1643,
+      "completion_tokens": 4414,
+      "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
+  "phoenix-lp/gemma-4-26b-a4b-qat": {
+    "schema_version": 1,
+    "theme": "phoenix-lp",
+    "model": "gemma-4-26b-a4b-qat",
+    "model_id": "gemma-4-26b-a4b-qat",
+    "harness": "lmstudio-api",
+    "reasoning_effort": "none",
+    "attempts": 1,
+    "generated_at": "2026-07-20T10:20:39+09:00",
+    "generated_at_source": "git-first-commit",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "lmstudio",
+      "quantization": "qat-4bit",
+      "api": "openai-compat"
+    },
+    "usage": {
+      "estimated": true,
+      "method": "tiktoken-o200k_base-proxy",
+      "prompt_tokens": 1643,
+      "completion_tokens": 4123,
+      "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": 0.001401,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": 0.1,
+      "completion_usd_per_mtok": 0.3,
+      "pricing_source": "openrouter-reference",
+      "pricing_model": "google/gemma-4-26b-a4b-it",
+      "pricing_fetched_at": "2026-07-17"
+    }
+  },
+  "phoenix-lp/gemma-4-31b": {
+    "schema_version": 1,
+    "theme": "phoenix-lp",
+    "model": "gemma-4-31b",
+    "model_id": "gemma-4-31b",
+    "harness": "lmstudio-api",
+    "reasoning_effort": "none",
+    "attempts": 1,
+    "generated_at": "2026-07-20T10:20:39+09:00",
+    "generated_at_source": "git-first-commit",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "lmstudio",
+      "quantization": "q4_k_m",
+      "api": "openai-compat"
+    },
+    "usage": {
+      "estimated": true,
+      "method": "tiktoken-o200k_base-proxy",
+      "prompt_tokens": 1643,
+      "completion_tokens": 5169,
+      "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": 0.003204,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": 0.22,
+      "completion_usd_per_mtok": 0.55,
+      "pricing_source": "openrouter-reference",
+      "pricing_model": "google/gemma-4-31b-it",
+      "pricing_fetched_at": "2026-07-17"
+    }
+  },
+  "phoenix-lp/gpt-5.6-luna": {
+    "schema_version": 1,
+    "theme": "phoenix-lp",
+    "model": "gpt-5.6-luna",
+    "model_id": "gpt-5.6-luna",
+    "harness": "codex-exec",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-20T10:20:39+09:00",
+    "generated_at_source": "git-first-commit",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": true,
+      "method": "tiktoken-o200k_base-proxy",
+      "prompt_tokens": 1643,
+      "completion_tokens": 28100,
+      "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": 0.170243,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 1.0,
+      "completion_usd_per_mtok": 6.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "openai/gpt-5.6-luna",
+      "pricing_fetched_at": "2026-07-17"
+    }
+  },
+  "phoenix-lp/gpt-5.6-sol": {
+    "schema_version": 1,
+    "theme": "phoenix-lp",
+    "model": "gpt-5.6-sol",
+    "model_id": "gpt-5.6-sol",
+    "harness": "codex-exec",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-20T10:20:39+09:00",
+    "generated_at_source": "git-first-commit",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": true,
+      "method": "tiktoken-o200k_base-proxy",
+      "prompt_tokens": 1643,
+      "completion_tokens": 37460,
+      "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": 1.132015,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 5.0,
+      "completion_usd_per_mtok": 30.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "openai/gpt-5.6-sol",
+      "pricing_fetched_at": "2026-07-17"
+    }
+  },
+  "phoenix-lp/gpt-5.6-terra": {
+    "schema_version": 1,
+    "theme": "phoenix-lp",
+    "model": "gpt-5.6-terra",
+    "model_id": "gpt-5.6-terra",
+    "harness": "codex-exec",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-20T10:20:39+09:00",
+    "generated_at_source": "git-first-commit",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": true,
+      "method": "tiktoken-o200k_base-proxy",
+      "prompt_tokens": 1643,
+      "completion_tokens": 18748,
+      "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": 0.285328,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 2.5,
+      "completion_usd_per_mtok": 15.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "openai/gpt-5.6-terra",
+      "pricing_fetched_at": "2026-07-17"
+    }
+  },
+  "phoenix-lp/grok-4-5": {
+    "schema_version": 1,
+    "theme": "phoenix-lp",
+    "model": "grok-4-5",
+    "model_id": "grok-4-5",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-20T10:20:39+09:00",
+    "generated_at_source": "git-first-commit",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 1698,
+      "completion_tokens": 18196,
+      "note": "OpenRouter API 実測。completion に reasoning 61 tokens を含む"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 0.112572,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 2.0,
+      "completion_usd_per_mtok": 6.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "x-ai/grok-4.5",
+      "pricing_fetched_at": "2026-07-17"
+    }
+  },
+  "phoenix-lp/kimi-k3": {
+    "schema_version": 1,
+    "theme": "phoenix-lp",
+    "model": "kimi-k3",
+    "model_id": "kimi-k3",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-20T10:20:39+09:00",
+    "generated_at_source": "git-first-commit",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 1819,
+      "completion_tokens": 15466,
+      "note": "OpenRouter API 実測。completion に reasoning 3914 tokens を含む"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 0.237447,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 3.0,
+      "completion_usd_per_mtok": 15.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "moonshotai/kimi-k3",
+      "pricing_fetched_at": "2026-07-17"
+    }
+  },
   "pr-triage/claude-opus-4-8": {
     "schema_version": 1,
     "theme": "pr-triage",

@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIBANA — Immersive Experience</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,500&family=Shippori+Mincho:wght@400;700&family=Zen+Kaku+Gothic+New:wght@300&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --dawn-bg: #f2ecf5;
+            --dawn-wing: #b9a6e0;
+            --orb: #e8f0a8;
+            --flame: #ff7a2f;
+            --ember: #ffb36b;
+            --night: #0a1030;
+            --feather: #7fb8ff;
+            --sunset: #c23a1f;
+            --ink: #2a2438;
+            --white: #ffffff;
+            --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background-color: var(--ink);
+            color: var(--white);
+            font-family: 'Zen Kaku Gothic New', sans-serif;
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        /* Base Typography */
+        .serif-italic { 
+            font-family: 'Cormorant Garamond', serif; 
+            font-style: italic; 
+            font-weight: 400;
+        }
+        .mincho { 
+            font-family: 'Shippori Mincho', serif; 
+        }
+
+        /* Scroll Wrapper */
+        #scroll-container {
+            height: 900vh; /* 6 scenes * 150vh */
+            position: relative;
+        }
+
+        /* Global UI */
+        #ui-layer {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .logo-area {
+            position: absolute;
+            top: 3vw; left: 3vw;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            pointer-events: auto;
+        }
+        .logo-text {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.2em;
+            color: var(--ink);
+            transition: color 0.8s ease;
+        }
+        .logo-bird { width: 24px; height: 24px; fill: #4a9eff; }
+        .logo-date { 
+            font-size: 0.65rem; 
+            opacity: 0.6; 
+            margin-left: 8px; 
+            color: var(--ink);
+            transition: color 0.8s ease;
+        }
+
+        .nav-area {
+            position: absolute;
+            top: 3vw; right: 3vw;
+            display: flex;
+            gap: 2rem;
+            pointer-events: auto;
+        }
+        .nav-item {
+            font-size: 0.75rem;
+            text-decoration: none;
+            color: var(--ink);
+            letter-spacing: 0.1em;
+            transition: opacity 0.3s ease, color 0.8s ease;
+            cursor: pointer;
+        }
+
+        .progress-bar {
+            position: absolute;
+            bottom: 3vw; left: 50%;
+            transform: translateX(-50%);
+            width: 120px; height: 2px;
+            background: rgba(0,0,0,0.1);
+        }
+        .progress-inner {
+            width: 0%; height: 100%;
+            background: var(--ink);
+            transition: width 0.1s linear;
+        }
+
+        .sound-ring {
+            position: absolute;
+            bottom: 3vw; left: 3vw;
+            width: 40px; height: 40px;
+            border: 1px solid var(--white);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1s ease, transform 1s ease;
+        }
+
+        /* Scene Architecture */
+        .scene {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 1.2s var(--ease-out-expo), visibility 1.2s;
+            pointer-events: none;
+        }
+        .scene.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        /* Staggered Text Animation */
+        .text-block {
+            position: relative;
+            max-width: 600px;
+            z-index: 10;
+        }
+        .stagger-row {
+            display: block;
+            margin-bottom: 0.5em;
+            overflow: hidden;
+        }
+        .stagger-word {
+            display: inline-block;
+            transform: translateY(100%);
+            opacity: 0;
+            transition: transform 0.8s var(--ease-out-expo), opacity 0.8s ease;
+            margin-right: 0.2em;
+        }
+        .active .stagger-word {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Scene Specific Styles */
+        #scene-0 { background: var(--dawn-bg); color: var(--ink); }
+        #scene-1 { background: linear-gradient(to bottom, #fce4d6, #ff9e80); color: var(--ink); }
+        #scene-2 { background: radial-gradient(circle, #fff5e6 0%, #fbc2eb 100%); color: var(--ink); }
+        #scene-3 { background: var(--night); color: var(--white); }
+        #scene-4 { background: var(--night); color: var(--white); }
+        #scene-5 { background: linear-gradient(to bottom, #c23a1f, #4a0e0e); color: var(--white); }
+
+        /* Scene 1-6 Layouts */
+        .scene-content {
+            width: 80%; height: 80%;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* Dawn */
+        .dawn-layout { justify-content: flex-end; text-align: right; }
+        .dawn-text { font-size: clamp(1.4rem, 3.2vw, 2.6rem); line-height: 1.5; }
+
+        /* Rise */
+        .rise-text { font-size: clamp(2rem, 5vw, 4rem); letter-spacing: 0.3em; }
+        .blur-text { filter: blur(4px); opacity: 0.6; transition: filter 2s ease, opacity 2s ease; }
+        .active .blur-text { filter: blur(0); opacity: 1; }
+
+        /* Halo */
+        .halo-char { font-size: clamp(6rem, 15vw, 20rem); line-height: 1; animation: pulse-glow 3s infinite ease-in-out; }
+        @keyframes pulse-glow { 0%, 100% { opacity: 0.6; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
+
+        /* Feather */
+        .feather-layout { justify-content: space-between; position: relative; }
+        .vertical-text { 
+            writing-mode: vertical-rl; 
+            font-size: 0.8rem; 
+            letter-spacing: 0.2em; 
+            opacity: 0.7; 
+            line-height: 2;
+        }
+        .feather-poem { position: absolute; bottom: 10%; left: 0; width: 100%; text-align: center; font-size: clamp(1.2rem, 2.5vw, 1.8rem); }
+
+        /* Crystal */
+        .crystal-container { perspective: 1000px; display: flex; gap: 4rem; }
+        .cube {
+            width: 80px; height: 80px; position: relative; transform-style: preserve-3d;
+            animation: cube-rotate 12s infinite linear;
+            transition: transform 0.5s ease;
+        }
+        .cube:hover { transform: scale(1.2) rotateX(45deg); }
+        .face { 
+            position: absolute; width: 80px; height: 80px; 
+            border: 1px solid rgba(255,255,255,0.6); 
+            background: rgba(255,255,255,0.1); 
+            backdrop-filter: blur(4px);
+        }
+        .front  { transform: translateZ(40px); }
+        .back   { transform: rotateY(180deg) translateZ(40px); }
+        .right  { transform: rotateY(90deg) translateZ(40px); }
+        .left   { transform: rotateY(-90deg) translateZ(40px); }
+        .top    { transform: rotateX(90deg) translateZ(40px); }
+        .bottom { transform: rotateX(-90deg) translateZ(40px); }
+
+        @keyframes cube-rotate { 
+            0% { transform: rotateX(0deg) rotateY(0deg); } 
+            100% { transform: rotateX(360deg) rotateY(360deg); } 
+        }
+
+        /* Finale */
+        .finale-layout { flex-direction: column; justify-content: center; text-align: center; }
+        .finale-text { font-size: clamp(1.2rem, 2.2vw, 1.6rem); margin-top: 4rem; }
+
+        /* Canvas Overlay */
+        #canvas-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div class="logo-area">
+            <svg class="logo-bird" viewBox="0 0 24 24"><path d="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z"/></svg>
+            <span class="logo-text serif-italic">HIBANA</span>
+            <span class="logo-date mincho">Sept. 29</span>
+        </div>
+        <div class="nav-area">
+            <a href="#" class="nav-item mincho">作品</a>
+            <a href="#" class="nav-item mincho">思想</a>
+            <a href="#" class="nav-item mincho">接続</a>
+        </div>
+        <div class="progress-bar"><div class="progress-inner" id="prog-bar"></div></div>
+        <div class="sound-ring" id="sound-btn"><span></span></div>
+    </div>
+
+    <canvas id="canvas-bg"></canvas>
+
+    <div id="scroll-container">
+        <!-- Scene 1: Dawn -->
+        <section class="scene active" id="scene-0">
+            <div class="scene-content dawn-layout">
+                <div class="text-block">
+                    <div class="stagger-row serif-italic dawn-text">
+                        <span class="stagger-word">what</span> <span class="stagger-word">guides</span> <span class="stagger-word">us</span>
+                    </div>
+                    <div class="stagger-row serif-italic dawn-text">
+                        <span class="stagger-word">through</span> <span class="stagger-word">*change*,</span>
+                    </div>
+                    <div class="stagger-row serif-italic dawn-text">
+                        <span class="stagger-word">*reinvention*,</span> <span class="stagger-word">and</span>
+                    </div>
+                    <div class="stagger-row serif-italic dawn-text">
+                        <span class="stagger-word">the</span> <span class="stagger-word">*unknown*—</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Scene 2: Rise -->
+        <section class="scene" id="scene-1">
+            <div class="scene-content">
+                <div class="text-block mincho rise-text blur-text" style="text-align: center;">
+                    再生である。
+                </div>
+            </div>
+        </section>
+
+        <!-- Scene 3: Halo -->
+        <section class="scene" id="scene-2">
+            <div class="scene-content">
+                <div class="text-block mincho halo-char" style="text-align: center;">音</div>
+            </div>
+        </section>
+
+        <!-- Scene 4: Feather -->
+        <section class="scene" id="scene-3">
+            <div class="scene-content feather-layout">
+                <div class="vertical-text mincho" style="text-align: left;">静寂のなかで、意識は研ぎ澄まされ、光さえも呼吸を止める。</div>
+                <div class="vertical-text mincho" style="text-align: right;">失われた記憶の破片が、空を舞い降りる。</div>
+                <div class="text-block feather-poem serif-italic">
+                    <span class="stagger-row">don't just *speak* to us. they *stimulate* us.</span>
+                    <span class="stagger-row" style="margin-top: 1rem;">light *becomes* 私、flare.</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Scene 5: Crystal -->
+        <section class="scene" id="scene-4">
+            <div class="scene-content">
+                <div class="crystal-container">
+                    <div class="cube"><div class="face front"></div><div class="face back"></div><div class="face right"></div><div class="face left"></div><div class="face top"></div><div class="face bottom"></div></div>
+                    <div class="cube" style="animation-delay: -2s;"><div class="face front"></div><div class="face back"></div><div class="face right"></div><div class="face left"></div><div class="face top"></div><div class="face bottom"></div></div>
+                    <div class="cube" style="animation-delay: -4s;"><div class="face front"></div><div class="face back"></div><div class="face right"></div><div class="face left"></div><div class="face top"></div><div class="face bottom"></div></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Scene 6: Finale -->
+        <section class="scene" id="scene-5">
+            <div class="scene-content finale-layout">
+                <div class="text-block serif-italic finale-text">
+                    <span class="stagger-row">*feel* their heat.</span>
+                    <span class="stagger-row">焔と *interact* with.</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        /** 
+         * CORE ENGINE
+         */
+        const canvas = document.getElementById('canvas-bg');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let scrollPos = 0;
+        let targetScrollPos = 0;
+
+        const scenes = document.querySelectorAll('.scene');
+        const progBar = document.getElementById('prog-bar');
+        const soundBtn = document.getElementById('sound-btn');
+
+        // Color tokens from design plan
+        const colors = {
+            dawnWing: '#b9a6e0',
+            orb: '#e8f0a8',
+            flame: '#ff7a2f',
+            ember: '#ffb36b',
+            feather: '#7fb8ff',
+            sunset: '#c23a1f'
+        };
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width * window.devicePixelRatio;
+            canvas.height = height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        /** 
+         * PARTICLE SYSTEM
+         */
+        class Particle {
+            constructor(type) {
+                this.init(type);
+            }
+
+            init(type) {
+                this.type = type;
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 1;
+                this.vy = (Math.random() - 0.5) * 1;
+                this.size = Math.random() * 3 + 1;
+                this.life = Math.random() * 0.5 + 0.5;
+                this.decay = Math.random() * 0.01 + 0.005;
+                this.color = '#fff';
+
+                if (type === 'dawn') {
+                    this.color = colors.dawnWing;
+                    this.vx *= 0.5; this.vy *= 0.5;
+                } else if (type === 'rise') {
+                    this.color = Math.random() > 0.5 ? colors.flame : colors.ember;
+                    this.vy = -Math.random() * 3 - 1;
+                } else if (type === 'halo') {
+                    this.color = `hsla(${Math.random() * 360}, 70%, 80%, 0.5)`;
+                    this.size = Math.random() * 10 + 2;
+                } else if (type === 'feather') {
+                    this.color = colors.feather;
+                    this.vy = Math.random() * 2 + 1;
+                    this.vx = (Math.random() - 0.5) * 0.5;
+                } else if (type === 'finale') {
+                    this.color = Math.random() > 0.3 ? colors.flame : colors.sunset;
+                    this.vy = -Math.random() * 5 - 2;
+                }
+            }
+
+            update(sceneIdx) {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.decay;
+
+                if (this.life <= 0) {
+                    // Re-init based on current scene to keep particle count constant but themed
+                    const types = ['dawn', 'rise', 'halo', 'feather', 'crystal', 'finale'];
+                    this.init(types[sceneIdx]);
+                }
+
+                // Boundary check
+                if (this.x < 0) this.x = width;
+                if (this.x > width) this.x = 0;
+                if (this.y < 0 || this.y > height) {
+                    this.life = 0; 
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.life * 0.6;
+                ctx.fill();
+            }
+        }
+
+        const particles = Array.from({ length: 300 }, () => new Particle('dawn'));
+
+        /**
+         * SCROLL & ANIMATION LOOP
+         */
+        window.addEventListener('scroll', () => {
+            targetScrollPos = window.scrollY;
+        });
+
+        function updateStaggeredText() {
+            const sceneIdx = Math.round(scrollPos / (window.innerHeight * 1.5));
+            scenes.forEach((scene, i) => {
+                if (i === sceneIdx) {
+                    scene.classList.add('active');
+                    // Set stagger delays for the words in this scene
+                    const words = scene.querySelectorAll('.stagger-word');
+                    words.forEach((w, idx) => {
+                        w.style.transitionDelay = `${60 * (idx % 5) + 100}ms`;
+                    });
+                } else {
+                    scene.classList.remove('active');
+                }
+            });
+
+            // UI Logic
+            const progress = (scrollPos / (window.innerHeight * 1.5 * 6)) * 100;
+            progBar.style.width = `${Math.min(100, progress)}%`;
+
+            if (sceneIdx >= 3) {
+                soundBtn.style.opacity = '1';
+                soundBtn.style.transform = 'translateY(0)';
+            } else {
+                soundBtn.style.opacity = '0';
+                soundBtn.style.transform = 'translateY(20px)';
+            }
+
+            // Color theme for UI based on scene (dark vs light)
+            const isLight = sceneIdx < 3;
+            document.querySelectorAll('.logo-text, .logo-date, .nav-item').forEach(el => {
+                el.style.color = isLight ? 'var(--ink)' : 'var(--white)';
+            });
+        }
+
+        function animate() {
+            // Lerp scroll for smoothness
+            scrollPos += (targetScrollPos - scrollPos) * 0.08;
+
+            // Clear with slight trail for "organic" feel
+            ctx.clearRect(0, 0, width, height);
+
+            const sceneIdx = Math.round(scrollPos / (window.innerHeight * 1.5));
+            updateStaggeredText();
+
+            // Draw particles based on scene logic
+            particles.forEach(p => {
+                p.update(sceneIdx);
+                p.draw();
+            });
+
+            // Special effects for specific scenes
+            if (sceneIdx === 0) { // Dawn: Orb
+                const time = Date.now() * 0.001;
+                ctx.beginPath();
+                const gx = width * 0.5 + Math.sin(time) * 20;
+                const gy = height * 0.3 + Math.cos(time) * 20;
+                const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, 80);
+                grad.addColorStop(0, colors.orb);
+                grad.addColorStop(1, 'transparent');
+                ctx.fillStyle = grad;
+                ctx.arc(gx, gy, 80, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            if (sceneIdx === 5) { // Finale: Reflection & Fire Wings
+                // Draw a reflected version of the particle area at bottom (simplified)
+                ctx.save();
+                ctx.translate(0, height);
+                ctx.scale(1, -1);
+                ctx.globalAlpha = 0.3;
+                ctx.filter = 'blur(8px)';
+                // (Normally we'd redraw particles here, but for performance we use a simple overlay)
+                ctx.restore();
+
+                // Flame wing emitter logic (central focused particles)
+                particles.forEach((p, i) => {
+                    if (i % 2 === 0) {
+                        p.vx += (Math.random() - 0.5) * 2;
+                        p.vy -= Math.random() * 1;
+                    }
+                });
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+    </script>
+</body>
+</html>

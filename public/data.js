@@ -148,6 +148,31 @@ window.THEMES = {
                     "「静謐で余白の多い」トーンを UI 細部まで通せるか"
                 ]
             },
+            "phoenix-lp": {
+                title: "不死鳥LP HIBANA",
+                short: "スクロール没入型LP",
+                desc: "「静止画みたいな Web サイト」の対極。スクロール駆動で 6 シーン（Dawn / Rise / Halo / Feather / Crystal / Finale）が入れ替わる不死鳥テーマの没入型 LP。単一 index.html + Canvas 2D パーティクル演出のみで受賞級品質を狙う。",
+                color: "#c23a1f",  // 茜色（--sunset）
+                colorDark: "#8f2612",
+                icon: "fa-solid fa-fire",
+                difficulty: "高（6 シーン遷移 + Canvas 2D パーティクル + 日英混在タイポ + 60fps 維持）",
+                deliverable: "単一 index.html（CSS/JS インライン化・Google Fonts のみ許可・WebGL 禁止）",
+                criteria: [
+                    "スクロール駆動で 6 シーン（Dawn / Rise / Halo / Feather / Crystal / Finale）が position:fixed でクロスフェード遷移すること",
+                    "総スクロール高は 6 シーン × 150vh 程度で、縦積みレイアウトになっていないこと",
+                    "常時 UI（左上ロゴ「HIBANA」+ 青い鳥アイコン、右上 3 ナビ、下中央プログレスバー、左下サウンドリング）が破綻なく機能",
+                    "全シーン共通の Canvas 2D パーティクル（羽根・翼・炎・光の筋）が requestAnimationFrame 1 本で常時動作",
+                    "デザイントークン（茜 #c23a1f・炎 #ff7a2f・夜 #0a1030・羽 #7fb8ff・墨 #2a2438 等）と指定フォント（Cormorant Garamond / Shippori Mincho / Zen Kaku Gothic New）に準拠",
+                    "prefers-reduced-motion でパーティクル密度 1/4 + 自動アニメ停止、コンソールエラー 0"
+                ],
+                highlights: [
+                    "Canvas 2D 縛りで水彩の滲み・炎・光の筋をどこまで表現できるか（WebGL に逃げられない）",
+                    "6 シーンの世界観差（水彩ラベンダー → 珊瑚色不死鳥 → 虹色ハロー → 濃紺夜 → クリスタル → 茜色フィナーレ）の描き分け",
+                    "日英混在イタリック + 階段状スタガード配置のタイポセンス",
+                    "lerp 平滑化スクロール（現在値 += (目標-現在)*0.08）でシーン遷移がヌルヌル動くか",
+                    "非アクティブシーンのエミッタ停止など 60fps 維持のためのライフサイクル設計"
+                ]
+            },
             "extract-questions": {
                 title: "質問抽出 → フォーム化",
                 short: "JSON / 質問抽出",
@@ -553,6 +578,20 @@ window.ENTRIES = [
             // kimi-k3（リリース翌日に OpenRouter API 経由・reasoning high で追加。スモーク検証は既存と同一手順）
             { theme: "lp-fable5", model: "kimi-k3",   runner: "OpenRouter API (reasoning high)", note: "JSエラー0。水彩トーンと7セクション構成に完全追従、SVGイラストも破綻なし。843行/47KB。", kind: "html" },
             { theme: "suminagashi", model: "kimi-k3", runner: "OpenRouter API (reasoning high)", note: "JSエラー0で流体が動く。墨と朱の大胆な混色と乱流はフロンティア級。自動流出モード付き。544行/22KB。", kind: "html" },
+
+            // phoenix-lp（不死鳥スクロール没入型 LP「HIBANA」。単一 index.html + Canvas 2D 縛り。
+            // スモーク検証: ページロード + Canvas 存在 + スクロールで描画変化 + JS エラー数を機械確認）
+            { theme: "phoenix-lp", model: "gemma-4-12b-qat",     runner: "LM Studio API", note: "1ショット551行/20KB。6シーン構成とスクロール遷移は動くが、初期化時 JS エラー1件（i is not defined）。所要2分10秒。", kind: "html" },
+            { theme: "phoenix-lp", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API", note: "1ショット369行/16KB。canvas は出るがスクロールで描画が変化せず、JS エラー1件（undefined の x 参照）。所要55秒。", kind: "html" },
+            { theme: "phoenix-lp", model: "gemma-4-31b",         runner: "LM Studio API", note: "1ショット536行/20KB。ロード・canvas・スクロール遷移OK、JSエラー0。所要6分9秒。", kind: "html" },
+            { theme: "phoenix-lp", model: "claude-opus-4-8",     runner: "claude CLI headless (effort high)", note: "1ショット432行/20KB。6シーン遷移・JSエラー0。所要2分6秒と最速級。", kind: "html" },
+            { theme: "phoenix-lp", model: "grok-4-5",            runner: "OpenRouter API (reasoning high)", note: "1ショット1638行/52KB。スクロール遷移・JSエラー0。completion 18196 tok。", kind: "html" },
+            { theme: "phoenix-lp", model: "claude-fable-5",      runner: "claude CLI headless (effort high)", note: "1ショット675行/32KB。6シーン遷移・JSエラー0。所要7分7秒。", kind: "html" },
+            { theme: "phoenix-lp", model: "gpt-5.6-luna",        runner: "codex exec (reasoning high)", note: "1ショット3234行/92KB。スクロール遷移・JSエラー0。所要5分6秒。", kind: "html" },
+            { theme: "phoenix-lp", model: "gpt-5.6-terra",       runner: "codex exec (reasoning high)", note: "1ショット1526行/56KB。スクロール遷移・JSエラー0。所要3分26秒。", kind: "html" },
+            { theme: "phoenix-lp", model: "gpt-5.6-sol",         runner: "codex exec (reasoning high)", note: "1ショット4144行/128KB と最大ボリューム。スクロール遷移・JSエラー0。所要6分8秒。", kind: "html" },
+            { theme: "phoenix-lp", model: "gemini-3-1-pro",      runner: "AntiGravity CLI (High)", note: "1ショット866行/28KB。スクロール遷移・JSエラー0。所要3分46秒。", kind: "html" },
+            { theme: "phoenix-lp", model: "kimi-k3",             runner: "OpenRouter API (reasoning high)", note: "1ショット807行/32KB。スクロール遷移・JSエラー0。completion 15466 tok。", kind: "html" },
 
             // extract-questions（20 問入力、基本サイズ、全モデル PASS = 実運用サイズは全モデル対応可の証拠）
             { theme: "extract-questions", model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。20 件抽出、最軽量でも 本番運用スキーマを完全に満たす。", kind: "json" },

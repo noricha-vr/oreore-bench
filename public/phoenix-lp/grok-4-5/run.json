@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "theme": "phoenix-lp",
+  "model": "grok-4-5",
+  "model_id": "grok-4-5",
+  "harness": "openrouter-api",
+  "reasoning_effort": "high",
+  "attempts": 1,
+  "generated_at": "2026-07-20T10:20:39+09:00",
+  "generated_at_source": "git-first-commit",
+  "sampling": {
+    "temperature": "default",
+    "max_tokens": "default",
+    "top_p": "default"
+  },
+  "system_prompt": "harness-default",
+  "post_processing": "none",
+  "runtime": null,
+  "usage": {
+    "estimated": false,
+    "method": "api-usage",
+    "prompt_tokens": 1698,
+    "completion_tokens": 18196,
+    "note": "OpenRouter API 実測。completion に reasoning 61 tokens を含む"
+  },
+  "cost": {
+    "estimated": false,
+    "usd": 0.112572,
+    "actual_usd": null,
+    "prompt_usd_per_mtok": 2.0,
+    "completion_usd_per_mtok": 6.0,
+    "pricing_source": "openrouter",
+    "pricing_model": "x-ai/grok-4.5",
+    "pricing_fetched_at": "2026-07-17"
+  }
+}

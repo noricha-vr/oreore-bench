@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HIBANA — 不死鳥のスクロール没入型 LP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,500;1,600&family=Shippori+Mincho:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --dawn-bg:#f2ecf5; --dawn-wing:#b9a6e0; --orb:#e8f0a8;
+  --flame:#ff7a2f; --ember:#ffb36b; --night:#0a1030;
+  --feather:#7fb8ff; --sunset:#c23a1f; --ink:#2a2438;
+  --serif:'Cormorant Garamond', serif;
+  --mincho:'Shippori Mincho', serif;
+  --gothic:'Zen Kaku Gothic New', sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:auto}
+body{
+  font-family:var(--mincho);
+  background:var(--night);
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+#spacer{height:900vh; width:1px; pointer-events:none}
+
+/* ============ LAYER STACK ============ */
+#bgs{position:fixed; inset:0; z-index:1; pointer-events:none}
+#fx{position:fixed; inset:0; z-index:2; pointer-events:none}
+#fgs{position:fixed; inset:0; z-index:3; pointer-events:none}
+.scene{position:absolute; inset:0; opacity:0; will-change:opacity,transform; overflow:hidden}
+.fgscene{pointer-events:none}
+.fgscene.active{pointer-events:auto}
+
+/* ============ SCENE BACKGROUNDS ============ */
+.bg-dawn{
+  background:
+    radial-gradient(ellipse 90% 70% at 20% 80%, rgba(185,166,224,.28), transparent 60%),
+    radial-gradient(ellipse 70% 60% at 85% 15%, rgba(232,240,168,.35), transparent 55%),
+    radial-gradient(ellipse 120% 90% at 50% 50%, #f6f1f8 0%, var(--dawn-bg) 55%, #e6ddf0 100%);
+}
+.bg-dawn::after{ /* paper grain wash */
+  content:''; position:absolute; inset:0;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,.5), transparent 40%),
+    radial-gradient(circle at 75% 70%, rgba(185,166,224,.14), transparent 45%);
+  mix-blend-mode:soft-light;
+}
+.orb{
+  position:absolute; left:50%; top:16%; width:11vmin; height:11vmin;
+  transform:translateX(-50%); border-radius:50%;
+  background:radial-gradient(circle at 42% 38%, #fdffe9 0%, var(--orb) 42%, rgba(232,240,168,0) 72%);
+  box-shadow:0 0 8vmin 4vmin rgba(232,240,168,.55), 0 0 22vmin 10vmin rgba(232,240,168,.22);
+  animation:orbPulse 5.5s ease-in-out infinite;
+}
+@keyframes orbPulse{
+  0%,100%{transform:translateX(-50%) scale(1); opacity:.95}
+  50%{transform:translateX(-50%) scale(1.12); opacity:1}
+}
+.bg-rise{
+  background:
+    radial-gradient(ellipse 100% 80% at 50% 115%, rgba(255,122,47,.85), rgba(255,140,80,.35) 40%, transparent 70%),
+    linear-gradient(180deg, #1d0f22 0%, #4a1a2a 38%, #8a3226 66%, #d8622f 88%, #ff9a4a 100%);
+}
+.bg-halo{
+  background:
+    radial-gradient(circle at 50% 46%,
+      rgba(255,255,255,.95) 0%, rgba(255,240,200,.75) 8%,
+      rgba(255,190,120,.5) 16%, rgba(255,120,160,.4) 26%,
+      rgba(170,130,255,.36) 38%, rgba(110,170,255,.3) 52%,
+      rgba(120,230,200,.22) 66%, rgba(20,20,60,.85) 88%, #0b0c26 100%);
+}
+.bg-halo::before{
+  content:''; position:absolute; inset:-20%;
+  background:repeating-radial-gradient(circle at 50% 46%,
+    rgba(255,255,255,0) 0 6vmin, rgba(255,255,255,.06) 6vmin 6.6vmin);
+  animation:haloSpin 40s linear infinite;
+}
+@keyframes haloSpin{to{transform:rotate(360deg) scale(1.05)}}
+.bg-night{
+  background:
+    radial-gradient(ellipse 90% 60% at 50% 0%, rgba(60,80,160,.25), transparent 60%),
+    radial-gradient(ellipse 60% 45% at 50% 60%, rgba(127,184,255,.10), transparent 65%),
+    linear-gradient(180deg, #070b24 0%, var(--night) 55%, #0d1440 100%);
+}
+.bg-night::after{
+  content:''; position:absolute; inset:0; opacity:.7;
+  background-image:
+    radial-gradient(1.2px 1.2px at 12% 22%, #cfe2ff, transparent),
+    radial-gradient(1px 1px at 34% 8%, #9db9ff, transparent),
+    radial-gradient(1.4px 1.4px at 58% 18%, #e8f1ff, transparent),
+    radial-gradient(1px 1px at 76% 30%, #b9cfff, transparent),
+    radial-gradient(1.1px 1.1px at 88% 12%, #dce9ff, transparent),
+    radial-gradient(1px 1px at 22% 44%, #8fa8e8, transparent),
+    radial-gradient(1.3px 1.3px at 67% 52%, #cfe2ff, transparent),
+    radial-gradient(1px 1px at 45% 36%, #a8c0f0, transparent);
+}
+.bg-finale{
+  background:
+    radial-gradient(ellipse 80% 55% at 50% 62%, rgba(255,150,70,.75), transparent 62%),
+    linear-gradient(180deg, #2a1030 0%, #6e1d28 30%, var(--sunset) 55%, #ff8a3d 66%,
+      #7a2418 66.4%, #40101a 78%, #160a18 100%);
+}
+.mountains{
+  position:absolute; left:0; right:0; bottom:33.5%; height:16%;
+}
+.water{
+  position:absolute; left:0; right:0; bottom:0; height:33.5%;
+  background:linear-gradient(180deg, rgba(60,16,26,.0) 0%, rgba(30,10,22,.85) 40%, #0c0612 100%);
+  overflow:hidden;
+}
+.water::before{ /* inverted flame glow */
+  content:''; position:absolute; left:50%; top:-6%; width:60vmin; height:34vmin;
+  transform:translateX(-50%) scaleY(-1);
+  background:radial-gradient(ellipse at 50% 0%, rgba(255,140,60,.65), rgba(255,90,40,.25) 45%, transparent 72%);
+  filter:blur(14px);
+  animation:waterShimmer 6s ease-in-out infinite;
+}
+.water::after{
+  content:''; position:absolute; inset:0;
+  background:repeating-linear-gradient(180deg,
+    rgba(255,170,110,.05) 0 2px, transparent 2px 7px);
+  animation:waterLines 9s linear infinite;
+}
+@keyframes waterShimmer{0%,100%{opacity:.8; transform:translateX(-50%) scaleY(-1) scaleX(1)}50%{opacity:1; transform:translateX(-50%) scaleY(-1) scaleX(1.06)}}
+@keyframes waterLines{to{transform:translateY(7px)}}
+
+/* ============ FOREGROUND / TYPO ============ */
+.poem{
+  font-family:var(--serif); font-style:italic; font-weight:500;
+  font-size:clamp(1.4rem, 3.2vw, 2.6rem);
+  line-height:1.5; letter-spacing:.04em;
+}
+.stag .w{
+  display:inline-block; opacity:0; transform:translateY(.9em);
+  transition:opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1);
+  transition-delay:calc(var(--i,0) * 75ms);
+}
+.stag.in .w{opacity:1; transform:translateY(var(--sy,0))}
+.stag .w:nth-child(5n+1){--sy:.32em}
+.stag .w:nth-child(5n+2){--sy:-.14em}
+.stag .w:nth-child(5n+3){--sy:.12em}
+.stag .w:nth-child(5n+4){--sy:-.3em}
+.stag .w:nth-child(5n+5){--sy:.22em}
+.w em, .wem{font-style:italic; font-weight:600}
+
+/* scene 1 fg */
+.fg-dawn{ display:flex; align-items:center; justify-content:flex-end; }
+.fg-dawn .poem{
+  color:var(--ink); max-width:44ch; margin-right:8vw; text-align:left;
+  text-shadow:0 1px 0 rgba(255,255,255,.4);
+}
+.fg-dawn .jp{
+  position:absolute; left:8vw; bottom:14%;
+  writing-mode:vertical-rl; font-family:var(--mincho); font-size:.85rem;
+  letter-spacing:.35em; color:rgba(42,36,56,.55);
+}
+
+/* scene 2 fg */
+.fg-rise{display:flex; align-items:center; justify-content:center; flex-direction:column; gap:2.2vh}
+.fg-rise .big{
+  font-family:var(--mincho); font-weight:500;
+  font-size:clamp(2.2rem, 7vw, 5.4rem); color:#fff4ea;
+  letter-spacing:.14em; text-shadow:0 0 30px rgba(255,150,80,.7);
+}
+.fg-rise .big .w:nth-child(3){filter:blur(3px); opacity:.85}
+.fg-rise .big .w:nth-child(4){filter:blur(1.5px)}
+.fg-rise .sub{font-family:var(--serif); font-style:italic; color:var(--ember); font-size:clamp(.9rem,1.6vw,1.2rem); letter-spacing:.2em}
+
+/* scene 3 fg */
+.fg-halo{display:flex; align-items:center; justify-content:center}
+.halo-wings{position:absolute; left:50%; top:44%; width:min(92vw,1100px); transform:translate(-50%,-50%); opacity:.9}
+.oto{
+  position:relative; z-index:2; font-family:var(--mincho); font-weight:600;
+  font-size:clamp(6rem, 22vw, 17rem); color:#fff;
+  text-shadow:0 0 40px rgba(255,255,255,.9), 0 0 120px rgba(255,220,180,.7);
+  animation:otoFlicker 3.4s ease-in-out infinite;
+}
+@keyframes otoFlicker{
+  0%,100%{opacity:.92; text-shadow:0 0 40px rgba(255,255,255,.9),0 0 120px rgba(255,220,180,.6)}
+  42%{opacity:1; text-shadow:0 0 60px #fff,0 0 160px rgba(255,230,200,.9)}
+  58%{opacity:.78}
+  66%{opacity:1}
+}
+.fg-halo .cap{position:absolute; bottom:12%; left:50%; transform:translateX(-50%);
+  font-family:var(--serif); font-style:italic; color:rgba(255,255,255,.8); letter-spacing:.25em; font-size:clamp(.85rem,1.5vw,1.1rem)}
+
+/* scene 4 fg */
+.fg-feather .side{
+  position:absolute; top:50%; transform:translateY(-50%);
+  writing-mode:vertical-rl; font-size:.82rem; letter-spacing:.3em;
+  color:rgba(190,215,255,.72); line-height:2.2; font-weight:400;
+}
+.fg-feather .side.l{left:7vw}
+.fg-feather .side.r{right:7vw}
+.fg-feather .side .en{font-family:var(--serif); font-style:italic; letter-spacing:.1em}
+.fg-feather .bottom{
+  position:absolute; left:50%; bottom:9%; transform:translateX(-50%);
+  text-align:center; color:#dfeaff; width:min(88vw,900px);
+}
+.fg-feather .bottom .l2{margin-top:1.2em; color:var(--feather)}
+
+/* scene 5 fg */
+.fg-crystal{display:flex; align-items:center; justify-content:center; gap:9vw; perspective:1100px}
+.crystal-wrap{display:flex; flex-direction:column; align-items:center; gap:4vh}
+.crystal-title{
+  position:absolute; top:11%; left:50%; transform:translateX(-50%);
+  font-family:var(--serif); font-style:italic; color:rgba(210,225,255,.9);
+  font-size:clamp(1.1rem,2.2vw,1.7rem); letter-spacing:.18em; text-align:center;
+}
+.crystal-title small{display:block; font-family:var(--mincho); font-style:normal; font-size:.72rem; letter-spacing:.5em; color:rgba(160,185,240,.6); margin-top:.8em}
+.cube{
+  position:relative; width:var(--s,120px); height:var(--s,120px);
+  transform-style:preserve-3d;
+  animation:cubeSpin var(--dur,16s) linear infinite;
+  transition:transform .5s ease; cursor:pointer;
+}
+.cube:hover{animation-play-state:paused; transform:rotateX(-18deg) rotateY(24deg) scale(1.08)}
+.cube:hover .face{border-color:rgba(255,255,255,.85)}
+@keyframes cubeSpin{from{transform:rotateX(-20deg) rotateY(0)}to{transform:rotateX(-20deg) rotateY(360deg)}}
+.face{
+  position:absolute; inset:0; border:1px solid rgba(170,200,255,.55);
+  background:linear-gradient(135deg,
+    rgba(127,184,255,.16), rgba(255,150,220,.10) 35%,
+    rgba(150,255,220,.12) 65%, rgba(255,220,150,.14));
+  backdrop-filter:blur(2px);
+  box-shadow:inset 0 0 24px rgba(140,180,255,.18);
+}
+.face:nth-child(1){transform:translateZ(calc(var(--s,120px)/2))}
+.face:nth-child(2){transform:rotateY(180deg) translateZ(calc(var(--s,120px)/2))}
+.face:nth-child(3){transform:rotateY(90deg) translateZ(calc(var(--s,120px)/2))}
+.face:nth-child(4){transform:rotateY(-90deg) translateZ(calc(var(--s,120px)/2))}
+.face:nth-child(5){transform:rotateX(90deg) translateZ(calc(var(--s,120px)/2))}
+.face:nth-child(6){transform:rotateX(-90deg) translateZ(calc(var(--s,120px)/2))}
+.cube-cap{font-size:.72rem; letter-spacing:.4em; color:rgba(160,185,240,.65); font-family:var(--gothic); font-weight:300}
+
+/* scene 6 fg */
+.fg-finale .bottom{
+  position:absolute; left:50%; bottom:7%; transform:translateX(-50%);
+  text-align:center; color:#ffe8d2; width:min(88vw,900px);
+  text-shadow:0 2px 24px rgba(120,20,10,.8);
+}
+.fg-finale .kanji{
+  position:absolute; top:12%; left:50%; transform:translateX(-50%);
+  font-family:var(--mincho); font-size:clamp(.8rem,1.4vw,1rem);
+  letter-spacing:.6em; color:rgba(255,215,190,.75);
+}
+
+/* ============ FIXED UI ============ */
+.ui{position:fixed; z-index:10; pointer-events:none}
+.logo{top:4vh; left:4vw; display:flex; align-items:center; gap:.7em; pointer-events:auto; mix-blend-mode:difference}
+.logo .name{font-family:var(--gothic); font-weight:300; letter-spacing:.5em; font-size:.95rem; color:#fff}
+.logo .date{font-family:var(--serif); font-style:italic; font-size:.72rem; color:rgba(255,255,255,.65); letter-spacing:.12em}
+.logo svg{width:26px; height:26px}
+.nav{top:4.4vh; right:4vw; display:flex; gap:2.6em; pointer-events:auto; mix-blend-mode:difference}
+.nav a{
+  font-family:var(--gothic); font-weight:300; font-size:.75rem; letter-spacing:.3em;
+  color:rgba(255,255,255,.85); text-decoration:none; position:relative; padding-bottom:4px;
+}
+.nav a::after{content:''; position:absolute; left:0; bottom:0; width:0; height:1px; background:#fff; transition:width .5s cubic-bezier(.2,.7,.2,1)}
+.nav a:hover::after{width:100%}
+.progress{bottom:4.5vh; left:50%; transform:translateX(-50%); width:min(40vw,420px); height:1px; background:rgba(255,255,255,.18); mix-blend-mode:difference}
+.progress .fill{height:100%; width:0%; background:#fff; transition:none}
+.progress .tick{position:absolute; top:-3px; width:1px; height:7px; background:rgba(255,255,255,.35)}
+.sound{
+  bottom:4vh; left:4vw; width:52px; height:52px; border-radius:50%;
+  opacity:0; transform:scale(.7); transition:opacity 1s ease, transform 1s cubic-bezier(.2,.7,.2,1);
+  mix-blend-mode:difference;
+}
+.sound.on{opacity:1; transform:scale(1)}
+.sound .ring{
+  position:absolute; inset:0; border-radius:50%;
+  background:conic-gradient(#fff 0 40deg, transparent 40deg 90deg, #fff 90deg 150deg, transparent 150deg 220deg, #fff 220deg 300deg, transparent 300deg);
+  -webkit-mask:radial-gradient(circle, transparent 58%, #000 60%);
+          mask:radial-gradient(circle, transparent 58%, #000 60%);
+  animation:ringSpin 7s linear infinite;
+}
+@keyframes ringSpin{to{transform:rotate(360deg)}}
+.sound .dot{position:absolute; left:50%; top:50%; width:5px; height:5px; border-radius:50%; background:#fff; transform:translate(-50%,-50%)}
+.scroll-hint{
+  bottom:4vh; right:4vw; font-family:var(--gothic); font-weight:300; font-size:.68rem;
+  letter-spacing:.4em; color:rgba(255,255,255,.6); mix-blend-mode:difference;
+  writing-mode:vertical-rl; transition:opacity .8s;
+}
+.scroll-hint.hide{opacity:0}
+
+@media (prefers-reduced-motion: reduce){
+  .orb,.oto,.sound .ring,.bg-halo::before,.water::before,.water::after{animation:none !important}
+  .cube{animation-duration:60s}
+  .stag .w{transition-duration:.01s; transition-delay:0s}
+}
+@media (max-width:720px){
+  .fg-feather .side.r{display:none}
+  .fg-crystal{gap:5vw}
+  .nav{gap:1.4em}
+}
+</style>
+</head>
+<body>
+
+<div id="spacer"></div>
+
+<!-- ======= BACKGROUND LAYERS ======= -->
+<div id="bgs">
+  <section class="scene bg-dawn"><div class="orb"></div></section>
+  <section class="scene bg-rise"></section>
+  <section class="scene bg-halo"></section>
+  <section class="scene bg-night"></section>
+  <section class="scene bg-night"></section>
+  <section class="scene bg-finale">
+    <svg class="mountains" viewBox="0 0 1200 160" preserveAspectRatio="none">
+      <path d="M0 160 L0 110 L140 60 L260 105 L380 40 L520 100 L650 55 L780 110 L900 30 L1040 95 L1200 65 L1200 160 Z" fill="#1c0a16" opacity=".9"/>
+      <path d="M0 160 L0 135 L200 100 L420 140 L640 105 L860 145 L1080 110 L1200 135 L1200 160 Z" fill="#120612"/>
+    </svg>
+    <div class="water"></div>
+  </section>
+</div>
+
+<!-- ======= PARTICLE CANVAS ======= -->
+<canvas id="fx"></canvas>
+
+<!-- ======= FOREGROUND / TEXT LAYERS ======= -->
+<div id="fgs">
+  <section class="scene fgscene fg-dawn">
+    <p class="poem stag">
+      <span class="w">what</span> <span class="w">guides</span> <span class="w">us</span> <span class="w">through</span><br>
+      <span class="w"><em>change,</em></span> <span class="w"><em>reinvention,</em></span><br>
+      <span class="w">and</span> <span class="w">the</span> <span class="w"><em>unknown—</em></span>
+    </p>
+    <div class="jp">夜明けの翼、滲む記憶。</div>
+  </section>
+
+  <section class="scene fgscene fg-rise">
+    <h2 class="big stag">
+      <span class="w">再</span><span class="w">生</span><span class="w">で</span><span class="w">あ</span><span class="w">る</span><span class="w">。</span>
+    </h2>
+    <p class="sub stag"><span class="w">to</span> <span class="w"><em>rise,</em></span> <span class="w"><em>again.</em></span></p>
+  </section>
+
+  <section class="scene fgscene fg-halo">
+    <svg class="halo-wings" viewBox="0 0 1000 700" aria-hidden="true">
+      <g fill="#120e2e" opacity=".92" style="filter:blur(1.5px)">
+        <path d="M500 660 C 640 580 790 430 930 210 C 880 450 740 610 560 670 C 690 640 800 640 890 680 C 760 720 620 710 510 690 Z"/>
+        <path d="M500 660 C 360 580 210 430 70 210 C 120 450 260 610 440 670 C 310 640 200 640 110 680 C 240 720 380 710 490 690 Z"/>
+        <ellipse cx="500" cy="665" rx="34" ry="52"/>
+        <path d="M500 622 C 508 596 526 580 544 574 C 530 596 522 612 520 632 Z"/>
+      </g>
+    </svg>
+    <div class="oto">音</div>
+    <p class="cap stag"><span class="w">the</span> <span class="w"><em>sound</em></span> <span class="w">of</span> <span class="w"><em>ignition.</em></span></p>
+  </section>
+
+  <section class="scene fgscene fg-feather">
+    <div class="side l">一枚の羽根が、夜を縫う。<br>落ちることは、失うことではない。<br><span class="en">a feather, descending —</span></div>
+    <div class="side r">青白い軌跡は、呼吸のあと。<br>拾う者にだけ、火は宿る。<br><span class="en">the light it leaves behind</span></div>
+    <div class="bottom">
+      <p class="poem stag">
+        <span class="w">don't</span> <span class="w">just</span> <span class="w"><em>speak</em></span> <span class="w">to</span> <span class="w">us.</span><br>
+        <span class="w">they</span> <span class="w"><em>stimulate</em></span> <span class="w">us.</span>
+      </p>
+      <p class="poem l2 stag">
+        <span class="w">light</span> <span class="w"><em>becomes</em></span> <span class="w">私、</span><span class="w"><em>flare。</em></span>
+      </p>
+    </div>
+  </section>
+
+  <section class="scene fgscene fg-crystal">
+    <div class="crystal-title stag">
+      <span class="w">crystallized</span> <span class="w"><em>thoughts</em></span>
+      <small>思考の結晶 — 触れれば、揺れる</small>
+    </div>
+    <div class="crystal-wrap">
+      <div class="cube" style="--s:130px; --dur:18s">
+        <div class="face"></div><div class="face"></div><div class="face"></div>
+        <div class="face"></div><div class="face"></div><div class="face"></div>
+      </div>
+      <div class="cube-cap">STRUCTURE</div>
+    </div>
+    <div class="crystal-wrap">
+      <div class="cube" style="--s:90px; --dur:13s; animation-direction:reverse">
+        <div class="face"></div><div class="face"></div><div class="face"></div>
+        <div class="face"></div><div class="face"></div><div class="face"></div>
+      </div>
+      <div class="cube-cap">MEMORY</div>
+    </div>
+    <div class="crystal-wrap">
+      <div class="cube" style="--s:110px; --dur:22s">
+        <div class="face"></div><div class="face"></div><div class="face"></div>
+        <div class="face"></div><div class="face"></div><div class="face"></div>
+      </div>
+      <div class="cube-cap">DREAM</div>
+    </div>
+  </section>
+
+  <section class="scene fgscene fg-finale">
+    <p class="kanji stag"><span class="w">焔</span><span class="w">、</span><span class="w">再</span><span class="w">び</span><span class="w">。</span></p>
+    <div class="bottom">
+      <p class="poem stag">
+        <span class="w"><em>feel</em></span> <span class="w">their</span> <span class="w">heat.</span><br>
+        <span class="w">焔と</span> <span class="w"><em>interact</em></span> <span class="w">with。</span>
+      </p>
+    </div>
+  </section>
+</div>
+
+<!-- ======= FIXED UI ======= -->
+<header class="ui logo">
+  <svg viewBox="0 0 32 32" aria-hidden="true">
+    <path d="M6 20 C 8 12 16 6 26 6 C 22 9 20 12 20 15 C 24 14 27 15 29 17 C 25 18 22 19 20 22 C 16 26 10 26 6 20 Z" fill="#5a8fe8"/>
+    <circle cx="22.5" cy="11.5" r="1.3" fill="#0a1030"/>
+  </svg>
+  <span class="name">HIBANA</span>
+  <span class="date">Sept. 29</span>
+</header>
+<nav class="ui nav">
+  <a href="#" data-jump="3">作品</a>
+  <a href="#" data-jump="2">思想</a>
+  <a href="#" data-jump="5">接続</a>
+</nav>
+<div class="ui progress" id="progress"><div class="fill" id="fill"></div></div>
+<div class="ui sound" id="sound"><div class="ring"></div><div class="dot"></div></div>
+<div class="ui scroll-hint" id="hint">SCROLL</div>
+
+<script>
+(() => {
+'use strict';
+
+/* ================= CORE STATE ================= */
+const N = 6;
+const SEG = 1.5; // vh units per scene
+const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const DENSITY = reduced ? 0.25 : 1;
+
+const bgs = Array.from(document.querySelectorAll('#bgs .scene'));
+const fgs = Array.from(document.querySelectorAll('#fgs .scene'));
+const fill = document.getElementById('fill');
+const sound = document.getElementById('sound');
+const hint = document.getElementById('hint');
+const progressEl = document.getElementById('progress');
+
+// progress ticks
+for (let i = 1; i < N; i++) {
+  const t = document.createElement('div');
+  t.className = 'tick';
+  t.style.left = (i / N * 100) + '%';
+  progressEl.appendChild(t);
+}
+
+// stagger indices
+document.querySelectorAll('.stag').forEach(g => {
+  g.querySelectorAll('.w').forEach((w, i) => w.style.setProperty('--i', i));
+});
+
+// nav jumps
+document.querySelectorAll('.nav a').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const idx = +a.dataset.jump;
+    const max = document.documentElement.scrollHeight - innerHeight;
+    window.scrollTo({ top: (idx / (N - 1)) * max, behavior: reduced ? 'auto' : 'smooth' });
+  });
+});
+
+/* ================= CANVAS ================= */
+const cv = document.getElementById('fx');
+const ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+function resize() {
+  DPR = Math.min(devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR;
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+resize();
+addEventListener('resize', resize);
+
+/* glow sprites */
+function makeSprite(stops) {
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const g = c.getContext('2d');
+  const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  stops.forEach(s => grad.addColorStop(s[0], s[1]));
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 64, 64);
+  return c;
+}
+const SP = {
+  ember:  makeSprite([[0,'rgba(255,240,210,1)'],[0.25,'rgba(255,179,107,.9)'],[0.6,'rgba(255,122,47,.45)'],[1,'rgba(255,80,20,0)']]),
+  blue:   makeSprite([[0,'rgba(235,245,255,1)'],[0.3,'rgba(127,184,255,.85)'],[0.7,'rgba(80,130,255,.3)'],[1,'rgba(60,100,255,0)']]),
+  violet: makeSprite([[0,'rgba(220,205,250,.9)'],[0.4,'rgba(185,166,224,.55)'],[1,'rgba(160,140,220,0)']]),
+  halo:   makeSprite([[0,'rgba(255,255,255,.95)'],[0.4,'rgba(255,230,190,.5)'],[1,'rgba(255,200,150,0)']])
+};
+
+/* ================= PARTICLES ================= */
+const parts = [];
+const MAXP = Math.floor(620 * DENSITY);
+
+function emit(p) {
+  if (parts.length >= MAXP) return;
+  parts.push(p);
+}
+
+function updateParts(dt, t) {
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const p = parts[i];
+    p.age += dt;
+    if (p.age >= p.life) { parts.splice(i, 1); continue; }
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    if (p.sway) p.x += Math.sin(t * p.swayF + p.seed) * p.sway * dt;
+    if (p.grav) p.vy += p.grav * dt;
+    if (p.grow) p.r += p.grow * dt;
+  }
+}
+
+function drawParts() {
+  // soft watercolor (normal composite) first
+  ctx.globalCompositeOperation = 'source-over';
+  for (const p of parts) {
+    if (p.glow) continue;
+    const k = p.age / p.life;
+    ctx.globalAlpha = p.a * (1 - k) * (k < 0.15 ? k / 0.15 : 1);
+    ctx.drawImage(p.sp, p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+  }
+  // additive glow pass
+  ctx.globalCompositeOperation = 'lighter';
+  for (const p of parts) {
+    if (!p.glow) continue;
+    const k = p.age / p.life;
+    ctx.globalAlpha = p.a * (1 - k) * (k < 0.1 ? k / 0.1 : 1);
+    ctx.drawImage(p.sp, p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+  }
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+/* ================= SCENE EMITTERS ================= */
+const rand = (a, b) => a + Math.random() * (b - a);
+
+function emitDawn(w, t) {
+  // watercolor wing strokes on the left: blobs along an arc
+  const n = Math.random() < 0.6 ? 2 : 1;
+  for (let i = 0; i < n; i++) {
+    const ang = rand(-2.5, 0.4);
+    const rad = rand(0.10, 0.30) * Math.min(W, H) * 1.2;
+    const cx = W * 0.14, cy = H * 0.52;
+    emit({
+      sp: SP.violet, glow: false,
+      x: cx + Math.cos(ang) * rad * 0.9 + rand(-20, 20),
+      y: cy + Math.sin(ang) * rad * 0.55 + rand(-16, 16),
+      vx: rand(-4, 4), vy: rand(-6, -1),
+      r: rand(10, 26), grow: rand(6, 16),
+      a: rand(0.05, 0.12), age: 0, life: rand(2.5, 5), seed: Math.random() * 9
+    });
+  }
+  // faint motes around the orb
+  if (Math.random() < 0.3) {
+    emit({
+      sp: SP.halo, glow: true,
+      x: W * 0.5 + rand(-60, 60), y: H * 0.16 + rand(-50, 60),
+      vx: rand(-6, 6), vy: rand(-10, -2), r: rand(3, 9),
+      a: 0.5, age: 0, life: rand(1.5, 3), seed: Math.random() * 9
+    });
+  }
+}
+
+function wingEmitters(cx, cy, span, lift, flap, count, opts) {
+  for (let i = 0; i < count; i++) {
+    const side = Math.random() < 0.5 ? -1 : 1;
+    const tt = Math.random();
+    const x = cx + side * tt * span;
+    const y = cy - Math.sin(tt * 2.0 + flap) * (14 + tt * 26) - tt * lift;
+    emit(Object.assign({
+      sp: SP.ember, glow: true,
+      x, y,
+      vx: side * rand(8, 40) * tt, vy: rand(-90, -30),
+      r: rand(3, 9), a: rand(0.5, 0.95),
+      age: 0, life: rand(0.7, 1.8),
+      sway: rand(10, 40), swayF: rand(2, 5), seed: Math.random() * 9
+    }, opts || {}));
+  }
+}
+
+function emitRise(w, t, f) {
+  // phoenix rising with scroll progress
+  const rp = Math.min(1, Math.max(0, (f - 0.55) / 1.15));
+  const cx = W * 0.5 + Math.sin(t * 0.9) * W * 0.05;
+  const cy = H * (1.12 - rp * 0.78);
+  const flap = Math.sin(t * 6) * 0.9;
+  wingEmitters(cx, cy, W * 0.16, 40 + flap * 20, flap, Math.round(4 * DENSITY) || 1);
+  // body glow
+  if (Math.random() < 0.8) {
+    emit({
+      sp: SP.ember, glow: true, x: cx + rand(-6, 6), y: cy + rand(-6, 6),
+      vx: rand(-5, 5), vy: rand(-40, -15), r: rand(10, 22),
+      a: 0.55, age: 0, life: rand(0.5, 1.1), seed: 0
+    });
+  }
+  // ambient rising sparks
+  if (Math.random() < 0.4) {
+    emit({
+      sp: SP.ember, glow: true, x: rand(0, W), y: H + 10,
+      vx: rand(-8, 8), vy: rand(-140, -60), r: rand(2, 5),
+      a: 0.7, age: 0, life: rand(2, 4), sway: 24, swayF: 2, seed: Math.random() * 9
+    });
+  }
+}
+
+function emitHalo(w, t) {
+  if (Math.random() > 0.55) return;
+  const cx = W / 2, cy = H * 0.46;
+  const ang = rand(0, Math.PI * 2);
+  const rad = Math.min(W, H) * rand(0.28, 0.42);
+  emit({
+    sp: SP.halo, glow: true,
+    x: cx + Math.cos(ang) * rad, y: cy + Math.sin(ang) * rad * 0.85,
+    vx: -Math.sin(ang) * 22, vy: Math.cos(ang) * 16,
+    r: rand(2, 7), a: rand(0.3, 0.7), age: 0, life: rand(1.5, 3.2), seed: 0
+  });
+}
+
+/* feather state (persistent) */
+const feather = { x: 0, y: -120, rot: 0, init: false };
+function emitFeather(w, t, dt) {
+  if (!feather.init || feather.y > H + 90) {
+    feather.x = W * rand(0.38, 0.62);
+    feather.y = -80;
+    feather.init = true;
+  }
+  feather.y += (reduced ? 12 : 34) * dt;
+  feather.x += Math.sin(t * 1.2 + feather.y * 0.01) * 22 * dt;
+  feather.rot = Math.sin(t * 1.4) * 0.5 + Math.sin(feather.y * 0.008) * 0.3;
+
+  // particle beam trail
+  const n = Math.random() < 0.85 ? 2 : 1;
+  for (let i = 0; i < n; i++) {
+    emit({
+      sp: SP.blue, glow: true,
+      x: feather.x + rand(-4, 4), y: feather.y - rand(0, 26),
+      vx: rand(-6, 6), vy: rand(-24, -6),
+      r: rand(2, 6), a: rand(0.5, 0.95),
+      age: 0, life: rand(0.8, 2.0), sway: 12, swayF: 3, seed: Math.random() * 9
+    });
+  }
+  drawFeather(feather.x, feather.y, feather.rot);
+}
+
+function drawFeather(x, y, rot) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.shadowColor = 'rgba(127,184,255,.9)';
+  ctx.shadowBlur = 22;
+  const L = 46;
+  const grad = ctx.createLinearGradient(0, -L, 0, L);
+  grad.addColorStop(0, 'rgba(235,246,255,.95)');
+  grad.addColorStop(0.5, 'rgba(127,184,255,.85)');
+  grad.addColorStop(1, 'rgba(90,140,240,.35)');
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 1.6;
+  // shaft
+  ctx.beginPath();
+  ctx.moveTo(0, -L);
+  ctx.quadraticCurveTo(5, 0, 0, L * 0.9);
+  ctx.stroke();
+  // barbs
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 12; i++) {
+    const tt = i / 12;
+    const by = -L + tt * L * 1.6;
+    const len = Math.sin(tt * Math.PI) * 17 + 3;
+    ctx.globalAlpha = 0.55 * (1 - tt * 0.4);
+    ctx.beginPath();
+    ctx.moveTo(2, by);
+    ctx.quadraticCurveTo(len * 0.6, by + 5, len, by + 13);
+    ctx.moveTo(-1, by);
+    ctx.quadraticCurveTo(-len * 0.6, by + 5, -len, by + 13);
+    ctx.stroke();
+  }
+  ctx.restore();
+  ctx.globalAlpha = 1;
+}
+
+function emitCrystal(w, t) {
+  if (Math.random() > 0.3) return;
+  const spots = [[0.28, 0.5], [0.5, 0.52], [0.72, 0.5]];
+  const s = spots[Math.floor(Math.random() * spots.length)];
+  emit({
+    sp: SP.blue, glow: true,
+    x: W * s[0] + rand(-70, 70), y: H * s[1] + rand(-70, 70),
+    vx: rand(-4, 4), vy: rand(-14, -4),
+    r: rand(1.5, 4), a: rand(0.4, 0.8), age: 0, life: rand(1, 2.4), seed: 0
+  });
+}
+
+function emitFinale(w, t) {
+  const cx = W / 2, cy = H * 0.60;
+  const flap = Math.sin(t * 3.2) * 0.7;
+  wingEmitters(cx, cy, W * 0.20, 90 + flap * 30, flap, Math.round(5 * DENSITY) || 1, {
+    vy: rand(-160, -60), r: rand(4, 11), life: rand(0.8, 2.0)
+  });
+  // core blaze
+  for (let i = 0; i < 2; i++) {
+    emit({
+      sp: SP.ember, glow: true,
+      x: cx + rand(-16, 16), y: cy + rand(-10, 14),
+      vx: rand(-10, 10), vy: rand(-120, -50),
+      r: rand(8, 20), a: 0.6, age: 0, life: rand(0.6, 1.4), seed: 0
+    });
+  }
+  // drifting embers
+  if (Math.random() < 0.5) {
+    emit({
+      sp: SP.ember, glow: true,
+      x: rand(W * 0.2, W * 0.8), y: H * 0.66,
+      vx: rand(-12, 12), vy: rand(-110, -40),
+      r: rand(2, 5), a: 0.8, age: 0, life: rand(2, 4.5),
+      sway: 30, swayF: 1.6, seed: Math.random() * 9
+    });
+  }
+}
+
+/* ================= SCROLL ENGINE ================= */
+let target = window.scrollY;
+let smooth = target;
+addEventListener('scroll', () => { target = window.scrollY; }, { passive: true });
+
+const sceneState = new Array(N).fill(false);
+
+function applyScenes(f) {
+  const p = f / (N - 1);
+  fill.style.width = (p * 100).toFixed(2) + '%';
+  sound.classList.toggle('on', f >= 2.5);
+  hint.classList.toggle('hide', f > 0.25);
+
+  for (let i = 0; i < N; i++) {
+    const d = f - i;
+    const vis = Math.max(0, 1 - Math.abs(d));
+    const op = vis * vis * (3 - 2 * vis); // smoothstep
+    const b = bgs[i], g = fgs[i];
+    b.style.opacity = op;
+    g.style.opacity = op;
+    g.style.transform = 'translateY(' + (d * -70).toFixed(1) + 'px)';
+    b.style.transform = 'translateY(' + (d * -24).toFixed(1) + 'px)';
+    const active = vis > 0.45;
+    if (active !== sceneState[i]) {
+      sceneState[i] = active;
+      g.classList.toggle('active', active);
+      g.querySelectorAll('.stag').forEach(el => el.classList.toggle('in', active));
+    }
+    const hidden = vis <= 0.001;
+    b.style.visibility = hidden ? 'hidden' : 'visible';
+    g.style.visibility = hidden ? 'hidden' : 'visible';
+  }
+}
+
+/* ================= MAIN LOOP ================= */
+let last = performance.now();
+let time = 0;
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  time += dt;
+
+  smooth += (target - smooth) * 0.08;
+  if (Math.abs(target - smooth) < 0.05) smooth = target;
+  const vh = innerHeight;
+  const f = Math.max(0, Math.min(N - 1, smooth / (SEG * vh)));
+
+  applyScenes(f);
+
+  ctx.clearRect(0, 0, W, H);
+
+  // emitters weighted by scene visibility
+  const w0 = Math.max(0, 1 - Math.abs(f - 0));
+  const w1 = Math.max(0, 1 - Math.abs(f - 1));
+  const w2 = Math.max(0, 1 - Math.abs(f - 2));
+  const w3 = Math.max(0, 1 - Math.abs(f - 3));
+  const w4 = Math.max(0, 1 - Math.abs(f - 4));
+  const w5 = Math.max(0, 1 - Math.abs(f - 5));
+
+  if (!reduced || true) { // particles always run, density already scaled
+    if (w0 > 0.02) emitDawn(w0, time);
+    if (w1 > 0.02) emitRise(w1, time, f);
+    if (w2 > 0.02) emitHalo(w2, time);
+    if (w3 > 0.02) emitFeather(w3, time, dt);
+    if (w4 > 0.02) emitCrystal(w4, time);
+    if (w5 > 0.02) emitFinale(w5, time);
+  }
+
+  updateParts(dt, time);
+  drawParts();
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+})();
+</script>
+</body>
+</html>

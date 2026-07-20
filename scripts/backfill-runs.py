@@ -39,6 +39,8 @@ RUNNER_MAP: dict[str, tuple[str, str]] = {
     "OpenAI API (reasoning high)": ("openai-api", "high"),
     "grok CLI (single-turn)": ("grok-cli", "none"),
     "OpenRouter API": ("openrouter-api", "none"),
+    "OpenRouter API (reasoning high)": ("openrouter-api", "high"),
+    "codex exec (reasoning high)": ("codex-exec", "high"),
     "AntiGravity CLI (High)": ("antigravity-cli", "high"),
 }
 

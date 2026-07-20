@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIBANA | Phoenix Scroll LP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Shippori+Mincho:wght@400;700&family=Zen+Kaku+Gothic+New:wght@300&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --dawn-bg: #f2ecf5; --dawn-wing: #b9a6e0; --orb: #e8f0a8;
+            --flame: #ff7a2f; --ember: #ffb36b; --night: #0a1030;
+            --feather: #7fb8ff; --sunset: #c23a1f; --ink: #2a2438;
+            --text-main: #2a2438; --text-light: rgba(255,255,255,0.8);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+        body { 
+            background: #000; 
+            overflow: hidden; 
+            color: var(--text-main);
+            font-family: 'Zen Kaku Gothic New', sans-serif;
+        }
+
+        /* Scroll Container */
+        #viewport {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            overflow: hidden;
+        }
+
+        #scroll-proxy {
+            height: 900vh; /* 6 scenes * 150vh */
+            width: 100%;
+        }
+
+        /* Layers */
+        .scene {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100vh;
+            opacity: 0; visibility: hidden;
+            transition: opacity 1.2s cubic-bezier(0.22, 1, 0.36, 1), visibility 1.2s;
+            display: flex; justify-content: center; align-items: center;
+            overflow: hidden;
+        }
+        .scene.active { opacity: 1; visibility: visible; }
+
+        /* Canvas */
+        #canvas-overlay {
+            position: fixed; top: 0; left: 0; pointer-events: none; z-index: 5;
+        }
+
+        /* UI Elements */
+        .ui-layer { position: fixed; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        .ui-element { pointer-events: auto; }
+
+        .logo-box { position: absolute; top: 40px; left: 6vw; display: flex; align-items: center; gap: 12px; }
+        .logo-text { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; letter-spacing: 0.2em; font-weight: 500; }
+        .date-sub { font-size: 0.75rem; color: #888; margin-left: 4px; }
+
+        .nav-box { position: absolute; top: 40px; right: 6vw; }
+        .nav-list { list-style: none; display: flex; gap: 30px; }
+        .nav-list li { font-size: 0.75rem; letter-spacing: 0.1em; cursor: pointer; transition: opacity 0.3s; }
+        .nav-list li:hover { opacity: 0.5; }
+
+        .progress-bar-wrap { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 200px; height: 2px; background: rgba(0,0,0,0.1); }
+        #progress-fill { height: 100%; width: 0%; background: var(--text-main); transition: width 0.1s linear; }
+
+        .sound-ring { 
+            position: absolute; bottom: 40px; left: 6vw; width: 60px; height: 60px; 
+            border-radius: 50%; border: 1px solid rgba(0,0,0,0.2); 
+            display: flex; justify-content: center; align-items: center; 
+            cursor: pointer; opacity: 0; transition: opacity 1s;
+        }
+        .sound-ring::after { content: ''; width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); }
+
+        /* Typography */
+        .text-block { max-width: 80%; z-index: 6; pointer-events: none; }
+        .stanza { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: clamp(1.4rem, 3.2vw, 2.6rem); line-height: 1.5; letter-spacing: 0.04em; }
+        .stanza span { display: inline-block; opacity: 0; transform: translateY(30px); }
+
+        .jp-text { font-family: 'Shippori Mincho', serif; font-weight: 700; }
+        .vert-text { writing-mode: vertical-rl; text-orientation: mixed; font-size: 1rem; letter-spacing: 0.3em; }
+
+        /* Scene Specifics */
+        #scene-1 { background: var(--dawn-bg); color: var(--ink); }
+        #scene-2 { background: #ff9e7d; color: #fff; } /* Coral/Orange */
+        #scene-3 { background: radial-gradient(circle, #333, #000); color: #fff; }
+        #scene-3 .kanji { font-size: 12rem; font-family: 'Shippori Mincho', serif; opacity: 0.8; text-shadow: 0 0 50px rgba(255,255,255,0.5); }
+        #scene-4 { background: var(--night); color: #fff; }
+        #scene-5 { background: #0a1030; }
+        #scene-6 { background: linear-gradient(to bottom, #c23a1f, #ff7a2f); }
+
+        /* Crystal 3D */
+        .crystal-container { perspective: 800px; width: 300px; height: 300px; display: flex; justify-content: center; align-items: center; }
+        .crystal {
+            width: 100px; height: 100px; background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.4); transform-style: preserve-3d;
+            animation: rotateCrystal 15s infinite linear;
+            box-shadow: inset 0 0 20px rgba(255,255,255,0.2);
+        }
+        @keyframes rotateCrystal {
+            from { transform: rotateX(0) rotateY(0) rotateZ(0); }
+            to { transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg); }
+        }
+
+        /* Utilities */
+        .fade-in-up { animation: fadeInUp 1.5s forwards cubic-bezier(0.22, 1, 0.36, 1); }
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="viewport">
+    <canvas id="canvas-overlay"></canvas>
+
+    <!-- Scene 1: Dawn -->
+    <section id="scene-1" class="scene active">
+        <div class="text-block stanza" style="text-align: right; margin-right: 6vw;">
+            <span>what guides us through</span><br>
+            <span>*change*,</span><br>
+            <span>*reinvention*,</span><br>
+            <span>and the *unknown*—</span>
+        </div>
+    </section>
+
+    <!-- Scene 2: Rise -->
+    <section id="scene-2" class="scene">
+        <div class="text-block stanza jp-text" style="font-size: 4rem;">
+            <span>再生である。</span>
+        </div>
+    </section>
+
+    <!-- Scene 3: Halo -->
+    <section id="scene-3" class="scene">
+        <div class="kanji">音</div>
+    </section>
+
+    <!-- Scene 4: Feather -->
+    <section id="scene-4" class="scene">
+        <div style="position: absolute; right: 10vw; top: 25%; font-size: 0.8rem; writing-mode: vertical-rl; letter-spacing: 0.5em; opacity: 0.7;">
+            作品解説: 闇を切り裂く一筋の光、それは記憶の断片。
+        </div>
+        <div class="text-block stanza" style="text-align: center; width: 100%;">
+            <p style="font-size: 0.9rem; opacity: 0.7; margin-bottom: 20px;">don't just *speak* to us. they *stimulate* us.</p>
+            <p style="font-size: 1.8rem;">light *becomes* 私、flare。</p>
+        </div>
+    </section>
+
+    <!-- Scene 5: Crystal -->
+    <section id="scene-5" class="scene">
+        <div class="crystal-container">
+            <div class="crystal"></div>
+        </div>
+    </section>
+
+    <!-- Scene 6: Finale -->
+    <section id="scene-6" class="scene">
+        <div class="text-block stanza" style="text-align: center; color: #fff; width: 100%;">
+            <span style="font-size: 3rem;">*feel* their heat.</span><br>
+            <span>焔と *interact* with。</span>
+        </div>
+    </section>
+
+    <!-- UI Layer -->
+    <div class="ui-layer">
+        <div class="logo-box ui-element">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z" fill="#4A90E2"/></svg>
+            <span class="logo-text">HIBANA</span>
+            <span class="date-sub">Sept. 29</span>
+        </div>
+        <nav class="nav-box ui-element">
+            <ul class="nav-list">
+                <li>WORKS</li>
+                <li>PHILOSOPHY</li>
+                <li>CONNECT</li>
+            </ul>
+        </nav>
+        <div class="progress-bar-wrap ui-element">
+            <div id="progress-fill"></div>
+        </div>
+        <div class="sound-ring ui-element" id="sound-btn"></div>
+    </div>
+</div>
+
+<div id="scroll-proxy"></div>
+
+<script>
+/** 
+ * HIBANA Core Engine
+ * Smooth Scroll + Particle System
+ */
+
+const canvas = document.getElementById('canvas-overlay');
+const ctx = canvas.getContext('2d');
+const scrollProxy = document.getElementById('scroll-proxy');
+const scenes = document.querySelectorAll('.scene');
+const progressFill = document.getElementById('progress-fill');
+const soundBtn = document.getElementById('sound-btn');
+
+let width, height;
+let scrollY = 0;
+let targetScrollY = 0;
+let currentSceneIdx = 0;
+
+// Particle System
+class Particle {
+    constructor(config) {
+        this.init(config);
+    }
+    init(config) {
+        this.x = config.x ?? Math.random() * width;
+        this.y = config.y ?? Math.random() * height;
+        this.vx = (Math.random() - 0.5) * config.speed || 1;
+        this.vy = (Math.random() - 0.5) * config.speed || 1;
+        this.size = Math.random() * config.size || 2;
+        this.color = config.color || '#fff';
+        this.life = Math.random() * 0.5 + 0.5;
+        this.decay = config.decay || 0.005;
+        this.type = config.type || 'dot';
+    }
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life -= this.decay;
+        if (this.life <= 0) this.init(this.config);
+    }
+    draw() {
+        ctx.globalAlpha = this.life * 0.6;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        if (this.type === 'dot') {
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        } else if (this.type === 'line') {
+            ctx.rect(this.x, this.y, this.size * 2, 1);
+        }
+        ctx.fill();
+    }
+}
+
+let particles = [];
+let emitters = [];
+
+function initCanvas() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+}
+
+function createEmitter(config) {
+    emitters.push(config);
+}
+
+// Particle lifecycle
+function updateParticles() {
+    // Clear with slight trail for "motion blur" feel
+    ctx.clearRect(0, 0, width, height);
+
+    // Manage emitters
+    if (currentSceneIdx === 0) { // Dawn: Lavender wings & Orb
+        if (particles.length < 50) particles.push(new Particle({
+            x: width * 0.2, y: height * 0.4, vx: Math.random() * 0.5 - 0.25, vy: Math.random() * 0.5 - 0.25, 
+            size: 40, color: '#b9a6e0', decay: 0.002, speed: 1
+        }));
+        if (particles.length < 100) particles.push(new Particle({
+            x: width * 0.4, y: height * 0.3, vx: Math.random() * 1 - 0.5, vy: Math.random() * 1 - 0.5, 
+            size: 15, color: '#e8f0a8', decay: 0.01, speed: 0.5
+        }));
+    } else if (currentSceneIdx === 1) { // Rise: Orange wings
+        if (particles.length < 150) particles.push(new Particle({
+            x: width * 0.5, y: height + 100, vx: (Math.random() - 0.5) * 4, vy: -Math.random() * 5 - 2, 
+            size: 4, color: '#ff7a2f', decay: 0.015, speed: 4
+        }));
+    } else if (currentSceneIdx === 3) { // Feather: Falling blue beam
+        if (particles.length < 5) particles.push(new Particle({
+            x: width * 0.5, y: -50, vx: 0, vy: 5, size: 2, color: '#7fb8ff', decay: 0.001, speed: 5
+        }));
+    } else if (currentSceneIdx === 5) { // Finale: Fire
+        if (particles.length < 200) particles.push(new Particle({
+            x: width * 0.5 + (Math.random()-0.5)*200, y: height * 0.7, vx: (Math.random()-0.5)*4, vy: -Math.random()*8 - 4, 
+            size: 5, color: '#ff7a2f', decay: 0.02, speed: 6
+        }));
+    }
+
+    // Trim particles
+    particles = particles.filter(p => p.life > 0);
+    particles.forEach(p => {
+        p.update();
+        p.draw();
+    });
+}
+
+// Scroll Logic
+window.addEventListener('scroll', () => {
+    targetScrollY = window.scrollY;
+});
+
+function lerpScroll() {
+    scrollY += (targetScrollY - scrollY) * 0.08;
+    const progress = scrollY / (scrollProxy.offsetHeight - window.innerHeight);
+    const sceneHeight = 1 / 6;
+    
+    // Update progress bar
+    progressFill.style.width = `${progress * 100}%`;
+
+    // Handle Scene Transitions
+    const newSceneIdx = Math.min(Math.floor(progress * 6), 5);
+    if (newSceneIdx !== currentSceneIdx) {
+        currentSceneIdx = newSceneIdx;
+        handleSceneChange(currentSceneIdx);
+    }
+    
+    // Apply Parallax to backgrounds (subtle)
+    scenes.forEach((s, i) => {
+        if (i === currentSceneIdx) s.classList.add('active');
+        else s.classList.remove('active');
+    });
+}
+
+function handleSceneChange(idx) {
+    particles = []; // Reset particles on scene change
+    const activeScene = scenes[idx];
+    const textSpans = activeScene.querySelectorAll('span');
+    
+    // Reset text
+    textSpans.forEach(span => {
+        span.style.opacity = '0';
+        span.style.transform = 'translateY(30px)';
+    });
+
+    // Trigger text animation with staggered delay
+    setTimeout(() => {
+        textSpans.forEach((span, i) => {
+            setTimeout(() => {
+                span.style.transition = 'all 1s cubic-bezier(0.22, 1, 0.36, 1)';
+                span.style.opacity = '1';
+                span.style.transform = 'translateY(0)';
+            }, i * 80);
+        });
+    }, 500);
+
+    // Sound ring visibility
+    if (idx >= 3) {
+        soundBtn.style.opacity = '1';
+    } else {
+        soundBtn.style.opacity = '0';
+    }
+}
+
+function animate() {
+    lerpScroll();
+    updateParticles();
+    requestAnimationFrame(animate);
+}
+
+// Initialization
+window.addEventListener('resize', initCanvas);
+initCanvas();
+animate();
+
+// Mobile/Accessibility
+if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // Stop heavy movement if user prefers reduced motion
+    // (In this implementation, we'd reduce particle counts/speed)
+}
+
+</script>
+</body>
+</html>

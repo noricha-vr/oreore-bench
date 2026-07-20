@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "theme": "phoenix-lp",
+  "model": "gpt-5.6-luna",
+  "model_id": "gpt-5.6-luna",
+  "harness": "codex-exec",
+  "reasoning_effort": "high",
+  "attempts": 1,
+  "generated_at": "2026-07-20T10:20:39+09:00",
+  "generated_at_source": "git-first-commit",
+  "sampling": {
+    "temperature": "default",
+    "max_tokens": "default",
+    "top_p": "default"
+  },
+  "system_prompt": "harness-default",
+  "post_processing": "none",
+  "runtime": null,
+  "usage": {
+    "estimated": true,
+    "method": "tiktoken-o200k_base-proxy",
+    "prompt_tokens": 1643,
+    "completion_tokens": 28100,
+    "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+  },
+  "cost": {
+    "estimated": true,
+    "usd": 0.170243,
+    "actual_usd": null,
+    "prompt_usd_per_mtok": 1.0,
+    "completion_usd_per_mtok": 6.0,
+    "pricing_source": "openrouter",
+    "pricing_model": "openai/gpt-5.6-luna",
+    "pricing_fetched_at": "2026-07-17"
+  }
+}

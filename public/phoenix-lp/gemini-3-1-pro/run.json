@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "theme": "phoenix-lp",
+  "model": "gemini-3-1-pro",
+  "model_id": "gemini-3-1-pro",
+  "harness": "antigravity-cli",
+  "reasoning_effort": "high",
+  "attempts": 1,
+  "generated_at": "2026-07-20T10:20:39+09:00",
+  "generated_at_source": "git-first-commit",
+  "sampling": {
+    "temperature": "default",
+    "max_tokens": "default",
+    "top_p": "default"
+  },
+  "system_prompt": "harness-default",
+  "post_processing": "none",
+  "runtime": null,
+  "usage": {
+    "estimated": true,
+    "method": "tiktoken-o200k_base-proxy",
+    "prompt_tokens": 1643,
+    "completion_tokens": 8129,
+    "note": "reasoning トークン・ハーネス側 system prompt を含まない下限値"
+  },
+  "cost": {
+    "estimated": true,
+    "usd": 0.100834,
+    "actual_usd": null,
+    "prompt_usd_per_mtok": 2.0,
+    "completion_usd_per_mtok": 12.0,
+    "pricing_source": "openrouter",
+    "pricing_model": "google/gemini-3.1-pro-preview",
+    "pricing_fetched_at": "2026-07-17"
+  }
+}

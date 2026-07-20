@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HIBANA — 焔の物語</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Shippori+Mincho:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --dawn-bg:#f2ecf5; --dawn-wing:#b9a6e0; --orb:#e8f0a8; --flame:#ff7a2f;
+    --ember:#ffb36b; --night:#0a1030; --feather:#7fb8ff; --sunset:#c23a1f; --ink:#2a2438;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;background:#0a1030;color:var(--ink);}
+  body{
+    font-family:"Zen Kaku Gothic New",sans-serif;font-weight:300;
+    overflow-x:hidden;-webkit-font-smoothing:antialiased;
+  }
+  /* total scroll driver */
+  #scroll-driver{position:relative;width:100%;height:900vh;pointer-events:none;z-index:1;}
+
+  /* fixed particle canvas */
+  #fx{position:fixed;inset:0;width:100vw;height:100vh;z-index:2;pointer-events:none;}
+
+  /* scene stage */
+  #stage{position:fixed;inset:0;width:100vw;height:100vh;z-index:3;overflow:hidden;}
+  .scene{
+    position:fixed;inset:0;width:100vw;height:100vh;
+    opacity:0;will-change:opacity,transform;
+    display:flex;align-items:center;justify-content:center;
+    transition:none;
+  }
+  .scene .bg{position:absolute;inset:0;will-change:transform;}
+  .scene .content{position:relative;z-index:5;width:100%;height:100%;}
+
+  /* ---------- typography ---------- */
+  .poem{
+    font-family:"Cormorant Garamond",serif;font-style:italic;font-weight:400;
+    font-size:clamp(1.4rem,3.2vw,2.6rem);line-height:1.5;letter-spacing:0.04em;
+  }
+  .poem em{color:var(--flame);font-weight:500;}
+  .jp{font-family:"Shippori Mincho",serif;}
+  .stagger{display:block;}
+  .stagger .w{
+    display:inline-block;opacity:0;transform:translateY(1.2em);
+    transition:opacity .9s ease, transform .9s cubic-bezier(.2,.8,.2,1);
+  }
+  .scene.active .stagger .w{opacity:1;transform:translateY(var(--ty,0));}
+
+  /* ---------- UI ---------- */
+  .ui{position:fixed;z-index:20;font-family:"Zen Kaku Gothic New",sans-serif;font-weight:300;color:#fff;mix-blend-mode:difference;}
+  #logo{top:2.4vh;left:2.6vw;display:flex;align-items:center;gap:.6rem;}
+  #logo .mark{width:26px;height:26px;}
+  #logo .name{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:1.5rem;letter-spacing:.14em;}
+  #logo .date{font-size:.7rem;letter-spacing:.2em;opacity:.7;margin-left:.4rem;}
+  #nav{top:3vh;right:2.6vw;display:flex;gap:1.6rem;font-size:.78rem;letter-spacing:.24em;}
+  #nav span{cursor:pointer;opacity:.8;}
+  #progress-wrap{position:fixed;bottom:3.2vh;left:50%;transform:translateX(-50%);z-index:20;width:min(38vw,420px);height:1px;background:rgba(255,255,255,.25);mix-blend-mode:difference;}
+  #progress{height:100%;width:0;background:#fff;transform-origin:left;}
+  #sound{position:fixed;bottom:3vh;left:2.8vw;width:46px;height:46px;z-index:20;opacity:0;transition:opacity .8s ease;mix-blend-mode:difference;}
+  #sound circle{fill:none;stroke:#fff;stroke-width:1;}
+  #sound .bars line{stroke:#fff;stroke-width:1.4;}
+  #scene-label{position:fixed;bottom:3.1vh;right:2.8vw;z-index:20;font-size:.72rem;letter-spacing:.3em;color:#fff;mix-blend-mode:difference;opacity:.75;}
+
+  /* ---------- scene 1 dawn ---------- */
+  #s1 .bg{background:
+     radial-gradient(120% 90% at 62% 20%, rgba(232,240,168,.5), transparent 42%),
+     radial-gradient(90% 80% at 20% 70%, rgba(185,166,224,.55), transparent 55%),
+     linear-gradient(160deg,#f7f2fa 0%, #f2ecf5 40%, #e9dff0 100%);}
+  #s1 .orb{position:absolute;top:14%;left:56%;width:min(30vw,340px);height:min(30vw,340px);border-radius:50%;
+     background:radial-gradient(circle at 40% 38%, #f4ffcf, #e8f0a8 40%, rgba(200,220,120,0) 70%);
+     filter:blur(2px);mix-blend-mode:screen;}
+  #s1 .txt{position:absolute;right:6vw;top:44%;max-width:46vw;color:#4a3f5c;text-align:right;}
+  #s1 .txt em{color:#9a6bd0;}
+
+  /* ---------- scene 2 rise ---------- */
+  #s2 .bg{background:
+     radial-gradient(80% 90% at 50% 105%, rgba(255,122,47,.85), transparent 55%),
+     radial-gradient(60% 70% at 50% 90%, rgba(255,179,107,.6), transparent 60%),
+     linear-gradient(180deg,#3a1608 0%, #7a2a10 45%, #c23a1f 100%);}
+  #s2 .txt{position:absolute;left:50%;top:40%;transform:translateX(-50%);text-align:center;color:#fff2e6;}
+  #s2 .txt .jp{font-size:clamp(2rem,6vw,4.4rem);letter-spacing:.12em;text-shadow:0 0 30px rgba(255,150,80,.6);}
+
+  /* ---------- scene 3 halo ---------- */
+  #s3 .bg{background:
+     radial-gradient(circle at 50% 46%, #fff 0%, #ffe9c2 8%, #ffb36b 18%, #ff7a2f 30%, #c23a1f 46%, #5a1c3a 66%, #1a1038 100%);}
+  #s3 .glyph{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);
+     font-family:"Shippori Mincho",serif;font-size:clamp(6rem,26vw,20rem);color:#fff;
+     text-shadow:0 0 40px rgba(255,220,150,.9);animation:pulse 3.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:.55;filter:blur(.4px)}50%{opacity:1;filter:blur(0)}}
+
+  /* ---------- scene 4 feather ---------- */
+  #s4 .bg{background:
+     radial-gradient(70% 60% at 50% 30%, rgba(127,184,255,.18), transparent 60%),
+     linear-gradient(180deg,#060a24 0%, #0a1030 55%, #050818 100%);}
+  #s4 .side{position:absolute;top:50%;transform:translateY(-50%);writing-mode:vertical-rl;
+     font-family:"Shippori Mincho",serif;color:#9fb6e8;font-size:.9rem;line-height:2.1;letter-spacing:.28em;opacity:.85;}
+  #s4 .side.l{left:6vw;} #s4 .side.r{right:6vw;text-align:right;}
+  #s4 .txt{position:absolute;left:50%;bottom:12%;transform:translateX(-50%);text-align:center;max-width:70vw;color:#cfe0ff;}
+  #s4 .txt em{color:var(--feather);}
+
+  /* ---------- scene 5 crystal ---------- */
+  #s5 .bg{background:linear-gradient(180deg,#060a24 0%, #0a1030 55%, #08122e 100%);}
+  #s5 .stage3d{position:absolute;inset:0;perspective:1200px;display:flex;align-items:center;justify-content:center;gap:min(8vw,120px);pointer-events:auto;}
+  .cube{position:relative;width:min(16vw,150px);height:min(16vw,150px);transform-style:preserve-3d;animation:spin 16s linear infinite;}
+  .cube:nth-child(2){width:min(11vw,110px);height:min(11vw,110px);animation-duration:22s;animation-direction:reverse;}
+  .cube:nth-child(3){width:min(13vw,130px);height:min(13vw,130px);animation-duration:19s;}
+  .cube .f{position:absolute;inset:0;border:1px solid rgba(200,220,255,.55);
+     background:linear-gradient(135deg,rgba(127,184,255,.14),rgba(255,122,47,.10),rgba(200,120,255,.14));
+     backdrop-filter:blur(2px);box-shadow:inset 0 0 30px rgba(150,200,255,.3);}
+  .cube .f1{transform:translateZ(var(--h))} .cube .f2{transform:rotateY(180deg) translateZ(var(--h))}
+  .cube .f3{transform:rotateY(90deg) translateZ(var(--h))} .cube .f4{transform:rotateY(-90deg) translateZ(var(--h))}
+  .cube .f5{transform:rotateX(90deg) translateZ(var(--h))} .cube .f6{transform:rotateX(-90deg) translateZ(var(--h))}
+  .cube:hover{animation-play-state:paused;}
+  #s5 .stage3d:hover .cube{transform:rotateX(12deg) rotateY(20deg);transition:transform .6s ease;}
+  #s5 .txt{position:absolute;left:50%;bottom:14%;transform:translateX(-50%);text-align:center;color:#bcd0ff;}
+  @keyframes spin{from{transform:rotateX(-18deg) rotateY(0)}to{transform:rotateX(-18deg) rotateY(360deg)}}
+
+  /* ---------- scene 6 finale ---------- */
+  #s6 .bg{background:
+     linear-gradient(180deg,#2a0e2e 0%, #7a1e18 30%, #c23a1f 50%, #6a1710 60%, #2a0a14 70%, #140812 100%);}
+  #s6 .mountains{position:absolute;bottom:38%;left:0;width:100%;height:22%;
+     background:linear-gradient(180deg, transparent, #1a0810);
+     clip-path:polygon(0 100%,0 60%,14% 30%,26% 55%,40% 22%,55% 50%,70% 18%,84% 48%,100% 28%,100% 100%);opacity:.9;}
+  #s6 .txt{position:absolute;left:50%;bottom:9%;transform:translateX(-50%);text-align:center;color:#ffe6cf;text-shadow:0 0 24px rgba(255,120,50,.6);}
+  #s6 .txt em{color:#ffd27a;}
+
+  @media (max-width:680px){
+    #s1 .txt{max-width:78vw;} #s4 .side{font-size:.72rem;} #nav{gap:1rem;}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="fx"></canvas>
+
+<div id="stage">
+  <!-- Scene 1 Dawn -->
+  <section class="scene" id="s1" data-scene="0">
+    <div class="bg"></div>
+    <div class="content">
+      <div class="orb"></div>
+      <div class="txt poem">
+        <span class="stagger" data-line>what guides us through</span>
+        <span class="stagger" data-line><em>change</em>, <em>reinvention</em>,</span>
+        <span class="stagger" data-line>and the <em>unknown</em>—</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scene 2 Rise -->
+  <section class="scene" id="s2" data-scene="1">
+    <div class="bg"></div>
+    <div class="content">
+      <div class="txt">
+        <span class="jp stagger" data-line>再生である。</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scene 3 Halo -->
+  <section class="scene" id="s3" data-scene="2">
+    <div class="bg"></div>
+    <div class="content">
+      <div class="glyph jp">音</div>
+    </div>
+  </section>
+
+  <!-- Scene 4 Feather -->
+  <section class="scene" id="s4" data-scene="3">
+    <div class="bg"></div>
+    <div class="content">
+      <div class="side l jp">羽根は落ちながら光を編む。<br>沈黙は音を孕む器。</div>
+      <div class="side r jp">青の残響、夜の底へ。<br>ひとひらの記憶。</div>
+      <div class="txt poem">
+        <span class="stagger" data-line>don't just <em>speak</em> to us.</span>
+        <span class="stagger" data-line>they <em>stimulate</em> us.</span>
+        <span class="stagger" data-line>light <em>becomes</em> <span class="jp">私</span>, flare.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scene 5 Crystal -->
+  <section class="scene" id="s5" data-scene="4">
+    <div class="bg"></div>
+    <div class="content">
+      <div class="stage3d">
+        <div class="cube" style="--h:calc(min(16vw,150px)/2)"><div class="f f1"></div><div class="f f2"></div><div class="f f3"></div><div class="f f4"></div><div class="f f5"></div><div class="f f6"></div></div>
+        <div class="cube" style="--h:calc(min(11vw,110px)/2)"><div class="f f1"></div><div class="f f2"></div><div class="f f3"></div><div class="f f4"></div><div class="f f5"></div><div class="f f6"></div></div>
+        <div class="cube" style="--h:calc(min(13vw,130px)/2)"><div class="f f1"></div><div class="f f2"></div><div class="f f3"></div><div class="f f4"></div><div class="f f5"></div><div class="f f6"></div></div>
+      </div>
+      <div class="txt poem">
+        <span class="stagger" data-line>refracted <em>light</em>, <span class="jp">結晶</span>のなかで。</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scene 6 Finale -->
+  <section class="scene" id="s6" data-scene="5">
+    <div class="bg"></div>
+    <div class="content">
+      <div class="mountains"></div>
+      <div class="txt poem">
+        <span class="stagger" data-line><em>feel</em> their heat.</span>
+        <span class="stagger" data-line><span class="jp">焔</span>と <em>interact</em> with。</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- UI -->
+<div class="ui" id="logo">
+  <svg class="mark" viewBox="0 0 32 32" fill="none">
+    <path d="M6 20 C10 8, 22 6, 26 14 C22 12, 18 14, 16 18 C20 17, 23 19, 24 22 C19 20, 12 22, 6 20Z" fill="#7fb8ff"/>
+    <circle cx="23" cy="12" r="1.3" fill="#0a1030"/>
+  </svg>
+  <span class="name">HIBANA</span>
+  <span class="date">Sept. 29</span>
+</div>
+<nav class="ui" id="nav"><span>作品</span><span>思想</span><span>接続</span></nav>
+<svg class="ui" id="sound" viewBox="0 0 46 46">
+  <circle cx="23" cy="23" r="21"/>
+  <g class="bars">
+    <line x1="18" y1="19" x2="18" y2="27"><animate attributeName="y1" values="20;16;20" dur="1.1s" repeatCount="indefinite"/><animate attributeName="y2" values="26;30;26" dur="1.1s" repeatCount="indefinite"/></line>
+    <line x1="23" y1="16" x2="23" y2="30"><animate attributeName="y1" values="17;14;17" dur="0.9s" repeatCount="indefinite"/><animate attributeName="y2" values="29;32;29" dur="0.9s" repeatCount="indefinite"/></line>
+    <line x1="28" y1="19" x2="28" y2="27"><animate attributeName="y1" values="20;15;20" dur="1.3s" repeatCount="indefinite"/><animate attributeName="y2" values="26;31;26" dur="1.3s" repeatCount="indefinite"/></line>
+  </g>
+</svg>
+<div id="scene-label" class="ui">DAWN</div>
+<div id="progress-wrap"><div id="progress"></div></div>
+
+<div id="scroll-driver"></div>
+
+<script>
+(function(){
+  "use strict";
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const scenes = Array.from(document.querySelectorAll(".scene"));
+  const N = scenes.length;
+  const labels = ["DAWN","RISE","HALO","FEATHER","CRYSTAL","FINALE"];
+  const progressEl = document.getElementById("progress");
+  const labelEl = document.getElementById("scene-label");
+  const soundEl = document.getElementById("sound");
+
+  // ---------- staggered words ----------
+  scenes.forEach(sc=>{
+    sc.querySelectorAll("[data-line]").forEach(line=>{
+      const html = line.innerHTML;
+      // split by spaces but keep tags: simple tokenization on top-level spaces
+      const tmp=document.createElement("div"); tmp.innerHTML=html;
+      const frag=document.createDocumentFragment();
+      let wi=0;
+      function wrap(node){
+        if(node.nodeType===3){
+          node.textContent.split(/(\s+)/).forEach(tok=>{
+            if(tok.trim()===""){ frag.appendChild(document.createTextNode(tok)); return;}
+            const s=document.createElement("span"); s.className="w";
+            s.textContent=tok; s.style.transitionDelay=(wi*75)+"ms";
+            s.style.setProperty("--ty",(((wi%3)-1)*-0.12)+"em");
+            wi++; frag.appendChild(s);
+          });
+        } else {
+          const s=document.createElement("span"); s.className="w";
+          s.innerHTML=node.outerHTML; s.style.transitionDelay=(wi*75)+"ms";
+          s.style.setProperty("--ty",(((wi%3)-1)*-0.12)+"em");
+          wi++; frag.appendChild(s);
+        }
+      }
+      Array.from(tmp.childNodes).forEach(wrap);
+      line.innerHTML=""; line.appendChild(frag);
+    });
+  });
+
+  // ---------- scroll driver ----------
+  const total = ()=>document.getElementById("scroll-driver").offsetHeight - window.innerHeight;
+  let targetP=0, curP=0;
+  function onScroll(){ targetP = Math.min(1,Math.max(0, window.scrollY/total())); }
+  window.addEventListener("scroll",onScroll,{passive:true});
+  window.addEventListener("resize",onScroll);
+
+  // ---------- canvas particles ----------
+  const canvas=document.getElementById("fx");
+  const ctx=canvas.getContext("2d");
+  let W,H,DPR;
+  function resize(){
+    DPR=Math.min(window.devicePixelRatio||1,2);
+    W=canvas.width=innerWidth*DPR; H=canvas.height=innerHeight*DPR;
+    canvas.style.width=innerWidth+"px"; canvas.style.height=innerHeight+"px";
+  }
+  resize(); window.addEventListener("resize",resize);
+
+  const DENS = reduce?0.25:1;
+  const rnd=(a,b)=>a+Math.random()*(b-a);
+  let particles=[];
+
+  function spawn(count,init){
+    for(let i=0;i<count*DENS;i++) particles.push(init());
+  }
+  function seed(){
+    particles=[];
+    // dawn watercolor motes (scene0)
+    spawn(70,()=>({s:0,x:rnd(0,W*0.5),y:rnd(0,H),vx:rnd(-.1,.15)*DPR,vy:rnd(-.15,.1)*DPR,r:rnd(20,70)*DPR,life:1,c:"185,166,224"}));
+    // ember rise (scene1)
+    spawn(120,()=>({s:1,x:rnd(W*0.2,W*0.8),y:rnd(H*0.6,H*1.3),vx:rnd(-.3,.3)*DPR,vy:rnd(-2.2,-0.9)*DPR,r:rnd(1.5,5)*DPR,life:1,c:"255,150,70"}));
+    // halo sparks (scene2)
+    spawn(90,()=>({s:2,a:rnd(0,Math.PI*2),rad:rnd(0.05,0.55),spd:rnd(.002,.007),r:rnd(1,3.5)*DPR,c:"255,225,160"}));
+    // feather beams (scene3)
+    spawn(80,()=>({s:3,x:rnd(0,W),y:rnd(0,H),vy:rnd(.6,2.2)*DPR,vx:rnd(-.1,.1)*DPR,r:rnd(1,3)*DPR,life:1,c:"127,184,255"}));
+    // crystal dust (scene4)
+    spawn(70,()=>({s:4,x:rnd(0,W),y:rnd(0,H),vx:rnd(-.2,.2)*DPR,vy:rnd(-.2,.2)*DPR,r:rnd(.8,2.6)*DPR,c:"180,210,255"}));
+    // flame finale (scene5)
+    spawn(150,()=>resetFlame({s:5}));
+  }
+  function resetFlame(p){
+    const cx=W*0.5, spread=W*0.22;
+    p.x=cx+rnd(-spread,spread);
+    p.y=H*0.62+rnd(-40,40)*DPR;
+    p.vx=(p.x-cx)/spread*rnd(.2,.9)*DPR;
+    p.vy=rnd(-3.4,-1.4)*DPR;
+    p.r=rnd(2,7)*DPR; p.life=rnd(.6,1);
+    p.c=Math.random()<.5?"255,122,47":"255,179,107";
+    return p;
+  }
+  seed(); window.addEventListener("resize",seed);
+
+  // scene weight = how active each scene is (0..1)
+  function sceneWeight(i){
+    // each scene occupies 1/N of progress, peak at center
+    const pos = curP*(N-1);
+    const d=Math.abs(pos-i);
+    return Math.max(0,1-d);
+  }
+
+  let t=0;
+  function frame(){
+    curP += (targetP-curP)*0.08;
+    t += 0.016;
+
+    // update scenes visual state
+    const pos=curP*(N-1);
+    let activeIdx=Math.round(pos);
+    scenes.forEach((sc,i)=>{
+      const w=Math.max(0,1-Math.abs(pos-i));
+      const op=Math.pow(w,1.4);
+      sc.style.opacity=op.toFixed(3);
+      sc.style.pointerEvents = op>0.5?"auto":"none";
+      const bg=sc.querySelector(".bg");
+      if(bg){ const par=(pos-i); bg.style.transform=`scale(${1.06-op*0.06}) translateY(${par*4}vh)`; }
+      const content=sc.querySelector(".content");
+      if(content) content.style.transform=`translateY(${(pos-i)*3}vh)`;
+      sc.classList.toggle("active", op>0.55);
+    });
+
+    labelEl.textContent=labels[Math.min(N-1,Math.max(0,activeIdx))];
+    progressEl.style.transform=`scaleX(${curP})`;
+    soundEl.style.opacity = (pos>=2.6)?"0.85":"0";
+
+    // ---- particles ----
+    ctx.clearRect(0,0,W,H);
+    ctx.globalCompositeOperation="lighter";
+    for(const p of particles){
+      const w=sceneWeight(p.s);
+      if(w<=0.02) continue;
+      switch(p.s){
+        case 0:
+          p.x+=p.vx; p.y+=p.vy;
+          if(p.x<-100)p.x=W*0.5; if(p.x>W*0.5)p.x=-100;
+          if(p.y<-100)p.y=H; if(p.y>H+100)p.y=-100;
+          blob(p,0.08*w); break;
+        case 1:
+          p.x+=p.vx; p.y+=p.vy; p.vy*=0.998; p.vx+=Math.sin((p.y*0.01)+t)*0.02*DPR;
+          if(p.y<-20){ p.y=H*rnd(1,1.3); p.x=rnd(W*0.2,W*0.8); p.vy=rnd(-2.2,-0.9)*DPR; }
+          dot(p,0.9*w); break;
+        case 2:
+          p.a+=p.spd;
+          p.x=W*0.5+Math.cos(p.a)*p.rad*W;
+          p.y=H*0.47+Math.sin(p.a)*p.rad*H*0.7;
+          dot(p,(0.5+0.5*Math.sin(t*2+p.a))*w); break;
+        case 3:
+          p.y+=p.vy; p.x+=p.vx;
+          if(p.y>H+20){p.y=-20;p.x=rnd(0,W);}
+          beam(p,0.7*w); break;
+        case 4:
+          p.x+=p.vx; p.y+=p.vy+Math.sin(t+p.x*0.005)*0.15*DPR;
+          if(p.x<0)p.x=W; if(p.x>W)p.x=0; if(p.y<0)p.y=H; if(p.y>H)p.y=0;
+          dot(p,0.5*w); break;
+        case 5:
+          p.x+=p.vx; p.y+=p.vy; p.vy+=0.02*DPR; p.vx*=0.99; p.life-=0.012;
+          p.r*=0.985;
+          if(p.life<=0||p.r<0.6) resetFlame(p);
+          flame(p,w); break;
+      }
+    }
+    ctx.globalCompositeOperation="source-over";
+
+    requestAnimationFrame(frame);
+  }
+  function dot(p,al){ ctx.beginPath(); ctx.fillStyle=`rgba(${p.c},${al})`; ctx.arc(p.x,p.y,p.r,0,6.283); ctx.fill(); }
+  function blob(p,al){
+    const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
+    g.addColorStop(0,`rgba(${p.c},${al})`); g.addColorStop(1,`rgba(${p.c},0)`);
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.283); ctx.fill();
+  }
+  function beam(p,al){
+    const g=ctx.createLinearGradient(p.x,p.y-30*DPR,p.x,p.y+30*DPR);
+    g.addColorStop(0,`rgba(${p.c},0)`); g.addColorStop(.5,`rgba(${p.c},${al})`); g.addColorStop(1,`rgba(${p.c},0)`);
+    ctx.strokeStyle=g; ctx.lineWidth=p.r; ctx.beginPath();
+    ctx.moveTo(p.x,p.y-28*DPR); ctx.lineTo(p.x,p.y+28*DPR); ctx.stroke();
+  }
+  function flame(p,w){
+    const al=p.life*0.85*w;
+    const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*2.2);
+    g.addColorStop(0,`rgba(255,240,200,${al})`);
+    g.addColorStop(0.4,`rgba(${p.c},${al*0.8})`);
+    g.addColorStop(1,`rgba(${p.c},0)`);
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,p.r*2.2,0,6.283); ctx.fill();
+    // water reflection
+    const ry=H*0.62+(H*0.62-p.y)*0.6;
+    const g2=ctx.createRadialGradient(p.x,ry,0,p.x,ry,p.r*3);
+    g2.addColorStop(0,`rgba(${p.c},${al*0.18})`); g2.addColorStop(1,`rgba(${p.c},0)`);
+    ctx.fillStyle=g2; ctx.beginPath(); ctx.arc(p.x,ry,p.r*3,0,6.283); ctx.fill();
+  }
+
+  onScroll();
+  scenes[0].classList.add("active");
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
