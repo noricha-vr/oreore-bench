@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HIBANA — 不死鳥スクロール</title>
+<meta name="description" content="スクロールで物語が進む、不死鳥の没入型 LP。水彩と焔の6シーン。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Shippori+Mincho:wght@400;500&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --dawn-bg:#f2ecf5; --dawn-wing:#b9a6e0; --orb:#e8f0a8;
+  --flame:#ff7a2f; --ember:#ffb36b; --night:#0a1030;
+  --feather:#7fb8ff; --sunset:#c23a1f; --ink:#2a2438;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:auto;}
+body{
+  background:var(--dawn-bg);
+  font-family:'Zen Kaku Gothic New',sans-serif;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+.spacer{height:900vh;}
+
+/* ---------- fixed scene layers ---------- */
+.scene{
+  position:fixed; inset:0; opacity:0; visibility:hidden;
+  pointer-events:none; will-change:opacity;
+}
+.scene.bgL{z-index:1;} .scene.fgL{z-index:4;}
+.plx{position:absolute; inset:0; will-change:transform;}
+canvas#cvA{position:fixed; inset:0; z-index:2; pointer-events:none;}
+canvas#cvB{position:fixed; inset:0; z-index:3; pointer-events:none;}
+#vig{
+  position:fixed; inset:0; z-index:6; pointer-events:none;
+  background:radial-gradient(120% 120% at 50% 45%, transparent 52%,
+    rgba(10,16,48,.14) 76%, rgba(10,16,48,.40) 100%);
+}
+canvas#grain{
+  position:fixed; inset:0; z-index:7; pointer-events:none;
+  opacity:.05; mix-blend-mode:overlay;
+}
+
+/* ---------- 常時 UI ---------- */
+.bd{mix-blend-mode:difference; color:#fff;}
+#brand{
+  position:fixed; top:4vh; left:6vw; z-index:10; display:flex;
+  align-items:center; gap:.7rem; pointer-events:none;
+}
+#brand svg{width:22px; height:22px; flex:none;}
+#brand svg path{fill:var(--feather);}
+#brand svg circle{fill:var(--night);}
+#brand .logo{
+  font-family:'Cormorant Garamond',serif; font-weight:500;
+  font-size:.95rem; letter-spacing:.42em;
+}
+#brand .date{
+  font-family:'Cormorant Garamond',serif; font-style:italic;
+  font-size:.75rem; letter-spacing:.12em; opacity:.72;
+}
+#nav{
+  position:fixed; top:4vh; right:6vw; z-index:10; display:flex; gap:2.2rem;
+}
+#nav a{
+  font-weight:300; font-size:.75rem; letter-spacing:.34em;
+  text-decoration:none; cursor:pointer; pointer-events:auto;
+  transition:opacity .4s; opacity:.85;
+}
+#nav a:hover{opacity:.5;}
+#prog{
+  position:fixed; bottom:3.2vh; left:50%; transform:translateX(-50%);
+  width:26vw; height:1px; background:rgba(255,255,255,.25); z-index:10;
+}
+#bar{
+  display:block; height:100%; background:#fff;
+  transform-origin:left; transform:scaleX(0); will-change:transform;
+}
+#sring{
+  position:fixed; left:6vw; bottom:5vh; width:46px; height:46px; z-index:10;
+  color:color-mix(in srgb, var(--feather) 62%, white);
+  opacity:0; transform:translateY(14px); transition:opacity .9s ease, transform .9s ease;
+  pointer-events:none;
+}
+#sring.show{opacity:.85; transform:none; pointer-events:auto; cursor:pointer;}
+#sring svg{width:100%; height:100%; overflow:visible;}
+#sring .dash{transform-origin:24px 24px; animation:spin360 16s linear infinite;}
+#sring .bars rect{
+  fill:currentColor; transform-box:fill-box; transform-origin:center bottom;
+  animation:eq 1.3s ease-in-out infinite alternate;
+}
+#sring .bars rect:nth-child(2){animation-delay:-.45s;}
+#sring .bars rect:nth-child(3){animation-delay:-.9s;}
+#sring.on .bars rect{animation-duration:.55s;}
+@keyframes spin360{to{transform:rotate(360deg);}}
+@keyframes eq{from{transform:scaleY(.35);}to{transform:scaleY(1);}}
+
+/* ---------- タイポ共通 ---------- */
+.chap{
+  font-weight:300; font-size:.75rem; letter-spacing:.5em;
+  text-transform:uppercase; opacity:.55; margin-bottom:2.2rem;
+}
+.poem{
+  font-family:'Cormorant Garamond',serif; font-weight:400;
+  font-size:clamp(1.4rem,3.2vw,2.6rem); line-height:1.5; letter-spacing:.04em;
+}
+.poem .em{font-style:italic; font-weight:500;}
+.poem .jp{font-family:'Shippori Mincho',serif; font-size:.88em;}
+.w{
+  display:inline-block; opacity:0;
+  transform:translateY(calc(var(--y,0em) + .65em));
+  transition:opacity .95s cubic-bezier(.22,.61,.21,1),
+             transform 1.15s cubic-bezier(.22,.61,.21,1);
+  transition-delay:calc(var(--d,0)*78ms);
+}
+.in .w{opacity:1; transform:translateY(var(--y,0em));}
+.in .w.soft{opacity:.72;}
+.w.soft{filter:blur(3.5px);}
+.risein{
+  opacity:0; transform:translateY(26px);
+  transition:opacity 1.1s ease, transform 1.2s cubic-bezier(.22,.61,.21,1);
+}
+.in .risein{opacity:1; transform:none;}
+
+/* ---------- Scene 1 : Dawn ---------- */
+#sb0{
+  background:var(--dawn-bg);
+  background:linear-gradient(150deg,
+    color-mix(in srgb, var(--dawn-bg) 68%, white) 0%,
+    var(--dawn-bg) 46%,
+    color-mix(in srgb, var(--dawn-wing) 26%, var(--dawn-bg)) 100%);
+}
+.dawnwash{
+  position:absolute; inset:0;
+  background:
+    radial-gradient(46vmax 34vmax at 12% 62%, color-mix(in srgb, var(--dawn-wing) 30%, transparent), transparent 70%),
+    radial-gradient(36vmax 28vmax at 86% 18%, color-mix(in srgb, var(--orb) 22%, transparent), transparent 70%);
+}
+.orbGlow{
+  position:absolute; left:50%; top:30%; width:36vmin; height:36vmin;
+  transform:translate(-50%,-50%);
+  background:radial-gradient(circle,
+    color-mix(in srgb, var(--orb) 85%, white) 0%,
+    color-mix(in srgb, var(--orb) 55%, transparent) 34%, transparent 70%);
+  filter:blur(6px); animation:orbPulse 7s ease-in-out infinite;
+}
+@keyframes orbPulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.9;}
+  50%{transform:translate(-50%,-50%) scale(1.12);opacity:1;}}
+.s0text{
+  position:absolute; right:8vw; top:50%; transform:translateY(-50%);
+  max-width:42vw; min-width:min(88vw,30rem); color:var(--ink);
+}
+.s0text .chap{color:var(--ink);}
+
+/* ---------- Scene 2 : Rise ---------- */
+#sb1{
+  background:var(--ember);
+  background:linear-gradient(180deg,
+    color-mix(in srgb, var(--dawn-bg) 78%, var(--ember)) 0%,
+    color-mix(in srgb, var(--ember) 48%, var(--dawn-bg)) 46%,
+    color-mix(in srgb, var(--flame) 52%, var(--ember)) 100%);
+}
+.s1text{
+  position:absolute; left:50%; top:44%; transform:translate(-50%,-50%);
+  text-align:center; color:color-mix(in srgb, var(--ink) 80%, var(--sunset));
+}
+.s1text .chap{color:color-mix(in srgb, var(--ink) 70%, var(--sunset));}
+.jpbig{
+  font-family:'Shippori Mincho',serif; font-weight:500;
+  font-size:clamp(2.8rem,8vw,6.2rem); letter-spacing:.08em; line-height:1.3;
+}
+
+/* ---------- Scene 3 : Halo ---------- */
+#sb2{background:color-mix(in srgb, var(--ink) 68%, var(--night));}
+.s2text{
+  position:absolute; left:50%; top:47%; transform:translate(-50%,-50%);
+  text-align:center; color:var(--dawn-bg);
+}
+.oto{
+  font-family:'Shippori Mincho',serif; font-weight:500;
+  font-size:clamp(9rem,28vmin,19rem); line-height:1; color:var(--dawn-bg);
+  text-shadow:0 0 44px color-mix(in srgb, var(--ember) 55%, transparent),
+              0 0 140px color-mix(in srgb, var(--dawn-wing) 45%, transparent);
+  animation:flick 6.5s ease-in-out infinite;
+}
+@keyframes flick{0%,100%{opacity:1;}42%{opacity:.5;}47%{opacity:.92;}56%{opacity:.6;}64%{opacity:1;}}
+
+/* ---------- Scene 4 : Feather ---------- */
+.nightbg{
+  background:var(--night);
+  background:radial-gradient(120% 105% at 50% 38%,
+    color-mix(in srgb, var(--night) 82%, var(--feather)) 0%,
+    var(--night) 56%,
+    color-mix(in srgb, var(--night) 82%, black) 100%);
+}
+.vtext{
+  position:absolute; writing-mode:vertical-rl;
+  font-family:'Shippori Mincho',serif; font-size:.8rem;
+  letter-spacing:.4em; line-height:2.4;
+  color:color-mix(in srgb, var(--feather) 48%, white); opacity:.78;
+}
+.vL{left:8vw; top:16vh; max-height:52vh;}
+.vR{right:8vw; bottom:22vh; max-height:52vh;}
+.s3text{
+  position:absolute; left:50%; bottom:11vh; transform:translateX(-50%);
+  text-align:center; width:max-content; max-width:88vw;
+  color:color-mix(in srgb, var(--feather) 34%, white);
+}
+.s3text .chap{color:color-mix(in srgb, var(--feather) 55%, white); margin-bottom:1.2rem;}
+
+/* ---------- Scene 5 : Crystal ---------- */
+.cubes{
+  position:absolute; inset:0; display:flex; gap:9vw;
+  align-items:center; justify-content:center; perspective:1200px;
+}
+.cw{
+  width:clamp(84px,12vw,140px); aspect-ratio:1; position:relative;
+  pointer-events:auto; transform-style:preserve-3d;
+}
+.cw:nth-child(1){transform:translateY(-7vh) scale(.82);}
+.cw:nth-child(2){transform:translateY(4vh);}
+.cw:nth-child(3){transform:translateY(-2vh) scale(.62);}
+.shake{width:100%; height:100%; transform-style:preserve-3d;}
+.cw:hover .shake{animation:wob .9s ease-in-out infinite;}
+.cube{
+  width:100%; height:100%; position:relative;
+  transform-style:preserve-3d; animation:spinCube 26s linear infinite;
+}
+.cw:nth-child(2) .cube{animation-duration:34s; animation-delay:-9s;}
+.cw:nth-child(3) .cube{animation-duration:21s; animation-delay:-5s; animation-direction:reverse;}
+.face{
+  position:absolute; inset:0;
+  background:linear-gradient(135deg,
+    color-mix(in srgb, var(--feather) 12%, transparent),
+    color-mix(in srgb, var(--dawn-wing) 6%, transparent) 55%,
+    color-mix(in srgb, var(--ember) 10%, transparent));
+  border:1px solid;
+  border-image:linear-gradient(120deg,
+    color-mix(in srgb, var(--flame) 55%, transparent),
+    color-mix(in srgb, var(--feather) 72%, transparent),
+    color-mix(in srgb, var(--dawn-wing) 60%, transparent)) 1;
+  box-shadow:inset 0 0 26px color-mix(in srgb, var(--feather) 8%, transparent);
+}
+.f1{transform:translateZ(calc(clamp(84px,12vw,140px)/2));}
+.f2{transform:rotateY(180deg) translateZ(calc(clamp(84px,12vw,140px)/2));}
+.f3{transform:rotateY(90deg) translateZ(calc(clamp(84px,12vw,140px)/2));}
+.f4{transform:rotateY(-90deg) translateZ(calc(clamp(84px,12vw,140px)/2));}
+.f5{transform:rotateX(90deg) translateZ(calc(clamp(84px,12vw,140px)/2));}
+.f6{transform:rotateX(-90deg) translateZ(calc(clamp(84px,12vw,140px)/2));}
+@keyframes spinCube{from{transform:rotateX(-16deg) rotateY(0deg);}to{transform:rotateX(-16deg) rotateY(360deg);}}
+@keyframes wob{0%,100%{transform:rotate(0deg) translateY(0);}
+  25%{transform:rotate(2.4deg) translateY(-4px);}75%{transform:rotate(-2deg) translateY(3px);}}
+.s4text{
+  position:absolute; left:50%; bottom:13vh; transform:translateX(-50%);
+  text-align:center; color:color-mix(in srgb, var(--feather) 34%, white);
+}
+.s4text .cap{
+  font-family:'Cormorant Garamond',serif; font-style:italic;
+  font-size:clamp(1rem,1.8vw,1.4rem); letter-spacing:.08em; opacity:.85;
+}
+.s4text .cap .jp{font-family:'Shippori Mincho',serif; font-style:normal; font-size:.85em;}
+.s4text .chap{color:color-mix(in srgb, var(--feather) 55%, white); margin-bottom:1rem;}
+
+/* ---------- Scene 6 : Finale ---------- */
+#sb5{
+  background:var(--sunset);
+  background:linear-gradient(180deg,
+    color-mix(in srgb, var(--night) 52%, var(--sunset)) 0%,
+    var(--sunset) 44%,
+    color-mix(in srgb, var(--ember) 52%, var(--sunset)) 68%,
+    color-mix(in srgb, var(--night) 62%, var(--sunset)) 68.2%,
+    color-mix(in srgb, var(--night) 88%, var(--sunset)) 100%);
+}
+.mts{position:absolute; left:0; right:0; height:16vh; pointer-events:none;}
+.mtsFar{bottom:32%; opacity:.55;}
+.mtsNear{bottom:31.4%;}
+.mts svg{width:100%; height:100%; display:block;}
+.mtsFar path{fill:color-mix(in srgb, var(--night) 55%, var(--sunset));}
+.mtsNear path{fill:color-mix(in srgb, var(--night) 80%, var(--sunset));}
+.waterglow{
+  position:absolute; left:50%; bottom:6%; width:70vmin; height:22vmin;
+  transform:translateX(-50%);
+  background:radial-gradient(50% 60% at 50% 20%,
+    color-mix(in srgb, var(--flame) 34%, transparent), transparent 75%);
+  filter:blur(18px);
+}
+.s5text{
+  position:absolute; left:50%; bottom:9vh; transform:translateX(-50%);
+  text-align:center; width:max-content; max-width:88vw;
+  color:color-mix(in srgb, var(--dawn-bg) 84%, var(--ember));
+}
+.s5text .chap{color:color-mix(in srgb, var(--dawn-bg) 75%, var(--ember)); margin-bottom:1.2rem;}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.01s !important;
+    animation-iteration-count:1 !important;
+    transition-delay:0ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 背景シーン層 (z1) ============ -->
+<div class="scene bgL" id="sb0">
+  <div class="plx" data-s="0" data-d="0.3"><div class="dawnwash"></div></div>
+  <div class="plx" data-s="0" data-d="0.5"><div class="orbGlow"></div></div>
+</div>
+<div class="scene bgL" id="sb1"></div>
+<div class="scene bgL" id="sb2"></div>
+<div class="scene bgL nightbg" id="sb3"></div>
+<div class="scene bgL nightbg" id="sb4"></div>
+<div class="scene bgL" id="sb5">
+  <div class="plx" data-s="5" data-d="0.3">
+    <div class="mts mtsFar"><svg viewBox="0 0 1440 200" preserveAspectRatio="none"><path d="M0 130 L140 78 L260 118 L420 52 L560 112 L720 70 L880 120 L1030 66 L1180 116 L1320 88 L1440 118 L1440 200 L0 200 Z"/></svg></div>
+  </div>
+  <div class="plx" data-s="5" data-d="0.5">
+    <div class="mts mtsNear"><svg viewBox="0 0 1440 200" preserveAspectRatio="none"><path d="M0 118 L100 66 L210 108 L330 40 L470 104 L600 62 L740 110 L860 50 L1010 112 L1150 72 L1290 106 L1380 84 L1440 108 L1440 200 L0 200 Z"/></svg></div>
+    <div class="waterglow"></div>
+  </div>
+</div>
+
+<canvas id="cvA"></canvas>
+<canvas id="cvB"></canvas>
+
+<!-- ============ 前景シーン層 (z4) ============ -->
+<div class="scene fgL" id="sf0">
+  <div class="plx" data-s="0" data-d="1">
+    <div class="s0text">
+      <p class="chap"><span class="w" style="--d:0">01 — Dawn</span></p>
+      <p class="poem">
+        <span class="w" style="--d:2;--y:0em">what</span>
+        <span class="w" style="--d:1;--y:.38em">guides</span>
+        <span class="w" style="--d:0;--y:.14em">us</span>
+        <span class="w" style="--d:1;--y:.55em">through</span><br>
+        <span class="w em" style="--d:2;--y:.1em">change,</span>
+        <span class="w em" style="--d:3;--y:.48em">reinvention,</span><br>
+        <span class="w" style="--d:4;--y:.22em">and</span>
+        <span class="w" style="--d:5;--y:.04em">the</span>
+        <span class="w em" style="--d:6;--y:.6em">unknown—</span>
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="scene fgL" id="sf1">
+  <div class="plx" data-s="1" data-d="1">
+    <div class="s1text">
+      <p class="chap"><span class="w" style="--d:0">02 — Rise</span></p>
+      <h2 class="jpbig">
+        <span class="w" style="--d:2;--y:0em">再</span><span class="w" style="--d:1;--y:.06em">生</span><span class="w soft" style="--d:0;--y:.12em">で</span><span class="w soft" style="--d:0;--y:.06em">あ</span><span class="w" style="--d:1;--y:0em">る</span><span class="w" style="--d:2;--y:.1em">。</span>
+      </h2>
+    </div>
+  </div>
+</div>
+
+<div class="scene fgL" id="sf2">
+  <div class="plx" data-s="2" data-d="1">
+    <div class="s2text">
+      <p class="chap"><span class="w" style="--d:0">03 — Halo</span></p>
+      <h2 class="oto"><span class="w" style="--d:1">音</span></h2>
+    </div>
+  </div>
+</div>
+
+<div class="scene fgL" id="sf3">
+  <div class="plx" data-s="3" data-d="0.5">
+    <p class="vtext vL risein" style="transition-delay:.35s">一枚の羽根が夜を降りるとき、光は千の筋をのこす。</p>
+    <p class="vtext vR risein" style="transition-delay:.6s">青は沈黙の温度。翳りのなかで作品は呼吸する。</p>
+  </div>
+  <div class="plx" data-s="3" data-d="1">
+    <div class="s3text">
+      <p class="chap"><span class="w" style="--d:0">04 — Feather</span></p>
+      <p class="poem">
+        <span class="w" style="--d:3;--y:.05em">don't</span>
+        <span class="w" style="--d:2;--y:.28em">just</span>
+        <span class="w em" style="--d:1;--y:0em">speak</span>
+        <span class="w" style="--d:0;--y:.2em">to</span>
+        <span class="w" style="--d:1;--y:.42em">us.</span>
+        <span class="w" style="--d:2;--y:.1em">they</span>
+        <span class="w em" style="--d:3;--y:.33em">stimulate</span>
+        <span class="w" style="--d:4;--y:.05em">us.</span><br>
+        <span class="w" style="--d:5;--y:.18em">light</span>
+        <span class="w em" style="--d:6;--y:0em">becomes</span>
+        <span class="w jp" style="--d:7;--y:.26em">私、</span><span class="w em" style="--d:8;--y:.08em">flare。</span>
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="scene fgL" id="sf4">
+  <div class="plx" data-s="4" data-d="1">
+    <div class="cubes">
+      <div class="cw risein" style="transition-delay:.2s"><div class="shake"><div class="cube">
+        <div class="face f1"></div><div class="face f2"></div><div class="face f3"></div>
+        <div class="face f4"></div><div class="face f5"></div><div class="face f6"></div>
+      </div></div></div>
+      <div class="cw risein" style="transition-delay:.45s"><div class="shake"><div class="cube">
+        <div class="face f1"></div><div class="face f2"></div><div class="face f3"></div>
+        <div class="face f4"></div><div class="face f5"></div><div class="face f6"></div>
+      </div></div></div>
+      <div class="cw risein" style="transition-delay:.7s"><div class="shake"><div class="cube">
+        <div class="face f1"></div><div class="face f2"></div><div class="face f3"></div>
+        <div class="face f4"></div><div class="face f5"></div><div class="face f6"></div>
+      </div></div></div>
+    </div>
+    <div class="s4text">
+      <p class="chap"><span class="w" style="--d:0">05 — Crystal</span></p>
+      <p class="cap"><span class="w" style="--d:1;--y:.05em">refracted</span> <span class="w em" style="--d:2;--y:.22em">light</span> <span class="w jp" style="--d:3;--y:0em">—</span> <span class="w jp" style="--d:4;--y:.14em">屈折する夜のかたち</span></p>
+    </div>
+  </div>
+</div>
+
+<div class="scene fgL" id="sf5">
+  <div class="plx" data-s="5" data-d="1">
+    <div class="s5text">
+      <p class="chap"><span class="w" style="--d:0">06 — Finale</span></p>
+      <p class="poem">
+        <span class="w em" style="--d:1;--y:.05em">feel</span>
+        <span class="w" style="--d:0;--y:.3em">their</span>
+        <span class="w" style="--d:1;--y:.08em">heat.</span>
+        <span class="w jp" style="--d:2;--y:.36em">焔と</span>
+        <span class="w em" style="--d:3;--y:.12em">interact</span>
+        <span class="w" style="--d:4;--y:.42em">with。</span>
+      </p>
+    </div>
+  </div>
+</div>
+
+<div id="vig"></div>
+<canvas id="grain"></canvas>
+
+<!-- ============ 常時 UI ============ -->
+<header id="brand">
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M2.6 13.6C6 14.6 9.4 13.2 10.9 10 12 7.7 14.2 6.7 16.2 7.5l-1 1.8 3.3 1c-1.5 3.7-4.9 5.9-8.6 5.9-2.9 0-5.4-.8-7.3-2.6Z"/>
+    <circle cx="14.6" cy="8.9" r=".55"/>
+  </svg>
+  <span class="logo bd">HIBANA</span>
+  <span class="date bd">Sept. 29</span>
+</header>
+<nav id="nav">
+  <a class="bd" data-go="3">作品</a>
+  <a class="bd" data-go="1">思想</a>
+  <a class="bd" data-go="5">接続</a>
+</nav>
+<div id="prog" class="bd"><i id="bar"></i></div>
+<div id="sring" aria-hidden="true">
+  <svg viewBox="0 0 48 48">
+    <circle cx="24" cy="24" r="22" fill="none" stroke="currentColor" stroke-opacity=".35" stroke-width="1"/>
+    <g class="dash"><circle cx="24" cy="24" r="16" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="3 6"/></g>
+    <g class="bars"><rect x="20" y="20" width="1.4" height="8"/><rect x="23.3" y="18" width="1.4" height="12"/><rect x="26.6" y="21" width="1.4" height="6"/></g>
+  </svg>
+</div>
+
+<div class="spacer"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ---------- setup ---------- */
+const RM   = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const dens = RM ? 0.25 : 1;               // reduced-motion では密度 1/4
+const dpr  = Math.min(2, devicePixelRatio || 1);
+
+const cvA = document.getElementById('cvA'), ctxA = cvA.getContext('2d');
+const cvB = document.getElementById('cvB'), ctxB = cvB.getContext('2d');
+const gCv = document.getElementById('grain'), gCtx = gCv.getContext('2d');
+
+let W = innerWidth, H = innerHeight, M = Math.min(W, H);
+
+const SB = [], SF = [];
+for (let i = 0; i < 6; i++) {
+  SB.push(document.getElementById('sb' + i));
+  SF.push(document.getElementById('sf' + i));
+}
+const PLX  = [...document.querySelectorAll('.plx')];
+const bar  = document.getElementById('bar');
+const ring = document.getElementById('sring');
+
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const sstep = x => x * x * (3 - 2 * x);
+const R     = (a, b) => a + Math.random() * (b - a);
+const quad  = (a, b, c, u) => { const v = 1 - u; return v * v * a + 2 * v * u * b + u * u * c; };
+const cub   = (a, b, c, d, u) => { const v = 1 - u; return v*v*v*a + 3*v*v*u*b + 3*v*u*u*c + u*u*u*d; };
+
+/* ---------- grain ---------- */
+function makeGrain() {
+  const tile = document.createElement('canvas');
+  tile.width = tile.height = 128;
+  const tc = tile.getContext('2d');
+  const im = tc.createImageData(128, 128);
+  for (let i = 0; i < im.data.length; i += 4) {
+    const v = (Math.random() * 255) | 0;
+    im.data[i] = im.data[i+1] = im.data[i+2] = v;
+    im.data[i+3] = 255;
+  }
+  tc.putImageData(im, 0, 0);
+  gCv.width = W; gCv.height = H;
+  gCtx.fillStyle = gCtx.createPattern(tile, 'repeat');
+  gCtx.fillRect(0, 0, W, H);
+}
+
+function resize() {
+  W = innerWidth; H = innerHeight; M = Math.min(W, H);
+  for (const [cv, cx] of [[cvA, ctxA], [cvB, ctxB]]) {
+    cv.width = W * dpr; cv.height = H * dpr;
+    cv.style.width = W + 'px'; cv.style.height = H + 'px';
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  makeGrain();
+}
+addEventListener('resize', resize);
+resize();
+
+/* ---------- glow sprites : createRadialGradient を事前焼き込み ---------- */
+function mkS(stops) {
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const x = c.getContext('2d');
+  const g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+  for (const [o, col] of stops) g.addColorStop(o, col);
+  x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+  return c;
+}
+const SP = {
+  wing : mkS([[0,'rgba(185,166,224,.30)'],[.55,'rgba(185,166,224,.12)'],[1,'rgba(185,166,224,0)']]),
+  orb  : mkS([[0,'rgba(255,255,255,.9)'],[.25,'rgba(232,240,168,.6)'],[1,'rgba(232,240,168,0)']]),
+  flame: mkS([[0,'rgba(255,236,200,1)'],[.22,'rgba(255,179,107,.75)'],[.55,'rgba(255,122,47,.35)'],[1,'rgba(255,122,47,0)']]),
+  ember: mkS([[0,'rgba(255,179,107,.9)'],[.4,'rgba(255,122,47,.4)'],[1,'rgba(194,58,31,0)']]),
+  blue : mkS([[0,'rgba(235,245,255,.95)'],[.3,'rgba(127,184,255,.55)'],[1,'rgba(127,184,255,0)']]),
+  mist : mkS([[0,'rgba(127,184,255,.18)'],[1,'rgba(127,184,255,0)']]),
+  white: mkS([[0,'rgba(255,255,255,.85)'],[1,'rgba(255,255,255,0)']]),
+};
+const PRISM = [0, 50, 110, 170, 230, 290].map(h =>
+  mkS([[0, `hsla(${h},75%,72%,.9)`], [.4, `hsla(${h},75%,60%,.32)`], [1, `hsla(${h},75%,60%,0)`]]));
+
+/* ---------- particle pool (固定長 2400) ---------- */
+const N = 2400, pool = [];
+for (let i = 0; i < N; i++) pool.push({alive:false,x:0,y:0,vx:0,vy:0,life:0,max:1,sz:1,gr:0,spr:null,comp:'l',fw:0,gv:0,dr:.97,al:1});
+let pi = 0;
+function spawn(o) {
+  const p = pool[pi]; pi = (pi + 1) % N;
+  p.alive = true;
+  p.x = o.x; p.y = o.y;
+  p.vx = o.vx || 0; p.vy = o.vy || 0;
+  p.life = p.max = o.life || 80;
+  p.sz = o.sz || 6; p.gr = o.gr || 0;
+  p.spr = o.spr; p.comp = o.comp || 'l';
+  p.fw = o.fw !== undefined ? o.fw : .05;
+  p.gv = o.gv || 0; p.dr = o.dr !== undefined ? o.dr : .97;
+  p.al = o.al !== undefined ? o.al : 1;
+}
+const acc = {};
+function pump(k, rate) {
+  acc[k] = (acc[k] || 0) + rate;
+  const n = Math.floor(acc[k]); acc[k] -= n;
+  return n;
+}
+
+/* sin 重ね合わせによる簡易フローフィールド */
+function field(x, y, t) {
+  return (Math.sin(x * .0016 + t * .35) + Math.sin(y * .0021 - t * .28)
+        + .6 * Math.sin((x + y) * .0009 + t * .5)) * 1.35;
+}
+
+/* ---------- ベジェ・シルエット群 ---------- */
+function wingPt(side, s, flap, u) {
+  return {
+    x: cub(0, side * .25 * s, side * .55 * s, side * .98 * s, u),
+    y: cub(-.10 * s, -.50 * s, s * (-.62 + flap * .2), s * (-.50 + flap * .34), u)
+  };
+}
+function drawPhoenix(c, x, y, s, flap, fill, glow) {
+  c.save(); c.translate(x, y);
+  if (glow) {
+    const g = c.createRadialGradient(0, -s * .1, 0, 0, -s * .1, s * .95);
+    g.addColorStop(0, 'rgba(255,179,107,.30)');
+    g.addColorStop(1, 'rgba(255,179,107,0)');
+    c.fillStyle = g; c.fillRect(-s, -s * 1.1, s * 2, s * 2.2);
+  }
+  c.fillStyle = fill;
+  for (const side of [-1, 1]) {
+    c.beginPath();
+    c.moveTo(0, -.10 * s);
+    c.bezierCurveTo(side * .25 * s, -.50 * s, side * .55 * s, s * (-.62 + flap * .2), side * .98 * s, s * (-.50 + flap * .34));
+    c.bezierCurveTo(side * .86 * s, s * (-.30 + flap * .22), side * .80 * s, s * (-.16 + flap * .10), side * .66 * s, s * (-.10 + flap * .06));
+    c.bezierCurveTo(side * .66 * s, .04 * s, side * .56 * s, .10 * s, side * .44 * s, .06 * s);
+    c.bezierCurveTo(side * .42 * s, .20 * s, side * .30 * s, .26 * s, side * .20 * s, .20 * s);
+    c.bezierCurveTo(side * .14 * s, .30 * s, side * .05 * s, .28 * s, 0, .16 * s);
+    c.closePath(); c.fill();
+  }
+  c.beginPath();
+  c.moveTo(0, -.38 * s);
+  c.bezierCurveTo(.085 * s, -.30 * s, .095 * s, -.06 * s, .06 * s, .14 * s);
+  c.bezierCurveTo(.04 * s, .26 * s, .02 * s, .32 * s, 0, .36 * s);
+  c.bezierCurveTo(-.02 * s, .32 * s, -.04 * s, .26 * s, -.06 * s, .14 * s);
+  c.bezierCurveTo(-.095 * s, -.06 * s, -.085 * s, -.30 * s, 0, -.38 * s);
+  c.fill();
+  c.beginPath();
+  c.moveTo(.02 * s, -.35 * s); c.lineTo(.12 * s, -.41 * s); c.lineTo(.03 * s, -.29 * s);
+  c.closePath(); c.fill();
+  for (const side of [-1, 1]) {
+    c.beginPath();
+    c.moveTo(side * .03 * s, .30 * s);
+    c.bezierCurveTo(side * .12 * s, .55 * s, side * .06 * s, .75 * s, side * .16 * s, .98 * s);
+    c.bezierCurveTo(side * .07 * s, .78 * s, side * .10 * s, .60 * s, 0, .36 * s);
+    c.closePath(); c.fill();
+  }
+  c.restore();
+}
+function drawFeather(c, x, y, s, rot, alpha) {
+  c.save(); c.translate(x, y); c.rotate(rot); c.globalAlpha = alpha;
+  const g = c.createLinearGradient(0, -s, 0, s);
+  g.addColorStop(0, 'rgba(235,245,255,.95)');
+  g.addColorStop(1, 'rgba(127,184,255,.12)');
+  c.fillStyle = g;
+  c.beginPath();
+  c.moveTo(0, -s);
+  c.quadraticCurveTo(.36 * s, -.30 * s, .12 * s, .70 * s);
+  c.quadraticCurveTo(.04 * s, .90 * s, 0, .95 * s);
+  c.quadraticCurveTo(-.03 * s, .80 * s, -.10 * s, .50 * s);
+  c.quadraticCurveTo(-.30 * s, -.20 * s, 0, -s);
+  c.closePath(); c.fill();
+  c.strokeStyle = 'rgba(235,245,255,.8)';
+  c.lineWidth = Math.max(1, s * .02);
+  c.beginPath(); c.moveTo(0, -s); c.lineTo(0, .95 * s); c.stroke();
+  c.restore();
+}
+function dawnGeom(t) {
+  const rx = W * .16, ry = H * .56, arr = [];
+  for (let k = 0; k < 4; k++) {
+    const ang = (-28 - k * 19) * Math.PI / 180;
+    const L = M * (.30 + .07 * k);
+    const x1 = rx + Math.cos(ang) * L, y1 = ry + Math.sin(ang) * L;
+    const mx = (rx + x1) / 2, my = (ry + y1) / 2;
+    const sway = Math.sin(t * .6 + k) * M * .015;
+    arr.push({x0: rx, y0: ry, cx: mx - M * .05, cy: my - M * .07 + sway, x1, y1});
+  }
+  return arr;
+}
+
+/* ---------- scroll (lerp 平滑化) / rAF 1 本 ---------- */
+let cur = 0, revealed = [false,false,false,false,false,false];
+const A = [0,0,0,0,0,0];
+
+document.querySelectorAll('#nav a').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+    scrollTo({top: (+a.dataset.go / 5) * max, behavior: 'smooth'});
+  });
+});
+ring.addEventListener('click', () => ring.classList.toggle('on'));
+
+function frame(now) {
+  const t = now / 1000;
+  const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+  const targ = clamp((scrollY || 0) / max, 0, 1);
+  cur += (targ - cur) * 0.08;
+  const p = cur * 5;
+
+  /* シーン不透明度: |p-i|<0.38 でプラトー、0.62 までフェード(重なり=残光区間) */
+  for (let i = 0; i < 6; i++) {
+    const d = Math.abs(p - i);
+    const a = sstep(clamp((0.62 - d) / 0.24, 0, 1));
+    A[i] = a;
+    const vis = a > 0.001;
+    SB[i].style.opacity = SF[i].style.opacity = a.toFixed(3);
+    SB[i].style.visibility = SF[i].style.visibility = vis ? 'visible' : 'hidden';
+    if (a > 0.6 && !revealed[i]) { revealed[i] = true; SF[i].classList.add('in'); }
+    if (a < 0.05 && revealed[i]) { revealed[i] = false; SF[i].classList.remove('in'); }
+  }
+
+  /* 3層パララックス */
+  for (const el of PLX) {
+    const s = +el.dataset.s;
+    if (A[s] <= 0.001) continue;
+    el.style.transform = `translate3d(0, ${(-(p - s) * (+el.dataset.d) * H * 0.14).toFixed(1)}px, 0)`;
+  }
+
+  bar.style.transform = `scaleX(${cur.toFixed(4)})`;
+  ring.classList.toggle('show', p > 2.55);
+
+  /* ---- silhouette layer (毎フレーム clear) ---- */
+  ctxA.clearRect(0, 0, W, H);
+
+  /* Scene1 Dawn */
+  if (A[0] > 0.03) {
+    const strokes = dawnGeom(t);
+    ctxA.save(); ctxA.globalAlpha = A[0]; ctxA.lineCap = 'round';
+    for (const st of strokes) {
+      for (const [lw, al] of [[M*.032,.06],[M*.017,.10],[M*.007,.16]]) {
+        ctxA.strokeStyle = `rgba(185,166,224,${al})`;
+        ctxA.lineWidth = lw;
+        ctxA.beginPath();
+        ctxA.moveTo(st.x0, st.y0);
+        ctxA.quadraticCurveTo(st.cx, st.cy, st.x1, st.y1);
+        ctxA.stroke();
+      }
+    }
+    ctxA.restore();
+    let n = pump('wash', 1.8 * A[0] * dens);
+    while (n--) {
+      const st = strokes[(Math.random() * strokes.length) | 0], u = R(.05, .95);
+      spawn({x: quad(st.x0, st.cx, st.x1, u) + R(-24, 24),
+             y: quad(st.y0, st.cy, st.y1, u) + R(-24, 24),
+             vx: R(-.1,.1), vy: R(-.12,.02), life: R(140, 260),
+             sz: R(16, 46), gr: .10, spr: SP.wing, comp: 's',
+             fw: .012, dr: .986, al: .9});
+    }
+    n = pump('orb', 1.3 * A[0] * dens);
+    while (n--) {
+      const ang = R(0, 6.283), r = R(0, M * .07);
+      spawn({x: W*.5 + Math.cos(ang)*r, y: H*.30 + Math.sin(ang)*r*.7,
+             vx: R(-.1,.1), vy: R(-.45,-.1), life: R(70, 140),
+             sz: R(2.5, 7), gr: -.02, spr: SP.orb, fw: .05, dr: .985});
+    }
+  }
+
+  /* Scene2 Rise */
+  if (A[1] > 0.03) {
+    const e = sstep(clamp((p - 1 + .55) / .95, 0, 1));
+    const px = W * .5 + Math.sin(t * .7) * W * .02;
+    const py = H * (1.25 - .85 * e);
+    const s2 = M * .33;
+    const fl = Math.sin(t * 5.4) * .7;
+    ctxA.save(); ctxA.globalAlpha = A[1];
+    drawPhoenix(ctxA, px, py, s2, fl, 'rgba(194,58,31,.92)', true);
+    ctxA.restore();
+    let n = pump('rise', 11 * A[1] * dens);
+    while (n--) {
+      const side = Math.random() < .5 ? -1 : 1;
+      const pt = wingPt(side, s2, fl, R(.25, 1));
+      spawn({x: px + pt.x + R(-6, 6), y: py + pt.y + R(-6, 6),
+             vx: pt.x * .004 + R(-.2, .2), vy: R(.4, 1.4),
+             life: R(45, 95), sz: R(4, 11), gr: -.07,
+             spr: Math.random() < .6 ? SP.flame : SP.ember,
+             fw: .08, gv: .01, dr: .965});
+    }
+    n = pump('riseT', 4 * A[1] * dens);
+    while (n--) spawn({x: px + R(-8, 8), y: py + s2 * R(.5, .95),
+             vx: R(-.15, .15), vy: R(.8, 1.8), life: R(50, 100),
+             sz: R(3, 8), gr: -.05, spr: SP.ember, fw: .07, dr: .97});
+  }
+
+  /* Scene3 Halo(虹色例外シーン) */
+  if (A[2] > 0.02) {
+    const cx = W / 2, cy = H * .46, Rr = Math.max(W, H) * .75;
+    ctxA.save(); ctxA.globalAlpha = A[2];
+    const g = ctxA.createRadialGradient(cx, cy, 0, cx, cy, Rr);
+    for (let i = 0; i <= 10; i++) {
+      const u = i / 10;
+      const hue = ((t * 10 + u * 320) % 360).toFixed(0);
+      const al = ((.04 + .09 * (.5 + .5 * Math.sin(u * 14 - t * .7))) * (1 - u * .5)).toFixed(3);
+      g.addColorStop(u, `hsla(${hue},68%,62%,${al})`);
+    }
+    ctxA.fillStyle = g; ctxA.fillRect(0, 0, W, H);
+    const g2 = ctxA.createRadialGradient(cx, cy, 0, cx, cy, Rr * .28);
+    g2.addColorStop(0, 'rgba(255,252,240,.5)');
+    g2.addColorStop(1, 'rgba(255,252,240,0)');
+    ctxA.fillStyle = g2; ctxA.fillRect(0, 0, W, H);
+    drawPhoenix(ctxA, cx, cy + H * .02, M * .34,
+                -.45 + Math.sin(t * 1.1) * .04, 'rgba(42,36,56,.92)', false);
+    ctxA.restore();
+    let n = pump('prism', 2.6 * A[2] * dens);
+    while (n--) {
+      const ang = R(0, 6.283), r = R(.16, .46) * M;
+      spawn({x: cx + Math.cos(ang) * r, y: cy + Math.sin(ang) * r,
+             vx: -Math.sin(ang) * .5, vy: Math.cos(ang) * .5,
+             life: R(90, 180), sz: R(4, 9), gr: -.02,
+             spr: PRISM[(Math.random() * PRISM.length) | 0], fw: .03, dr: .988});
+    }
+  }
+
+  /* Scene4 Feather */
+  if (A[3] > 0.03) {
+    const fT = (t * .10) % 1;
+    const fy = -H * .12 + fT * H;
+    const fx = W * .5 + Math.sin(t * .8) * W * .02 + Math.sin(fT * 12.56) * W * .012;
+    const fs = M * .06;
+    drawFeather(ctxA, fx, fy, fs, .35 + Math.sin(t * 1.3) * .12, A[3]);
+    let n = pump('beam', 5.5 * A[3] * dens);
+    while (n--) spawn({x: fx + R(-7, 7), y: fy + R(-4, 10),
+             vx: R(-.12, .12), vy: R(-1.1, -.35), life: R(70, 150),
+             sz: R(3, 9), gr: -.03,
+             spr: Math.random() < .8 ? SP.blue : SP.white, fw: .04, dr: .988});
+    n = pump('beamM', .8 * A[3] * dens);
+    while (n--) spawn({x: fx + R(-14, 14), y: fy + R(-6, 6),
+             vx: 0, vy: R(-.4, -.1), life: R(100, 180),
+             sz: R(16, 34), gr: .04, spr: SP.mist, fw: .02, dr: .99});
+  }
+
+  /* Scene5 Crystal — 微細なきらめきのみ */
+  if (A[4] > 0.03) {
+    let n = pump('spark', .9 * A[4] * dens);
+    while (n--) spawn({x: R(W * .15, W * .85), y: R(H * .22, H * .78),
+             vx: 0, vy: R(-.16, -.02), life: R(40, 90),
+             sz: R(1.5, 4), gr: -.01,
+             spr: Math.random() < .5 ? SP.white : SP.blue,
+             fw: .02, dr: .99, al: .8});
+  }
+
+  /* Scene6 Finale */
+  if (A[5] > 0.03) {
+    const s6 = M * .42, px = W * .5, py = H * .40;
+    const fl = -.52 + Math.sin(t * 1.4) * .05;
+    const waterY = H * .68;
+    ctxA.save(); ctxA.globalAlpha = A[5];
+    drawPhoenix(ctxA, px, py, s6, fl, 'rgba(133,49,41,.95)', true);
+    /* 水面リフレクション(反転+圧縮+揺らぎ) */
+    ctxA.globalAlpha = A[5] * .16;
+    ctxA.translate(Math.sin(t * 2) * 4, waterY * 1.8);
+    ctxA.scale(1, -.8);
+    drawPhoenix(ctxA, px, py, s6, fl, 'rgba(255,122,47,.8)', false);
+    ctxA.restore();
+    ctxA.save(); ctxA.globalAlpha = A[5] * .22;
+    ctxA.drawImage(SP.ember, px - s6 * .8, waterY, s6 * 1.6, s6 * .6);
+    ctxA.restore();
+    let n = pump('flame', 22 * A[5] * dens);
+    while (n--) {
+      const side = Math.random() < .5 ? -1 : 1;
+      const pt = wingPt(side, s6, fl, R(.05, 1));
+      spawn({x: px + pt.x + R(-8, 8), y: py + pt.y + R(-8, 8),
+             vx: R(-.3, .3) + side * .1, vy: -R(.7, 2.3),
+             life: R(40, 90), sz: R(7, 18), gr: -.14,
+             spr: Math.random() < .65 ? SP.flame : SP.ember,
+             fw: .12, gv: -.012, dr: .97});
+    }
+    n = pump('flameB', 6 * A[5] * dens);
+    while (n--) spawn({x: px + R(-s6 * .07, s6 * .07), y: py + R(-s6 * .1, s6 * .4),
+             vx: R(-.2, .2), vy: -R(.6, 1.8), life: R(45, 85),
+             sz: R(8, 16), gr: -.13, spr: SP.flame, fw: .1, gv: -.01, dr: .97});
+    n = pump('flameS', 1.4 * A[5] * dens);
+    while (n--) spawn({x: px + R(-s6 * .5, s6 * .5), y: py + R(-s6 * .3, s6 * .2),
+             vx: R(-.5, .5), vy: -R(1.5, 3.2), life: R(30, 70),
+             sz: R(1.5, 3.5), gr: -.02, spr: SP.white, fw: .1, dr: .985});
+  }
+
+  /* ---- particle layer: clearRect せず古いフレームを溶かす(残像) ---- */
+  ctxB.globalCompositeOperation = 'destination-out';
+  ctxB.fillStyle = 'rgba(0,0,0,0.10)';
+  ctxB.fillRect(0, 0, W, H);
+
+  for (const q of pool) {
+    if (!q.alive) continue;
+    q.life--;
+    if (q.life <= 0 || q.sz < .3) { q.alive = false; continue; }
+    const a = field(q.x, q.y, t);
+    q.vx += Math.cos(a) * q.fw; q.vy += Math.sin(a) * q.fw + q.gv;
+    q.vx *= q.dr; q.vy *= q.dr;
+    q.x += q.vx; q.y += q.vy;
+    q.sz += q.gr;
+  }
+  /* 水彩ブロブ → source-over、発光 → lighter(加算合成) の2パス */
+  for (const mode of ['s', 'l']) {
+    ctxB.globalCompositeOperation = mode === 's' ? 'source-over' : 'lighter';
+    for (const q of pool) {
+      if (!q.alive || q.comp !== mode) continue;
+      const lf = q.life / q.max;
+      const age = q.max - q.life;
+      ctxB.globalAlpha = Math.min(1, age / 6) * lf * q.al;
+      ctxB.drawImage(q.spr, q.x - q.sz, q.y - q.sz, q.sz * 2, q.sz * 2);
+    }
+  }
+  ctxB.globalAlpha = 1;
+  ctxB.globalCompositeOperation = 'source-over';
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

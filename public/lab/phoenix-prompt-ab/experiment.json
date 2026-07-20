@@ -1,0 +1,52 @@
+{
+  "slug": "phoenix-prompt-ab",
+  "title": "phoenix プロンプト A/B 改善実験",
+  "date": "2026-07-20",
+  "model": "claude-fable-5 (claude CLI headless / effort high / ハーネス隔離)",
+  "purpose": "不死鳥LP「HIBANA」のベンチ用プロンプトを、1ショット品質が上がる方向へ5ラウンドのA/Bで改善する。各ラウンドで現チャンピオン(A)と仮説を1つ足したチャレンジャー(B)を同条件で生成し、6シーンのスクリーンショット比較で勝者を決定。勝者プロンプトが次ラウンドのチャンピオンになる。",
+  "constraints": "R1-3: Canvas 2D 縛り（ベンチ現行と同条件）/ R4: Three.js r0.160 解禁 / R5: Three.js + 露出規律。生成はすべて run-clean-cli.sh によるハーネス隔離（個人 CLAUDE.md / skills 遮断、サブスク認証のみ）",
+  "conclusion": "最終チャンピオンは「H1 craft語彙 + H3 実装技法の直書き」を足した Canvas 2D 版（PROMPT-final.md）。効いた仮説は (1) H1: AI slop の禁止列挙・タイポ数値・grain/vignette などの craft 語彙、(2) H3: 加算合成・放射グラデ・残像・ベジェシルエット+輪郭パーティクルの2層モチーフ指定（最大の品質ジャンプ）。効かなかったのは H2: XML 構造化+rubric 自己照合（ラベル衝突を防げず悪化）と H4/H5: Three.js（Bloom 白飛び→露出規律で暗部シーンは実験中最高になったが明色シーンが乳白化し総合で2Dに届かず）。Three.js は多ショット前提なら有望。ベンチへの反映は別途判断。",
+  "finalPromptPath": "PROMPT-final.md",
+  "rounds": [
+    {
+      "round": 1,
+      "hypothesis": "H1: craft 語彙の注入（AI slop 禁止列挙・タイポ数値・stagger/パララックス比・grain/vignette・1シーン1感情）",
+      "a": { "id": "r1a", "label": "P0（ベンチ現行の凍結プロンプト）", "errorCount": 0, "bytes": 26772 },
+      "b": { "id": "r1b", "label": "P0 + H1 craft語彙", "errorCount": 0, "bytes": 32109 },
+      "winner": "b",
+      "judgment": "B はタイポグラフィが編集誌的な階層（unknown の大型イタリック等）になり、配色の統制・シーン2/3 の仕様再現が明確に向上。シーン6で前シーンの立方体が残って文言と衝突する副作用（クロスフェード残光指示の過剰解釈）はあったが、4/6 シーンで B 優位。"
+    },
+    {
+      "round": 2,
+      "hypothesis": "H2: プロンプト構造改革（XML セクション化 + design_plan 内的2段化 + binary rubric 自己照合）",
+      "a": { "id": "r2a", "label": "チャンピオン（H1）", "errorCount": 0, "bytes": 30604 },
+      "b": { "id": "r2b", "label": "チャンピオン + H2 XML/rubric", "errorCount": 0, "bytes": 29201 },
+      "winner": "a",
+      "judgment": "B はシーンラベルがロゴと衝突し、S4 が空虚、フィナーレの不死鳥が消失。rubric に「前シーン要素の衝突チェック」を明記したのに防げず、構造改革単体では品質が上がらないことを確認。A（H1 のみ）は別サンプルでも安定して高品質で、再現性も確認できた。"
+    },
+    {
+      "round": 3,
+      "hypothesis": "H3: Canvas 実装技法の直書き（lighter 加算合成・放射グラデ・残像 fillRect・DPR・フローフィールド・ベジェシルエット+輪郭パーティクルの2層モチーフ）",
+      "a": { "id": "r3a", "label": "チャンピオン（H1）", "errorCount": 0, "bytes": 26961 },
+      "b": { "id": "r3b", "label": "チャンピオン + H3 技法直書き", "errorCount": 0, "bytes": 28547 },
+      "winner": "b",
+      "judgment": "実験中最大のジャンプ。ベジェシルエット+輪郭パーティクルの2層指定が決定打で、S1 の水彩ストローク・S2 の不死鳥・S6 のフィナーレが最良水準に。技法名と数値をプロンプトに直書きすると 1 ショットの絵作りが安定することを確認。S4 の構図崩れは両者共通の残課題。"
+    },
+    {
+      "round": 4,
+      "hypothesis": "H4: Three.js r0.160 解禁（importmap 固定・UnrealBloomPass・GPU パーティクル・フレネル）",
+      "a": { "id": "r4a", "label": "チャンピオン（H1+H3）", "errorCount": 0, "bytes": 29773 },
+      "b": { "id": "r4b", "label": "チャンピオン + H4 Three.js", "errorCount": 0, "bytes": 33988 },
+      "winner": "a",
+      "judgment": "B は GPU パーティクルの質感・発光は魅力的だが、Bloom が暴走してフィナーレが完全に白飛びし文字が判読不能。A は S2 の光る不死鳥・S6 の水面反射など実験中最良の出来で、成熟した 2D プロンプトが 1 ショット Three.js を上回った。"
+    },
+    {
+      "round": 5,
+      "hypothesis": "H5: Three.js 再挑戦 + 露出規律（ACESFilmic トーンマッピング・Bloom strength 0.6-0.9/threshold 0.9・白飛び8%上限・文字判読の保証）",
+      "a": { "id": "r5a", "label": "チャンピオン（H1+H3）", "errorCount": 0, "bytes": 36572 },
+      "b": { "id": "r5b", "label": "チャンピオン + H5 Three.js+露出規律", "errorCount": 0, "bytes": 32829 },
+      "winner": "a",
+      "judgment": "露出規律は機能し、B の S4（青い羽根の落下）と S6（粒子の翼と水面）は実験中最高品質。しかし明色シーン（S1/S2）が霧がかった乳白になり LP の前半半分を落とした。総合で 2D チャンピオンが防衛。Three.js は「明色背景の霞み」を直せれば逆転の目がある＝1ショットでは露出・フォグ制御の指示がまだ足りない。"
+    }
+  ]
+}

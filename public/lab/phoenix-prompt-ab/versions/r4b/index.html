@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HIBANA — 不死鳥スクロール</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Shippori+Mincho:wght@400;500&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --dawn-bg:#f2ecf5; --dawn-wing:#b9a6e0; --orb:#e8f0a8; --flame:#ff7a2f;
+  --ember:#ffb36b; --night:#0a1030; --feather:#7fb8ff; --sunset:#c23a1f; --ink:#2a2438;
+  --serif:'Cormorant Garamond',serif; --mincho:'Shippori Mincho',serif; --gothic:'Zen Kaku Gothic New',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scrollbar-width:thin}
+body{background:var(--night);font-family:var(--serif);overflow-x:hidden}
+#spacer{height:900vh;pointer-events:none}
+
+/* ---------- fixed scene layers ---------- */
+.sbg,.sfg{position:fixed;inset:0;pointer-events:none;opacity:0;will-change:opacity}
+.pl{position:absolute;inset:0;will-change:transform}
+canvas#gl{position:fixed;inset:0;width:100vw;height:100vh;mix-blend-mode:screen;pointer-events:none;z-index:3}
+.sbg{z-index:1}.sfg{z-index:4}
+
+/* ---------- scene 0 · Dawn ---------- */
+.sbg[data-s="0"] .l-back{
+  background:
+    radial-gradient(55% 45% at 68% 22%, color-mix(in oklab,var(--orb) 30%,transparent), transparent 72%),
+    radial-gradient(80% 90% at 14% 60%, color-mix(in oklab,var(--dawn-wing) 26%,transparent), transparent 78%),
+    var(--dawn-bg);
+}
+.wingwash{
+  position:absolute;left:-6vw;top:12vh;width:56vw;height:74vh;filter:blur(10px);
+  transform:rotate(-20deg);
+  background:
+    radial-gradient(42% 20% at 30% 32%, color-mix(in oklab,var(--dawn-wing) 68%,transparent), transparent 70%),
+    radial-gradient(50% 16% at 44% 48%, color-mix(in oklab,var(--dawn-wing) 55%,transparent), transparent 72%),
+    radial-gradient(38% 13% at 34% 62%, color-mix(in oklab,var(--dawn-wing) 62%,transparent), transparent 70%),
+    radial-gradient(30% 10% at 52% 74%, color-mix(in oklab,var(--dawn-wing) 45%,transparent), transparent 70%),
+    radial-gradient(20% 30% at 22% 50%, color-mix(in oklab,var(--ink) 24%,transparent), transparent 75%);
+  animation:breathe 9s ease-in-out infinite alternate;
+}
+@keyframes breathe{from{transform:rotate(-20deg) scale(1)}to{transform:rotate(-22deg) scale(1.035)}}
+
+/* ---------- scene 1 · Rise ---------- */
+.sbg[data-s="1"] .l-back{
+  background:linear-gradient(180deg,var(--ink) 0%,color-mix(in oklab,var(--ink) 72%,var(--sunset)) 58%,color-mix(in oklab,var(--flame) 32%,var(--ink)) 100%);
+}
+.sbg[data-s="1"] .l-mid{
+  background:radial-gradient(60% 45% at 50% 92%, color-mix(in oklab,var(--ember) 30%,transparent), transparent 75%);
+}
+
+/* ---------- scene 2 · Halo ---------- */
+.sbg[data-s="2"] .l-back{
+  background:
+    radial-gradient(circle at 50% 46%,
+      rgba(255,250,238,.98) 0%, rgba(255,246,225,.95) 9%,
+      color-mix(in oklab,var(--ember) 44%,transparent) 18%,
+      color-mix(in oklab,var(--orb) 40%,transparent) 28%,
+      rgba(168,214,206,.38) 38%,
+      color-mix(in oklab,var(--feather) 30%,transparent) 48%,
+      color-mix(in oklab,var(--dawn-wing) 52%,transparent) 62%,
+      color-mix(in oklab,var(--dawn-wing) 66%,var(--ink)) 100%),
+    var(--dawn-bg);
+}
+.halo-sil{position:absolute;left:50%;top:47%;width:min(62vw,760px);transform:translate(-50%,-50%);opacity:.88;filter:blur(.6px) drop-shadow(0 0 26px color-mix(in oklab,var(--dawn-wing) 55%,transparent))}
+.oto{
+  position:absolute;left:50%;top:46%;transform:translate(-50%,-54%);
+  font-family:var(--mincho);font-weight:500;font-size:clamp(7rem,23vw,15rem);color:var(--ink);
+  text-shadow:0 0 60px rgba(255,248,230,.9);animation:oto 4.2s ease-in-out infinite alternate;
+}
+@keyframes oto{from{opacity:.5}to{opacity:1}}
+
+/* ---------- scene 3 · Feather ---------- */
+.sbg[data-s="3"] .l-back{
+  background:radial-gradient(42% 55% at 50% 38%, color-mix(in oklab,var(--feather) 12%,transparent), transparent 75%), var(--night);
+}
+.vtxt{
+  position:absolute;writing-mode:vertical-rl;font-family:var(--mincho);font-size:.8rem;
+  line-height:2.3;letter-spacing:.22em;color:color-mix(in oklab,var(--feather) 55%,#e8ecff);opacity:.85;height:46vh;
+}
+.vtxt small{font-size:.66rem;opacity:.55;font-family:var(--gothic);font-weight:300;letter-spacing:.3em}
+.vtxt.vl{left:7vw;top:16vh}
+.vtxt.vr{right:7vw;top:30vh}
+
+/* ---------- scene 4 · Crystal ---------- */
+.sbg[data-s="4"] .l-back{
+  background:radial-gradient(50% 60% at 62% 58%, color-mix(in oklab,var(--feather) 9%,transparent), transparent 75%), var(--night);
+}
+.cw{position:absolute;perspective:900px;pointer-events:auto;transition:transform .8s cubic-bezier(.22,1,.36,1)}
+.cw:hover{transform:scale(1.08) rotate(3deg)}
+.cube{width:var(--s);height:var(--s);position:relative;transform-style:preserve-3d;animation:spin var(--t) linear infinite}
+@keyframes spin{from{transform:rotateX(-18deg) rotateY(0deg)}to{transform:rotateX(342deg) rotateY(360deg)}}
+.cube .f{
+  position:absolute;inset:0;
+  border:1px solid color-mix(in oklab,var(--feather) 55%,transparent);
+  background:linear-gradient(135deg, color-mix(in oklab,var(--feather) 14%,transparent),
+    rgba(255,255,255,.03) 45%, color-mix(in oklab,var(--dawn-wing) 12%,transparent));
+  box-shadow:inset 0 0 26px color-mix(in oklab,var(--feather) 14%,transparent);
+}
+.cube .f.prism{background:
+  conic-gradient(from 40deg, transparent 0 18%, color-mix(in oklab,var(--orb) 26%,transparent) 26%,
+  transparent 38%, color-mix(in oklab,var(--ember) 22%,transparent) 52%, transparent 64%,
+  color-mix(in oklab,var(--feather) 26%,transparent) 78%, transparent 100%)}
+.f1{transform:translateZ(calc(var(--s)/2))}
+.f2{transform:rotateY(180deg) translateZ(calc(var(--s)/2))}
+.f3{transform:rotateY(90deg) translateZ(calc(var(--s)/2))}
+.f4{transform:rotateY(-90deg) translateZ(calc(var(--s)/2))}
+.f5{transform:rotateX(90deg) translateZ(calc(var(--s)/2))}
+.f6{transform:rotateX(-90deg) translateZ(calc(var(--s)/2))}
+.crys-cap{position:absolute;right:8vw;bottom:14vh;font-family:var(--gothic);font-weight:300;font-size:.75rem;letter-spacing:.28em;color:color-mix(in oklab,var(--feather) 45%,#dfe6ff);opacity:.75}
+
+/* ---------- scene 5 · Finale ---------- */
+.sbg[data-s="5"] .l-back{
+  background:linear-gradient(180deg,
+    color-mix(in oklab,var(--sunset) 55%,var(--ink)) 0%,
+    var(--sunset) 34%,
+    color-mix(in oklab,var(--ember) 55%,var(--sunset)) 56%,
+    color-mix(in oklab,var(--ember) 70%,var(--sunset)) 63%,
+    color-mix(in oklab,var(--night) 62%,var(--sunset)) 66%,
+    color-mix(in oklab,var(--night) 84%,var(--sunset)) 100%);
+}
+.mtn{position:absolute;left:0;right:0;height:20vh;top:47vh}
+.mtn.m1{background:color-mix(in oklab,var(--ink) 78%,var(--sunset));clip-path:polygon(0 100%,0 62%,9% 40%,17% 58%,26% 30%,36% 55%,44% 38%,55% 60%,64% 34%,74% 56%,83% 42%,92% 58%,100% 46%,100% 100%)}
+.mtn.m2{top:50vh;background:color-mix(in oklab,var(--night) 72%,var(--sunset));clip-path:polygon(0 100%,0 55%,12% 70%,20% 45%,31% 68%,42% 50%,53% 72%,63% 48%,75% 66%,86% 50%,100% 64%,100% 100%)}
+.water{position:absolute;left:0;right:0;top:66vh;bottom:0;overflow:hidden}
+.water::before{
+  content:"";position:absolute;left:50%;top:-12vh;width:80vw;height:52vh;transform:translateX(-50%) scaleY(-1);
+  background:radial-gradient(46% 62% at 50% 22%, color-mix(in oklab,var(--flame) 62%,transparent), color-mix(in oklab,var(--ember) 28%,transparent) 55%, transparent 78%);
+  filter:blur(22px);animation:shimmer 5.5s ease-in-out infinite alternate;
+}
+@keyframes shimmer{from{opacity:.75;transform:translateX(-50%) scaleY(-1) scaleX(1)}to{opacity:1;transform:translateX(-50%) scaleY(-1) scaleX(1.06)}}
+
+/* ---------- typography ---------- */
+.poem{position:absolute;letter-spacing:.04em;line-height:1.5;font-size:clamp(1.4rem,3.2vw,2.6rem);color:var(--ink)}
+.poem i{font-style:italic;font-weight:500}
+.p-dawn{right:6vw;top:26vh;max-width:38ch;text-align:left;font-weight:400}
+.p-dawn .big{font-size:1.6em;letter-spacing:-.02em}
+.p-rise{left:50%;top:44%;transform:translateX(-50%);font-family:var(--mincho);font-weight:500;
+  font-size:clamp(2.6rem,7vw,5rem);color:color-mix(in oklab,var(--ember) 78%,#fff);letter-spacing:.08em;white-space:nowrap;
+  text-shadow:0 0 44px color-mix(in oklab,var(--flame) 55%,transparent)}
+.p-rise .blur1{filter:blur(5px);opacity:.85}
+.p-rise .blur2{filter:blur(2px)}
+.p-feather{left:50%;bottom:12vh;transform:translateX(-50%);text-align:center;color:color-mix(in oklab,var(--feather) 62%,#f0f4ff);white-space:nowrap}
+.p-feather .ln2{display:block;margin-top:.5em;font-size:1.28em;letter-spacing:-.02em}
+.p-feather .jp{font-family:var(--mincho);font-size:.82em}
+.p-finale{left:50%;bottom:9vh;transform:translateX(-50%);text-align:center;white-space:nowrap;
+  color:color-mix(in oklab,var(--ember) 82%,#fff);font-size:clamp(1.6rem,3.6vw,3rem);letter-spacing:-.02em;
+  text-shadow:0 0 34px color-mix(in oklab,var(--flame) 60%,transparent)}
+.p-finale .jp{font-family:var(--mincho);font-size:.84em;letter-spacing:.06em}
+
+/* staggered reveal */
+.w{display:inline-block;opacity:0;transform:translateY(calc(var(--ty,0em) + .7em));
+  transition:opacity 1.15s ease,transform 1.15s cubic-bezier(.22,1,.36,1);transition-delay:0s}
+.live .w{opacity:1;transform:translateY(var(--ty,0em));transition-delay:var(--d,0s)}
+
+/* ---------- persistent UI ---------- */
+header{position:fixed;inset:0 0 auto 0;z-index:10;display:flex;justify-content:space-between;align-items:flex-start;padding:28px 34px;pointer-events:none}
+.logo{display:flex;align-items:center;gap:10px;pointer-events:auto}
+.logo b{font-family:var(--serif);font-style:italic;font-weight:500;font-size:1.25rem;letter-spacing:.14em}
+.logo .date{font-family:var(--gothic);font-weight:300;font-size:.72rem;letter-spacing:.2em;opacity:.6;margin-top:.35em}
+nav{display:flex;gap:28px;pointer-events:auto}
+nav button{background:none;border:none;cursor:pointer;font-family:var(--gothic);font-weight:300;
+  font-size:.75rem;letter-spacing:.32em;color:inherit;padding:4px 2px;transition:opacity .3s;opacity:.75}
+nav button:hover{opacity:1}
+header,#progress{color:var(--ink);transition:color 1s ease}
+body.dark header{color:#f2ecf5}
+body.dark #progress .bar{background:rgba(242,236,245,.85)}
+body.dark #progress{background:rgba(242,236,245,.18)}
+.logo svg path{transition:fill 1s ease}
+#progress{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);width:26vw;height:1px;background:rgba(42,36,56,.25);z-index:10}
+#progress .bar{position:absolute;inset:0;background:rgba(42,36,56,.8);transform-origin:left;transform:scaleX(0)}
+#sound{position:fixed;left:34px;bottom:26px;width:46px;height:46px;z-index:10;opacity:0;transition:opacity 1.2s ease;pointer-events:none}
+#sound.on{opacity:1;pointer-events:auto}
+#sound svg{position:absolute;inset:0;animation:ringspin 14s linear infinite}
+#sound .dot{position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px;border-radius:50%;background:var(--ember);animation:oto 2.4s ease-in-out infinite alternate}
+@keyframes ringspin{to{transform:rotate(360deg)}}
+
+/* ---------- grain & vignette ---------- */
+.grain{position:fixed;left:-50%;top:-50%;width:200%;height:200%;z-index:8;pointer-events:none;
+  opacity:.05;mix-blend-mode:overlay;background-repeat:repeat;animation:grain 1.4s steps(8) infinite}
+@keyframes grain{
+  0%,100%{transform:translate(0,0)}12%{transform:translate(-3%,-6%)}25%{transform:translate(-8%,3%)}
+  37%{transform:translate(5%,-7%)}50%{transform:translate(-4%,8%)}62%{transform:translate(7%,2%)}
+  75%{transform:translate(-6%,-4%)}87%{transform:translate(3%,6%)}}
+.vignette{position:fixed;inset:0;z-index:7;pointer-events:none;
+  background:radial-gradient(115% 115% at 50% 45%, transparent 52%, rgba(10,16,48,.18) 78%, rgba(10,16,48,.42) 100%)}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation:none!important}
+  .w{transition-duration:.01s!important}
+}
+@media (max-width:760px){
+  .p-dawn{right:6vw;left:auto;max-width:80vw}
+  .vtxt.vl{left:6vw}.vtxt.vr{right:6vw}
+  #progress{width:44vw}
+  .p-rise{white-space:normal;text-align:center}
+}
+</style>
+<script type="importmap">{"imports":{
+  "three":"https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"
+}}</script>
+</head>
+<body>
+<div id="spacer"></div>
+
+<!-- backgrounds -->
+<div class="sbg" data-s="0">
+  <div class="pl l-back" data-f="0.3"></div>
+  <div class="pl l-mid" data-f="0.5"><div class="wingwash"></div></div>
+</div>
+<div class="sbg" data-s="1">
+  <div class="pl l-back" data-f="0.3"></div>
+  <div class="pl l-mid" data-f="0.5"></div>
+</div>
+<div class="sbg" data-s="2">
+  <div class="pl l-back" data-f="0.3"></div>
+  <div class="pl l-mid" data-f="0.5">
+    <svg class="halo-sil" viewBox="0 0 480 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path fill="#2a2438" d="M240 262 C234 226 236 200 240 176 C226 188 210 190 196 184 C210 176 218 166 220 152 C200 164 178 164 158 152 C178 146 192 134 198 118 C168 132 130 128 96 104 C134 106 166 94 186 70 C152 76 116 64 88 36 C130 50 172 46 204 22 C216 40 226 60 232 84 C236 64 238 48 240 30 C242 48 244 64 248 84 C254 60 264 40 276 22 C308 46 350 50 392 36 C364 64 328 76 294 70 C314 94 346 106 384 104 C350 128 312 132 282 118 C288 134 302 146 322 152 C302 164 280 164 260 152 C262 166 270 176 284 184 C270 190 254 188 240 176 C244 200 246 226 240 262 Z"/>
+    </svg>
+  </div>
+</div>
+<div class="sbg" data-s="3"><div class="pl l-back" data-f="0.3"></div></div>
+<div class="sbg" data-s="4"><div class="pl l-back" data-f="0.3"></div></div>
+<div class="sbg" data-s="5">
+  <div class="pl l-back" data-f="0.3"></div>
+  <div class="pl l-mid" data-f="0.5"><div class="mtn m1"></div><div class="mtn m2"></div><div class="water"></div></div>
+</div>
+
+<canvas id="gl"></canvas>
+
+<!-- foregrounds -->
+<div class="sfg" data-s="0"><div class="pl" data-f="1">
+  <p class="poem p-dawn">
+    <span class="w" style="--ty:0em">what</span>
+    <span class="w" style="--ty:.45em">guides</span>
+    <span class="w" style="--ty:.15em">us</span>
+    <span class="w" style="--ty:.6em">through</span><br>
+    <span class="w" style="--ty:.25em"><i>change,</i></span>
+    <span class="w" style="--ty:.75em"><i>reinvention,</i></span><br>
+    <span class="w" style="--ty:.4em">and</span>
+    <span class="w" style="--ty:.2em">the</span>
+    <span class="w big" style="--ty:.65em"><i>unknown—</i></span>
+  </p>
+</div></div>
+<div class="sfg" data-s="1"><div class="pl" data-f="1">
+  <p class="poem p-rise">
+    <span class="w" style="--ty:0em">再</span><span class="w" style="--ty:.18em">生</span><span class="w blur2" style="--ty:.06em">で</span><span class="w blur1" style="--ty:.26em">あ</span><span class="w" style="--ty:.1em">る</span><span class="w" style="--ty:.3em">。</span>
+  </p>
+</div></div>
+<div class="sfg" data-s="2"><div class="pl" data-f="1">
+  <p class="oto"><span class="w" style="--ty:0em">音</span></p>
+</div></div>
+<div class="sfg" data-s="3"><div class="pl" data-f="1">
+  <p class="vtxt vl"><span class="w" style="--ty:0em">一枚の羽根は落下しながら光条を曳く。<br>夜の底で、音のない軌跡だけが残る。<br><small>feather study — 01</small></span></p>
+  <p class="vtxt vr"><span class="w" style="--ty:.3em">落ちること、それ自体が<br>飛翔の記憶をなぞる問いである。<br><small>feather study — 02</small></span></p>
+  <p class="poem p-feather">
+    <span class="w" style="--ty:0em">don't</span>
+    <span class="w" style="--ty:.3em">just</span>
+    <span class="w" style="--ty:.1em"><i>speak</i></span>
+    <span class="w" style="--ty:.4em">to</span>
+    <span class="w" style="--ty:.18em">us.</span>
+    <span class="w" style="--ty:.5em">they</span>
+    <span class="w" style="--ty:.24em"><i>stimulate</i></span>
+    <span class="w" style="--ty:.55em">us.</span>
+    <span class="ln2">
+      <span class="w" style="--ty:.1em">light</span>
+      <span class="w" style="--ty:.42em"><i>becomes</i></span>
+      <span class="w jp" style="--ty:.2em">私、</span>
+      <span class="w" style="--ty:.55em"><i>flare。</i></span>
+    </span>
+  </p>
+</div></div>
+<div class="sfg" data-s="4"><div class="pl" data-f="1">
+  <div class="cw" style="left:20vw;top:28vh"><div class="cube" style="--s:120px;--t:30s">
+    <div class="f f1 prism"></div><div class="f f2"></div><div class="f f3"></div><div class="f f4"></div><div class="f f5"></div><div class="f f6"></div>
+  </div></div>
+  <div class="cw" style="left:60vw;top:42vh"><div class="cube" style="--s:150px;--t:40s">
+    <div class="f f1"></div><div class="f f2 prism"></div><div class="f f3"></div><div class="f f4"></div><div class="f f5"></div><div class="f f6"></div>
+  </div></div>
+  <div class="cw" style="left:44vw;top:64vh"><div class="cube" style="--s:84px;--t:24s">
+    <div class="f f1"></div><div class="f f2"></div><div class="f f3 prism"></div><div class="f f4"></div><div class="f f5"></div><div class="f f6"></div>
+  </div></div>
+  <p class="crys-cap"><span class="w" style="--ty:0em">屈折 — 焔の記憶を結晶に閉じる</span></p>
+</div></div>
+<div class="sfg" data-s="5"><div class="pl" data-f="1">
+  <p class="poem p-finale">
+    <span class="w" style="--ty:0em"><i>feel</i></span>
+    <span class="w" style="--ty:.3em">their</span>
+    <span class="w" style="--ty:.12em">heat.</span>
+    <span class="w jp" style="--ty:.42em">焔と</span>
+    <span class="w" style="--ty:.2em"><i>interact</i></span>
+    <span class="w" style="--ty:.5em">with。</span>
+  </p>
+</div></div>
+
+<div class="vignette"></div>
+<div class="grain" id="grain"></div>
+
+<header>
+  <div class="logo">
+    <svg width="22" height="18" viewBox="0 0 32 26" aria-hidden="true">
+      <path fill="#7fb8ff" d="M2 16 Q8 4 16 6 Q20 1 25 3 Q23 6 24 8 L30 10 Q22 12 18 18 Q12 24 4 22 Q8 20 7 17 Z"/>
+      <circle cx="22.4" cy="5.4" r="1" fill="#0a1030"/>
+    </svg>
+    <div><b>HIBANA</b><div class="date">Sept. 29</div></div>
+  </div>
+  <nav>
+    <button data-go="3.08">作品</button>
+    <button data-go="2.05">思想</button>
+    <button data-go="5.1">接続</button>
+  </nav>
+</header>
+<div id="progress"><div class="bar"></div></div>
+<div id="sound" aria-hidden="true">
+  <svg viewBox="0 0 46 46"><circle cx="23" cy="23" r="20" fill="none" stroke="rgba(255,179,107,.55)" stroke-width="1" stroke-dasharray="7 12"/></svg>
+  <span class="dot"></span>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- grain tile ---------- */
+{
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const x = c.getContext('2d'), d = x.createImageData(128, 128);
+  for (let i = 0; i < d.data.length; i += 4) {
+    const v = Math.random() * 255 | 0;
+    d.data[i] = d.data[i+1] = d.data[i+2] = v; d.data[i+3] = 255;
+  }
+  x.putImageData(d, 0, 0);
+  document.getElementById('grain').style.backgroundImage = `url(${c.toDataURL()})`;
+}
+
+/* ---------- renderer ---------- */
+const canvas = document.getElementById('gl');
+canvas.addEventListener('webglcontextlost', e => e.preventDefault());
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.setClearColor(0x000000, 1);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 60);
+camera.position.z = 9;
+const world = new THREE.Group();
+scene.add(world);
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 1.35, 0.4, 0.85);
+if (!reduced) composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+/* ---------- particle system (all six emitters, GPU-driven) ---------- */
+const COUNTS = [1200, 1500, 1000, 1200, 400, 1900].map(n => reduced ? Math.floor(n / 5) : n);
+const TOTAL = COUNTS.reduce((a, b) => a + b, 0);
+const seeds = new Float32Array(TOTAL * 4);
+const scn = new Float32Array(TOTAL);
+{
+  let k = 0;
+  COUNTS.forEach((n, s) => {
+    for (let i = 0; i < n; i++, k++) {
+      seeds[k*4] = Math.random(); seeds[k*4+1] = Math.random();
+      seeds[k*4+2] = Math.random(); seeds[k*4+3] = Math.random();
+      scn[k] = s;
+    }
+  });
+}
+const pGeo = new THREE.BufferGeometry();
+pGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(TOTAL * 3), 3));
+pGeo.setAttribute('aSeed', new THREE.BufferAttribute(seeds, 4));
+pGeo.setAttribute('aScene', new THREE.BufferAttribute(scn, 1));
+
+const pMat = new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  uniforms: {
+    uTime: { value: 0 }, uProgress: { value: 0 },
+    uPixelRatio: { value: renderer.getPixelRatio() }
+  },
+  vertexShader: /* glsl */`
+    uniform float uTime, uProgress, uPixelRatio;
+    attribute vec4 aSeed;
+    attribute float aScene;
+    varying vec3 vColor;
+    varying float vAlpha;
+    vec3 hsv2rgb(vec3 c){
+      vec3 p = abs(fract(c.xxx + vec3(0., 2./3., 1./3.)) * 6. - 3.);
+      return c.z * mix(vec3(1.), clamp(p - 1., 0., 1.), c.y);
+    }
+    void main(){
+      float t = uProgress * 6.0 - aScene;
+      float fin = aScene < 0.5 ? 1.0 : smoothstep(-0.35, 0.12, t);
+      float fout = aScene > 4.5 ? 1.0 : 1.0 - smoothstep(0.88, 1.35, t);
+      float vis = fin * fout;
+      float lt = clamp(t, 0.0, 1.0);
+      vec3 p = vec3(0.0); vec3 col = vec3(1.0);
+      float size = 1.0, a = 1.0;
+
+      if (aScene < 0.5) { /* Dawn: watercolor wing bleed */
+        float dr = uTime * 0.08 + aSeed.w * 6.2831;
+        p = vec3(-3.4 + (aSeed.x - 0.5) * 5.5, (aSeed.y - 0.5) * 6.5, (aSeed.z - 0.5) * 2.0);
+        p.y += p.x * 0.35;
+        p.x += sin(dr + p.y) * 0.35; p.y += cos(dr * 1.3) * 0.25;
+        col = mix(vec3(0.72, 0.62, 0.95), vec3(0.95, 0.98, 0.72), step(0.9, aSeed.x));
+        size = 2.0 + aSeed.y * 7.0; a = 0.10 + aSeed.w * 0.14;
+      } else if (aScene < 1.5) { /* Rise: phoenix trail */
+        float life = fract(aSeed.w + uTime * 0.45);
+        vec2 em = vec2(sin(uTime * 0.8) * 0.4, -7.2 + lt * 8.6);
+        float flap = sin(uTime * 2.4 - life * 3.0);
+        p.x = em.x + (aSeed.x - 0.5) * (1.2 + life * 2.8) + flap * (aSeed.x - 0.5) * 1.2;
+        p.y = em.y - life * 4.6 + sin(aSeed.y * 6.28 + uTime) * 0.3;
+        p.z = (aSeed.z - 0.5) * 1.5;
+        col = mix(vec3(2.1, 0.9, 0.3), vec3(1.9, 1.3, 0.72), aSeed.y);
+        a = (1.0 - life) * (0.4 + aSeed.z * 0.5);
+        size = 1.5 + aSeed.y * 4.0 * (1.0 - life);
+      } else if (aScene < 2.5) { /* Halo: iridescent ring (rainbow exception) */
+        float ang = aSeed.x * 6.2831 + uTime * 0.12;
+        float rad = 2.6 + aSeed.y * 1.2 + sin(uTime * 0.6 + aSeed.z * 6.28) * 0.25;
+        p = vec3(cos(ang) * rad * 1.15, sin(ang) * rad * 0.95 + 0.1, aSeed.z - 0.5);
+        col = hsv2rgb(vec3(fract(aSeed.x + uTime * 0.02), 0.5, 1.6));
+        a = 0.3 + aSeed.w * 0.4; size = 1.5 + aSeed.w * 4.0;
+      } else if (aScene < 3.5) { /* Feather: falling light beam */
+        float life = fract(aSeed.w + uTime * (0.10 + aSeed.y * 0.08));
+        p.x = sin(life * 6.28 + aSeed.x * 6.28) * 0.45 * (0.3 + aSeed.x) + (aSeed.x - 0.5) * 0.9;
+        p.y = 4.6 - life * 10.0;
+        p.z = (aSeed.z - 0.5) * 2.0;
+        col = mix(vec3(0.5, 0.72, 1.0), vec3(1.5, 1.9, 2.6), step(0.86, aSeed.y));
+        a = (0.22 + aSeed.z * 0.5) * sin(life * 3.1416);
+        size = 1.2 + aSeed.y * 3.5;
+      } else if (aScene < 4.5) { /* Crystal: sparse dust */
+        p = vec3((aSeed.x - 0.5) * 12.0,
+                 (aSeed.y - 0.5) * 7.0 + sin(uTime * 0.3 + aSeed.w * 6.28) * 0.4,
+                 (aSeed.z - 0.5) * 3.0);
+        col = vec3(0.5, 0.72, 1.0);
+        a = 0.10 + aSeed.w * 0.16; size = 1.0 + aSeed.y * 2.0;
+      } else { /* Finale: flame from wing-contour emitter */
+        float life = fract(aSeed.w + uTime * (0.5 + aSeed.y * 0.4));
+        float wx = (aSeed.x - 0.5) * 7.0;
+        float ax = abs(wx);
+        float wy = -1.3 + ax * 0.75 - ax * ax * 0.045;
+        p.x = wx + sin(life * 9.0 + aSeed.y * 6.28) * 0.28 * life;
+        p.y = wy + life * (2.2 + aSeed.y * 1.9)
+              + sin(uTime * 2.2 - ax * 0.9) * smoothstep(0.5, 3.5, ax) * 0.4;
+        p.z = aSeed.z - 0.5;
+        col = mix(vec3(2.3, 0.95, 0.28), vec3(1.7, 0.35, 0.12), life);
+        a = (1.0 - life) * (0.4 + aSeed.z * 0.5);
+        size = 1.4 + (1.0 - life) * 4.5;
+      }
+      vAlpha = a * vis;
+      vColor = col;
+      vec4 mv = modelViewMatrix * vec4(p, 1.0);
+      gl_PointSize = size * uPixelRatio * (38.0 / -mv.z);
+      gl_Position = vis < 0.001 ? vec4(0.0, 0.0, 2.0, 1.0) : projectionMatrix * mv;
+    }`,
+  fragmentShader: /* glsl */`
+    varying vec3 vColor;
+    varying float vAlpha;
+    void main(){
+      float m = smoothstep(0.5, 0.06, length(gl_PointCoord - 0.5));
+      float a = vAlpha * m;
+      if (a < 0.003) discard;
+      gl_FragColor = vec4(vColor, a);
+    }`
+});
+const points = new THREE.Points(pGeo, pMat);
+points.frustumCulled = false;
+world.add(points);
+
+/* ---------- phoenix: bezier shape + flap shader ---------- */
+function phoenixShape(){
+  const s = new THREE.Shape();
+  s.moveTo(0, -2.9);
+  s.bezierCurveTo(0.3, -2.2, 0.42, -1.4, 0.34, -0.6);
+  s.bezierCurveTo(0.5, 0.2, 0.4, 0.9, 0.14, 1.35);
+  s.bezierCurveTo(0.6, 1.35, 1.3, 1.5, 2.1, 2.0);
+  s.bezierCurveTo(3.0, 2.55, 3.9, 2.8, 4.7, 2.65);
+  s.bezierCurveTo(4.0, 2.15, 3.6, 1.7, 3.7, 1.05);
+  s.bezierCurveTo(3.15, 1.35, 2.75, 1.05, 2.8, 0.45);
+  s.bezierCurveTo(2.25, 0.75, 1.8, 0.45, 1.75, -0.15);
+  s.bezierCurveTo(1.3, 0.05, 0.9, -0.25, 0.7, -0.8);
+  s.bezierCurveTo(0.5, -1.6, 0.3, -2.3, 0, -2.9);
+  return s;
+}
+const phGeo = new THREE.ShapeGeometry(phoenixShape(), 16);
+function phoenixMaterial(){
+  return new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
+    uniforms: {
+      uTime: { value: 0 }, uFlap: { value: 0.45 }, uOpacity: { value: 0 },
+      uColA: { value: new THREE.Color(2.2, 1.15, 0.42) },
+      uColB: { value: new THREE.Color(1.7, 0.5, 0.2) }
+    },
+    vertexShader: /* glsl */`
+      uniform float uTime, uFlap;
+      varying vec2 vP;
+      void main(){
+        vec3 p = position;
+        float ax = abs(p.x);
+        p.y += sin(uTime * 2.3 - ax * 0.9) * smoothstep(0.4, 4.6, ax) * uFlap;
+        vP = position.xy;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+      }`,
+    fragmentShader: /* glsl */`
+      uniform vec3 uColA, uColB;
+      uniform float uOpacity, uTime;
+      varying vec2 vP;
+      void main(){
+        float r = clamp(length(vP) / 4.6, 0.0, 1.0);
+        vec3 c = mix(uColA, uColB, r) + uColB * pow(r, 3.0) * 0.8;
+        c *= 0.92 + 0.08 * sin(uTime * 7.0 + vP.x * 3.0);
+        gl_FragColor = vec4(c, uOpacity);
+      }`
+  });
+}
+function makePhoenix(){
+  const g = new THREE.Group(), m = phoenixMaterial();
+  const r = new THREE.Mesh(phGeo, m);
+  const l = new THREE.Mesh(phGeo, m); l.scale.x = -1;
+  g.add(r, l); g.userData.mat = m;
+  return g;
+}
+const phoenix = makePhoenix(); world.add(phoenix);
+const reflection = makePhoenix(); world.add(reflection);
+reflection.scale.set(1.35, -1.05, 1); reflection.position.y = -5.6;
+
+/* ---------- glow sprites (dawn orb, falling feather) ---------- */
+function glowSprite(color, stretch){
+  return new THREE.Mesh(
+    new THREE.PlaneGeometry(3.4, 3.4),
+    new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      uniforms: {
+        uColor: { value: new THREE.Color(...color) },
+        uOpacity: { value: 0 },
+        uStretch: { value: new THREE.Vector2(...stretch) }
+      },
+      vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      fragmentShader: /* glsl */`
+        uniform vec3 uColor; uniform float uOpacity; uniform vec2 uStretch;
+        varying vec2 vUv;
+        void main(){
+          vec2 d = (vUv - 0.5) / uStretch;
+          float a = exp(-dot(d, d) * 9.0) * uOpacity;
+          if (a < 0.004) discard;
+          gl_FragColor = vec4(uColor, a);
+        }`
+    })
+  );
+}
+const orb = glowSprite([1.6, 1.85, 0.95], [1, 1]);
+orb.position.set(2.3, 2.4, 0); world.add(orb);
+const feather = glowSprite([1.4, 1.9, 2.7], [0.3, 1]);
+feather.rotation.z = 0.18; world.add(feather);
+
+/* ---------- DOM caches ---------- */
+const sbgs = [...document.querySelectorAll('.sbg')].sort((a,b)=>a.dataset.s-b.dataset.s);
+const sfgs = [...document.querySelectorAll('.sfg')].sort((a,b)=>a.dataset.s-b.dataset.s);
+const layers = [];
+for (let i = 0; i < 6; i++){
+  layers[i] = [];
+  sbgs[i].querySelectorAll('.pl').forEach(el => layers[i].push({ el, f: +el.dataset.f || 0.3 }));
+  sfgs[i].querySelectorAll('.pl').forEach(el => layers[i].push({ el, f: +el.dataset.f || 1 }));
+}
+sfgs.forEach(fg => {
+  const ws = fg.querySelectorAll('.w'), c = (ws.length - 1) / 2;
+  ws.forEach((w, i) => w.style.setProperty('--d', (0.12 + Math.abs(i - c) * 0.075).toFixed(3) + 's'));
+});
+const bar = document.querySelector('#progress .bar');
+const sound = document.getElementById('sound');
+const cubesLayer = sfgs[4];
+document.querySelectorAll('nav button').forEach(b =>
+  b.addEventListener('click', () => scrollTo({ top: (+b.dataset.go / 6) * maxScroll(), behavior: 'smooth' })));
+function maxScroll(){ return document.documentElement.scrollHeight - innerHeight; }
+
+/* ---------- scroll state ---------- */
+let cur = Math.min(1, (scrollY || 0) / Math.max(1, maxScroll()));
+const sm = (a, b, x) => { x = Math.min(1, Math.max(0, (x - a) / (b - a))); return x * x * (3 - 2 * x); };
+const vis = i => {
+  const t = cur * 6 - i;
+  return (i === 0 ? 1 : sm(-0.35, 0.12, t)) * (i === 5 ? 1 : 1 - sm(0.88, 1.35, t));
+};
+const lerp = (a, b, m) => a + (b - a) * m;
+const UI_DARK = [false, true, false, true, true, true];
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(innerWidth, innerHeight);
+  composer.setSize(innerWidth, innerHeight);
+  pMat.uniforms.uPixelRatio.value = renderer.getPixelRatio();
+});
+
+/* ---------- single rAF: particles, meshes, DOM ---------- */
+const cA1 = new THREE.Color(2.2, 1.15, 0.42), cA5 = new THREE.Color(2.5, 1.0, 0.3);
+const cB1 = new THREE.Color(1.7, 0.5, 0.2), cB5 = new THREE.Color(1.9, 0.4, 0.12);
+let wasDark = null;
+
+function tick(ms){
+  requestAnimationFrame(tick);
+  const time = reduced ? 12.0 : ms * 0.001;
+  cur += (scrollY / Math.max(1, maxScroll()) - cur) * 0.08;
+  cur = Math.min(1, Math.max(0, cur));
+
+  pMat.uniforms.uTime.value = time;
+  pMat.uniforms.uProgress.value = cur;
+
+  const v = [vis(0), vis(1), vis(2), vis(3), vis(4), vis(5)];
+
+  /* phoenix (Rise ↔ Finale) */
+  const w1 = v[1], w5 = v[5], m = w5 / (w1 + w5 + 1e-4);
+  phoenix.visible = (w1 + w5) > 0.002;
+  if (phoenix.visible){
+    const pm = phoenix.userData.mat;
+    pm.uniforms.uTime.value = time;
+    pm.uniforms.uOpacity.value = Math.min(1, w1 * 0.65 + w5 * 0.9);
+    pm.uniforms.uFlap.value = reduced ? 0 : lerp(0.5, 0.32, m);
+    pm.uniforms.uColA.value.lerpColors(cA1, cA5, m);
+    pm.uniforms.uColB.value.lerpColors(cB1, cB5, m);
+    const riseY = -7.4 + Math.min(1, Math.max(0, cur * 6 - 1)) * 7.0;
+    phoenix.position.y = lerp(riseY, -0.3, m);
+    phoenix.position.x = lerp(Math.sin(time * 0.8) * 0.4, 0, m);
+    const sc = lerp(0.95, 1.42, m);
+    phoenix.scale.set(sc * lerp(1, 1.12, m), sc, 1);
+  }
+  reflection.visible = w5 > 0.002;
+  if (reflection.visible){
+    const rm = reflection.userData.mat;
+    rm.uniforms.uTime.value = time;
+    rm.uniforms.uFlap.value = reduced ? 0 : 0.32;
+    rm.uniforms.uOpacity.value = 0.13 * w5;
+    rm.uniforms.uColA.value.copy(cA5); rm.uniforms.uColB.value.copy(cB5);
+  }
+
+  /* orb & feather sprites */
+  orb.visible = v[0] > 0.002;
+  orb.material.uniforms.uOpacity.value = v[0] * (0.7 + 0.15 * Math.sin(time * 1.6));
+  feather.visible = v[3] > 0.002;
+  feather.material.uniforms.uOpacity.value = v[3] * 0.95;
+  feather.position.set(Math.sin(time * 0.7) * 0.55, 4.4 - ((time * 0.55) % 9), 0.2);
+  feather.rotation.z = 0.18 + Math.sin(time * 0.9) * 0.12;
+
+  /* camera drift */
+  camera.position.x = Math.sin(cur * Math.PI * 2) * 0.25;
+  camera.position.y = Math.cos(cur * Math.PI) * 0.15;
+  camera.lookAt(0, 0, 0);
+  world.scale.setScalar(camera.aspect < 1 ? 0.72 : 1);
+
+  reduced ? renderer.render(scene, camera) : composer.render();
+
+  /* DOM — all writes inside rAF */
+  for (let i = 0; i < 6; i++){
+    const on = v[i] > 0.001;
+    const o = v[i].toFixed(3);
+    sbgs[i].style.opacity = o; sfgs[i].style.opacity = o;
+    sbgs[i].style.visibility = sfgs[i].style.visibility = on ? 'visible' : 'hidden';
+    if (on){
+      const ltn = Math.min(1, Math.max(0, (cur * 6 - i + 0.5) / 2));
+      for (const { el, f } of layers[i])
+        el.style.transform = `translate3d(0,${((0.5 - ltn) * f * innerHeight * 0.3).toFixed(1)}px,0)`;
+    }
+    if (v[i] > 0.5) sfgs[i].classList.add('live');
+    else if (v[i] < 0.08) sfgs[i].classList.remove('live');
+  }
+  cubesLayer.style.pointerEvents = v[4] > 0.4 ? 'auto' : 'none';
+  bar.style.transform = `scaleX(${cur.toFixed(4)})`;
+  sound.classList.toggle('on', cur * 6 >= 3.15);
+  const dark = UI_DARK[Math.min(5, Math.max(0, Math.round(cur * 6 - 0.5)))];
+  if (dark !== wasDark){ document.body.classList.toggle('dark', dark); wasDark = dark; }
+}
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
