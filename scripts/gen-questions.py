@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""LM Studio に 3 Gemma モデルで extract-questions 系テーマの生成を投げる。
-Claude Opus は別途 Agent ツール経由。
+"""LM Studio のローカルモデルで JSON テーマを生成する。
+
+API モデルは別のハーネス経由で生成する。
 
 使い方:
   python3 scripts/gen-questions.py                              # extract-questions
   python3 scripts/gen-questions.py --theme extract-questions-v2 # v2
+  python3 scripts/gen-questions.py --theme pr-triage --temperature default
   python3 scripts/gen-questions.py --model 12b --overwrite
 """
 from __future__ import annotations
@@ -18,33 +20,53 @@ PRICING_PATH = ROOT / "scripts" / "pricing.json"
 API = "http://127.0.0.1:1234/v1/chat/completions"
 
 MODELS = [
-    ("google/gemma-4-12b-qat", "gemma-4-12b-qat"),
-    ("google/gemma-4-26b-a4b-qat", "gemma-4-26b-a4b-qat"),
-    ("google/gemma-4-31b", "gemma-4-31b"),
+    ("google/gemma-4-12b-qat", "gemma-4-12b-qat", "qat-4bit"),
+    ("google/gemma-4-26b-a4b-qat", "gemma-4-26b-a4b-qat", "qat-4bit"),
+    ("google/gemma-4-31b", "gemma-4-31b", "q4_k_m"),
+    ("wcamon/agents-a1-4b-mlx-4bit", "agents-a1-4b", "mlx-4bit"),
 ]
 
 
 def build_prompt(theme_dir: Path) -> str:
     prompt_md = (theme_dir / "PROMPT.md").read_text(encoding="utf-8")
-    prompt_md = prompt_md.replace(
-        "[input.md の本文をここに展開してプロンプトに含める]", ""
-    )
-    input_md = (theme_dir / "input.md").read_text(encoding="utf-8")
-    return f"{prompt_md.strip()}\n\n{input_md.strip()}\n\n---\n\nJSON 単体で出力してください。"
+    placeholder = "[input.md の本文をここに展開してプロンプトに含める]"
+    input_path = theme_dir / "input.md"
+    if placeholder in prompt_md:
+        if not input_path.exists():
+            raise FileNotFoundError(f"input file not found: {input_path}")
+        prompt_md = prompt_md.replace(placeholder, "")
+        input_md = input_path.read_text(encoding="utf-8")
+        prompt_md = f"{prompt_md.strip()}\n\n{input_md.strip()}"
+    return f"{prompt_md.strip()}\n\n---\n\nJSON 単体で出力してください。"
 
 
-def gen_one(theme_dir: Path, model_id: str, dir_name: str, prompt: str, sampling: dict, overwrite: bool = False) -> str:
+def gen_one(
+    theme_dir: Path,
+    model_id: str,
+    dir_name: str,
+    quantization: str,
+    prompt: str,
+    sampling: dict,
+    overwrite: bool = False,
+) -> str:
     out_dir = theme_dir / dir_name
     out_dir.mkdir(parents=True, exist_ok=True)
     out_file = out_dir / "output.json"
     if out_file.exists() and not overwrite:
         return f"{dir_name}: skip (exists)"
-    payload = {
+    attempts = 1
+    run_file = out_dir / "run.json"
+    if overwrite and run_file.exists():
+        previous_run = json.loads(run_file.read_text(encoding="utf-8"))
+        attempts = int(previous_run.get("attempts") or 0) + 1
+    payload: dict = {
         "model": model_id,
         "messages": [{"role": "user", "content": prompt}],
-        "temperature": sampling["temperature"],
-        "max_tokens": sampling["max_tokens"],
     }
+    if sampling["temperature"] != "default":
+        payload["temperature"] = sampling["temperature"]
+    if sampling["max_tokens"] != "default":
+        payload["max_tokens"] = sampling["max_tokens"]
     req = urllib.request.Request(
         API,
         data=json.dumps(payload).encode("utf-8"),
@@ -66,7 +88,17 @@ def gen_one(theme_dir: Path, model_id: str, dir_name: str, prompt: str, sampling
     if pt == 0 or ct == 0:
         raise RuntimeError(f"{dir_name}: usage tokens are zero (prompt={pt}, completion={ct}). Refusing to write measured run.json.")
 
-    _write_run_measured(theme_dir, out_dir, dir_name, model_id, pt, ct, sampling)
+    _write_run_measured(
+        theme_dir,
+        out_dir,
+        dir_name,
+        model_id,
+        quantization,
+        attempts,
+        pt,
+        ct,
+        sampling,
+    )
 
     return f"{dir_name}: saved {len(content)} chars"
 
@@ -76,6 +108,8 @@ def _write_run_measured(
     out_dir: Path,
     model_slug: str,
     model_id: str,
+    quantization: str,
+    attempts: int,
     prompt_tokens: int,
     completion_tokens: int,
     sampling: dict,
@@ -97,8 +131,10 @@ def _write_run_measured(
         "model_id": model_id,
         # gen-questions.py の担当領域は LM Studio 経由の LMS-API 生成のみ
         "harness": "lmstudio-api",
-        "reasoning_effort": "none",
-        "attempts": 1,
+        "reasoning_effort": (
+            "unknown" if model_slug == "agents-a1-4b" else "none"
+        ),
+        "attempts": attempts,
         "generated_at": now_iso,
         "generated_at_source": "measured",
         "sampling": {
@@ -108,7 +144,11 @@ def _write_run_measured(
         },
         "system_prompt": "harness-default",
         "post_processing": "none",
-        "runtime": {"engine": "lmstudio", "quantization": "qat-4bit" if "qat" in model_slug else "q4_k_m", "api": "openai-compat"},
+        "runtime": {
+            "engine": "lmstudio",
+            "quantization": quantization,
+            "api": "openai-compat",
+        },
         "usage": {
             "estimated": False,
             "method": "api-usage",
@@ -165,8 +205,10 @@ def main() -> int:
                     help="テーマ名（デフォルト extract-questions）")
     ap.add_argument("--model", help="モデル名の部分一致で絞る")
     ap.add_argument("--overwrite", action="store_true")
-    ap.add_argument("--max-tokens", type=int, default=16000,
-                    help="LM Studio に投げる max_tokens (デフォルト 16000)")
+    ap.add_argument("--temperature", default="0.2",
+                    help="LM Studio に投げる temperature。default なら省略")
+    ap.add_argument("--max-tokens", default="16000",
+                    help="LM Studio に投げる max_tokens。default なら省略")
     args = ap.parse_args()
 
     theme_dir = PUBLIC / args.theme
@@ -175,13 +217,34 @@ def main() -> int:
         return 1
 
     prompt = build_prompt(theme_dir)
-    sampling = {"temperature": 0.2, "max_tokens": args.max_tokens}
+    try:
+        temperature: float | str = (
+            "default" if args.temperature == "default" else float(args.temperature)
+        )
+        max_tokens: int | str = (
+            "default" if args.max_tokens == "default" else int(args.max_tokens)
+        )
+    except ValueError as exc:
+        print(f"[ERROR] invalid sampling value: {exc}", file=sys.stderr)
+        return 1
+
+    sampling = {"temperature": temperature, "max_tokens": max_tokens}
     print(f"=== {args.theme} (prompt {len(prompt)} chars) ===", file=sys.stderr)
-    for mid, dn in MODELS:
+    for mid, dn, quantization in MODELS:
         if args.model and args.model not in dn:
             continue
         try:
-            print(gen_one(theme_dir, mid, dn, prompt, sampling, args.overwrite))
+            print(
+                gen_one(
+                    theme_dir,
+                    mid,
+                    dn,
+                    quantization,
+                    prompt,
+                    sampling,
+                    args.overwrite,
+                )
+            )
         except Exception as e:
             print(f"[ERROR] {dn}: {e}", file=sys.stderr)
     return 0

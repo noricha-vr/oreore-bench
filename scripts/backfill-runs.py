@@ -7,7 +7,7 @@
 
 - generated_at は git log --diff-filter=A --format=%aI -- <path> の初回コミット時刻を使う
   (「手直しなし」ルールにより生成日と一致するはずという計画の前提)
-- sampling: gen-questions.py 由来 (Gemma × extract-questions 系) のみ temperature 0.2 / max_tokens 16000 が確定
+- sampling: gen-questions.py 由来のローカルモデル × extract-questions 系のみ temperature 0.2 / max_tokens 16000 が確定
 - #5 デフォルトは既存 run.json のあるエントリをスキップする (手動修正の無警告巻き戻しを防ぐ)
 - --overwrite 指定時のみ既存 run.json を再生成 (usage/cost は保持)
 - 実測 (estimated: false) の run.json は --overwrite でも触らない
@@ -44,11 +44,16 @@ RUNNER_MAP: dict[str, tuple[str, str]] = {
     "AntiGravity CLI (High)": ("antigravity-cli", "high"),
 }
 
-# gen-questions.py で生成される (Gemma × extract-questions*) は sampling 確定。
-GEN_QUESTIONS_MODELS = {"gemma-4-12b-qat", "gemma-4-26b-a4b-qat", "gemma-4-31b"}
+# gen-questions.py で生成されるローカルモデル × extract-questions* は sampling 確定。
+GEN_QUESTIONS_MODELS = {
+    "agents-a1-4b",
+    "gemma-4-12b-qat",
+    "gemma-4-26b-a4b-qat",
+    "gemma-4-31b",
+}
 GEN_QUESTIONS_THEMES = {"extract-questions", "extract-questions-v2"}
 
-# ENTRIES 配列を抜き出す正規表現。1 行 1 エントリ想定 (現状の index.html はその形式)。
+# ENTRIES 配列・後続 push を抜き出す正規表現。1 行 1 エントリ想定。
 ENTRY_LINE_RE = re.compile(
     r'\{\s*theme:\s*"(?P<theme>[^"]+)",\s*model:\s*"(?P<model>[^"]+)",\s*runner:\s*"(?P<runner>[^"]+)"'
 )
@@ -63,7 +68,16 @@ def parse_entries() -> list[dict]:
     m = re.search(r"(?:window\.|const )ENTRIES = \[(.+?)\];", text, re.DOTALL)
     if not m:
         raise RuntimeError("ENTRIES literal not found in public/data.js / index.html")
-    body = m.group(1)
+    bodies = [m.group(1)]
+    bodies.extend(
+        match.group(1)
+        for match in re.finditer(
+            r"window\.ENTRIES\.push\((.+?)\);",
+            text,
+            re.DOTALL,
+        )
+    )
+    body = "\n".join(bodies)
     entries: list[dict] = []
     for line in body.splitlines():
         m2 = ENTRY_LINE_RE.search(line)
@@ -109,6 +123,8 @@ def build_run(entry: dict) -> dict[str, Any]:
 
     model_dir = PUBLIC / theme / model
     generated_at = git_first_commit_time(model_dir) if model_dir.exists() else None
+    if model == "agents-a1-4b":
+        effort = "unknown"
 
     # sampling は gen-questions.py 由来のみ確定
     if theme in GEN_QUESTIONS_THEMES and model in GEN_QUESTIONS_MODELS:
@@ -119,6 +135,8 @@ def build_run(entry: dict) -> dict[str, Any]:
     # ローカルモデルは runtime を付ける (量子化・エンジン情報)
     if model.startswith("gemma-"):
         runtime = {"engine": "lmstudio", "quantization": "qat-4bit" if "qat" in model else "q4_k_m", "api": "openai-compat"}
+    elif model == "agents-a1-4b":
+        runtime = {"engine": "lmstudio", "quantization": "mlx-4bit", "api": "openai-compat"}
     else:
         runtime = None
 
@@ -126,7 +144,11 @@ def build_run(entry: dict) -> dict[str, Any]:
         "schema_version": 1,
         "theme": theme,
         "model": model,
-        "model_id": model,
+        "model_id": (
+            "wcamon/agents-a1-4b-mlx-4bit"
+            if model == "agents-a1-4b"
+            else model
+        ),
         "harness": harness,
         "reasoning_effort": effort,
         "attempts": 1,

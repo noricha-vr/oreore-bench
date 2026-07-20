@@ -10,5 +10,6 @@
   "kimi-k3":              { "id": "moonshotai/kimi-k3",             "type": "api" },
   "gemma-4-31b":          { "id": "google/gemma-4-31b-it",          "type": "local" },
   "gemma-4-26b-a4b-qat":  { "id": "google/gemma-4-26b-a4b-it",      "type": "local" },
-  "gemma-4-12b-qat":      { "id": null,                              "type": "local" }
+  "gemma-4-12b-qat":      { "id": null,                              "type": "local" },
+  "agents-a1-4b":         { "id": null,                              "type": "local" }
 }
