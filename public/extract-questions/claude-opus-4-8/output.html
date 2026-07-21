@@ -165,7 +165,7 @@
     document.getElementById('input-text').textContent = '読み込み失敗';
   });
 
-  const meta = {"valid_json": true, "generated_at": "2026-06-30T13:41:00.913Z", "raw_length": 6291, "count_ok": true, "schema_pass": true, "question_count": 20, "expected_min": 15, "expected_target": 20, "has_id_pct": 100, "has_originalText_pct": 100, "has_question_pct": 100, "has_options_pct": 100, "has_confidence_pct": 100, "free_option_present_pct": 100, "exceed_options_cap": 0, "duplicate_ids": 0, "duplicate_questions": 0, "issues": []};
+  const meta = {"valid_json": true, "generated_at": "2026-07-01T01:14:37.686Z", "raw_length": 6291, "count_ok": true, "schema_pass": true, "question_count": 20, "expected_min": 15, "expected_target": 20, "has_id_pct": 100, "has_originalText_pct": 100, "has_question_pct": 100, "has_options_pct": 100, "has_confidence_pct": 100, "free_option_present_pct": 100, "exceed_options_cap": 0, "duplicate_ids": 0, "duplicate_questions": 0, "issues": []};
   const FREE_LABEL = '自由に記述する';
 
   function escape(s) {
@@ -216,15 +216,26 @@
     `;
   }
 
+  function parseOutputJson(raw) {
+    const trimmed = raw.trim();
+    // Prefer fenced JSON so braces in preamble examples do not become parse anchors.
+    const fence = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    let text = fence ? fence[1].trim() : trimmed;
+    if (!fence) {
+      const first = text.indexOf('{');
+      const last = text.lastIndexOf('}');
+      if (first >= 0 && last > first) text = text.slice(first, last + 1);
+    }
+    try { return JSON.parse(text); } catch (error) {
+      if (fence) throw error;
+      return JSON.parse(raw);
+    }
+  }
+
   fetch('./output.json').then(r => r.text()).then(raw => {
     if (!meta.valid_json) { renderError('parse failed', raw); return; }
     try {
-      let s = raw.trim();
-      s = s.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
-      const idx = s.indexOf('{');
-      if (idx > 0) s = s.slice(idx);
-      const data = JSON.parse(s);
-      renderQuestions(data);
+      renderQuestions(parseOutputJson(raw));
     } catch (e) {
       renderError(e.message, raw);
     }

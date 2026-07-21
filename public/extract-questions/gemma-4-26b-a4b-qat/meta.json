@@ -1,20 +1,9 @@
 {
-  "valid_json": true,
-  "generated_at": "2026-07-01T01:14:37.688Z",
+  "valid_json": false,
+  "generated_at": "2026-07-15T16:11:23.622Z",
   "raw_length": 6157,
-  "count_ok": true,
-  "schema_pass": true,
-  "question_count": 20,
-  "expected_min": 15,
-  "expected_target": 20,
-  "has_id_pct": 100,
-  "has_originalText_pct": 100,
-  "has_question_pct": 100,
-  "has_options_pct": 100,
-  "has_confidence_pct": 100,
-  "free_option_present_pct": 100,
-  "exceed_options_cap": 0,
-  "duplicate_ids": 0,
-  "duplicate_questions": 0,
-  "issues": []
+  "schema_pass": false,
+  "issues": [
+    "JSON parse failed"
+  ]
 }
