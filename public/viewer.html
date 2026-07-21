@@ -4,374 +4,247 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>作品ビューア — OreOre-Bench</title>
-    <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%232563eb'/><text x='16' y='22' text-anchor='middle' font-family='sans-serif' font-size='18' font-weight='700' fill='white'>O</text></svg>">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230071e3'/><text x='16' y='22' text-anchor='middle' font-family='sans-serif' font-size='18' font-weight='600' fill='white'>O</text></svg>">
+    <link rel="stylesheet" href="/assets/apple-modern.css">
     <style>
-        :root {
-            --bg: #ffffff;
-            --bg-soft: #f7f8fa;
-            --fg: #1a1a1a;
-            --fg-soft: #5a5a5a;
-            --muted-fg: #6b7280;
-            --border: #e5e7eb;
-            --border-strong: #d1d5db;
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --primary-fg: #ffffff;
-            --radius: 12px;
-            --radius-sm: 6px;
-            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        html,
         body {
-            height: 100%;
-        }
-
-        body {
-            margin: 0;
+            min-height: 100dvh;
             overflow: hidden;
-            background: var(--bg-soft);
-            color: var(--fg);
-            font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+            background: var(--bg-alt);
         }
-
-        button,
-        select,
-        a {
-            font: inherit;
-        }
-
-        a {
-            color: inherit;
-        }
-
         .viewer-shell {
             display: grid;
-            grid-template-columns: 280px minmax(0, 1fr);
+            grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
             height: 100dvh;
-            min-height: 0;
         }
-
         .sidebar {
+            position: relative;
+            z-index: 2;
             display: flex;
-            min-width: 0;
-            min-height: 0;
             flex-direction: column;
-            border-right: 1px solid var(--border);
-            background: var(--bg);
+            min-width: 0;
+            overflow: hidden;
+            border-right: 1px solid var(--border-subtle);
+            background: var(--bg-alt);
         }
-
         .sidebar-header {
-            flex: 0 0 auto;
-            padding: 18px 20px 20px;
-            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 3;
+            display: grid;
+            gap: 18px;
+            padding: 20px 22px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            background: rgba(245, 245, 247, 0.78);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
         }
-
         .back-link {
-            display: inline-flex;
-            align-items: center;
-            min-height: 36px;
-            margin-bottom: 12px;
-            color: var(--fg-soft);
-            font-weight: 700;
+            width: fit-content;
+            color: var(--link);
+            font-size: var(--text-caption);
             text-decoration: none;
         }
-
         .back-link:hover {
-            color: var(--primary);
+            text-decoration: underline;
+            text-underline-offset: 3px;
         }
-
         .theme-field {
             display: grid;
-            gap: 6px;
+            gap: 8px;
         }
-
-        .field-label,
-        .section-label {
-            color: var(--muted-fg);
-            font-size: 0.8125rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-        }
-
-        .theme-select {
-            width: 100%;
-            min-height: 42px;
-            padding: 8px 34px 8px 11px;
-            border: 1px solid var(--border-strong);
-            border-radius: var(--radius-sm);
-            background: var(--bg);
-            color: var(--fg);
+        .field-label, .section-label {
+            color: var(--text-secondary);
+            font-size: var(--text-caption);
             font-weight: 600;
         }
-
-        .theme-select:hover {
-            border-color: #9ca3af;
+        .theme-select {
+            width: 100%;
+            min-height: 44px;
+            padding: 9px 36px 9px 14px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            background: var(--bg-light);
+            color: var(--text);
+            cursor: pointer;
+            transition: border-color var(--duration-fast) var(--ease-apple);
         }
-
-        .theme-select:focus-visible,
-        .model-button:focus-visible,
-        .detail-link:focus-visible,
-        .back-link:focus-visible {
-            outline: 3px solid rgba(37, 99, 235, 0.28);
-            outline-offset: 2px;
-        }
-
+        .theme-select:hover { border-color: var(--border-strong); }
         .model-section {
             display: flex;
             min-height: 0;
-            flex: 1 1 auto;
+            flex: 1;
             flex-direction: column;
+            padding: 22px;
+            border-bottom: 1px solid var(--border-subtle);
         }
-
-        .section-label {
-            padding: 14px 20px 6px;
-        }
-
         .model-list {
-            display: flex;
-            min-height: 0;
-            flex: 1 1 auto;
-            flex-direction: column;
-            gap: 6px;
-            overflow-y: auto;
-            padding: 6px 12px 16px;
-        }
-
-        .model-button {
-            --active-color: var(--primary);
             display: grid;
+            gap: 8px;
+            margin-top: 12px;
+            padding-right: 4px;
+            overflow-y: auto;
+            overscroll-behavior-block: contain;
+        }
+        .model-button {
             width: 100%;
-            gap: 4px;
-            padding: 10px 10px 10px 12px;
-            border: 1px solid transparent;
-            border-left: 4px solid transparent;
-            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-            background: transparent;
-            color: var(--fg);
+            padding: 13px 14px;
+            border: 1px solid var(--border-subtle);
+            border-left: 3px solid transparent;
+            border-radius: 14px;
+            background: var(--bg-light);
+            color: var(--text);
             text-align: left;
             cursor: pointer;
+            box-shadow: var(--shadow-card);
+            transition:
+                border-color var(--duration-fast) var(--ease-apple),
+                box-shadow var(--duration-fast) var(--ease-apple),
+                transform var(--duration-fast) var(--ease-apple);
         }
-
         .model-button:hover {
-            border-color: var(--border);
-            border-left-color: var(--border-strong);
-            background: var(--bg-soft);
+            border-color: var(--border-strong);
+            box-shadow: var(--shadow-card-hover);
+            transform: translateY(-1px);
         }
-
         .model-button.is-selected {
-            border-color: var(--border);
-            border-left-color: var(--active-color);
-            background: var(--bg-soft);
-            box-shadow: var(--shadow-sm);
+            border-left-color: var(--active-color, var(--cta));
+            background: var(--bg-light);
+            box-shadow: 0 0 0 1px rgba(0, 102, 204, 0.16);
         }
-
         .model-line {
             display: flex;
-            min-width: 0;
-            align-items: center;
+            align-items: baseline;
             justify-content: space-between;
             gap: 8px;
         }
-
         .model-name {
             min-width: 0;
-            overflow: hidden;
-            font-size: 0.9rem;
-            font-weight: 700;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
         }
-
         .runner {
-            overflow: hidden;
-            color: var(--muted-fg);
-            font-size: 0.8125rem;
-            line-height: 1.4;
-            text-overflow: ellipsis;
-            text-transform: lowercase;
-            white-space: nowrap;
+            color: var(--text-secondary);
+            font-size: var(--text-caption);
+            line-height: 1.45;
         }
-
         .cost-chip {
             display: inline-flex;
-            min-height: 22px;
             flex: 0 0 auto;
             align-items: center;
-            padding: 2px 7px;
-            border: 1px solid #e2e5e9;
-            border-radius: 999px;
-            background: #f1f3f5;
-            color: #343a40;
-            font-size: 0.8125rem;
-            font-weight: 700;
+            min-height: 24px;
+            margin-top: 7px;
+            padding: 3px 9px;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-pill);
+            background: var(--bg-alt);
+            color: var(--text-secondary);
+            font-size: var(--text-caption);
             line-height: 1;
             white-space: nowrap;
         }
-
         .entry-details {
-            flex: 0 0 auto;
-            max-height: 34vh;
-            overflow-y: auto;
-            padding: 16px 20px 18px;
-            border-top: 1px solid var(--border);
-            background: #fbfcfd;
+            display: grid;
+            gap: 10px;
+            padding: 22px;
+            background: var(--bg-light);
         }
-
         .detail-title {
-            margin: 0 0 6px;
-            font-size: 1rem;
-            line-height: 1.4;
+            margin: 0;
+            color: var(--text);
+            font: 600 1.25rem / 1.3 var(--font-display);
+            letter-spacing: -0.015em;
         }
-
         .entry-note {
-            margin: 0 0 14px;
-            color: var(--fg-soft);
-            font-size: 0.875rem;
-            line-height: 1.65;
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: var(--text-caption);
+            line-height: 1.7;
         }
-
         .detail-links {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            align-items: center;
+            gap: 6px 12px;
+            margin-top: 4px;
         }
-
         .detail-link {
             display: inline-flex;
-            min-height: 34px;
             align-items: center;
-            justify-content: center;
-            padding: 6px 9px;
-            border: 1px solid var(--border-strong);
-            border-radius: var(--radius-sm);
-            background: var(--bg);
-            color: var(--fg);
-            font-size: 0.8125rem;
-            font-weight: 700;
+            min-height: 38px;
+            padding: 8px 4px;
+            color: var(--link);
+            font-size: var(--text-caption);
             text-decoration: none;
         }
-
         .detail-link:hover {
-            border-color: var(--primary);
-            color: var(--primary);
+            text-decoration: underline;
+            text-underline-offset: 3px;
         }
-
         .detail-link.primary {
-            border-color: var(--primary);
-            background: var(--primary);
-            color: var(--primary-fg);
+            padding-inline: 16px;
+            border-radius: var(--radius-pill);
+            background: var(--cta);
+            color: #fff;
+            font-weight: 600;
         }
-
         .detail-link.primary:hover {
-            border-color: var(--primary-hover);
-            background: var(--primary-hover);
-            color: var(--primary-fg);
+            background: var(--cta-hover-aa);
+            text-decoration: none;
         }
-
         .frame-wrap {
             min-width: 0;
-            min-height: 0;
-            background: #e9ecef;
+            padding: 16px;
+            overflow: hidden;
+            background: #d2d2d7;
         }
-
         .artifact-frame {
             display: block;
             width: 100%;
             height: 100%;
             border: 0;
-            background: var(--bg);
+            border-radius: var(--radius-card);
+            background: var(--bg-light);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
         }
-
         @media (max-width: 767px) {
-            html,
-            body {
-                height: auto;
-                min-height: 100%;
-            }
-
-            body {
-                overflow: auto;
-            }
-
+            body { overflow: auto; }
             .viewer-shell {
-                display: flex;
+                grid-template-columns: minmax(0, 1fr);
+                grid-template-rows: auto minmax(560px, 68dvh);
                 height: auto;
                 min-height: 100dvh;
-                flex-direction: column;
             }
-
             .sidebar {
-                width: 100%;
+                overflow: visible;
                 border-right: 0;
-                border-bottom: 1px solid var(--border);
+                border-bottom: 1px solid var(--border-subtle);
             }
-
             .sidebar-header {
-                display: grid;
                 grid-template-columns: auto minmax(0, 1fr);
                 align-items: end;
-                gap: 12px;
-                padding: 10px 16px 12px;
+                padding: 14px 18px;
             }
-
-            .back-link {
-                min-height: 42px;
-                margin: 0;
-                white-space: nowrap;
-            }
-
-            .section-label {
-                padding: 10px 16px 4px;
-            }
-
+            .theme-field { min-width: 0; }
+            .model-section { padding: 16px 18px 18px; }
             .model-list {
-                flex-direction: row;
-                gap: 8px;
+                display: flex;
+                margin-inline: -18px;
+                padding-inline: 18px;
+                padding-bottom: 4px;
+                overflow-y: visible;
                 overflow-x: auto;
-                overflow-y: hidden;
-                padding: 6px 16px 12px;
-                scroll-snap-type: x proximity;
+                overscroll-behavior-inline: contain;
             }
-
             .model-button {
-                min-width: 220px;
-                max-width: 240px;
-                flex: 0 0 auto;
-                scroll-snap-align: start;
+                flex: 0 0 clamp(248px, 78%, 286px);
+                transform: none;
             }
-
-            .entry-details {
-                max-height: none;
-                padding: 12px 16px 14px;
-            }
-
-            .detail-title {
-                margin-bottom: 4px;
-            }
-
-            .entry-note {
-                display: -webkit-box;
-                margin-bottom: 10px;
-                overflow: hidden;
-                -webkit-box-orient: vertical;
-                -webkit-line-clamp: 3;
-            }
-
-            .frame-wrap {
-                width: 100%;
-                height: 70vh;
-                min-height: 420px;
-            }
+            .entry-details { padding: 18px; }
+            .frame-wrap { padding: 10px; }
+            .artifact-frame { border-radius: 14px; }
         }
     </style>
 </head>
@@ -379,7 +252,7 @@
     <main class="viewer-shell">
         <aside class="sidebar" aria-label="作品選択">
             <header class="sidebar-header">
-                <a class="back-link" id="back-link" href="./index.html">◀ 一覧へ</a>
+                <a class="back-link" id="back-link" href="./index.html">‹ 一覧へ</a>
                 <label class="theme-field">
                     <span class="field-label">テーマ</span>
                     <select class="theme-select" id="theme-select"></select>

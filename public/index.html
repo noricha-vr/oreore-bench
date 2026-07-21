@@ -4,564 +4,249 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OreOre-Bench — 同じプロンプト、違うAI</title>
-    <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%232563eb'/><text x='16' y='22' text-anchor='middle' font-family='sans-serif' font-size='18' font-weight='700' fill='white'>O</text></svg>">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+    <meta name="description" content="同じプロンプトに対する複数のLLMの出力を、テーマごとに見比べられる静的ベンチマーク。">
+    <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230071e3'/><text x='16' y='22' text-anchor='middle' font-family='sans-serif' font-size='18' font-weight='600' fill='white'>O</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="/assets/apple-modern.css">
     <style>
-        :root {
-            --bg: #ffffff;
-            --bg-soft: #f7f8fa;
-            --fg: #1a1a1a;
-            --fg-soft: #5a5a5a;
-            --muted-fg: #6b7280; /* WCAG AA を満たすよう濃く */
-            --border: #e5e7eb;
-            --border-strong: #d1d5db;
-            --primary: #2563eb;        /* 明るい青 */
-            --primary-hover: #1d4ed8;
-            --primary-fg: #ffffff;
-            --accent: #f59e0b;          /* オレンジ（CTA 等） */
-            --success: #10b981;
-            --radius: 12px;
-            --radius-sm: 6px;
-            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -1px rgba(0,0,0,0.04);
-        }
-
-        body {
-            font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg);
-            color: var(--fg);
-            line-height: 1.7;
-            font-size: 0.95rem;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        h1 {
-            font-weight: 700;
-            font-size: 2.5rem;
-            line-height: 1.3;
-            letter-spacing: -0.02em;
-            color: var(--fg);
-            margin-top: 0;
-            margin-bottom: 0;
-        }
-
-        h2 {
-            font-weight: 700;
-            font-size: 2rem;
-            line-height: 1.3;
-            letter-spacing: -0.02em;
-            color: var(--fg);
-            margin-top: 0;
-            margin-bottom: 0;
-        }
-
-        h3 {
-            font-weight: 600;
-            font-size: 1.25rem;
-            line-height: 1.5;
-            color: var(--fg);
-            margin-top: 0;
-            margin-bottom: 0;
-        }
-
-        .text-label {
-            font-weight: 600;
-            font-size: 0.8125rem;
-            letter-spacing: 0.02em;
-            text-transform: uppercase;
-            color: var(--fg-soft);
-        }
-
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding-left: 24px;
-            padding-right: 24px;
+            width: 100%;
+            max-width: var(--content-wide);
+            margin-inline: auto;
+            padding-inline: var(--page-gutter);
         }
-
-        @media (min-width: 768px) {
-            .container {
-                padding-left: 48px;
-                padding-right: 48px;
-            }
-        }
-
         section {
-            padding-top: 64px;
-            padding-bottom: 64px;
+            padding-block: var(--section-py);
+            scroll-margin-top: 48px;
         }
-        /* Hero は上を短く、下を抑えてカード一覧に自然に流す */
+        section.bg-gray-50 { background: var(--bg-alt); }
         section.hero {
-            padding-top: 48px;
-            padding-bottom: 56px;
+            min-height: min(760px, calc(100svh - 48px));
+            padding-block: clamp(104px, 16vw, 180px);
+            display: grid;
+            place-items: center;
+            overflow-x: clip;
         }
-        /* 最後のセクションは下を厚く */
-        section:last-of-type {
-            padding-bottom: 96px;
+        section:last-of-type { padding-bottom: var(--section-py); }
+        .hero .container { max-width: 1060px; }
+        .hero h1 {
+            max-width: 980px;
+            margin: 0;
+            color: var(--text);
+            font: var(--weight-heading) var(--text-hero) / 1.03 var(--font-display);
+            letter-spacing: var(--tracking-hero);
+            text-wrap: balance;
         }
-
-        /* セクションの背景色は section 自身に当てる（内側に .container を入れる構造） */
-        section.bg-gray-50 {
-            background-color: var(--bg-soft);
+        .hero p {
+            max-width: 700px;
+            margin: 28px 0 0;
+            color: var(--text-secondary);
+            font-size: clamp(1.0625rem, 1.8vw, 1.3125rem);
+            line-height: 1.7;
+            text-wrap: pretty;
         }
-
-        /* Utility classes */
+        .hero .btn { margin-top: 36px; }
+        h2 {
+            margin: 0;
+            color: var(--text);
+            font: var(--weight-heading) var(--text-h2) / 1.08 var(--font-display);
+            letter-spacing: var(--tracking-hero);
+            text-wrap: balance;
+        }
+        h3 {
+            margin: 0;
+            color: var(--text);
+            font: var(--weight-heading) var(--text-h3) / 1.3 var(--font-display);
+        }
+        p { margin-top: 0; }
         .flex { display: flex; }
         .items-center { align-items: center; }
-        .justify-center { justify-content: center; }
         .justify-between { justify-content: space-between; }
         .flex-col { flex-direction: column; }
-        .flex-wrap { flex-wrap: wrap; }
-        .gap-2 { gap: 0.5rem; }
-        .gap-4 { gap: 1rem; }
-        .gap-8 { gap: 2rem; }
         .grid { display: grid; }
-        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        .grid-cols-1 { grid-template-columns: minmax(0, 1fr); }
         .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-        .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-        .p-4 { padding: 1rem; }
-        .p-6 { padding: 1.5rem; }
-        .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-        .px-4 { padding-left: 1rem; padding-right: 1rem; }
-        .mt-4 { margin-top: 1rem; }
-        .mt-8 { margin-top: 2rem; }
-        .mt-16 { margin-top: 4rem; }
-        .mb-2 { margin-bottom: 0.5rem; }
-        .mb-4 { margin-bottom: 1rem; }
-        .mb-8 { margin-bottom: 2rem; }
-        .mb-12 { margin-bottom: 3rem; }
-        .mb-16 { margin-bottom: 4rem; }
-        .ml-8 { margin-left: 2rem; }
-        .rounded-md { border-radius: var(--radius-sm); }
-        .rounded-lg { border-radius: var(--radius); }
-        .shadow-sm { box-shadow: var(--shadow-sm); }
-        .shadow-md { box-shadow: var(--shadow-md); }
-        .bg-white { background-color: var(--bg); }
-        .bg-gray-50 { background-color: var(--bg-soft); }
-        .border { border: 1px solid var(--border); }
-        .border-gray-200 { border-color: var(--border); }
-        .border-t { border-top: 1px solid var(--border); }
+        .gap-8 { gap: 2rem; }
+        .items-center { align-items: center; }
         .text-center { text-align: center; }
-        .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
-        .text-base { font-size: 1rem; line-height: 1.5rem; }
-        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
-        .text-primary { color: var(--primary); }
-        .text-fg-soft { color: var(--fg-soft); }
-        .text-muted { color: var(--muted-fg); }
-        .font-bold { font-weight: 700; }
+        .text-lg { font-size: 1.125rem; }
+        .text-base { font-size: 1rem; }
+        .text-sm, .text-label { font-size: var(--text-caption); }
+        .text-fg-soft, .text-muted { color: var(--text-secondary); }
         .font-semibold { font-weight: 600; }
         .max-w-2xl { max-width: 42rem; }
-        .max-w-3xl { max-width: 48rem; }
-        .w-full { width: 100%; }
-        .flex-1 { flex: 1 1 0%; }
-
-
+        .mt-4 { margin-top: 1rem; }
+        .mt-8 { margin-top: 2rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-8 { margin-bottom: 2rem; }
+        .mb-12 { margin-bottom: 3rem; }
+        .text-label {
+            color: var(--text-secondary);
+            font-weight: 600;
+            letter-spacing: 0;
+        }
+        header.nav { padding: 0; }
+        header.nav .container { height: 100%; }
+        .brand-link {
+            color: var(--text);
+            font-size: var(--text-caption);
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            text-decoration: none;
+        }
+        .header-nav {
+            display: flex;
+            align-items: center;
+            gap: clamp(14px, 2.5vw, 28px);
+            height: 100%;
+        }
+        .nav-link {
+            color: var(--text-secondary);
+            font-size: var(--text-caption);
+            font-weight: 400;
+            line-height: 48px;
+            text-decoration: none;
+            transition: color var(--duration-fast) var(--ease-apple);
+        }
+        .nav-link:hover { color: var(--link); }
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 10px 20px;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s, color 0.2s;
-            text-decoration: none;
+            border-radius: var(--radius-pill);
+            font-weight: 500;
             line-height: 1;
+            text-decoration: none;
             white-space: nowrap;
-        }
-
-        .btn-primary {
-            background-color: var(--primary);
-            color: var(--primary-fg);
-            border: 1px solid var(--primary);
-        }
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-            border-color: var(--primary-hover);
-        }
-
-        .btn-secondary {
-            background-color: var(--bg);
-            color: var(--fg);
-            border: 1px solid var(--border-strong);
-        }
-        .btn-secondary:hover {
-            border-color: var(--primary);
-            color: var(--primary);
+            transition:
+                color var(--duration-fast) var(--ease-apple),
+                background-color var(--duration-fast) var(--ease-apple),
+                border-color var(--duration-fast) var(--ease-apple),
+                transform var(--duration-fast) var(--ease-apple);
         }
         .btn-sm {
-            padding: 8px 16px;
-            font-size: 0.875rem;
+            min-height: 38px;
+            padding: 9px 15px;
+            font-size: var(--text-caption);
         }
-
-        .badge {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: var(--radius-sm);
-            font-size: 0.8125rem;
-            font-weight: 700;
-            line-height: 1;
-            letter-spacing: 0.02em;
-            color: var(--primary-fg);
-            white-space: nowrap;
+        .btn-secondary {
+            padding-inline: 6px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--link);
         }
-
-        /* Entry list grid — ユーザー指定 0.5em 上下左右 */
-        .cards-grid {
-            gap: 0.5em;
+        .btn-secondary:hover {
+            color: var(--link);
+            text-decoration: underline;
+            text-underline-offset: 3px;
         }
-        /* Model cards grid — 0.5em */
-        .models-grid {
-            gap: 0.5em;
-        }
-
-        /* Model card (クリックでモーダル) */
-        .model-card-btn {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 16px 18px;
-            background-color: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            cursor: pointer;
-            text-align: left;
-            font-family: inherit;
-            transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
-            width: 100%;
-        }
-        .model-card-btn:hover {
-            border-color: var(--primary);
-            box-shadow: var(--shadow-md);
-            transform: translateY(-2px);
-        }
-        .model-card-btn .model-card-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-        .model-card-btn .model-card-text {
+        .filters {
             display: flex;
             flex-direction: column;
-            flex-grow: 1;
+            gap: 24px;
+            margin-bottom: 40px;
+            padding: clamp(20px, 3vw, 32px);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-card);
+            background: var(--bg-light);
+            box-shadow: var(--shadow-card);
+        }
+        .filter-block {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .theme-tabs, .model-checks {
+            display: flex;
             min-width: 0;
-        }
-        .model-card-btn .model-card-title {
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--fg);
-            line-height: 1.3;
-            margin: 0;
-        }
-        .model-card-btn .model-card-meta {
-            font-size: 0.8125rem;
-            color: var(--muted-fg);
-            margin-top: 2px;
-        }
-        .model-card-btn .model-card-arrow {
-            color: var(--muted-fg);
-            font-size: 0.875rem;
-            flex-shrink: 0;
-        }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background-color: rgba(15, 18, 25, 0.55);
-            display: none;
-            align-items: flex-start;
-            justify-content: center;
-            padding: 5vh 20px;
-            z-index: 200;
-            overflow-y: auto;
-            backdrop-filter: blur(2px);
-        }
-        .modal-overlay.open {
-            display: flex;
-        }
-        .modal {
-            background-color: var(--bg);
-            border-radius: 16px;
-            max-width: 640px;
-            width: 100%;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.22);
-            position: relative;
-            animation: modal-pop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-            overflow: hidden;
-        }
-        @keyframes modal-pop {
-            from { transform: translateY(12px) scale(0.98); opacity: 0; }
-            to { transform: translateY(0) scale(1); opacity: 1; }
-        }
-        .modal-close {
-            position: absolute;
-            top: 14px;
-            right: 14px;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: none;
-            background-color: rgba(255, 255, 255, 0.18);
-            color: #ffffff;
-            font-size: 1rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.18s;
-            backdrop-filter: blur(8px);
-            z-index: 2;
-        }
-        .modal-close:hover {
-            background-color: rgba(255, 255, 255, 0.32);
-        }
-
-        /* Hero band (上部のカラーバンド) */
-        .modal-hero {
-            padding: 36px 32px 28px;
-            color: #ffffff;
-            position: relative;
-            background: linear-gradient(135deg, var(--accent-from, #2563eb) 0%, var(--accent-to, #1d4ed8) 100%);
-        }
-        .modal-hero-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 14px;
-            background-color: rgba(255, 255, 255, 0.18);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #ffffff;
-            font-size: 1.5rem;
-            margin-bottom: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.25);
-        }
-        .modal-hero-title {
-            font-size: 1.875rem;
-            font-weight: 800;
-            line-height: 1.2;
-            letter-spacing: -0.02em;
-            margin: 0 0 6px 0;
-            color: #ffffff;
-        }
-        .modal-hero-subtitle {
-            font-size: 0.9375rem;
-            opacity: 0.88;
-            margin: 0;
-            color: #ffffff;
-            line-height: 1.6;
-        }
-        .modal-hero-tag {
-            display: inline-block;
-            font-size: 0.75rem;
-            font-weight: 800;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.22);
-            padding: 5px 12px;
-            border-radius: 999px;
-            margin-bottom: 14px;
-        }
-
-        .modal-body-inner {
-            padding: 24px 32px 32px;
-        }
-
-        /* Stat grid (モデルモーダルの数値) — 4 件運用 (パラメータ / 量子化 / コンテキスト / 最大出力) */
-        .stat-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-        @media (min-width: 540px) {
-            .stat-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
-        .stat-card {
-            background-color: var(--bg-soft);
-            border-radius: 10px;
-            padding: 14px 12px;
-            text-align: center;
-            border: 1px solid var(--border);
-        }
-        .stat-value {
-            display: block;
-            font-size: 1.375rem;
-            font-weight: 800;
-            color: var(--fg);
-            line-height: 1.1;
-            letter-spacing: -0.02em;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-        .stat-label {
-            display: block;
-            font-size: 0.75rem;
-            color: var(--fg-soft);
-            margin-top: 6px;
-            font-weight: 800;
-            letter-spacing: 0.04em;
-        }
-        .stat-note {
-            display: block;
-            font-size: 0.75rem;
-            color: var(--muted-fg);
-            margin-top: 4px;
-            line-height: 1.4;
-        }
-
-        /* Inline spec (モデルモーダルの2行目以降の詳細) */
-        .modal-spec {
-            display: grid;
-            grid-template-columns: max-content 1fr;
-            gap: 10px 16px;
-            font-size: 0.9375rem;
-            padding: 14px 0 4px;
-        }
-        .modal-spec dt {
-            color: var(--fg);
-            font-weight: 800;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            padding-top: 3px;
-        }
-        .modal-spec dd {
-            margin: 0;
-            color: var(--fg);
-            line-height: 1.6;
-        }
-
-        .modal-section {
-            margin-top: 20px;
-        }
-        .modal-section h4 {
-            font-size: 0.8125rem;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--fg);
-            margin: 0 0 8px 0;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .modal-section h4::before {
-            content: '';
-            width: 14px;
-            height: 2px;
-            background-color: currentColor;
-            display: inline-block;
-            border-radius: 1px;
-            opacity: 0.5;
-        }
-        .modal-section p {
-            font-size: 0.9375rem;
-            line-height: 1.75;
-            color: var(--fg-soft);
-            margin: 0;
-        }
-
-        /* Modal list (テーマモーダル) — ナンバリングバッジ */
-        .modal-list {
-            margin: 4px 0 0 0;
-            padding: 0;
-            list-style: none;
-            counter-reset: modal-list;
-            display: flex;
-            flex-direction: column;
+            max-width: 100%;
+            flex-wrap: wrap;
             gap: 10px;
         }
-        .modal-list li {
-            counter-increment: modal-list;
-            position: relative;
-            padding-left: 32px;
-            color: var(--fg-soft);
-            font-size: 0.9375rem;
-            line-height: 1.7;
+        .theme-tab, .model-check {
+            min-height: 44px;
+            padding: 9px 16px;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-pill);
+            background: var(--bg-light);
+            color: var(--text-secondary);
+            font-size: var(--text-caption);
+            font-weight: 500;
+            line-height: 1.3;
+            white-space: nowrap;
+            cursor: pointer;
+            transition:
+                color var(--duration-fast) var(--ease-apple),
+                border-color var(--duration-fast) var(--ease-apple),
+                background-color var(--duration-fast) var(--ease-apple);
         }
-        .modal-list li::before {
-            content: counter(modal-list);
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            background-color: var(--accent-from, var(--bg-soft));
-            color: #ffffff;
-            font-size: 0.75rem;
-            font-weight: 700;
-            display: flex;
+        .theme-tab:hover, .model-check:hover {
+            border-color: var(--border-strong);
+            color: var(--text);
+        }
+        .theme-tab.active {
+            border-color: var(--text);
+            background: var(--text);
+            color: var(--bg-light);
+        }
+        .model-check {
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            gap: 8px;
+            user-select: none;
         }
-
-        .modal-links {
-            display: flex;
-            gap: 16px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-            padding-top: 16px;
-            border-top: 1px solid var(--border);
+        .model-check.checked {
+            border-color: rgba(0, 102, 204, 0.45);
+            background: rgba(0, 102, 204, 0.07);
+            color: var(--text);
         }
-        .modal-links a {
-            font-size: 0.875rem;
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
-            border-bottom: 1px solid transparent;
-            transition: border-color 0.18s;
+        .model-check input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            accent-color: var(--cta);
+            cursor: pointer;
         }
-        .modal-links a:hover {
-            border-bottom-color: var(--primary);
+        .model-dot, .model-card-dot {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            flex: 0 0 auto;
+            border-radius: 50%;
+            opacity: 0.78;
         }
-
-        @media (max-width: 600px) {
-            .modal-hero { padding: 28px 24px 22px; }
-            .modal-hero-title { font-size: 1.5rem; }
-            .modal-body-inner { padding: 20px 24px 28px; }
-            /* 4 件運用なのでモバイルは 2 カラム × 2 行 */
-            .stat-grid > .stat-card { min-width: 0; padding: 12px 10px; }
-            .stat-card .stat-value { font-size: 1.125rem; }
-            .stat-card .stat-label { font-size: 0.6875rem; }
+        .model-check .model-dot { margin: 0; }
+        .cards-grid, .models-grid, #themes-grid { gap: 16px; }
+        .theme-card, .theme-info-card, .model-card-btn {
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-card);
+            background: var(--bg-light);
+            box-shadow: var(--shadow-card);
+            transition:
+                transform var(--duration-base) var(--ease-apple),
+                box-shadow var(--duration-base) var(--ease-apple),
+                border-color var(--duration-base) var(--ease-apple);
         }
-
-        /* Entry card */
+        .theme-card:hover, .theme-info-card:hover, .model-card-btn:hover {
+            border-color: var(--border-strong);
+            box-shadow: var(--shadow-card-hover);
+            transform: translateY(-2px);
+        }
         .theme-card {
-            background-color: var(--bg);
-            border: 1px solid var(--border);
-            border-left: 5px solid; /* Theme color set by JS */
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            transition: transform 0.18s, box-shadow 0.18s;
-            position: relative;
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
-        }
-        .theme-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-md);
-            /* border-color はあえて変えない（左ボーダーのテーマ色を維持） */
+            gap: 16px;
+            padding: clamp(22px, 3vw, 30px);
+            border-left-width: 3px;
         }
         .theme-card .card-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            gap: 0.75rem;
+            justify-content: space-between;
             flex-wrap: wrap;
+            gap: 12px;
         }
         .theme-card .card-title-block {
             display: flex;
@@ -569,298 +254,370 @@
             gap: 4px;
         }
         .theme-card .card-title {
-            font-size: 1.125rem;
-            font-weight: 700;
-            line-height: 1.4;
             margin: 0;
+            color: var(--text);
+            font: 600 1.3125rem / 1.25 var(--font-display);
+            letter-spacing: -0.015em;
         }
-        .theme-card .card-subtitle {
-            font-size: 0.875rem;
-            line-height: 1.6;
-            color: var(--muted-fg);
+        .theme-card .card-subtitle,
+        .theme-card .card-note,
+        .theme-card .card-run-meta,
+        .theme-card .card-meta { color: var(--text-secondary); }
+        .theme-card .card-subtitle,
+        .theme-card .card-note {
             margin: 0;
+            font-size: var(--text-caption);
+            line-height: 1.7;
+        }
+        .theme-card .card-note { flex-grow: 1; }
+        .theme-card .card-run-meta {
+            margin: 0;
+            font-size: var(--text-caption);
+            line-height: 1.5;
         }
         .theme-card .card-meta {
             display: flex;
             align-items: center;
             gap: 6px;
-            font-size: 0.8125rem;
-            color: var(--fg-soft);
+            font-size: var(--text-caption);
+        }
+        .theme-card .card-actions {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px 12px;
+            margin-top: 4px;
+        }
+        .badge {
+            padding: 6px 10px;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-pill);
+            background: var(--bg-alt) !important;
+            color: var(--text-secondary);
+            font-size: var(--text-caption);
             font-weight: 600;
+            line-height: 1;
+            white-space: nowrap;
         }
         .cost-chip {
             display: inline-flex;
             align-items: center;
-            min-height: 24px;
-            padding: 2px 8px;
-            border: 1px solid #e2e5e9;
-            border-radius: 999px;
-            background: #f1f3f5;
-            color: #343a40;
-            font-size: 0.8125rem;
-            font-weight: 700;
+            min-height: 26px;
+            padding-inline: 10px;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-pill);
+            background: var(--bg-alt);
+            color: var(--text-secondary);
+            font-size: var(--text-caption);
             line-height: 1;
             white-space: nowrap;
         }
-        .theme-card .card-note {
-            color: var(--fg-soft);
-            font-size: 0.875rem;
-            line-height: 1.7;
-            margin: 0;
-            flex-grow: 1;
-        }
-        .theme-card .card-run-meta {
-            /* run.json 由来のメタ情報 (harness ・ effort ・ runtime)。
-               card-note より控えめ、text-xs 相当は避けて 0.8125rem に留める */
-            color: var(--fg-soft);
-            font-size: 0.8125rem;
-            line-height: 1.5;
-            margin: 0;
-            opacity: 0.85;
-        }
-        .theme-card .card-actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-top: 4px;
-        }
-        .theme-card .card-actions .btn-primary {
-            flex: 0 0 auto;
-        }
-
-        .model-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 8px;
-            /* background-color will be overridden by inline style from JS */
-        }
-
-        .step-num {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 2.75rem;
-            font-weight: 700;
-            color: var(--fg);
-            line-height: 1;
-            margin-bottom: 0.75rem;
-            letter-spacing: -0.04em;
-            opacity: 0.85;
-        }
-
-        /* Theme info card (テーマについて セクション、クリックでモーダル) */
         .theme-info-card {
-            background-color: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 1.5rem;
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
-            transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
-            cursor: pointer;
-            text-align: left;
-            font-family: inherit;
+            gap: 18px;
+            min-height: 100%;
             width: 100%;
-        }
-        .theme-info-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-            border-color: var(--primary);
+            padding: clamp(22px, 3vw, 30px);
+            color: inherit;
+            text-align: left;
+            cursor: pointer;
         }
         .theme-info-head {
             display: flex;
             align-items: center;
-            gap: 0.875rem;
+            gap: 16px;
         }
         .theme-info-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #ffffff;
-            font-size: 1.125rem;
-            flex-shrink: 0;
+            width: 42px;
+            height: 42px;
+            flex: 0 0 auto;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1rem;
         }
         .theme-info-title {
-            font-size: 1.125rem;
-            font-weight: 700;
-            margin: 0;
-            color: var(--fg);
             flex-grow: 1;
-        }
-        .theme-info-arrow {
-            font-size: 0.8125rem;
+            color: var(--text);
+            font-size: 1.125rem;
             font-weight: 600;
-            color: var(--muted-fg);
+        }
+        .theme-info-arrow, .model-card-arrow {
+            flex: 0 0 auto;
+            color: var(--link);
+            font-size: var(--text-caption);
+            font-weight: 400;
             white-space: nowrap;
         }
         .theme-info-desc {
-            color: var(--fg-soft);
-            font-size: 0.9375rem;
-            line-height: 1.8;
             margin: 0;
+            color: var(--text-secondary);
+            font-size: var(--text-caption);
+            line-height: 1.75;
         }
-
-        /* Modal list (テーマモーダルの評価基準・見どころ) */
-        .modal-list {
-            margin: 4px 0 0 0;
-            padding-left: 1.25rem;
-            color: var(--fg-soft);
-            font-size: 0.9375rem;
+        .model-card-btn {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-height: 86px;
+            width: 100%;
+            padding: 18px 20px;
+            color: inherit;
+            text-align: left;
+            cursor: pointer;
+        }
+        .model-card-text {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .model-card-title {
+            color: var(--text);
+            font-size: 1rem;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+        .model-card-meta {
+            margin-top: 2px;
+            color: var(--text-secondary);
+            font-size: var(--text-caption);
+        }
+        .step-num {
+            margin-bottom: 20px;
+            color: var(--text-tertiary);
+            font: 500 clamp(2.25rem, 4vw, 3.25rem) / 1 var(--font-display);
+            letter-spacing: var(--tracking-hero);
+        }
+        #how-to-use .grid > div { padding-inline: clamp(8px, 2vw, 24px); }
+        #how-to-use h3 { font-size: 1.125rem; }
+        #how-to-use p {
+            max-width: 300px;
+            margin-bottom: 0;
+            color: var(--text-secondary);
+            font-size: var(--text-caption);
+            line-height: 1.75;
+        }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            display: none;
+            align-items: flex-start;
+            justify-content: center;
+            padding: max(24px, 5vh) 20px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.48);
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            position: relative;
+            width: 100%;
+            max-width: 680px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-card);
+            background: var(--bg-light);
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.22);
+            animation: modal-pop var(--duration-base) var(--ease-apple);
+        }
+        @keyframes modal-pop {
+            from { transform: translateY(16px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            z-index: 2;
+            display: grid;
+            place-items: center;
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            border: 0;
+            border-radius: 50%;
+            background: transparent;
+            color: var(--text-on-dark);
+            cursor: pointer;
+        }
+        .modal-close:hover { background: rgba(255, 255, 255, 0.12); }
+        .modal-hero {
+            padding: clamp(36px, 6vw, 52px) clamp(24px, 5vw, 44px) 36px;
+            background: var(--bg-dark);
+            color: var(--text-on-dark);
+        }
+        .modal-hero-icon {
+            display: grid;
+            place-items: center;
+            width: 52px;
+            height: 52px;
+            margin-bottom: 22px;
+            border: 1px solid rgba(245, 245, 247, 0.24);
+            border-radius: 14px;
+            color: var(--text-on-dark);
+            font-size: 1.25rem;
+        }
+        .modal-hero-tag {
+            display: inline-block;
+            margin-bottom: 12px;
+            color: #b7b7bd;
+            font-size: var(--text-caption);
+        }
+        .modal-hero-title {
+            margin: 0 0 6px;
+            color: var(--text-on-dark);
+            font: 600 clamp(2rem, 5vw, 3rem) / 1.08 var(--font-display);
+            letter-spacing: var(--tracking-hero);
+        }
+        .modal-hero-subtitle {
+            margin: 0;
+            color: #d2d2d7;
+            font-size: var(--text-caption);
             line-height: 1.7;
         }
-        .modal-list li {
-            margin-bottom: 4px;
+        .modal-body-inner { padding: clamp(24px, 5vw, 40px); }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            margin-bottom: 20px;
         }
-        .modal-list li::marker {
-            color: var(--muted-fg);
+        .stat-card {
+            padding: 14px 10px;
+            border-radius: 14px;
+            background: var(--bg-alt);
+            text-align: center;
         }
-
-        /* Header Navigation */
-        header {
-            padding: 18px 0;
-            border-bottom: 1px solid var(--border);
-            background-color: rgba(255, 255, 255, 0.92);
-            backdrop-filter: saturate(180%) blur(8px);
-            -webkit-backdrop-filter: saturate(180%) blur(8px);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+        .stat-value {
+            display: block;
+            color: var(--text);
+            font: 600 1.25rem / 1.1 var(--font-display);
+            letter-spacing: -0.02em;
         }
-        .brand-link {
-            font-size: 1.275rem; /* 1.0625rem × 1.2 */
-            font-weight: 700;
-            color: var(--fg);
-            text-decoration: none;
-            letter-spacing: -0.01em;
+        .stat-label, .stat-note {
+            display: block;
+            margin-top: 6px;
+            color: var(--text-secondary);
+            font-size: var(--text-caption);
+            line-height: 1.4;
         }
-        .header-nav {
-            display: flex;
-            gap: 24px;
-            align-items: center;
+        .modal-spec {
+            display: grid;
+            grid-template-columns: max-content 1fr;
+            gap: 10px 16px;
+            padding: 14px 0 4px;
+            font-size: var(--text-caption);
         }
-        @media (max-width: 600px) {
-            .header-nav { gap: 14px; }
-            /* モバイルでも「ベンチ一覧」と「GitHub」は残す（中央 2 件のみ非表示） */
-            .header-nav .nav-link:nth-child(2),
-            .header-nav .nav-link:nth-child(3) { display: none; }
-        }
-        .nav-link {
-            color: var(--fg-soft);
-            text-decoration: none;
+        .modal-spec dt {
+            padding-top: 3px;
+            color: var(--text);
             font-weight: 600;
-            font-size: 0.875rem;
-            transition: color 0.2s;
         }
-        .nav-link:hover {
-            color: var(--primary);
-        }
-
-        /* Filters — 上段: テーマタブ（単一選択） / 下段: モデルチェックボックス（複数選択） */
-        .filters {
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-        }
-        .filter-block {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        /* テーマタブ */
-        .theme-tabs {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .theme-tab {
-            font-family: inherit;
-            font-size: 0.9375rem;
-            font-weight: 600;
-            color: var(--fg-soft);
-            background-color: var(--bg);
-            border: 1px solid var(--border-strong);
-            border-radius: 999px;
-            padding: 8px 18px;
-            cursor: pointer;
-            transition: all 0.18s;
-            white-space: nowrap;
-        }
-        .theme-tab:hover {
-            border-color: var(--fg-soft);
-            color: var(--fg);
-        }
-        .theme-tab.active {
-            background-color: var(--fg);
-            border-color: var(--fg);
-            color: var(--bg);
-        }
-
-        /* モデルチェックボックス */
-        .model-checks {
-            display: flex;
-            gap: 8px 14px;
-            flex-wrap: wrap;
-        }
-        .model-check {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9375rem;
-            font-weight: 500;
-            color: var(--fg);
-            cursor: pointer;
-            padding: 6px 12px 6px 10px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background-color: var(--bg);
-            transition: border-color 0.18s, background-color 0.18s;
-            user-select: none;
-        }
-        .model-check:hover {
-            border-color: var(--border-strong);
-        }
-        .model-check input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
+        .modal-spec dd {
             margin: 0;
-            accent-color: var(--primary);
-            cursor: pointer;
+            color: var(--text);
+            line-height: 1.6;
         }
-        .model-check.checked {
-            border-color: var(--primary);
-            background-color: rgba(37, 99, 235, 0.06);
+        .modal-section { margin-top: 20px; }
+        .modal-section h4 {
+            margin: 0 0 8px;
+            color: var(--text);
+            font-size: var(--text-caption);
+            font-weight: 600;
         }
-        .model-check .model-dot {
-            margin-right: 0;
+        .modal-section p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: var(--text-caption);
+            line-height: 1.75;
         }
-
+        .modal-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 4px 0 0;
+            padding: 0;
+            list-style: none;
+            counter-reset: modal-list;
+        }
+        .modal-list li {
+            position: relative;
+            padding-left: 32px;
+            color: var(--text-secondary);
+            font-size: var(--text-caption);
+            line-height: 1.7;
+            counter-increment: modal-list;
+        }
+        .modal-list li::before {
+            content: counter(modal-list);
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: grid;
+            place-items: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--text);
+            color: var(--text-on-dark);
+            font: 600 var(--text-caption) / 1 var(--font-display);
+        }
+        .modal-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-subtle);
+        }
+        .modal-links a {
+            color: var(--link);
+            font-size: var(--text-caption);
+            text-decoration: none;
+        }
+        .modal-links a:hover {
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
         @media (max-width: 767px) {
-            h1 { font-size: 1.85rem; }
-            h2 { font-size: 1.625rem; }
-            section { padding-top: 48px; padding-bottom: 48px; }
-            section.hero { padding-top: 32px; padding-bottom: 40px; }
-            .md\:grid-cols-2 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-            .md\:grid-cols-3 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-            .lg\:grid-cols-3 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-            .filters { flex-direction: column; gap: 16px; }
-            .filter-field { min-width: 0; width: 100%; }
-        }
-
-        @media (min-width: 768px) and (max-width: 1023px) {
-            .lg\:grid-cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            section, section.hero { padding-block: clamp(72px, 20vw, 96px); }
+            section.hero { min-height: auto; }
+            .hero h1 { font-size: clamp(2.5rem, 12vw, 4rem); }
+            h2 { font-size: clamp(2rem, 9vw, 2.75rem); }
+            .mb-12 { margin-bottom: 36px; }
+            .md\:grid-cols-2, .md\:grid-cols-3 { grid-template-columns: minmax(0, 1fr); }
+            .header-nav .nav-link:nth-child(2),
+            .header-nav .nav-link:nth-child(3),
+            .header-nav .nav-link:nth-child(5) { display: none; }
+            .theme-tabs, .model-checks {
+                flex-wrap: nowrap;
+                width: 100%;
+                margin-inline: 0;
+                padding-inline: 0;
+                padding-bottom: 4px;
+                overflow-x: auto;
+                overscroll-behavior-inline: contain;
+                scrollbar-width: thin;
+            }
+            .filters { margin-inline: 0; }
+            .theme-card:hover, .theme-info-card:hover, .model-card-btn:hover { transform: none; }
+            .modal-overlay { padding: 12px; }
+            .modal { border-radius: 16px; }
+            .modal-hero { padding: 34px 24px 28px; }
+            .modal-body-inner { padding: 24px; }
+            .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
     </style>
 </head>
 <body>
-    <header>
+    <header class="nav">
         <div class="container flex justify-between items-center">
             <a href="#" class="brand-link">OreOre-Bench</a>
-            <nav class="header-nav">
+            <nav class="header-nav" aria-label="メインナビゲーション">
                 <a href="#bench-list" class="nav-link">ベンチ一覧</a>
                 <a href="#theme-description" class="nav-link">テーマ</a>
                 <a href="#how-to-use" class="nav-link">使い方</a>
@@ -959,7 +716,9 @@
     <div id="modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="modal" id="modal-content">
             <button type="button" class="modal-close" id="modal-close" aria-label="閉じる">
-                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+                </svg>
             </button>
             <div class="modal-body"><!-- JS で動的描画 --></div>
         </div>
@@ -977,17 +736,25 @@
 
     <style>
         .site-footer {
-            border-top: 1px solid var(--border);
-            padding: 32px 24px;
+            min-height: 96px;
+            padding-block: 28px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            color: var(--fg-soft);
-            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-size: var(--text-caption);
         }
         .footer-links {
             display: flex;
             gap: 24px;
+        }
+        .site-footer .nav-link {
+            line-height: 1.5;
+        }
+        .modal-links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
         @media (max-width: 600px) {
             .site-footer { flex-direction: column; gap: 12px; }
@@ -1223,7 +990,7 @@
                             <i class="${theme.icon}" aria-hidden="true"></i>
                         </div>
                         <h3 class="theme-info-title">${theme.title}</h3>
-                        <span class="theme-info-arrow" aria-hidden="true">詳細 <i class="fa-solid fa-chevron-right"></i></span>
+                        <span class="theme-info-arrow" aria-hidden="true">詳細&nbsp;›</span>
                     </div>
                     <p class="theme-info-desc">${theme.desc}</p>
                 `;
@@ -1286,7 +1053,7 @@
                         <span class="model-card-title">${model.label}</span>
                         <span class="model-card-meta">${model.provider} ・ ${typeLabel}</span>
                     </span>
-                    <span class="model-card-arrow" aria-hidden="true">詳細 <i class="fa-solid fa-chevron-right"></i></span>
+                    <span class="model-card-arrow" aria-hidden="true">詳細&nbsp;›</span>
                 `;
                 btn.onclick = () => openModelModal(modelKey);
                 modelsListContainer.appendChild(btn);
@@ -1311,7 +1078,7 @@
                 </div>
             `).join('');
             const linksHtml = (model.links || []).map(l =>
-                `<a href="${l.href}" target="_blank" rel="noopener noreferrer">${l.label} <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:.75rem;"></i></a>`
+                `<a href="${l.href}" target="_blank" rel="noopener noreferrer">${l.label} <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></a>`
             ).join('');
             body.innerHTML = `
                 <div class="modal-hero">
