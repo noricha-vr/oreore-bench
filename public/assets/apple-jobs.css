@@ -2,6 +2,7 @@
     /* Typography — Jobs-era Apple system lineage. */
     --font-display: "Myriad Set Pro", "Myriad Pro", "Helvetica Neue", "Lucida Grande", sans-serif;
     --font-body: "Lucida Grande", "Helvetica Neue", "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+    --font-code: "SFMono-Regular", "Menlo", "Monaco", "Consolas", monospace;
     --leading-body: 1.7;
     --tracking-display: -0.01em;
 
@@ -18,6 +19,9 @@
     --line: #c9c9c9;
     --line-soft: #dedede;
     --focus-ring: rgba(42, 127, 255, 0.38);
+    --success: #247c3e;
+    --warning: #9a5b00;
+    --danger: #b62f2f;
 
     /* Layout. */
     --content-max: 980px;
@@ -246,6 +250,11 @@ section.bg-gray-50,
         inset 0 -1px 0 rgba(255, 255, 255, 0.18);
 }
 
+.btn:active::before,
+.btn-aqua:active::before {
+    opacity: 0.25;
+}
+
 .btn-primary {
     border-color: var(--accent-aqua-lo);
     color: var(--white);
@@ -299,6 +308,238 @@ section.bg-gray-50,
     pointer-events: none;
     mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.35), transparent 70%);
     -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.35), transparent 70%);
+}
+
+/* Prompt and input documents share one restrained, theme-tinted shell. */
+.document-page {
+    background: var(--bg-panel);
+    color: var(--text);
+}
+
+.document-page .hero {
+    position: relative;
+    padding: 30px var(--gutter) 32px;
+    color: var(--white);
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.34);
+    background: linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--theme-accent, var(--accent-aqua)) 88%, black) 0%,
+        color-mix(in srgb, var(--theme-accent, var(--accent-aqua)) 78%, black) 48%,
+        color-mix(in srgb, var(--theme-accent-dark, var(--accent-aqua-lo)) 86%, black) 100%
+    );
+    box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.52),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.17),
+        0 2px 5px rgba(0, 0, 0, 0.18);
+}
+
+.document-page .hero-inner {
+    width: min(100%, 760px);
+    margin-inline: auto;
+    text-align: center;
+}
+
+.document-page .hero a.back {
+    display: block;
+    width: max-content;
+    margin-bottom: 13px;
+    color: var(--white);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: left;
+    text-decoration: none;
+    opacity: 0.9;
+}
+
+.document-page .hero a.back:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+.document-page .hero h1 {
+    margin: 0 0 5px;
+    color: var(--white);
+    font-size: clamp(1.6rem, 4vw, 2rem);
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.document-page .hero .sub {
+    margin: 0;
+    color: var(--white);
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    opacity: 0.92;
+}
+
+.document-page > .container,
+.document-page main.container {
+    width: min(100%, 808px);
+    padding: 48px var(--gutter) 88px;
+}
+
+.document-page .card {
+    padding: clamp(24px, 5vw, 36px);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-panel);
+    background: linear-gradient(to bottom, #ffffff 0%, #f8f8f8 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.96),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.05),
+        0 2px 6px rgba(0, 0, 0, 0.13);
+}
+
+.document-page .card h2 {
+    margin: 30px 0 12px;
+    color: var(--text);
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.document-page .card h2:first-of-type {
+    margin-top: 0;
+}
+
+.document-page .card p {
+    margin: 0 0 15px;
+    color: var(--text-muted);
+}
+
+.document-page .card ul,
+.document-page .card ol {
+    margin: 0 0 18px 1.5rem;
+    color: var(--text-muted);
+}
+
+.document-page .card li {
+    margin-bottom: 5px;
+}
+
+.document-page .card strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.document-page .card code {
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--text);
+    font-family: var(--font-code);
+    font-size: 0.875rem;
+    background: #e9e9e9;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.document-page .card pre {
+    margin: 0 0 18px;
+    padding: 18px;
+    overflow-x: auto;
+    border: 1px solid #111;
+    border-radius: var(--radius-control);
+    color: #f1f1f1;
+    font-family: var(--font-code);
+    font-size: 0.8125rem;
+    line-height: 1.65;
+    background: linear-gradient(to bottom, #3a3a3a 0%, #191919 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+        0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+.document-page .card pre code {
+    padding: 0;
+    color: inherit;
+    background: transparent;
+    box-shadow: none;
+}
+
+.document-page .card hr {
+    height: 24px;
+    margin: 0;
+    border: 0;
+}
+
+.document-page .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    margin-top: 22px;
+    padding: 14px 16px;
+    border-radius: var(--radius-control);
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    background: linear-gradient(to bottom, #f1f1f1 0%, #e4e4e4 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.06);
+}
+
+.document-page .meta a {
+    color: #555;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.document-page .meta a:hover {
+    color: var(--accent-aqua-lo);
+    text-decoration: underline;
+}
+
+.document-page .stat-line {
+    margin-bottom: 22px;
+    padding: 14px 16px;
+    border-radius: var(--radius-control);
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.7;
+    background: linear-gradient(to bottom, #f2f2f2 0%, #e4e4e4 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.document-page .stat-line strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.document-page .body-text {
+    margin: 0;
+    overflow-wrap: anywhere;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    line-height: 2;
+    white-space: pre-wrap;
+}
+
+.document-page.input-page .body-text {
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    line-height: 2;
+    white-space: pre-wrap;
+    background: transparent;
+    box-shadow: none;
+}
+
+@media (max-width: 600px) {
+    .document-page .hero {
+        padding-block: 24px 26px;
+    }
+
+    .document-page > .container,
+    .document-page main.container {
+        padding-block: 30px 56px;
+    }
+
+    .document-page .card {
+        padding: 22px 20px;
+    }
 }
 
 @media (max-width: 767px) {
