@@ -405,10 +405,12 @@ a {
 }
 
 @supports (word-break: auto-phrase) {
-    h1,
-    h2,
-    h3 {
-        word-break: auto-phrase;
+    @media (min-width: 735px) {
+        h1,
+        h2,
+        h3 {
+            word-break: auto-phrase;
+        }
     }
 }
 
