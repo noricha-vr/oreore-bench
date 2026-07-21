@@ -490,7 +490,7 @@ footer {
 }
 
 @media (max-width: 767px) {
-    .header-nav .nav-link:nth-child(2),
+    /* モバイルは「ベンチ一覧 / Lab / GitHub」の3件だけ残す（使い方を非表示） */
     .header-nav .nav-link:nth-child(3) { display: none; }
     section { padding-block: 56px; }
     .experiments-grid, .ab-grid { grid-template-columns: minmax(0, 1fr); }

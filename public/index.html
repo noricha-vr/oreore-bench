@@ -590,9 +590,8 @@
             h2 { font-size: clamp(2rem, 9vw, 2.75rem); }
             .mb-12 { margin-bottom: 36px; }
             .md\:grid-cols-2, .md\:grid-cols-3 { grid-template-columns: minmax(0, 1fr); }
-            .header-nav .nav-link:nth-child(2),
-            .header-nav .nav-link:nth-child(3),
-            .header-nav .nav-link:nth-child(5) { display: none; }
+            /* モバイルは「ベンチ一覧 / Lab / GitHub」の3件だけ残す（使い方を非表示） */
+            .header-nav .nav-link:nth-child(3) { display: none; }
             .theme-tabs, .model-checks {
                 flex-wrap: nowrap;
                 width: 100%;
@@ -619,9 +618,8 @@
             <a href="#" class="brand-link">OreOre-Bench</a>
             <nav class="header-nav" aria-label="メインナビゲーション">
                 <a href="#bench-list" class="nav-link">ベンチ一覧</a>
-                <a href="#theme-description" class="nav-link">テーマ</a>
-                <a href="#how-to-use" class="nav-link">使い方</a>
                 <a href="./lab/" class="nav-link">Lab</a>
+                <a href="#how-to-use" class="nav-link">使い方</a>
                 <a href="https://github.com/noricha-vr/oreore-bench" target="_blank" rel="noopener noreferrer" class="nav-link">GitHub</a>
             </nav>
         </div>
