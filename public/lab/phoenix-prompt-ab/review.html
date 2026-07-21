@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>実験レビュー — OreOre-Bench Lab</title>
-    <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%232563eb'/><text x='16' y='22' text-anchor='middle' font-family='sans-serif' font-size='18' font-weight='700' fill='white'>O</text></svg>">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Cdefs%3E%3ClinearGradient%20id='a'%20x1='0'%20y1='0'%20x2='0'%20y2='1'%3E%3Cstop%20stop-color='%237ab8ff'/%3E%3Cstop%20offset='.5'%20stop-color='%232a7fff'/%3E%3Cstop%20offset='1'%20stop-color='%230a54c8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20x='1'%20y='1'%20width='30'%20height='30'%20rx='8'%20fill='url(%23a)'%20stroke='%23073f9c'/%3E%3Cpath%20d='M5%203h22'%20stroke='white'%20stroke-opacity='.6'%20stroke-width='2'/%3E%3Ctext%20x='16'%20y='22'%20text-anchor='middle'%20font-family='Helvetica%20Neue,sans-serif'%20font-size='18'%20font-weight='600'%20fill='white'%3EO%3C/text%3E%3C/svg%3E">
+    <link rel="stylesheet" href="/assets/apple-jobs.css">
     <link rel="stylesheet" href="../lab.css">
 </head>
 <body>
@@ -14,7 +13,7 @@
         <div class="container header-inner">
             <a href="../../" class="brand-link">OreOre-Bench</a>
             <nav class="header-nav">
-                <a href="../" class="nav-link"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Lab 一覧</a>
+                <a href="../" class="nav-link">Lab 一覧</a>
                 <a href="../../" class="nav-link">ベンチ一覧</a>
                 <a href="https://github.com/noricha-vr/oreore-bench" target="_blank" rel="noopener noreferrer" class="nav-link">GitHub</a>
             </nav>
@@ -25,11 +24,9 @@
         <section>
             <div class="container">
                 <div id="loading" class="empty-state">
-                    <p><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i></p>
                     <p>実験データを読み込んでいます...</p>
                 </div>
                 <div id="error" class="empty-state" style="display:none;">
-                    <p><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></p>
                     <p id="error-msg">experiment.json を読み込めませんでした。</p>
                 </div>
                 <div id="content" style="display:none;">
@@ -92,15 +89,15 @@
             let errorMetricHtml = '';
             if (errorCount !== null) {
                 const cls = errorCount === 0 ? 'error-zero' : 'error-nonzero';
-                errorMetricHtml = `<span class="ab-metric ${cls}"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> エラー <strong>${errorCount}</strong></span>`;
+                errorMetricHtml = `<span class="ab-metric ${cls}">エラー <strong>${errorCount}</strong></span>`;
             }
             const bytesMetricHtml = bytes !== null
-                ? `<span class="ab-metric"><i class="fa-solid fa-file-code" aria-hidden="true"></i> サイズ <strong>${escapeHtml(formatBytes(bytes))}</strong></span>`
+                ? `<span class="ab-metric">サイズ <strong>${escapeHtml(formatBytes(bytes))}</strong></span>`
                 : '';
 
             const variantTagClass = variant === 'a' ? 'tag-a' : 'tag-b';
             const winnerTagHtml = isWinner
-                ? '<span class="ab-tag winner-tag"><i class="fa-solid fa-crown" aria-hidden="true"></i> 勝者</span>'
+                ? '<span class="ab-tag winner-tag">勝者</span>'
                 : '';
 
             // iframe 遅延ロード: 開いた瞬間に src を注入する
@@ -124,15 +121,9 @@
                     </div>
                     <div class="shot-scroller">${shotsHtml}</div>
                     <div class="ab-actions">
-                        <a class="ab-btn primary" href="${versionUrl}" target="_blank" rel="noopener noreferrer">
-                            <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> 実物を開く
-                        </a>
-                        <button type="button" class="ab-btn" data-toggle-iframe="${wrapId}" data-iframe-src="${versionUrl}" data-iframe-id="${iframeId}">
-                            <i class="fa-solid fa-window-maximize" aria-hidden="true"></i> ここで開く
-                        </button>
-                        <a class="ab-btn" href="${promptUrl}" target="_blank" rel="noopener noreferrer">
-                            <i class="fa-solid fa-file-lines" aria-hidden="true"></i> プロンプト
-                        </a>
+                        <a class="ab-btn primary" href="${versionUrl}" target="_blank" rel="noopener noreferrer">実物を開く</a>
+                        <button type="button" class="ab-btn" data-toggle-iframe="${wrapId}" data-iframe-src="${versionUrl}" data-iframe-id="${iframeId}">ここで開く</button>
+                        <a class="ab-btn" href="${promptUrl}" target="_blank" rel="noopener noreferrer">プロンプト</a>
                     </div>
                     <div class="iframe-wrap" id="${wrapId}">
                         <iframe id="${iframeId}" title="${label} プレビュー" loading="lazy" sandbox="allow-scripts allow-same-origin"></iframe>
@@ -192,9 +183,7 @@
 
             const linksHtml = finalPromptPath
                 ? `<div class="exp-links">
-                    <a class="exp-link" href="./${finalPromptPath}" target="_blank" rel="noopener noreferrer">
-                        <i class="fa-solid fa-file-lines" aria-hidden="true"></i> 最終プロンプトを開く
-                    </a>
+                    <a class="exp-link" href="./${finalPromptPath}" target="_blank" rel="noopener noreferrer">最終プロンプトを開く</a>
                    </div>`
                 : '';
 
@@ -228,12 +217,12 @@
                     if (!wrap || !iframe) return;
                     if (wrap.classList.contains('open')) {
                         wrap.classList.remove('open');
-                        btn.innerHTML = '<i class="fa-solid fa-window-maximize" aria-hidden="true"></i> ここで開く';
+                        btn.textContent = 'ここで開く';
                     } else {
                         // 初回のみ src を注入 (以降はキャッシュされたまま再表示)
                         if (!iframe.getAttribute('src')) iframe.setAttribute('src', src);
                         wrap.classList.add('open');
-                        btn.innerHTML = '<i class="fa-solid fa-window-minimize" aria-hidden="true"></i> 閉じる';
+                        btn.textContent = '閉じる';
                     }
                 });
             });
