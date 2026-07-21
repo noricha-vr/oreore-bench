@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="/assets/apple-modern.css">
     <style>
-        body { overflow-x: hidden; }
         .container {
             width: 100%;
             max-width: var(--content-wide);
@@ -160,6 +159,8 @@
         }
         .theme-tabs, .model-checks {
             display: flex;
+            min-width: 0;
+            max-width: 100%;
             flex-wrap: wrap;
             gap: 10px;
         }
@@ -562,7 +563,7 @@
             border-radius: 50%;
             background: var(--text);
             color: var(--text-on-dark);
-            font: 600 0.75rem / 1 var(--font-display);
+            font: 600 var(--text-caption) / 1 var(--font-display);
         }
         .modal-links {
             display: flex;
@@ -593,14 +594,15 @@
             .header-nav .nav-link:nth-child(5) { display: none; }
             .theme-tabs, .model-checks {
                 flex-wrap: nowrap;
-                margin-inline: calc(var(--page-gutter) * -1);
-                padding-inline: var(--page-gutter);
+                width: 100%;
+                margin-inline: 0;
+                padding-inline: 0;
                 padding-bottom: 4px;
                 overflow-x: auto;
                 overscroll-behavior-inline: contain;
                 scrollbar-width: thin;
             }
-            .filters { margin-inline: calc(var(--page-gutter) * -0.45); }
+            .filters { margin-inline: 0; }
             .theme-card:hover, .theme-info-card:hover, .model-card-btn:hover { transform: none; }
             .modal-overlay { padding: 12px; }
             .modal { border-radius: 16px; }

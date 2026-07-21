@@ -94,20 +94,23 @@ section.hero {
 
 .status-badge {
     display: inline-flex;
+    flex: 0 0 auto;
     align-items: center;
-    gap: 7px;
+    gap: 6px;
     min-height: 28px;
-    padding: 4px 11px;
+    padding: 4px 9px;
     border: 1px solid currentColor;
     border-radius: var(--radius-pill);
     font-size: var(--text-caption);
     font-weight: 600;
     line-height: 1;
+    white-space: nowrap;
 }
 
 .status-badge::before {
     width: 7px;
     height: 7px;
+    flex: 0 0 auto;
     border-radius: 50%;
     background: currentColor;
     content: "";

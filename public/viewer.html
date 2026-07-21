@@ -119,9 +119,11 @@
             gap: 8px;
         }
         .model-name {
+            min-width: 0;
             font-size: 0.9375rem;
             font-weight: 600;
             line-height: 1.35;
+            overflow-wrap: anywhere;
         }
         .runner {
             color: var(--text-secondary);
@@ -130,6 +132,7 @@
         }
         .cost-chip {
             display: inline-flex;
+            flex: 0 0 auto;
             align-items: center;
             min-height: 24px;
             margin-top: 7px;
@@ -140,6 +143,7 @@
             color: var(--text-secondary);
             font-size: var(--text-caption);
             line-height: 1;
+            white-space: nowrap;
         }
         .entry-details {
             display: grid;
@@ -235,7 +239,7 @@
                 overscroll-behavior-inline: contain;
             }
             .model-button {
-                flex: 0 0 min(76vw, 280px);
+                flex: 0 0 clamp(248px, 78%, 286px);
                 transform: none;
             }
             .entry-details { padding: 18px; }

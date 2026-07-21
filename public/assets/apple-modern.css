@@ -220,7 +220,6 @@ a {
     position: relative;
     z-index: 1;
     padding: clamp(32px, 6vw, 52px) var(--page-gutter);
-    border-top: 4px solid var(--theme-accent);
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
     background: var(--bg-light);
 }
@@ -230,6 +229,16 @@ a {
     width: 100%;
     max-width: 840px;
     margin-inline: auto;
+}
+
+.document-page .hero-inner::before {
+    display: block;
+    width: 36px;
+    height: 3px;
+    margin-bottom: 14px;
+    border-radius: var(--radius-pill);
+    background: var(--theme-accent);
+    content: "";
 }
 
 .document-page .back {
