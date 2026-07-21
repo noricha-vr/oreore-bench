@@ -1,5 +1,3 @@
-@import url("/assets/apple-jobs.css");
-
 /* Lab registry and experiment review surfaces. */
 body {
     background: var(--bg);
@@ -365,7 +363,7 @@ footer {
     background: linear-gradient(
         to bottom,
         var(--accent-aqua-hi) 0%,
-        var(--accent-aqua) 48%,
+        var(--accent-aqua) 22%,
         var(--accent-aqua-lo) 100%
     );
     box-shadow:
@@ -376,7 +374,7 @@ footer {
 
 .ab-btn.primary::before {
     position: absolute;
-    inset: 1px 1px 48%;
+    inset: 1px 1px 78%;
     border-radius: var(--radius-button) var(--radius-button) 45% 45%;
     background: linear-gradient(to bottom, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.08));
     content: "";
