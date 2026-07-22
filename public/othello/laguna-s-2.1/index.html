@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Othello</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background: #f0f0f0;
+      font-family: sans-serif;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+      gap: 2px;
+      width: 90vmin;
+      height: 90vmin;
+      background: #008000;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+    .cell {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .black { background-color: #000; }
+    .white { background-color: #fff; }
+    .highlight { background-color: #ff0; }
+    #status {
+      margin-top: 20px;
+      font-size: 1.5rem;
+      color: #333;
+    }
+    #reset {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      border: none;
+      background: #4CAF50;
+      color: white;
+      border-radius: 5px;
+    }
+    #reset:hover {
+      background: #45a049;
+    }
+    @media (max-width: 600px) {
+      #board {
+        width: 95vmin;
+        height: 95vmin;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="board"></div>
+  <div id="status"></div>
+  <button id="reset">リセット</button>
+  <script>
+    const directions = [
+      [-1, -1], [-1, 0], [-1, 1],
+      [0, -1],          [0, 1],
+      [1, -1],  [1, 0], [1, 1]
+    ];
+
+    let board = Array.from({ length: 8 }, () => Array(8).fill(0));
+    board[3][3] = 1;
+    board[3][4] = 2;
+    board[4][3] = 2;
+    board[4][4] = 1;
+
+    let currentPlayer = 1;
+    let gameActive = true;
+
+    function renderBoard() {
+      const boardDiv = document.getElementById('board');
+      boardDiv.innerHTML = '';
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const cell = document.createElement('div');
+          cell.classList.add('cell');
+          if (board[r][c] === 1) cell.classList.add('black');
+          else if (board[r][c] === 2) cell.classList.add('white');
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+          boardDiv.appendChild(cell);
+        }
+      }
+    }
+
+    function getLegalMoves(currentBoard, color) {
+      const legal = [];
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          if (currentBoard[r][c] === 0 && isLegalMove(currentBoard, r, c, color)) {
+            legal.push([r, c]);
+          }
+        }
+      }
+      return legal;
+    }
+
+    function isLegalMove(currentBoard, row, col, color) {
+      if (currentBoard[row][col] !== 0) return false;
+      const opponent = color === 1 ? 2 : 1;
+      for (const [dr, dc] of directions) {
+        let r = row + dr;
+        let c = col + dc;
+        let hasOpponent = false;
+        while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+          if (currentBoard[r][c] === opponent) {
+            hasOpponent = true;
+            r += dr;
+            c += dc;
+          } else if (currentBoard[r][c] === color) {
+            if (hasOpponent) return true;
+            break;
+          } else {
+            break;
+          }
+        }
+      }
+      return false;
+    }
+
+    function highlightLegalMoves() {
+      const cells = document.querySelectorAll('.cell');
+      cells.forEach(cell => cell.classList.remove('highlight'));
+      if (currentPlayer === 1) {
+        const legalMoves = getLegalMoves(board, 1);
+        legalMoves.forEach(([r, c]) => {
+          const cell = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+          if (cell) cell.classList.add('highlight');
+        });
+      }
+    }
+
+    function applyMove(r, c, color) {
+      board[r][c] = color;
+      const opponent = color === 1 ? 2 : 1;
+      for (const [dr, dc] of directions) {
+        let nr = r + dr;
+        let nc = c + dc;
+        const toFlip = [];
+        while (nr >= 0 && nr < 8 && nc >= 0 && nc < 8 && board[nr][nc] === opponent) {
+          toFlip.push([nr, nc]);
+          nr += dr;
+          nc += dc;
+        }
+        if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8 && board[nr][nc] === color) {
+          for (const [x, y] of toFlip) {
+            board[x][y] = color;
+          }
+        }
+      }
+      renderBoard();
+      highlightLegalMoves();
+    }
+
+    function handleNextTurn() {
+      const nextPlayer = currentPlayer === 1 ? 2 : 1;
+      const legal = getLegalMoves(board, nextPlayer);
+      if (legal.length > 0) {
+        currentPlayer = nextPlayer;
+        if (currentPlayer === 1) {
+          highlightLegalMoves();
+        } else {
+          cpuMove();
+        }
+      } else {
+        const previousPlayer = currentPlayer;
+        const legalPrevious = getLegalMoves(board, previousPlayer);
+        if (legalPrevious.length > 0) {
+          currentPlayer = previousPlayer;
+          if (currentPlayer === 1) {
+            highlightLegalMoves();
+          } else {
+            cpuMove();
+          }
+        } else {
+          endGame();
+        }
+      }
+    }
+
+    function evaluateMove(r, c, color) {
+      let score = 0;
+      if ((r === 0 || r === 7) && (c === 0 || c === 7)) {
+        score += 100;
+      } else if (r === 0 || r === 7 || c === 0 || c === 7) {
+        score += 50;
+      }
+      const opponent = color === 1 ? 2 : 1;
+      let flipped = 0;
+      for (const [dr, dc] of directions) {
+        let nr = r + dr;
+        let nc = c + dc;
+        let count = 0;
+        while (nr >= 0 && nr < 8 && nc >= 0 && nc < 8 && board[nr][nc] === opponent) {
+          count++;
+          nr += dr;
+          nc += dc;
+        }
+        if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8 && board[nr][nc] === color) {
+          flipped += count;
+        }
+      }
+      score += flipped;
+      return score;
+    }
+
+    function cpuMove() {
+      const legalMoves = getLegalMoves(board, 2);
+      if (legalMoves.length === 0) return;
+      let bestScore = -Infinity;
+      let bestMove = null;
+      for (const [r, c] of legalMoves) {
+        const score = evaluateMove(r, c, 2);
+        if (score > bestScore) {
+          bestScore = score;
+          bestMove = [r, c];
+        }
+      }
+      applyMove(bestMove[0], bestMove[1], 2);
+      handleNextTurn();
+    }
+
+    function endGame() {
+      gameActive = false;
+      let blackCount = 0;
+      let whiteCount = 0;
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          if (board[r][c] === 1) blackCount++;
+          else if (board[r][c] === 2) whiteCount++;
+        }
+      }
+      const status = document.getElementById('status');
+      if (blackCount > whiteCount) {
+        status.textContent = '黒の勝ち！';
+      } else if (whiteCount > blackCount) {
+        status.textContent = '白の勝ち！';
+      } else {
+        status.textContent = '引き分け！';
+      }
+    }
+
+    function resetGame() {
+      board = Array.from({ length: 8 }, () => Array(8).fill(0));
+      board[3][3] = 1;
+      board[3][4] = 2;
+      board[4][3] = 2;
+      board[4][4] = 1;
+      currentPlayer = 1;
+      gameActive = true;
+      renderBoard();
+      highlightLegalMoves();
+      document.getElementById('status').textContent = '';
+    }
+
+    function handleBoardClick(e) {
+      if (!gameActive || currentPlayer !== 1) return;
+      const cell = e.target;
+      if (!cell.classList.contains('cell')) return;
+      const r = parseInt(cell.dataset.row);
+      const c = parseInt(cell.dataset.col);
+      if (board[r][c] !== 0) return;
+      if (!isLegalMove(board, r, c, 1)) return;
+      applyMove(r, c, 1);
+      handleNextTurn();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      renderBoard();
+      highlightLegalMoves();
+      document.getElementById('board').addEventListener('click', handleBoardClick);
+      document.getElementById('reset').addEventListener('click', resetGame);
+    });
+  </script>
+</body>
+</html>

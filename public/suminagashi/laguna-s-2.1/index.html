@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>墨流し</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, html { overflow: hidden; height: 100%; font-family: "Hiragino Mincho ProN", serif; background: #efeae0; }
+    canvas { display: block; }
+    .title {
+      position: absolute; top: 30px; left: 30px; font-size: 24px; color: #333; line-height: 1.5; writing-mode: vertical-rl;
+    }
+    .caption {
+      position: absolute; top: 50%; left: 10px; transform: rotate(180deg); font-size: 14px; letter-spacing: 0.3em; color: #555; writing-mode: vertical-rl;
+    }
+    .hint {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 18px; color: rgba(0,0,0,0.6); letter-spacing: 0.3em; pointer-events: none; transition: opacity 1s ease;
+    }
+    .dock {
+      position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 15px; padding: 10px 20px; background: rgba(255,255,255,0.7); border-radius: 20px; backdrop-filter: blur(5px);
+    }
+    .swatch {
+      width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; display: flex; align-items: center; justify-content: center;
+    }
+    .swatch.selected { border-color: #333; }
+    .swatch label { font-size: 10px; color: #333; white-space: nowrap; }
+    .toggle {
+      width: 40px; height: 20px; background: #ccc; border-radius: 10px; position: relative; cursor: pointer;
+    }
+    .toggle.active { background: #666; }
+    .toggle::before {
+      content: ""; width: 18px; height: 18px; border-radius: 50%; background: white; position: absolute; top: 1px; left: 1px; transition: transform 0.3s;
+    }
+    .toggle.active::before { transform: translateX(20px); }
+    .clear-btn {
+      padding: 6px 14px; border: none; border-radius: 10px; background: #ddd; cursor: pointer; font-size: 13px;
+    }
+    .credit {
+      position: absolute; right: 10px; bottom: 10px; font-size: 11px; color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="title">墨流し</div>
+  <div class="caption">SUMINAGASHI — INK DISSOLUTION</div>
+  <div class="hint" id="hint">画 面 を な ぞ っ て 墨 を 流 す</div>
+  <div class="dock">
+    <div id="swatchContainer"></div>
+    <div style="width:1px; height:24px; background:#aaa;"></div>
+    <div class="toggle" id="autoToggle"></div>
+    <span style="font-size:12px; color:#444;">自動演出</span>
+    <button class="clear-btn" id="clearBtn">洗い流す</button>
+  </div>
+  <div class="credit">THREE.JS · STABLE FLUIDS</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
+  <script>
+    const canvas = document.createElement('canvas');
+    document.body.appendChild(canvas);
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio > 1 ? 1 : 1);
+    const scene = new THREE.Scene();
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
+    camera.position.z = 1;
+
+    const DPR = window.devicePixelRatio || 1;
+    let width = window.innerWidth * DPR;
+    let height = window.innerHeight * DPR;
+
+    const vertexShader = `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = vec4(position.xy, 0.0, 1.0);
+      }
+    `;
+
+    const fragmentShader = `
+      precision highp float;
+      uniform sampler2D uTexture;
+      uniform vec2 uResolution;
+      varying vec2 vUv;
+      void main() {
+        vec2 uv = gl_FragCoord.xy / uResolution.xy;
+        vec4 color = texture2D(uTexture, uv);
+        gl_FragColor = color;
+      }
+    `;
+
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        uTexture: { value: null },
+        uResolution: { value: new THREE.Vector2(width, height) }
+      },
+      vertexShader,
+      fragmentShader
+    });
+
+    const plane = new THREE.PlaneGeometry(2, 2);
+    const mesh = new THREE.Mesh(plane, material);
+    scene.add(mesh);
+
+    // Simulation textures
+    const simMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        uTexture: { value: null },
+        uVelocity: { value: null },
+        uOpacity: { value: null },
+        uColor: { value: new THREE.Color(0x1a1a1f) },
+        uResolution: { value: new THREE.Vector2(width, height) },
+        uTime: { value: 0 },
+        uDeltaTime: { value: 0.016 }
+      },
+      vertexShader,
+      fragmentShader: `
+        precision highp float;
+        uniform sampler2D uTexture;
+        uniform sampler2D uVelocity;
+        uniform sampler2D uOpacity;
+        uniform vec3 uColor;
+        uniform vec2 uResolution;
+        uniform float uTime;
+        uniform float uDeltaTime;
+        varying vec2 vUv;
+
+        vec2 uvec(sampler2D tex, vec2 uv) {
+          return texture2D(tex, uv).xy * 2.0 - 1.0;
+        }
+
+        void main() {
+          vec2 uv = gl_FragCoord.xy / uResolution.xy;
+          vec2 vel = uvec(uVelocity, uv);
+          vec2 prevUv = uv - vel * uDeltaTime * 0.01;
+          vec4 ink = texture2D(uTexture, prevUv);
+          float opacity = texture2D(uOpacity, uv).r;
+          opacity *= exp(-uDeltaTime * 0.5); // fade over time
+          ink.a *= opacity;
+          gl_FragColor = ink;
+        }
+      `
+    });
+
+    const velocityMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        uTexture: { value: null },
+        uResolution: { value: new THREE.Vector2(width, height) },
+        uDeltaTime: { value: 0.016 }
+      },
+      vertexShader,
+      fragmentShader: `
+        precision highp float;
+        uniform sampler2D uTexture;
+        uniform vec2 uResolution;
+        uniform float uDeltaTime;
+        varying vec2 vUv;
+
+        void main() {
+          vec2 uv = gl_FragCoord.xy / uResolution.xy;
+          vec2 vel = texture2D(uTexture, uv).xy * 2.0 - 1.0;
+          vel *= 0.99;
+          gl_FragColor = vec4(vel * 0.5 + 0.5, 0.0, 1.0);
+        }
+      `
+    });
+
+    const vorticityMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        uTexture: { value: null },
+        uResolution: { value: new THREE.Vector2(width, height) },
+        uDeltaTime: { value: 0.016 }
+      },
+      vertexShader,
+      fragmentShader: `
+        precision highp float;
+        uniform sampler2D uTexture;
+        uniform vec2 uResolution;
+        uniform float uDeltaTime;
+        varying vec2 vUv;
+
+        void main() {
+          vec2 uv = gl_FragCoord.xy / uResolution.xy;
+          vec2 vel = texture2D(uTexture, uv).xy * 2.0 - 1.0;
+          float vorticity = 0.0;
+          float strength = 0.1;
+          vec2 dx = vec2(1.0 / uResolution.x, 0.0);
+          vec2 dy = vec2(0.0, 1.0 / uResolution.y);
+
+          float vL = texture2D(uTexture, uv - dx).y * 2.0 - 1.0;
+          float vR = texture2D(uTexture, uv + dx).y * 2.0 - 1.0;
+          float vT = texture2D(uTexture, uv + dy).x * 2.0 - 1.0;
+          float vB = texture2D(uTexture, uv - dy).x * 2.0 - 1.0;
+          vorticity = (vR - vL) - (vT - vB);
+
+          vec2 force = vec2(abs(vT) - abs(vB), abs(vL) - abs(vR));
+          force = normalize(force) * vorticity * strength;
+          vel += force * uDeltaTime;
+          gl_FragColor = vec4(vel * 0.5 + 0.5, 0.0, 1.0);
+        }
+      `
+    });
+
+    const divergenceMaterial = new WebGLFunc();
+    const pressureMaterial = new WebGLFunc();
+    const gradientSubMaterial = new WebGLFunc();
+
+    function WebGLFunc() {}
+
+    const renderTargetParams = {
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
+      wrapS: THREE.ClampToEdgeWrapping,
+      wrapT: THREE.ClampToEdgeWrapping,
+      stencilBuffer: false,
+      depthBuffer: false
+    };
+
+    const rtA = new THREE.WebGLRenderTarget(width, height, renderTargetParams);
+    const rtB = new THREE.WebGLRenderTarget(width, height, renderTargetParams);
+    const rtVelocity = new THREE.WebGLRenderTarget(width, height, renderTargetParams);
+    const rtVelocity2 = new THREE.WebGLRenderTarget(width, height, renderTargetParams);
+    const rtInk = new THREE.WebGLRenderTarget(width, height, renderTargetParams);
+    const rtInk2 = new THREE.WebGLRenderTarget(width, height, renderTargetParams);
+    const rtOpacity = new THREE.WebGLRenderTarget(width, height, renderTargetParams);
+    const rtOpacity2 = new THREE.WebGLRenderTarget(width, height, renderTargetParams);
+    const rtDivergence = new THREE.WebGLRenderTarget(width, height, renderTargetParams);
+    const rtPressure = new THREE.WebGLRenderTarget(width, height, renderTargetParams);
+    const rtPressure2 = new THREE.WebGLRenderTarget(width, height, renderTargetParams);
+
+    const colors = [
+      { name: "墨", hex: "#1a1a1f" },
+      { name: "藍", hex: "#16407a" },
+      { name: "朱", hex: "#c8372d" },
+      { name: "松葉", hex: "#2e6e52" }
+    ];
+
+    let currentColorIndex = 0;
+    let autoMode = true;
+    let lastTime = Date.now();
+    let lastDropTime = 0;
+    let hintTimeout;
+
+    const swatchContainer = document.getElementById("swatchContainer");
+    colors.forEach((c, i) => {
+      const swatch = document.createElement("div");
+      swatch.className = "swatch" + (i === currentColorIndex ? " selected" : "");
+      swatch.style.background = c.hex;
+      swatch.title = c.name;
+      swatch.innerHTML = `<span style="font-size:10px">${c.name}</span>`;
+      swatch.onclick = () => {
+        currentColorIndex = i;
+        document.querySelectorAll(".swatch").forEach(s => s.classList.remove("selected"));
+        swatch.classList.add("selected");
+      };
+      swatchContainer.appendChild(swatch);
+    });
+
+    const autoToggle = document.getElementById("autoToggle");
+    autoToggle.onclick = () => {
+      autoMode = !autoMode;
+      autoToggle.classList.toggle("active");
+    };
+
+    const clearBtn = document.getElementById("clearBtn");
+    clearBtn.onclick = () => {
+      const oldFrag = simMaterial.fragmentShader;
+      simMaterial.fragmentShader = simMaterial.fragmentShader.replace(/opacity \*= exp\(-uDeltaTime \* 5\.0\);/, "opacity *= 0.0;");
+      simMaterial.needsUpdate = true;
+      setTimeout(() => {
+        simMaterial.fragmentShader = oldFrag;
+        simMaterial.needsUpdate = true;
+      }, 100);
+    };
+
+    const hint = document.getElementById("hint");
+    hintTimeout = setTimeout(() => {
+      hint.style.opacity = "0";
+    }, 3000);
+
+    let isDragging = false;
+    let lastPos = { x: 0, y: 0 };
+
+    canvas.addEventListener("pointerdown", (e) => {
+      isDragging = true;
+      lastPos = { x: e.offsetX, y: e.offsetY };
+      hint.style.opacity = "0";
+    });
+
+    canvas.addEventListener("pointermove", (e) => {
+      if (!isDragging) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      const prevX = ((lastPos.x - rect.left) / rect.width) * 2 - 1;
+      const prevY = -((lastPos.y - rect.top) / rect.height) * 2 + 1;
+      lastPos = { x: e.offsetX, y: e.offsetY };
+
+      const dirX = x - prevX;
+      const dirY = y - prevY;
+      const speed = Math.sqrt(dirX * dirX + dirY * dirY);
+      if (speed < 0.001) return;
+
+      const angle = Math.atan2(dirY, dirX);
+      const px = Math.floor((x + 1) / 2 * width);
+      const py = Math.floor((y + 1) / 2 * height);
+
+      const size = Math.max(1, Math.floor(speed * 50));
+      injectInk(px, py, size, colors[currentColorIndex].hex);
+    });
+
+    canvas.addEventListener("pointerup", () => {
+      isDragging = false;
+    });
+
+    function injectInk(x, y, size, colorHex) {
+      const color = new THREE.Color(colorHex);
+      const gl = renderer.getContext();
+      const ext = gl.getExtension('O_ES3_sRGB_ext') || gl.getExtension('O_sRGB_ext');
+
+      const tempRT = new THREE.WebGLRenderTarget(width, height, renderTargetParams);
+      renderer.setRenderTarget(tempRT, 0);
+      renderer.setRenderTarget(inkRT, 0);
+      const inkMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 });
+      const inkGeo = new THREE.PlaneGeometry(size / width * 2, size / height * 2);
+      const inkMesh = new THREE.Mesh(inkGeo, inkMat);
+      inkMesh.position.set(x / width * 2 - 1, y / height * 2 - 1, 0);
+      scene.add(inkMesh);
+      renderer.render(scene, camera);
+      scene.remove(inkMesh);
+    }
+
+    const inkRT = new THREE.WebGLRenderTarget(width, height, renderTargetParams);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const now = Date.now();
+      const dt = Math.min((now - lastTime) / 1000, 0.02);
+      lastTime = now;
+
+      if (autoMode && now - lastDropTime > 1000) {
+        lastDropTime = now;
+        const x = Math.random() * width;
+        const y = Math.random() * height;
+        const size = 20 + Math.random() * 30;
+        const color = colors[Math.floor(Math.random() * colors.length)].hex;
+        injectInk(x, y, size, color);
+      }
+
+      renderer.setRenderTarget(inkRT, 0);
+      renderer.render(scene, camera);
+
+      renderer.setRenderTarget(null);
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    window.addEventListener("resize", () => {
+      width = window.innerWidth * DPR;
+      height = window.innerHeight * DPR;
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      material.uniforms.uResolution.value.set(width, height);
+    });
+  </script>
+</body>
+</html>

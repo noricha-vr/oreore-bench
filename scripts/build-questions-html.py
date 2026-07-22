@@ -33,6 +33,10 @@ MODEL_INFO = {
         "label": "Grok 4.5", "provider": "xAI", "type": "API LLM",
         "color": "#3A3A3C", "color_dark": "#111111",
     },
+    "laguna-s-2.1": {
+        "label": "Laguna S 2.1", "provider": "poolside", "type": "API LLM",
+        "color": "#0891B2", "color_dark": "#0E7490",
+    },
 }
 
 TEMPLATE = """<!DOCTYPE html>

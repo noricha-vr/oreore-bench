@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HIBANA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Shippori+Mincho:wght@400;500&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; overflow-x: hidden; }
+    body {
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      background: #000;
+      color: var(--ink);
+      overflow-x: hidden;
+    }
+    .scene {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.8s ease-out;
+    }
+    .scene.active { opacity: 1; pointer-events: auto; }
+
+    /* Scene-specific backgrounds */
+    #scene-dawn { background: linear-gradient(135deg, #f2ecf5 0%, #e6def0 100%); }
+    #scene-rise { background: linear-gradient(to bottom, #ff9a56 0%, #ff7e5f 100%); }
+    #scene-halo { background: radial-gradient(circle at center, #ffffff22 0%, #00000088 100%); }
+    #scene-feather { background: #0a1030; }
+    #scene-crystal { background: #0a1030; }
+    #scene-finale { background: linear-gradient(to bottom, #c23a1f 0%, #8b1a0e 100%); }
+
+    canvas.particles {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 1;
+    }
+
+    .content {
+      position: relative;
+      z-index: 2;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 6vw;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    h1, p, .staggered {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 400;
+      font-size: clamp(1.4rem, 3.2vw, 2.6rem);
+      line-height: 1.5;
+      letter-spacing: 0.04em;
+    }
+
+    .jp-text {
+      font-family: 'Shippori Mincho', serif;
+      font-size: clamp(1.2rem, 2.8vw, 2.2rem);
+      line-height: 1.6;
+    }
+
+    .staggered span {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.6s cubic-bezier(0.25, 0.49, 0.43, 0.99);
+    }
+
+    .scene.active .staggered span {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .staggered span:nth-child(1) { transition-delay: 0ms; }
+    .staggered span:nth-child(2) { transition-delay: 70ms; }
+    .staggered span:nth-child(3) { transition-delay: 140ms; }
+    .staggered span:nth-child(4) { transition-delay: 210ms; }
+    .staggered span:nth-child(5) { transition-delay: 280ms; }
+    .staggered span:nth-child(6) { transition-delay: 350ms; }
+    .staggered span:nth-child(7) { transition-delay: 420ms; }
+    .staggered span:nth-child(8) { transition-delay: 490ms; }
+    .staggered span:nth-child(9) { transition-delay: 560ms; }
+    .staggered span:nth-child(10) { transition-delay: 630ms; }
+
+    .ui-logo {
+      position: fixed;
+      top: 30px;
+      left: 30px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem;
+      font-weight: 500;
+      color: var(--ink);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ui-nav {
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      font-size: 0.75rem;
+      color: var(--ink);
+      display: flex;
+      gap: 20px;
+      z-index: 9999;
+    }
+
+    .progress-bar {
+      position: fixed;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      height: 2px;
+      background: rgba(0,0,0,0.2);
+      z-index: 9999;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--flame);
+      transition: width 0.1s linear;
+    }
+
+    .sound-ring {
+      position: fixed;
+      bottom: 60px;
+      left: 30px;
+      width: 40px;
+      height: 40px;
+      border: 2px solid var(--feather);
+      border-radius: 50%;
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .sound-ring.visible { opacity: 1; }
+
+    /* Scene layouts */
+    #scene-dawn .content { align-items: flex-start; }
+    #scene-rise .content { align-items: center; text-align: center; }
+    #scene-halo .content { align-items: center; text-align: center; }
+    #scene-feather .content { flex-direction: row; }
+    #scene-crystal .content { justify-content: center; }
+    #scene-finale .content { align-items: flex-end; text-align: center; }
+
+    .crystal {
+      position: relative;
+      width: 150px;
+      height: 150px;
+      margin: 20px;
+      background: linear-gradient(45deg, #00f2ff44, #ff00c844, #f0f00044);
+      border: 2px solid #fff;
+      border-radius: 10px;
+      transform-style: preserve-3d;
+      animation: rotate 10s infinite linear;
+      box-shadow: 0 0 30px #fff4;
+    }
+    @keyframes rotate {
+      0% { transform: rotateX(0) rotateY(0); }
+      100% { transform: rotateX(360deg) rotateY(360deg); }
+    }
+    .crystal:hover {
+      animation-duration: 3s;
+    }
+
+    .reflection {
+      position: absolute;
+      bottom: -100px;
+      left: 0;
+      width: 100%;
+      height: 100px;
+      background: linear-gradient(to top, #c23a1f88, transparent);
+      filter: blur(5px);
+      transform: scaleY(-0.3);
+      z-index: 0;
+    }
+
+    @media (max-width: 768px) {
+      .ui-logo, .ui-nav { font-size: 1rem; }
+      .progress-bar { width: 80%; }
+      .crystal { width: 100px; height: 100px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- UI Elements -->
+  <div class="ui-logo">
+    HIBANA <span style="font-size:1.2rem;">&#128039;</span> <span style="font-size:0.8rem; opacity:0.7;">Sept. 29</span>
+  </div>
+  <nav class="ui-nav">
+    <a href="#works">Works</a>
+    <a href="#philosophy">Philosophy</a>
+    <a href="#connect">Connect</a>
+  </nav>
+  <div class="progress-bar"><div class="progress-fill"></div></div>
+  <div class="sound-ring"></div>
+
+  <!-- Scenes -->
+  <section id="scene-dawn" class="scene active">
+    <canvas class="particles"></canvas>
+    <div class="content">
+      <div class="staggered">
+        <span>what</span> <span>guides</span> <span>us</span> <span>through</span>
+        <span style="color:var(--flame);">*</span><span>change</span>
+        <span style="color:var(--flame);">*</span><span>reinvention</span>
+        <span style="color:var(--flame);">*</span><span>and</span> <span>the</span>
+        <span style="color:var(--flame);">*</span><span>unknown</span><span>—</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="scene-rise" class="scene">
+    <canvas class="particles"></canvas>
+    <div class="content">
+      <p class="jp-text" style="text-shadow: 0 0 10px rgba(255,255,255,0.5);">再生である。</p>
+    </div>
+  </section>
+
+  <section id="scene-halo" class="scene">
+    <canvas class="particles"></canvas>
+    <div class="content">
+      <h1 style="font-size:clamp(3rem, 10vw, 8rem); opacity:0.8; animation: pulse 2s infinite;">音</h1>
+    </div>
+  </section>
+
+  <section id="scene-feather" class="scene">
+    <canvas class="particles"></canvas>
+    <div class="content">
+      <div style="flex:1; text-align:right;">
+        <p class="jp-text" style="margin-bottom:20px;">作品解説テキスト<br>作品解説テキスト<br>作品解説テキスト</p>
+      </div>
+      <div style="flex:1;">
+        <div class="staggered">
+          <span>don't</span> <span>just</span> <span style="color:var(--flame);">*</span><span>speak</span>
+          <span>to</span> <span>us.</span> <span>they</span> <span style="color:var(--flame);">*</span><span>stimulate</span>
+          <span>us.</span> <span style="color:var(--flame);">*</span><span>light</span>
+          <span style="color:var(--flame);">*</span><span>becomes</span> 私、flare。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="scene-crystal" class="scene">
+    <canvas class="particles"></canvas>
+    <div class="content" style="display:flex; justify-content:center; flex-wrap:wrap;">
+      <div class="crystal"></div>
+      <div class="crystal" style="animation-duration:15s;"></div>
+      <div class="crystal" style="animation-duration:20s;"></div>
+    </div>
+  </section>
+
+  <section id="scene-finale" class="scene">
+    <canvas class="particles"></canvas>
+    <div class="content">
+      <div class="staggered">
+        <span style="color:var(--flame);">*</span><span>feel</span> <span>their</span> <span>heat.</span>
+        <span style="color:var(--flame);">*</span><span>焔</span> <span>と</span>
+        <span style="color:var(--flame);">*</span><span>interact</span> <span>with。</span>
+      </div>
+      <div class="reflection"></div>
+    </div>
+  </section>
+
+  <script>
+    // Particle System
+    const emitters = {};
+    let activeScene = 'scene-dawn';
+
+    function createEmitter(type, sceneId) {
+      const canvas = document.querySelector(`#${sceneId} canvas`);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const particles = [];
+
+      emitters[sceneId] = {
+        type,
+        canvas,
+        ctx,
+        particles,
+        active: false
+      };
+
+      for (let i = 0; i < (type === 'wing' ? 50 : type === 'flame' ? 80 : 30); i++) {
+        particles.push(createParticle(type));
+      }
+    }
+
+    function createParticle(type) {
+      return {
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        vx: (Math.random() - 0.5) * (type === 'flame' ? 1 : 0.5),
+        vy: (Math.random() - 0.5) * (type === 'flame' ? 1 : 0.5),
+        size: Math.random() * 3 + 1,
+        life: Math.random(),
+        color: type === 'wing' ? '#b9a6e0' : type === 'flame' ? '#ff7a2f' : '#7fb8ff',
+        alpha: Math.random() * 0.5 + 0.3
+      };
+    }
+
+    function updateParticles(emitter) {
+      if (!emitter.active) return;
+      const { ctx, particles, type } = emitter;
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life += 0.005;
+
+        if (p.life > 1) {
+          particles[i] = createParticle(type);
+          continue;
+        }
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.alpha * (1 - p.life);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function animate() {
+      Object.values(emitters).forEach(updateParticles);
+      requestAnimationFrame(animate);
+    }
+
+    // Initialize emitters
+    createEmitter('wing', 'scene-dawn');
+    createEmitter('flame', 'scene-rise');
+    createEmitter('wing', 'scene-halo');
+    createEmitter('feather', 'scene-feather');
+    createEmitter('crystal', 'scene-crystal');
+    createEmitter('flame', 'scene-finale');
+
+    animate();
+
+    // Scroll handling
+    let currentScroll = 0;
+    let targetScroll = 0;
+    const totalHeight = window.innerHeight * 6 * 1.5;
+    const progressBar = document.querySelector('.progress-fill');
+    const scenes = document.querySelectorAll('.scene');
+    const soundRing = document.querySelector('.sound-ring');
+
+    window.addEventListener('scroll', () => {
+      targetScroll = window.scrollY;
+    });
+
+    function updateScroll() {
+      currentScroll += (targetScroll - currentScroll) * 0.08;
+
+      const progress = Math.min(currentScroll / totalHeight, 1);
+      progressBar.style.width = `${progress * 100}%`;
+
+      const sceneIndex = Math.floor(currentScroll / (window.innerHeight * 1.5));
+      const sceneId = `scene-${['dawn','rise','halo','feather','crystal','finale'][sceneIndex]}`;
+
+      if (sceneId !== activeScene) {
+        document.getElementById(activeScene)?.classList.remove('active');
+        document.getElementById(sceneId)?.classList.add('active');
+        activeScene = sceneId;
+
+        Object.entries(emitters).forEach(([key, emitter]) => {
+          emitter.active = key === sceneId;
+        });
+
+        if (sceneIndex >= 3) {
+          soundRing.classList.add('visible');
+        } else {
+          soundRing.classList.remove('visible');
+        }
+      }
+
+      requestAnimationFrame(updateScroll);
+    }
+
+    updateScroll();
+
+    // Reduced motion support
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      Object.values(emitters).forEach(e => {
+        e.particles = e.particles.slice(0, Math.floor(e.particles.length / 4));
+      });
+    }
+
+    // Window resize
+    window.addEventListener('resize', () => {
+      Object.values(emitters).forEach(emitter => {
+        emitter.canvas.width = window.innerWidth;
+        emitter.canvas.height = window.innerHeight;
+      });
+    });
+  </script>
+</body>
+</html>
