@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "theme": "extract-questions-v2",
+  "model": "laguna-s-2.1",
+  "model_id": "poolside/laguna-s-2.1",
+  "harness": "openrouter-api",
+  "reasoning_effort": "high",
+  "attempts": 1,
+  "generated_at": "2026-07-22T10:35:02+09:00",
+  "generated_at_source": "measured",
+  "sampling": {
+    "temperature": "default",
+    "max_tokens": 65000,
+    "top_p": "default"
+  },
+  "system_prompt": "none",
+  "post_processing": "none",
+  "runtime": null,
+  "usage": {
+    "estimated": false,
+    "method": "api-usage",
+    "prompt_tokens": 3494,
+    "completion_tokens": 5791,
+    "note": "OpenRouter API 実測。reasoning tokens は 0（effort high 指定でも思考トークンなし）"
+  },
+  "cost": {
+    "estimated": false,
+    "usd": 0.001508,
+    "actual_usd": null,
+    "prompt_usd_per_mtok": 0.1,
+    "completion_usd_per_mtok": 0.2,
+    "pricing_source": "openrouter",
+    "pricing_model": "poolside/laguna-s-2.1",
+    "pricing_fetched_at": "2026-07-22"
+  }
+}

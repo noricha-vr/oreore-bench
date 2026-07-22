@@ -230,6 +230,42 @@
       "pricing_fetched_at": "2026-07-16"
     }
   },
+  "extract-questions/laguna-s-2.1": {
+    "schema_version": 1,
+    "theme": "extract-questions",
+    "model": "laguna-s-2.1",
+    "model_id": "poolside/laguna-s-2.1",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-22T10:34:10+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 2148,
+      "completion_tokens": 2710,
+      "note": "OpenRouter API 実測。reasoning tokens は 0（effort high 指定でも思考トークンなし）"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 0.000757,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 0.1,
+      "completion_usd_per_mtok": 0.2,
+      "pricing_source": "openrouter",
+      "pricing_model": "poolside/laguna-s-2.1",
+      "pricing_fetched_at": "2026-07-22"
+    }
+  },
   "extract-questions-v2/agents-a1-4b": {
     "schema_version": 1,
     "theme": "extract-questions-v2",
@@ -423,6 +459,42 @@
       "pricing_source": "openrouter-reference",
       "pricing_model": "google/gemma-4-31b-it",
       "pricing_fetched_at": "2026-07-16"
+    }
+  },
+  "extract-questions-v2/laguna-s-2.1": {
+    "schema_version": 1,
+    "theme": "extract-questions-v2",
+    "model": "laguna-s-2.1",
+    "model_id": "poolside/laguna-s-2.1",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-22T10:35:02+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 3494,
+      "completion_tokens": 5791,
+      "note": "OpenRouter API 実測。reasoning tokens は 0（effort high 指定でも思考トークンなし）"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 0.001508,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 0.1,
+      "completion_usd_per_mtok": 0.2,
+      "pricing_source": "openrouter",
+      "pricing_model": "poolside/laguna-s-2.1",
+      "pricing_fetched_at": "2026-07-22"
     }
   },
   "hasami-shogi/agents-a1-4b": {
@@ -654,6 +726,42 @@
       "pricing_source": "openrouter",
       "pricing_model": "x-ai/grok-4.5",
       "pricing_fetched_at": "2026-07-16"
+    }
+  },
+  "hasami-shogi/laguna-s-2.1": {
+    "schema_version": 1,
+    "theme": "hasami-shogi",
+    "model": "laguna-s-2.1",
+    "model_id": "poolside/laguna-s-2.1",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-22T10:33:05+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 1108,
+      "completion_tokens": 2823,
+      "note": "OpenRouter API 実測。reasoning tokens は 0（effort high 指定でも思考トークンなし）"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 0.000675,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 0.1,
+      "completion_usd_per_mtok": 0.2,
+      "pricing_source": "openrouter",
+      "pricing_model": "poolside/laguna-s-2.1",
+      "pricing_fetched_at": "2026-07-22"
     }
   },
   "lp-fable5/agents-a1-4b": {
@@ -1103,6 +1211,42 @@
       "pricing_fetched_at": "2026-07-17"
     }
   },
+  "lp-fable5/laguna-s-2.1": {
+    "schema_version": 1,
+    "theme": "lp-fable5",
+    "model": "laguna-s-2.1",
+    "model_id": "poolside/laguna-s-2.1",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-22T10:31:30+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 1490,
+      "completion_tokens": 5725,
+      "note": "OpenRouter API 実測。reasoning tokens は 0（effort high 指定でも思考トークンなし）"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 0.001294,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 0.1,
+      "completion_usd_per_mtok": 0.2,
+      "pricing_source": "openrouter",
+      "pricing_model": "poolside/laguna-s-2.1",
+      "pricing_fetched_at": "2026-07-22"
+    }
+  },
   "lp-nishibi/agents-a1-4b": {
     "schema_version": 1,
     "theme": "lp-nishibi",
@@ -1292,6 +1436,42 @@
       "pricing_source": "openrouter",
       "pricing_model": "x-ai/grok-4.5",
       "pricing_fetched_at": "2026-07-16"
+    }
+  },
+  "lp-nishibi/laguna-s-2.1": {
+    "schema_version": 1,
+    "theme": "lp-nishibi",
+    "model": "laguna-s-2.1",
+    "model_id": "poolside/laguna-s-2.1",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-22T10:31:00+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 1078,
+      "completion_tokens": 3538,
+      "note": "OpenRouter API 実測。reasoning tokens は 0（effort high 指定でも思考トークンなし）"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 0.000815,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 0.1,
+      "completion_usd_per_mtok": 0.2,
+      "pricing_source": "openrouter",
+      "pricing_model": "poolside/laguna-s-2.1",
+      "pricing_fetched_at": "2026-07-22"
     }
   },
   "othello/agents-a1-4b": {
@@ -1487,6 +1667,42 @@
       "pricing_source": "openrouter",
       "pricing_model": "x-ai/grok-4.5",
       "pricing_fetched_at": "2026-07-16"
+    }
+  },
+  "othello/laguna-s-2.1": {
+    "schema_version": 1,
+    "theme": "othello",
+    "model": "laguna-s-2.1",
+    "model_id": "poolside/laguna-s-2.1",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-22T10:32:50+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 410,
+      "completion_tokens": 12383,
+      "note": "OpenRouter API 実測。completion に reasoning 9764 tokens を含む"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 0.002518,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 0.1,
+      "completion_usd_per_mtok": 0.2,
+      "pricing_source": "openrouter",
+      "pricing_model": "poolside/laguna-s-2.1",
+      "pricing_fetched_at": "2026-07-22"
     }
   },
   "phoenix-lp/agents-a1-4b": {
@@ -1936,6 +2152,42 @@
       "pricing_fetched_at": "2026-07-17"
     }
   },
+  "phoenix-lp/laguna-s-2.1": {
+    "schema_version": 1,
+    "theme": "phoenix-lp",
+    "model": "laguna-s-2.1",
+    "model_id": "poolside/laguna-s-2.1",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-22T10:33:18+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 2059,
+      "completion_tokens": 4279,
+      "note": "OpenRouter API 実測。reasoning tokens は 0（effort high 指定でも思考トークンなし）"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 0.001062,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 0.1,
+      "completion_usd_per_mtok": 0.2,
+      "pricing_source": "openrouter",
+      "pricing_model": "poolside/laguna-s-2.1",
+      "pricing_fetched_at": "2026-07-22"
+    }
+  },
   "pr-triage/agents-a1-4b": {
     "schema_version": 1,
     "theme": "pr-triage",
@@ -2165,6 +2417,42 @@
       "pricing_source": "openrouter",
       "pricing_model": "x-ai/grok-4.5",
       "pricing_fetched_at": "2026-07-16"
+    }
+  },
+  "pr-triage/laguna-s-2.1": {
+    "schema_version": 1,
+    "theme": "pr-triage",
+    "model": "laguna-s-2.1",
+    "model_id": "poolside/laguna-s-2.1",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-22T10:35:19+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 3229,
+      "completion_tokens": 1742,
+      "note": "OpenRouter API 実測。reasoning tokens は 0（effort high 指定でも思考トークンなし）"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 0.000671,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 0.1,
+      "completion_usd_per_mtok": 0.2,
+      "pricing_source": "openrouter",
+      "pricing_model": "poolside/laguna-s-2.1",
+      "pricing_fetched_at": "2026-07-22"
     }
   },
   "roguelike/agents-a1-4b": {
@@ -2540,6 +2828,42 @@
       "pricing_source": "openrouter",
       "pricing_model": "moonshotai/kimi-k3",
       "pricing_fetched_at": "2026-07-17"
+    }
+  },
+  "roguelike/laguna-s-2.1": {
+    "schema_version": 1,
+    "theme": "roguelike",
+    "model": "laguna-s-2.1",
+    "model_id": "poolside/laguna-s-2.1",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-22T10:33:46+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 1402,
+      "completion_tokens": 6174,
+      "note": "OpenRouter API 実測。reasoning tokens は 0（effort high 指定でも思考トークンなし）"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 0.001375,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 0.1,
+      "completion_usd_per_mtok": 0.2,
+      "pricing_source": "openrouter",
+      "pricing_model": "poolside/laguna-s-2.1",
+      "pricing_fetched_at": "2026-07-22"
     }
   },
   "suminagashi/agents-a1-4b": {
@@ -2987,6 +3311,42 @@
       "pricing_source": "openrouter",
       "pricing_model": "moonshotai/kimi-k3",
       "pricing_fetched_at": "2026-07-17"
+    }
+  },
+  "suminagashi/laguna-s-2.1": {
+    "schema_version": 1,
+    "theme": "suminagashi",
+    "model": "laguna-s-2.1",
+    "model_id": "poolside/laguna-s-2.1",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-22T10:32:51+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 979,
+      "completion_tokens": 4131,
+      "note": "OpenRouter API 実測。reasoning tokens は 0（effort high 指定でも思考トークンなし）"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 0.000924,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 0.1,
+      "completion_usd_per_mtok": 0.2,
+      "pricing_source": "openrouter",
+      "pricing_model": "poolside/laguna-s-2.1",
+      "pricing_fetched_at": "2026-07-22"
     }
   }
 }

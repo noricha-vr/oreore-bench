@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NISHIBI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cormorant Garamond', serif;
+            background-color: #1a120f;
+            color: #f5f0ec;
+            line-height: 1.8;
+            overflow-x: hidden;
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        section {
+            padding: 120px 60px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            section {
+                padding: 80px 30px;
+            }
+        }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding-top: 160px;
+            padding-bottom: 100px;
+            background: linear-gradient(to bottom, #3d2b1f, #1a120f);
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 300;
+            letter-spacing: -0.03em;
+            margin-bottom: 20px;
+            color: #e8d5c4;
+        }
+
+        .hero p {
+            font-size: 1.4rem;
+            font-weight: 300;
+            color: #c9b8a6;
+            margin-bottom: 40px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 16px 48px;
+            border: 1px solid #e8d5c4;
+            font-size: 1rem;
+            text-decoration: none;
+            color: #e8d5c4;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-weight: 300;
+        }
+
+        .cta-button:hover {
+            background-color: rgba(232, 213, 196, 0.1);
+        }
+
+        /* Philosophy */
+        .philosophy {
+            text-align: center;
+            background-color: #2a1e14;
+        }
+
+        .philosophy p {
+            font-size: 1.2rem;
+            max-width: 720px;
+            margin: 0 auto;
+            font-weight: 300;
+            color: #d4c2af;
+        }
+
+        /* Service */
+        .service {
+            background-color: #1a120f;
+        }
+
+        .service h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 60px;
+            color: #e8d5c4;
+        }
+
+        .plans {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+
+        .plan {
+            flex: 1;
+            min-width: 280px;
+            background-color: #2a1e14;
+            padding: 40px;
+            text-align: center;
+            border-top: 1px solid #4a3d2e;
+        }
+
+        .plan h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #e8d5c4;
+        }
+
+        .plan .price {
+            font-size: 2rem;
+            font-weight: 600;
+            margin: 20px 0;
+            color: #f5f0ec;
+        }
+
+        .plan ul {
+            list-style: none;
+            text-align: left;
+            margin-top: 20px;
+        }
+
+        .plan ul li {
+            margin-bottom: 10px;
+            color: #c9b8a6;
+        }
+
+        /* Science */
+        .science {
+            background-color: #2a1e14;
+        }
+
+        .science h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 60px;
+            color: #e8d5c4;
+        }
+
+        .science-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 40px;
+        }
+
+        .science-item {
+            text-align: center;
+        }
+
+        .science-item .value {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #f5f0ec;
+            margin-bottom: 10px;
+        }
+
+        .science-item .label {
+            font-size: 1rem;
+            color: #c9b8a6;
+        }
+
+        /* Studio */
+        .studio {
+            background-color: #1a120f;
+        }
+
+        .studio h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 60px;
+            color: #e8d5c4;
+        }
+
+        .studio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 40px;
+        }
+
+        .studio-item {
+            text-align: center;
+        }
+
+        .studio-item h3 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #e8d5c4;
+        }
+
+        .studio-item p {
+            color: #c9b8a6;
+        }
+
+        /* Testimonial */
+        .testimonial {
+            background-color: #2a1e14;
+        }
+
+        .testimonial h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 60px;
+            color: #e8d5c4;
+        }
+
+        .testimonials {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .testimonial-item {
+            text-align: center;
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        .testimonial-item p {
+            font-style: italic;
+            margin-bottom: 15px;
+            color: #d4c2af;
+        }
+
+        .testimonial-item .author {
+            font-weight: 600;
+            color: #e8d5c4;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 60px 20px;
+            background-color: #120d08;
+            color: #8d7d6b;
+            font-size: 0.9rem;
+        }
+
+        .social-links {
+            margin-top: 20px;
+        }
+
+        .social-links a {
+            color: #8d7d6b;
+            text-decoration: none;
+            margin: 0 10px;
+            transition: color 0.3s ease;
+        }
+
+        .social-links a:hover {
+            color: #e8d5c4;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Hero -->
+<section class="hero fade-in">
+    <h1>NISHIBI</h1>
+    <p>西日で焼く。自然の時間を、肌に。</p>
+    <a href="#plans" class="cta-button">予約する</a>
+</section>
+
+<!-- Philosophy -->
+<section class="philosophy fade-in">
+    <p>
+        太陽の光と空気は、私たちの肌と心をつなぐ最も古い対話である。<br>
+        NISHIBI は、窓から差し込む夕方の西日だけを使った天然日焼けスタジオである。<br>
+        UV ライトは一切使用せず、時間と空間をもとに肌を焼く。<br>
+        それは日焼けではなく、時間の質である。
+    </p>
+</section>
+
+<!-- Service -->
+<section id="plans" class="service fade-in">
+    <h2>Time-Based Plans</h2>
+    <div class="plans">
+        <div class="plan">
+            <h3>黄金時間</h3>
+            <div class="price">¥8,800</div>
+            <p>60分</p>
+            <ul>
+                <li>西日直射エリア</li>
+                <li>オーガニックティー付き</li>
+            </ul>
+        </div>
+        <div class="plan">
+            <h3>茜時間</h3>
+            <div class="price">¥12,800</div>
+            <p>90分</p>
+            <ul>
+                <li>プライベートルーム</li>
+                <li>アロマオイル付き</li>
+                <li>フォトグラフィー1枚</li>
+            </ul>
+        </div>
+        <div class="plan">
+            <h3>残光時間</h3>
+            <div class="price">¥19,800</div>
+            <p>120分</p>
+            <ul>
+                <li>専属スタイリスト</li>
+                <li>オーガニックビューテクリメント</li>
+                <li>フォトグラフィー3枚</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- Science -->
+<section class="science fade-in">
+    <h2>The Science of West Light</h2>
+    <div class="science-grid">
+        <div class="science-item">
+            <div class="value">30%</div>
+            <div class="label">紫外線量の低さ（東日比較）</div>
+        </div>
+        <div class="science-item">
+            <div class="value">45°</div>
+            <div class="label">最適な入射角</div>
+        </div>
+        <div class="science-item">
+            <div class="value">60分</div>
+            <div class="label">生体リズム調整効果時間</div>
+        </div>
+        <div class="science-item">
+            <div class="value">98%</div>
+            <div class="label">顧客満足度</div>
+        </div>
+    </div>
+</section>
+
+<!-- Studio -->
+<section class="studio fade-in">
+    <h2>Studio Environment</h2>
+    <div class="studio-grid">
+        <div class="studio-item">
+            <h3>南西向き全面窓</h3>
+            <p>夕陽が直射する専用スペース。自然光の最大限の浴び方。</p>
+        </div>
+        <div class="studio-item">
+            <h3>無垢材の内装</h3>
+            <p>空気の流れを妨げない、木の温もりを感じる空間。</p>
+        </div>
+        <div class="studio-item">
+            <h3>無音空間</h3>
+            <p>集中とリラゼーションをサポートする、静寂の設計。</p>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonial -->
+<section class="testimonial fade-in">
+    <h2>Voices</h2>
+    <div class="testimonials">
+        <div class="testimonial-item">
+            <p>
+                日焼けマシンのような人工的なものではなく、<br>
+                本当に太陽の気持ちいい季節を感じられる場所。
+            </p>
+            <div class="author">A. T., デザイナー</div>
+        </div>
+        <div class="testimonial-item">
+            <p>
+                西日を浴びることで、肌だけでなく心も温まる。<br>
+                これが日焼けの本当の意味なのだと思った。
+            </p>
+            <div class="author">M. S., ライター</div>
+        </div>
+        <div class="testimonial-item">
+            <p>
+                サステナブルなアプローチに魅かれてきた。<br>
+                自然の力を尊重した日焼け、とても美しい。
+            </p>
+            <div class="author">Y. K., カフェオーナー</div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="fade-in">
+    <p>NISHIBI</p>
+    <p>〒107-0062 東京都渋谷区南西町 2-15-3</p>
+    <div class="social-links">
+        <a href="#">Instagram</a>
+        <a href="#">Twitter</a>
+        <a href="#">LINE</a>
+    </div>
+</footer>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+    });
+</script>
+
+</body>
+</html>

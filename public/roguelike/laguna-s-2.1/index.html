@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Dungeon Rogue</title>
+<style>
+body{margin:0;background:#000;color:#fff;font-family:'ＭＳ ゴシック',monospace;display:flex;flex-direction:column;align-items:center;}
+#game{display:flex;}
+#map{white-space:pre;font-size:14px;line-height:1;}
+#ui{margin-left:10px;}
+#hud,#log,#inv{border:1px solid #fff;padding:5px;margin-bottom:10px;white-space:pre-wrap;max-width:300px;}
+.message{color:#ff0;}
+</style>
+</head>
+<body>
+<div id="title" style="text-align:center;margin:20px 0;"><h1>DUNGEON ROGUE</h1><p>Press Enter or Space to Start</p></div>
+<div id="game">
+  <pre id="map"></pre>
+  <div id="ui">
+    <div id="hud"></div>
+    <div id="log"></div>
+    <div id="inv"></div>
+  </div>
+</div>
+<script>
+(() => {
+const mapEl = document.getElementById("map");
+const hudEl = document.getElementById("hud");
+const logEl = document.getElementById("log");
+const invEl = document.getElementById("inv");
+const titleEl = document.getElementById("title");
+
+let gameState = "title"; // title, playing, gameover, clear
+
+const TILE = {
+  WALL: '#',
+  FLOOR: '.',
+  DOOR: '+',
+  CORRIDOR: '.',
+  STAIRS_DOWN: '>',
+  PLAYER: '@',
+  SLIME: 's',
+  GOBLIN: 'g',
+  POTION: '!',
+  WEAPON: '/'
+};
+
+const DIRS = [[0,-1],[0,1],[-1,0],[1,0]];
+
+class Game {
+  constructor() {
+    this.width = 40;
+    this.height = 25;
+    this.tileSize = 1;
+    this.fovRadius = 8;
+    this.reset();
+  }
+
+  reset() {
+    this.dungeon = new Dungeon(this.width, this.height);
+    this.dungeon.generate();
+    this.player = {
+      x: 0, y: 0,
+      hp: 20, maxHp: 20,
+      atk: 3,
+      level: 1,
+      exp: 0, expToNext: 10,
+      inventory: Array(9).fill(null),
+      floor: 1
+    };
+    this.messages = [];
+    this.placePlayer();
+    this.spawnEnemies();
+    this.spawnItems();
+    this.gameOver = false;
+    this.victory = false;
+  }
+
+  placePlayer() {
+    const room = this.dungeon.rooms[0];
+    this.player.x = Math.floor((room.x + room.x + room.w) / 2);
+    this.player.y = Math.floor((room.y + room.y + room.h) / 2);
+  }
+
+  spawnEnemies() {
+    this.enemies = [];
+    const floor = this.player.floor;
+    const enemyCount = 5 + Math.floor(floor / 2);
+    const slimeCount = Math.floor(enemyCount * 0.7);
+    const goblinCount = enemyCount - slimeCount;
+
+    for (let i = 0; i < slimeCount; i++) {
+      const pos = this.dungeon.getRandomFloorTile();
+      if (pos) {
+        this.enemies.push({
+          x: pos.x, y: pos.y,
+          type: 'slime',
+          hp: 8 + floor * 2,
+          atk: 2 + floor,
+          exp: 3 + floor,
+          tracked: false
+        });
+      }
+    }
+
+    for (let i = 0; i < goblinCount; i++) {
+      const pos = this.dungeon.getRandomFloorTile();
+      if (pos) {
+        this.enemies.push({
+          x: pos.x, y: pos.y,
+          type: 'goblin',
+          hp: 12 + floor * 3,
+          atk: 3 + floor,
+          exp: 5 + floor,
+          tracked: true
+        });
+      }
+    }
+  }
+
+  spawnItems() {
+    this.items = [];
+    const itemCount = 3 + Math.floor(this.player.floor / 2);
+    for (let i = 0; i < itemCount; i++) {
+      const pos = this.dungeon.getRandomFloorTile();
+      if (pos) {
+        const type = Math.random() < 0.6 ? 'potion' : 'weapon';
+        this.items.push({
+          x: pos.x, y: pos.y,
+          type: type,
+          used: false
+        });
+      }
+    }
+  }
+
+  update() {
+    if (this.gameOver || this.victory) return;
+
+    this.updateFOV();
+    this.render();
+  }
+
+  updateFOV() {
+    this.fov = new Set();
+    const px = this.player.x;
+    const py = this.player.y;
+
+    for (let dy = -this.fovRadius; dy <= this.fovRadius; dy++) {
+      for (let dx = -this.fovRadius; dx <= this.fovRadius; dx++) {
+        const nx = px + dx;
+        const ny = py + dy;
+        if (nx < 0 || ny < 0 || nx >= this.width || ny >= this.height) continue;
+        if (Math.sqrt(dx*dx + dy*dy) > this.fovRadius) continue;
+
+        // Simple raycasting
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const steps = Math.floor(dist);
+        let blocked = false;
+        for (let s = 1; s <= steps; s++) {
+          const ix = Math.floor(px + dx * s / steps);
+          const iy = Math.floor(py + dy * s / steps);
+          if (this.dungeon.isWall(ix, iy)) {
+            blocked = true;
+            break;
+          }
+        }
+
+        if (!blocked) {
+          this.fov.add(`${nx},${ny}`);
+        }
+      }
+    }
+
+    // Mark explored tiles
+    for (const key of this.fov) {
+      const [x, y] = key.split(',').map(Number);
+      this.dungeon.explored[y][x] = true;
+    }
+  }
+
+  render() {
+    let mapStr = '';
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        const key = `${x},${y}`;
+        const inFov = this.fov.has(key);
+        const explored = this.dungeon.explored[y][x];
+
+        let char = ' ';
+        let color = '#fff';
+
+        if (!explored) {
+          char = ' ';
+        } else if (inFov) {
+          char = this.getTileChar(x, y);
+          color = this.getTileColor(x, y);
+        } else {
+          char = this.getTileChar(x, y);
+          color = '#555';
+        }
+
+        mapStr += `<span style="color:${color}">${char}</span>`;
+      }
+      mapStr += '\n';
+    }
+    mapEl.innerHTML = mapStr;
+
+    // HUD
+    const p = this.player;
+    hudEl.innerHTML = `
+HP: ${p.hp}/${p.maxHp}<br>
+Level: ${p.level}<br>
+EXP: ${p.exp}/${p.expToNext}<br>
+Floor: ${p.floor}<br>
+ATK: ${p.atk}
+    `;
+
+    // Inventory
+    let invStr = 'Inventory:<br>';
+    for (let i = 0; i < 9; i++) {
+      const item = p.inventory[i];
+      if (item) {
+        invStr += `${i+1}: ${item.type === 'potion' ? 'Potion' : 'Weapon'}<br>`;
+      } else {
+        invStr += `${i+1}: ---<br>`;
+      }
+    }
+    invEl.innerHTML = invStr;
+
+    // Messages
+    logEl.innerHTML = this.messages.slice(-5).map(m => `<span class="message">${m}</span>`).join('<br>');
+  }
+
+  getTileChar(x, y) {
+    // Check items
+    for (const item of this.items) {
+      if (item.x === x && item.y === y && !item.used) {
+        return item.type === 'potion' ? TILE.POTION : TILE.WEAPON;
+      }
+    }
+
+    // Check enemies
+    for (const enemy of this.enemies) {
+      if (enemy.x === x && enemy.y === y && enemy.hp > 0) {
+        return enemy.type === 'slime' ? TILE.SLIME : TILE.GOBLIN;
+      }
+    }
+
+    // Check player
+    if (this.player.x === x && this.player.y === y) {
+      return TILE.PLAYER;
+    }
+
+    // Check stairs
+    if (this.dungeon.stairsDown.x === x && this.dungeon.stairsDown.y === y) {
+      return TILE.STAIRS_DOWN;
+    }
+
+    // Dungeon tile
+    return this.dungeon.getTile(x, y);
+  }
+
+  getTileColor(x, y) {
+    // Check items
+    for (const item of this.items) {
+      if (item.x === x && item.y === y && !item.used) {
+        return item.type === 'potion' ? '#0f0' : '#ff0';
+      }
+    }
+
+    // Check enemies
+    for (const enemy of this.enemies) {
+      if (enemy.x === x && enemy.y === y && enemy.hp > 0) {
+        return enemy.type === 'slime' ? '#0ff' : '#f88';
+      }
+    }
+
+    // Check player
+    if (this.player.x === x && this.player.y === y) {
+      return '#0f0';
+    }
+
+    // Check stairs
+    if (this.dungeon.stairsDown.x === x && this.dungeon.stairsDown.y === y) {
+      return '#f80';
+    }
+
+    // Dungeon tile
+    const tile = this.dungeon.getTile(x, y);
+    if (tile === TILE.WALL) return '#888';
+    if (tile === TILE.DOOR) return '#a52a2a';
+    return '#ccc';
+  }
+
+  movePlayer(dx, dy) {
+    if (this.gameOver || this.victory) return;
+
+    const nx = this.player.x + dx;
+    const ny = this.player.y + dy;
+
+    if (nx < 0 || ny < 0 || nx >= this.width || ny >= this.height) return;
+    if (this.dungeon.isWall(nx, ny)) return;
+
+    // Check for enemy
+    const enemy = this.enemies.find(e => e.x === nx && e.y === ny && e.hp > 0);
+    if (enemy) {
+      // Attack
+      enemy.hp -= this.player.atk;
+      this.addMessage(`You hit ${enemy.type} for ${this.player.atk} damage`);
+      if (enemy.hp <= 0) {
+        this.addMessage(`You defeated the ${enemy.type}!`);
+        this.player.exp += enemy.exp;
+        this.checkLevelUp();
+      }
+      this.enemyTurn();
+      return;
+    }
+
+    // Move
+    this.player.x = nx;
+    this.player.y = ny;
+
+    // Check item pickup
+    const item = this.items.find(i => i.x === nx && i.y === ny && !i.used);
+    if (item) {
+      item.used = true;
+      this.pickupItem(item);
+    }
+
+    this.enemyTurn();
+  }
+
+  pickupItem(item) {
+    const slot = this.player.inventory.findIndex(i => i === null);
+    if (slot !== -1) {
+      this.player.inventory[slot] = item;
+      this.addMessage(`Picked up ${item.type === 'potion' ? 'Potion' : 'Weapon'} (Slot ${slot+1})`);
+    } else {
+      this.addMessage("Inventory full!");
+    }
+  }
+
+  useItem(slotIndex) {
+    if (this.gameOver || this.victory) return;
+    const item = this.player.inventory[slotIndex];
+    if (!item) return;
+
+    if (item.type === 'potion') {
+      const healAmount = 10;
+      this.player.hp = Math.min(this.player.maxHp, this.player.hp + healAmount);
+      this.addMessage(`Used Potion: restored ${healAmount} HP`);
+    } else if (item.type === 'weapon') {
+      this.player.atk += 2;
+      this.addMessage("Used Weapon: ATK +2");
+    }
+
+    this.player.inventory[slotIndex] = null;
+    this.enemyTurn();
+  }
+
+  enemyTurn() {
+    for (const enemy of this.enemies) {
+      if (enemy.hp <= 0) continue;
+
+      if (enemy.type === 'goblin') {
+        // Goblin always tracks player
+        const dx = Math.sign(this.player.x - enemy.x);
+        const dy = Math.sign(this.player.y - enemy.y);
+
+        // Try to move towards player
+        const nx = enemy.x + dx;
+        const ny = enemy.y + dy;
+
+        if (nx === this.player.x && ny === this.player.y) {
+          // Attack player
+          this.player.hp -= enemy.atk;
+          this.addMessage(`${enemy.type} hits you for ${enemy.atk} damage`);
+          if (this.player.hp <= 0) {
+            this.gameOver = true;
+            this.addMessage("GAME OVER");
+          }
+        } else if (!this.dungeon.isWall(nx, ny)) {
+          // Check if another enemy is there
+          const otherEnemy = this.enemies.find(e => e.x === nx && e.y === ny && e !== enemy && e.hp > 0);
+          if (!otherEnemy) {
+            enemy.x = nx;
+            enemy.y = ny;
+          }
+        }
+      } else {
+        // Slime: only track if in FOV
+        const key = `${enemy.x},${enemy.y}`;
+        if (this.fov.has(key)) {
+          enemy.tracked = true;
+        }
+
+        if (enemy.tracked) {
+          const dx = Math.sign(this.player.x - enemy.x);
+          const dy = Math.sign(this.player.y - enemy.y);
+
+          const nx = enemy.x + dx;
+          const ny = enemy.y + dy;
+
+          if (nx === this.player.x && ny === this.player.y) {
+            this.player.hp -= enemy.atk;
+            this.addMessage(`${enemy.type} hits you for ${enemy.atk} damage`);
+            if (this.player.hp <= 0) {
+              this.gameOver = true;
+              this.addMessage("GAME OVER");
+            }
+          } else if (!this.dungeon.isWall(nx, ny)) {
+            const otherEnemy = this.enemies.find(e => e.x === nx && e.y === ny && e !== enemy && e.hp > 0);
+            if (!otherEnemy) {
+              enemy.x = nx;
+              enemy.y = ny;
+            }
+          }
+        }
+      }
+    }
+
+    if (!this.gameOver) {
+      this.update();
+    }
+  }
+
+  checkLevelUp() {
+    if (this.player.exp >= this.player.expToNext) {
+      this.player.level++;
+      this.player.exp -= this.player.expToNext;
+      this.player.expToNext = Math.floor(this.player.expToNext * 1.5);
+      this.player.maxHp += 5;
+      this.player.hp = this.player.maxHp;
+      this.player.atk += 1;
+      this.addMessage(`LEVEL UP! Now level ${this.player.level}`);
+    }
+  }
+
+  descendStairs() {
+    if (this.gameOver || this.victory) return;
+
+    if (this.player.x === this.dungeon.stairsDown.x && this.player.y === this.dungeon.stairsDown.y) {
+      this.player.floor++;
+      if (this.player.floor > 3) {
+        this.victory = true;
+        this.addMessage("You have cleared the dungeon! VICTORY!");
+      } else {
+        this.dungeon.generate();
+        this.placePlayer();
+        this.spawnEnemies();
+        this.spawnItems();
+        this.addMessage(`You descended to floor ${this.player.floor}`);
+      }
+    }
+  }
+
+  addMessage(msg) {
+    this.messages.push(msg);
+    if (this.messages.length > 10) this.messages.shift();
+  }
+}
+
+class Dungeon {
+  constructor(width, height) {
+    this.width = width;
+    this.height = height;
+    this.tiles = [];
+    this.rooms = [];
+    this.explored = [];
+    this.stairsDown = { x: 0, y: 0 };
+    this.init();
+  }
+
+  init() {
+    for (let y = 0; y < this.height; y++) {
+      this.tiles[y] = [];
+      this.explored[y] = [];
+      for (let x = 0; x < this.width; x++) {
+        this.tiles[y][x] = TILE.WALL;
+        this.explored[y][x] = false;
+      }
+    }
+  }
+
+  generate() {
+    this.init();
+    this.rooms = [];
+
+    const roomCount = 6 + Math.floor(Math.random() * 3);
+    const minSize = 4;
+    const maxSize = 8;
+
+    for (let i = 0; i < roomCount; i++) {
+      const w = minSize + Math.floor(Math.random() * (maxSize - minSize));
+      const h = minSize + Math.floor(Math.random() * (maxSize - minSize));
+      const x = Math.floor(Math.random() * (this.width - w - 2)) + 1;
+      const y = Math.floor(Math.random() * (this.height - h - 2)) + 1;
+
+      if (this.canPlaceRoom(x, y, w, h)) {
+        this.createRoom(x, y, w, h);
+        this.rooms.push({ x, y, w, h });
+
+        if (this.rooms.length > 1) {
+          const prevRoom = this.rooms[this.rooms.length - 2];
+          this.connectRooms(prevRoom, this.rooms[this.rooms.length - 1]);
+        }
+      }
+    }
+
+    // Place stairs in the last room
+    const lastRoom = this.rooms[this.rooms.length - 1];
+    this.stairsDown.x = Math.floor(lastRoom.x + lastRoom.w / 2);
+    this.stairsDown.y = Math.floor(lastRoom.y + lastRoom.h / 2);
+
+    // Ensure all rooms are connected by carving additional corridors if needed
+    this.ensureConnectivity();
+  }
+
+  canPlaceRoom(x, y, w, h) {
+    for (let dy = -1; dy <= h; dy++) {
+      for (let dx = -1; dx <= w; dx++) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= this.width || ny >= this.height) return false;
+        if (this.tiles[ny][nx] !== TILE.WALL) return false;
+      }
+    }
+    return true;
+  }
+
+  createRoom(x, y, w, h) {
+    for (let dy = 0; dy < h; dy++) {
+      for (let dx = 0; dx < w; dx++) {
+        this.tiles[y + dy][x + dx] = TILE.FLOOR;
+      }
+    }
+  }
+
+  connectRooms(room1, room2) {
+    const x1 = Math.floor(room1.x + room1.w / 2);
+    const y1 = Math.floor(room1.y + room1.h / 2);
+    const x2 = Math.floor(room2.x + room2.w / 2);
+    const y2 = Math.floor(room2.y + room2.h / 2);
+
+    // L-shaped corridor
+    if (Math.random() < 0.5) {
+      this.carveCorridor(x1, y1, x2, y1);
+      this.carveCorridor(x2, y1, x2, y2);
+    } else {
+      this.carveCorridor(x1, y1, x1, y2);
+      this.carveCorridor(x1, y2, x2, y2);
+    }
+  }
+
+  carveCorridor(x1, y1, x2, y2) {
+    const dx = Math.sign(x2 - x1);
+    const dy = Math.sign(y2 - y1);
+    let x = x1;
+    let y = y1;
+
+    while (x !== x2 || y !== y2) {
+      if (x !== x2) x += dx;
+      else if (y !== y2) y += dy;
+      if (x >= 0 && y >= 0 && x < this.width && y < this.height) {
+        this.tiles[y][x] = TILE.CORRIDOR;
+      }
+    }
+  }
+
+  ensureConnectivity() {
+    // Simple flood fill from first room
+    const visited = Array(this.height).fill().map(() => Array(this.width).fill(false));
+    const startRoom = this.rooms[0];
+    const queue = [{ x: Math.floor(startRoom.x + startRoom.w/2), y: Math.floor(startRoom.y + startRoom.h/2) }];
+    visited[queue[0].y][queue[0].x] = true;
+
+    while (queue.length > 0) {
+      const pos = queue.shift();
+      for (const [dx, dy] of DIRS) {
+        const nx = pos.x + dx;
+        const ny = pos.y + dy;
+        if (nx < 0 || ny < 0 || nx >= this.width || ny >= this.height) continue;
+        if (visited[ny][nx]) continue;
+        if (this.tiles[ny][nx] === TILE.WALL) continue;
+        visited[ny][nx] = true;
+        queue.push({ x: nx, y: ny });
+      }
+    }
+
+    // Check if all rooms are reachable
+    for (const room of this.rooms) {
+      const centerX = Math.floor(room.x + room.w / 2);
+      const centerY = Math.floor(room.y + room.h / 2);
+      if (!visited[centerY][centerX]) {
+        // Connect this room to the main area
+        this.connectUnreachableRoom(room, visited);
+      }
+    }
+  }
+
+  connectUnreachableRoom(room, visited) {
+    // Find nearest visited floor tile
+    let bestDist = Infinity;
+    let bestPos = null;
+
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        if (visited[y][x] && this.tiles[y][x] !== TILE.WALL) {
+          const dist = Math.abs(x - room.x) + Math.abs(y - room.y);
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestPos = { x, y };
+          }
+        }
+      }
+    }
+
+    if (bestPos) {
+      const roomCenterX = Math.floor(room.x + room.w / 2);
+      const roomCenterY = Math.floor(room.y + room.h / 2);
+      this.carveCorridor(bestPos.x, bestPos.y, roomCenterX, roomCenterY);
+    }
+  }
+
+  getTile(x, y) {
+    return this.tiles[y][x];
+  }
+
+  isWall(x, y) {
+    if (x < 0 || y < 0 || x >= this.width || y >= this.height) return true;
+    return this.tiles[y][x] === TILE.WALL;
+  }
+
+  getRandomFloorTile() {
+    const floorTiles = [];
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        if (this.tiles[y][x] === TILE.FLOOR || this.tiles[y][x] === TILE.CORRIDOR) {
+          floorTiles.push({ x, y });
+        }
+      }
+    }
+    if (floorTiles.length === 0) return null;
+    return floorTiles[Math.floor(Math.random() * floorTiles.length)];
+  }
+}
+
+const game = new Game();
+
+document.addEventListener('keydown', (e) => {
+  if (gameState === "title") {
+    if (e.key === 'Enter' || e.key === ' ') {
+      gameState = "playing";
+      titleEl.style.display = 'none';
+      game.update();
+    }
+    return;
+  }
+
+  if (gameState === "gameover" || gameState === "clear") {
+    if (e.key === 'r' || e.key === 'R') {
+      game.reset();
+      gameState = "playing";
+      game.update();
+    }
+    return;
+  }
+
+  switch(e.key) {
+    case 'ArrowUp': case 'w': case 'W':
+      game.movePlayer(0, -1);
+      break;
+    case 'ArrowDown': case 's': case 'S':
+      game.movePlayer(0, 1);
+      break;
+    case 'ArrowLeft': case 'a': case 'A':
+      game.movePlayer(-1, 0);
+      break;
+    case 'ArrowRight': case 'd': case 'D':
+      game.movePlayer(1, 0);
+      break;
+    case '1': case '2': case '3': case '4': case '5':
+    case '6': case '7': case '8': case '9':
+      game.useItem(parseInt(e.key) - 1);
+      break;
+    case 'Enter': case '>':
+      game.descendStairs();
+      break;
+    case 'r': case 'R':
+      game.reset();
+      game.update();
+      break;
+  }
+
+  if (game.gameOver) {
+    gameState = "gameover";
+  } else if (game.victory) {
+    gameState = "clear";
+  }
+});
+
+// Initial render
+game.render();
+</script>
+</body>
+</html>

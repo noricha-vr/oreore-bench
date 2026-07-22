@@ -1,0 +1,88 @@
+```json
+{
+  "triage": [
+    {
+      "pr": 101,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": ["Issue #90 に直接対応し、レートリミットにより管理者へのメール洪水を防止。", "テストコードを追加しており、CIもパス。", "レビューもapprove済みで、指摘もない。"],
+      "actions": ["マージ後、運用中の webhook 通知量を監視する。"],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 102,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": ["タスク一括アーカイブ API に所有者の絞り込みが欠落しており、他人のタスクをアーカイブ可能なセキュリティリスクがある。", "テストがないため、CIパスの信頼性が低い。", "作者への指摘に対して未返信である。"],
+      "actions": ["所有者絞り込みを追加し、テストを記述して再レビューを依頼する。"],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 103,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": ["エラーを握りつぶす `except Exception: pass` の使用は方針違反。", "Issue #91 の根本解決にはなっておらず、ログ抑制のみである。", "エラーログの抑制ではなく、適切なリトライやタイムアウト処理が必要。"],
+      "actions": ["このアプローチは却下し、外部API呼び出しの信頼性向善やリトライ機構の導入を提案する。"],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 104,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": ["依存パッケージのバージョン固定方針に違反している。", "サプライチェーン攻撃のリスクを高める。", "requirements.lock の削除は運用の再現性を損なう。"],
+      "actions": ["バージョン固定を維持し、依存更新は自動化ツールで管理するようにする。"],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 105,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": ["Issue #92 のセキュリティ問題（パスワードリセットトークンの漏えい）に対応。", "トークンをPOSTボディに移動し、旧リンクの互換ウィンドウを設けている。", "テストコードを追加し、CIもパスしている。"],
+      "actions": ["マージ後、パスワードリセットフローの監査ログを追加する。"],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 106,
+      "verdict": "hold",
+      "confidence": "medium",
+      "reasons": ["42ファイルに及ぶ大規模変更であり、レビューが困難。", "UI改善、通知設定、LP刷新が混在しており、目的が不明確。", "分割要求に対し作者が拒否しているため、判断が難しい。"],
+      "actions": ["PRを分割するよう作者に要求し、再提出を待つ。"],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 107,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": ["CIでテストが失敗しており、マージ不可。", "タイムゾーン関連のバグ修正なので、DST境界ケースのテストが重要。", "作者のコメントからCIを無視しようとしているため、対応が必要。"],
+      "actions": ["失敗したテストを修正し、CI環境での再現を確認する。"],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 108,
+      "verdict": "hold",
+      "confidence": "medium",
+      "reasons": ["Issue #94 で議論が未決着のままであり、PRの方向性が不明確。", "パフォーマンス懸念（JOIN増加）への回答がない。", "マイグレーションに `db_table` 変更を含み、データ損失のリスクがある。"],
+      "actions": ["Issue #94 の決定を待ち、設計レビューを実施する。"],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 109,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": ["READMEへのセットアップ手順追加は、既に `docs/setup.md` で解決済み。", "README.md にコンフリクトがあり、内容が重複している。", "30日間放置されており、最新のmainに対する価値がない。"],
+      "actions": ["このPRはクローズし、READMEは `docs/setup.md` へのリンクのみを維持する。"],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 110,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": ["CSVエクスポート機能は便利であり、テストコードも追加されている。", "CIもパスし、レビューもapproveされている。", "指摘されたnit（StreamingHttpResponse）は将来的な改喩であり、現状の規模では問題ない。"],
+      "actions": ["マージ後、エクスポート機能のパフォーマンスを監視する。"],
+      "risk_if_merged": "low"
+    }
+  ],
+  "priority_order": [105, 101, 110, 102, 107, 106, 108, 109, 104, 103],
+  "summary": "セキュリティとバグ修正を優先し、方針違反や未解決の設計問題はクローズまたは保留。大規模変更やテスト不足のPRは修正を求める。"
+}
+```
