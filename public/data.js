@@ -543,6 +543,31 @@ window.MODELS = {
                     { label: "Moonshot AI 公式", href: "https://www.moonshot.ai/" },
                     { label: "OpenRouter", href: "https://openrouter.ai/moonshotai/kimi-k3" }
                 ]
+            },
+            "laguna-s-2.1": {
+                label: "Laguna S 2.1",
+                provider: "poolside",
+                type: "api",
+                color: "#0891B2",
+                colorDark: "#0E7490",
+                release: "2026-07-21",
+                size: "118B 総パラメータ（MoE / 活性 8B）",
+                context: "1M tokens (1,048,576)",
+                output: "131,072 tokens（OpenRouter 掲載値）",
+                quantization: "—（API モデル。ウェイトは BF16/FP8/INT4/NVFP4 で公開）",
+                runtime: "OpenRouter API（reasoning effort: high）",
+                stats: [
+                    { value: "118B", label: "パラメータ", note: "MoE 総数（活性 8B）" },
+                    { value: "FP", label: "量子化", note: "API モデル" },
+                    { value: "1M", label: "コンテキスト", note: "OpenRouter / 公式" },
+                    { value: "131K", label: "最大出力", note: "OpenRouter 掲載値" }
+                ],
+                strengths: "agentic coding 特化の 118B-A8B MoE。SWE-Bench Multilingual 78.5% / Terminal-Bench 2.1 70.2% でオープンウェイト最高と主張（公式）。OpenMDW ライセンスでウェイト公開、単一 DGX Spark で動く設計。$0.10/$0.20 per Mtok と本ベンチ最安クラスの API 単価。",
+                weaknesses: "リリース翌日（2026-07-21）で実運用の知見が無い。コーディング特化で汎用・自然言語タスクの評価は非公表。フロンティア（Fable 5 / Kimi K3 等）には 10〜15pt 差があると自認。思考量の effort 制御は未実装で、今回 reasoning high 指定でも othello 以外は思考トークン 0。",
+                links: [
+                    { label: "poolside 公式ブログ", href: "https://poolside.ai/blog/introducing-laguna-s-2-1" },
+                    { label: "OpenRouter", href: "https://openrouter.ai/poolside/laguna-s-2.1" }
+                ]
             }
         };
 
@@ -650,4 +675,18 @@ window.ENTRIES.push(
     { theme: "extract-questions", model: "agents-a1-4b", runner: "LM Studio API", note: "FAIL。再試行後も空配列。", kind: "json" },
     { theme: "extract-questions-v2", model: "agents-a1-4b", runner: "LM Studio API", note: "FAIL。32Kを使い切り回答なし。", kind: "json" },
     { theme: "pr-triage", model: "agents-a1-4b", runner: "LM Studio API", note: "PASS。10件を完走し85%。", kind: "json" }
+);
+
+// laguna-s-2.1（リリース翌日に OpenRouter API 経由・reasoning high で全10テーマ追加。スモーク検証は既存と同一手順）
+window.ENTRIES.push(
+    { theme: "lp-nishibi", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "JSエラー0。ダークブラウン地に高級感あるタイポ、プラン3枚+数値パネルまで完備した端正なLP。430行/10KB。", kind: "html" },
+    { theme: "othello", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "JSエラー0。合法手ハイライト・反転・CPU応手を確認。タイトルもスコア表示もない極ミニマル緑盤。全テーマ中唯一 reasoning 9.7K tokens を消費。296行/8KB。", kind: "html" },
+    { theme: "hasami-shogi", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "スモーク検証PASS。初期配置・移動・CPU応答は正確だが、表組み+標準ボタンの装飾ゼロ Web 1.0 風。319行/9KB。", kind: "html" },
+    { theme: "roguelike", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "FAIL。スクリプト尻切れの構文エラー（Unexpected end of input）で開始画面から進めない。707行/19KB。", kind: "html" },
+    { theme: "lp-fable5", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "Anthropic 公式風の配色・7セクション構成を高精度再現。SVG path 途中終端の console error 2件のみで描画は完走。542行/14KB。", kind: "html" },
+    { theme: "suminagashi", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "FAIL。和の UI は美麗だが Three.js 初期化が canvas コンテキスト競合で失敗し、墨が一切描画されない。366行/13KB。", kind: "html" },
+    { theme: "phoenix-lp", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "FAIL（スクロール変化なし）。1画面の詩的タイポのみでナビ先のセクションが未実装。417行/13KB。", kind: "html" },
+    { theme: "extract-questions", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "FAIL。20問抽出・各項目100%だが、全問必須の「自由に記述する」選択肢を1問も付けず。", kind: "json" },
+    { theme: "extract-questions-v2", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "✅ スキーマ準拠 PASS。40問抽出、v1 で落とした「自由に記述する」も全問付与。", kind: "json" },
+    { theme: "pr-triage", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "✅ スキーマ準拠 PASS。正解キー一致 90%（9 primary）。唯一の不一致は PR106 を fix ではなく hold と保守的に判断。", kind: "json" }
 );
