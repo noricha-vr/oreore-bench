@@ -13,6 +13,13 @@
     "pricing_model": "anthropic/claude-opus-4.8",
     "pricing_fetched_at": "2026-07-22"
   },
+  "claude-opus-5": {
+    "prompt_usd_per_mtok": 5.0,
+    "completion_usd_per_mtok": 25.0,
+    "pricing_source": "openrouter",
+    "pricing_model": "anthropic/claude-opus-5",
+    "pricing_fetched_at": "2026-07-25"
+  },
   "grok-4-5": {
     "prompt_usd_per_mtok": 2.0,
     "completion_usd_per_mtok": 6.0,

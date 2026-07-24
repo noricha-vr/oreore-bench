@@ -302,6 +302,31 @@ window.MODELS = {
                     { label: "Anthropic 公式", href: "https://www.anthropic.com/claude" }
                 ]
             },
+            "claude-opus-5": {
+                label: "Claude Opus 5",
+                provider: "Anthropic",
+                type: "api",
+                color: "#CC785C",
+                colorDark: "#A8553D",
+                release: "2026-07-24",
+                size: "非公開",
+                context: "1M tokens（既定かつ最大）",
+                output: "128K tokens",
+                quantization: "—（API モデル）",
+                runtime: "Anthropic API / OpenRouter / Claude Code",
+                stats: [
+                    { value: "—", label: "パラメータ", note: "非公開" },
+                    { value: "FP", label: "量子化", note: "API モデル" },
+                    { value: "1M", label: "コンテキスト", note: "既定かつ最大" },
+                    { value: "128K", label: "最大出力", note: "" }
+                ],
+                strengths: "Opus 4.8 からの step-change 改善。深い推論・エージェント的長時間タスクで最大の伸び。公式いわく「Fable 5 のフロンティア知能に半額で肉薄」。pr-triage で全モデル初の正解キー一致 100%。",
+                weaknesses: "API 課金。ローカル不可。チャット応答様式が強く、HTML 一括生成では前置き+コードフェンス+末尾解説が混入しやすい（本ベンチでは 7 テーマ中 6 テーマで混入）。",
+                links: [
+                    { label: "Anthropic 公式発表", href: "https://www.anthropic.com/news/claude-opus-5" },
+                    { label: "OpenRouter", href: "https://openrouter.ai/anthropic/claude-opus-5" }
+                ]
+            },
             "gemma-4-12b-qat": {
                 label: "Gemma 4 12B (QAT)",
                 provider: "Google",
@@ -689,4 +714,19 @@ window.ENTRIES.push(
     { theme: "extract-questions", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "FAIL。20問抽出・各項目100%だが、全問必須の「自由に記述する」選択肢を1問も付けず。", kind: "json" },
     { theme: "extract-questions-v2", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "✅ スキーマ準拠 PASS。40問抽出、v1 で落とした「自由に記述する」も全問付与。", kind: "json" },
     { theme: "pr-triage", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "✅ スキーマ準拠 PASS。正解キー一致 90%（9 primary）。唯一の不一致は PR106 を fix ではなく hold と保守的に判断。", kind: "json" }
+);
+
+// claude-opus-5（リリース翌日に OpenRouter API 経由・reasoning high で全10テーマ追加。スモーク検証は既存と同一手順。
+// HTML 7テーマ中 6テーマで前置き+コードフェンス+末尾解説が混入したため、フェンス内 HTML を抽出して保存（run.json の post_processing に記録））
+window.ENTRIES.push(
+    { theme: "lp-nishibi", model: "claude-opus-5", runner: "OpenRouter API (reasoning high)", note: "JSエラー0。日没時刻・方位角まで作り込んだ架空スタジオの世界観と明朝体の大見出しが高水準。スクロール連動フェードも全域で動作。生出力は前置き+フェンス付きで抽出処理あり。711行/34KB。", kind: "html" },
+    { theme: "othello", model: "claude-opus-5", runner: "OpenRouter API (reasoning high)", note: "JSエラー0。合法手の黄色い点表示・8方向反転・CPU応答まで一貫動作、残り手数の案内文も機能。生出力は前置き+フェンス付きで抽出処理あり。406行/12KB。", kind: "html" },
+    { theme: "hasami-shogi", model: "claude-opus-5", runner: "OpenRouter API (reasoning high)", note: "スモーク検証PASS。駒選択で合法手をハイライト、CPU応答と棋譜風メッセージ・取得数カウンタも機能。生出力は前置き+フェンス付きで抽出処理あり。350行/12KB。", kind: "html" },
+    { theme: "roguelike", model: "claude-opus-5", runner: "OpenRouter API (reasoning high)", note: "スモークPASS・JSエラー0。タイトル画面から移動・戦闘・HUD・持ち物まで進行。7テーマ中唯一フェンス混入のない純粋な HTML を出力。728行/24KB。", kind: "html" },
+    { theme: "lp-fable5", model: "claude-opus-5", runner: "OpenRouter API (reasoning high)", note: "JSエラー0。インラインSVG13点の水彩イラストとスクロール連動の折れ線グラフを再現、架空モデルの免責文まで補完。生出力は前置き+フェンス付きで抽出処理あり。1130行/59KB。", kind: "html" },
+    { theme: "suminagashi", model: "claude-opus-5", runner: "OpenRouter API (reasoning high)", note: "JSエラー0で流体が動く。ドラッグ追従の滲みと巡・墨・藍・朱・松葉の色選択、自動演出・洗い流しまで完備。生出力は前置き+フェンス付きで抽出処理あり。795行/30KB。", kind: "html" },
+    { theme: "phoenix-lp", model: "claude-opus-5", runner: "OpenRouter API (reasoning high)", note: "JSエラー0。DAWN→FINALE の6シーン遷移をシーンカウンタ連動で完全実装、視覚的完成度は最高水準。生出力は前置き+フェンス付きで抽出処理あり。1041行/44KB。", kind: "html" },
+    { theme: "extract-questions", model: "claude-opus-5", runner: "OpenRouter API (reasoning high)", note: "✅ スキーマ準拠 PASS。20問抽出・全項目100%。前置きなしの JSON 単体で「JSON 単体」指示も遵守。", kind: "json" },
+    { theme: "extract-questions-v2", model: "claude-opus-5", runner: "OpenRouter API (reasoning high)", note: "✅ スキーマ準拠 PASS。40問抽出、長文でも指示の細部を最後まで維持。", kind: "json" },
+    { theme: "pr-triage", model: "claude-opus-5", runner: "OpenRouter API (reasoning high)", note: "✅ スキーマ準拠 PASS。全モデル初の正解キー一致 100%（10 primary）。4.8 が破った「JSON 単体」指示も遵守。", kind: "json" }
 );

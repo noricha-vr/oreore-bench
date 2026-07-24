@@ -35,6 +35,7 @@ LLM を「業務タスクの一発再現性」で評価する場。現実の制�
 | モデル | プロバイダー | タイプ | 量子化 |
 |---|---|---|---|
 | Claude Opus 4.8 | Anthropic | API | — |
+| Claude Opus 5 (effort high) | Anthropic | API | — |
 | Grok 4.5 | xAI | API | — |
 | Claude Fable 5 (effort high) | Anthropic | API | — |
 | GPT-5.6 Luna (reasoning high) | OpenAI | API | — |
