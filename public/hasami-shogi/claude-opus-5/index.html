@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>はさみ将棋 9x9</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+    background:#f3ede1;color:#2b2118;display:flex;justify-content:center;
+    padding:12px 10px 28px;
+  }
+  .wrap{width:100%;max-width:560px}
+  h1{font-size:1.2rem;text-align:center;margin:4px 0 12px;letter-spacing:.14em;font-weight:700}
+  .panel{
+    display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;
+    margin-bottom:10px;font-size:.86rem;
+  }
+  .turn{
+    font-weight:700;padding:7px 14px;border-radius:999px;background:#23303a;color:#f6f1e6;
+    white-space:nowrap;
+  }
+  .turn.cpu{background:#7a4b12}
+  .turn.done{background:#5c1f1f}
+  .scores{display:flex;gap:12px;flex-wrap:wrap}
+  .sc{background:#fff8ea;border:1px solid #d8c6a3;border-radius:8px;padding:6px 10px;white-space:nowrap}
+  .sc b{font-size:1.05rem}
+
+  .board{
+    display:grid;grid-template-columns:repeat(9,1fr);
+    width:100%;aspect-ratio:1/1;
+    background:#e2bc7e;border:5px solid #6b4a1e;border-radius:4px;
+    box-shadow:0 8px 20px rgba(0,0,0,.25);
+    user-select:none;touch-action:manipulation;
+  }
+  .cell{
+    position:relative;display:flex;align-items:center;justify-content:center;
+    border-right:1px solid #906f38;border-bottom:1px solid #906f38;
+  }
+  .cell:nth-child(9n){border-right:none}
+  .cell:nth-child(n+73){border-bottom:none}
+  .cell.sel{background:rgba(206,58,42,.30)}
+  .cell.last{background:rgba(255,214,92,.38)}
+  .cell.mv{cursor:pointer}
+  .cell.mv::after{
+    content:"";position:absolute;width:28%;height:28%;border-radius:50%;
+    background:rgba(24,78,182,.48);
+  }
+  .cell.own{cursor:pointer}
+
+  .piece{
+    width:86%;height:86%;display:flex;align-items:center;justify-content:center;
+    font-family:"Yu Mincho","Hiragino Mincho ProN",serif;font-weight:700;
+    font-size:min(5.4vw,30px);line-height:1;
+    border:1px solid #a37c3c;border-radius:16% 16% 8% 8% / 26% 26% 8% 8%;
+    box-shadow:0 1px 2px rgba(0,0,0,.25);
+  }
+  .ph{background:linear-gradient(#fdeec6,#e9cd91);color:#241a10}
+  .pc{background:linear-gradient(#f4e2c4,#dcc094);color:#3a1010;transform:rotate(180deg)}
+
+  .msg{min-height:2.6em;margin:10px 2px 6px;font-size:.9rem;line-height:1.45}
+  .msg .big{font-weight:700;font-size:1.02rem}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  button{
+    font:inherit;padding:9px 18px;border-radius:8px;border:1px solid #6b4a1e;
+    background:#23303a;color:#f6f1e6;cursor:pointer;
+  }
+  button:active{transform:translateY(1px)}
+  details{margin-top:14px;font-size:.84rem;background:#fff8ea;border:1px solid #d8c6a3;border-radius:8px;padding:8px 12px}
+  details summary{cursor:pointer;font-weight:700}
+  details ul{margin:8px 0 2px;padding-left:1.2em}
+  details li{margin:3px 0;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>は さ み 将 棋</h1>
+
+  <div class="panel">
+    <div id="turn" class="turn">あなたの番</div>
+    <div class="scores">
+      <div class="sc">あなた(歩) 取得 <b id="scoreH">0</b>/5</div>
+      <div class="sc">CPU(と) 取得 <b id="scoreC">0</b>/5</div>
+    </div>
+  </div>
+
+  <div id="board" class="board"></div>
+
+  <div id="msg" class="msg">自分の駒（歩）をクリックして選び、青い点のマスへ動かします。</div>
+
+  <div class="row">
+    <button id="reset">リセット</button>
+  </div>
+
+  <details>
+    <summary>ルール</summary>
+    <ul>
+      <li>すべての駒は縦横に何マスでも動けます（飛車と同じ）。駒を飛び越えることはできず、移動先は空きマスのみです。</li>
+      <li>自分が動かした結果、縦または横の直線上で相手の駒（1枚以上の連続）の両端を自分の駒で挟むと、その駒を全部取れます。複数方向が同時に成立した場合はすべて取ります。</li>
+      <li>四隅の駒は、その駒に縦横で隣接する2マスの両方を自分の駒で塞ぐと取れます。</li>
+      <li>自分から挟まれる位置・角で塞がれる位置に入っても取られません。相手の移動で成立した瞬間だけ取られます。</li>
+      <li>先に相手の駒を5枚取った方の勝ち。自分の手番で動ける手が1つもない場合は負けです。</li>
+    </ul>
+  </details>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const N = 9, EMPTY = 0, H = 1, C = 2;   // H:人間(歩) C:CPU(と)
+  const WIN = 5;
+  const DIRS = [[1,0],[-1,0],[0,1],[0,-1]];
+  const CORNERS = [
+    [0,0,[[0,1],[1,0]]],
+    [0,8,[[0,7],[1,8]]],
+    [8,0,[[7,0],[8,1]]],
+    [8,8,[[8,7],[7,8]]]
+  ];
+
+  let bd, turn, capH, capC, sel, targets, over, lastMove;
+
+  const boardEl = document.getElementById('board');
+  const turnEl  = document.getElementById('turn');
+  const msgEl   = document.getElementById('msg');
+
+  /* ---------- 基本ユーティリティ ---------- */
+  function inB(r,c){ return r>=0 && r<N && c>=0 && c<N; }
+  function clone(b){ return b.map(row => row.slice()); }
+
+  function getMoves(b, p){
+    const res = [];
+    for(let r=0;r<N;r++) for(let c=0;c<N;c++){
+      if(b[r][c] !== p) continue;
+      for(const [dr,dc] of DIRS){
+        let rr=r+dr, cc=c+dc;
+        while(inB(rr,cc) && b[rr][cc]===EMPTY){
+          res.push([r,c,rr,cc]);
+          rr+=dr; cc+=dc;
+        }
+      }
+    }
+    return res;
+  }
+
+  /* 動かした駒 (r,c) によって成立する捕獲の列挙 */
+  function findCaptures(b, r, c, p){
+    const opp = (p===H) ? C : H;
+    const out = [], seen = new Set();
+    const push = (a,d)=>{ const k=a*9+d; if(!seen.has(k)){ seen.add(k); out.push([a,d]); } };
+
+    for(const [dr,dc] of DIRS){
+      const line=[];
+      let rr=r+dr, cc=c+dc;
+      while(inB(rr,cc) && b[rr][cc]===opp){ line.push([rr,cc]); rr+=dr; cc+=dc; }
+      if(line.length && inB(rr,cc) && b[rr][cc]===p){
+        for(const q of line) push(q[0],q[1]);
+      }
+    }
+    // 角の取り方（動かした駒が隣接2マスの一方であることが条件）
+    for(const [cr,cc,ns] of CORNERS){
+      if(b[cr][cc] !== opp) continue;
+      let allMine = true, involved = false;
+      for(const [a,d] of ns){
+        if(b[a][d] !== p) allMine = false;
+        if(a===r && d===c) involved = true;
+      }
+      if(allMine && involved) push(cr,cc);
+    }
+    return out;
+  }
+
+  /* 移動を適用し、取った駒のリストを返す */
+  function apply(b, m, p){
+    b[m[0]][m[1]] = EMPTY;
+    b[m[2]][m[3]] = p;
+    const caps = findCaptures(b, m[2], m[3], p);
+    for(const [r,c] of caps) b[r][c] = EMPTY;
+    return caps;
+  }
+
+  /* ---------- 描画 ---------- */
+  function render(){
+    boardEl.innerHTML = '';
+    for(let r=0;r<N;r++){
+      for(let c=0;c<N;c++){
+        const d = document.createElement('div');
+        d.className = 'cell';
+        if(sel && sel[0]===r && sel[1]===c) d.classList.add('sel');
+        if(lastMove && ((lastMove[0]===r&&lastMove[1]===c)||(lastMove[2]===r&&lastMove[3]===c))) d.classList.add('last');
+        for(const t of targets){ if(t[2]===r && t[3]===c){ d.classList.add('mv'); break; } }
+        const v = bd[r][c];
+        if(v !== EMPTY){
+          const s = document.createElement('div');
+          s.className = 'piece ' + (v===H ? 'ph' : 'pc');
+          s.textContent = (v===H) ? '歩' : 'と';
+          d.appendChild(s);
+          if(v===H && !over && turn===H) d.classList.add('own');
+        }
+        d.addEventListener('click', function(){ onClick(r,c); });
+        boardEl.appendChild(d);
+      }
+    }
+    document.getElementById('scoreH').textContent = capH;
+    document.getElementById('scoreC').textContent = capC;
+  }
+
+  function setTurnLabel(){
+    turnEl.classList.remove('cpu','done');
+    if(over){ turnEl.textContent = '対局終了'; turnEl.classList.add('done'); }
+    else if(turn===H){ turnEl.textContent = 'あなたの番'; }
+    else { turnEl.textContent = 'CPU 思考中…'; turnEl.classList.add('cpu'); }
+  }
+
+  function msg(html){ msgEl.innerHTML = html; }
+
+  /* ---------- 進行 ---------- */
+  function finish(text){
+    over = true; sel = null; targets = [];
+    setTurnLabel();
+    render();
+    msg('<span class="big">'+text+'</span>');
+  }
+
+  function checkEnd(){
+    if(capH >= WIN){ finish('相手の駒を'+WIN+'枚取りました。あなたの勝ちです。'); return true; }
+    if(capC >= WIN){ finish('CPUに'+WIN+'枚取られました。あなたの負けです。'); return true; }
+    return false;
+  }
+
+  function startTurn(p, note){
+    if(over) return;
+    turn = p;
+    sel = null; targets = [];
+    const mv = getMoves(bd, p);
+    if(mv.length === 0){
+      render();
+      finish(p===H ? '動かせる駒がありません。あなたの負けです。'
+                   : 'CPUは動かせる駒がありません。あなたの勝ちです。');
+      return;
+    }
+    setTurnLabel();
+    render();
+    if(note) msg(note);
+    if(p === C) setTimeout(cpuTurn, 420);
+  }
+
+  function moveText(m, caps, who){
+    const name = (who===H) ? 'あなた' : 'CPU';
+    let t = name + ': (' + (9-m[1]) + ',' + (m[0]+1) + ') → (' + (9-m[3]) + ',' + (m[2]+1) + ')';
+    if(caps.length) t += ' ／ <b>' + caps.length + '枚取りました。</b>';
+    return t;
+  }
+
+  /* ---------- 人間の操作 ---------- */
+  function onClick(r,c){
+    if(over || turn !== H) return;
+    if(bd[r][c] === H){
+      if(sel && sel[0]===r && sel[1]===c){ sel=null; targets=[]; }
+      else{
+        sel = [r,c];
+        targets = getMoves(bd,H).filter(m => m[0]===r && m[1]===c);
+        if(targets.length===0) msg('その駒は動けません。別の駒を選んでください。');
+      }
+      render();
+      return;
+    }
+    if(!sel) return;
+    let found = null;
+    for(const t of targets){ if(t[2]===r && t[3]===c){ found = t; break; } }
+    if(!found) return;
+
+    const caps = apply(bd, found, H);
+    capH += caps.length;
+    lastMove = found;
+    sel = null; targets = [];
+    render();
+    const note = moveText(found, caps, H);
+    if(checkEnd()) return;
+    startTurn(C, note);
+  }
+
+  /* ---------- CPU ---------- */
+  function bestReplyCaptures(b, p){
+    let best = 0;
+    const mv = getMoves(b, p);
+    for(const m of mv){
+      const b2 = clone(b);
+      const caps = apply(b2, m, p);
+      if(caps.length > best) best = caps.length;
+    }
+    return { best: best, count: mv.length };
+  }
+
+  function chooseCpuMove(){
+    const moves = getMoves(bd, C);
+    let bestScore = -Infinity, pool = [];
+    for(const m of moves){
+      const b2 = clone(bd);
+      const caps = apply(b2, m, C);
+      let s = caps.length * 130;
+      if(capC + caps.length >= WIN) s += 1000000;
+
+      const rep = bestReplyCaptures(b2, H);
+      if(rep.count === 0) s += 500000;              // 相手を手詰まりに
+      s -= rep.best * 105;                          // 取られる手は避ける
+      if(capH + rep.best >= WIN) s -= 900000;
+
+      s += getMoves(b2, C).length * 0.25;           // 機動力
+      s += (4 - Math.abs(m[2]-4)) * 0.9;            // 中央寄りへ
+      s += (4 - Math.abs(m[3]-4)) * 0.4;
+      s += Math.random() * 2.5;
+
+      if(s > bestScore){ bestScore = s; pool = [m]; }
+      else if(s === bestScore){ pool.push(m); }
+    }
+    if(!pool.length) return null;
+    return pool[Math.floor(Math.random()*pool.length)];
+  }
+
+  function cpuTurn(){
+    if(over || turn !== C) return;
+    const m = chooseCpuMove();
+    if(!m){ finish('CPUは動かせる駒がありません。あなたの勝ちです。'); return; }
+    const caps = apply(bd, m, C);
+    capC += caps.length;
+    lastMove = m;
+    render();
+    const note = moveText(m, caps, C);
+    if(checkEnd()) return;
+    startTurn(H, note);
+  }
+
+  /* ---------- 初期化 ---------- */
+  function init(){
+    bd = [];
+    for(let r=0;r<N;r++){ bd.push(new Array(N).fill(EMPTY)); }
+    for(let c=0;c<N;c++){ bd[0][c] = C; bd[N-1][c] = H; }
+    capH = 0; capC = 0; sel = null; targets = []; over = false; lastMove = null;
+    msg('自分の駒（歩）をクリックして選び、青い点のマスへ動かします。');
+    startTurn(H);
+  }
+
+  document.getElementById('reset').addEventListener('click', init);
+  init();
+})();
+</script>
+</body>
+</html>

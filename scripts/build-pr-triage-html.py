@@ -18,6 +18,10 @@ MODEL_INFO = {
         "label": "Claude Opus 4.8", "provider": "Anthropic", "type": "API LLM",
         "color": "#CC785C", "color_dark": "#A8553D",
     },
+    "claude-opus-5": {
+        "label": "Claude Opus 5", "provider": "Anthropic", "type": "API LLM",
+        "color": "#CC785C", "color_dark": "#A8553D",
+    },
     "gemma-4-31b": {
         "label": "Gemma 4 31B", "provider": "Google", "type": "ローカル LLM",
         "color": "#4285F4", "color_dark": "#1A56DB",

@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HIBANA — 火の記憶 / a scroll-driven phoenix</title>
+<meta name="description" content="静止画のようなサイトの対極。スクロールで物語が進む、生きたランディングページ。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500;1,600&family=Shippori+Mincho:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   TOKENS
+   ========================================================= */
+:root{
+  --dawn-bg:#f2ecf5; --dawn-wing:#b9a6e0; --orb:#e8f0a8;
+  --flame:#ff7a2f; --ember:#ffb36b; --night:#0a1030;
+  --feather:#7fb8ff; --sunset:#c23a1f; --ink:#2a2438;
+  --ui-rgb:42,36,56;
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --mincho:'Shippori Mincho','Hiragino Mincho ProN',serif;
+  --ui:'Zen Kaku Gothic New','Hiragino Sans',sans-serif;
+  --poem:clamp(1.4rem,3.2vw,2.6rem);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%}
+html{scroll-behavior:auto}
+body{
+  background:var(--night); color:var(--ink);
+  font-family:var(--ui); font-weight:300;
+  overflow-x:hidden; -webkit-font-smoothing:antialiased;
+}
+::selection{background:rgba(255,122,47,.28)}
+#spacer{height:900vh; pointer-events:none}
+
+/* =========================================================
+   LAYER STACK
+   ========================================================= */
+#bgs,#copies{position:fixed;inset:0;pointer-events:none}
+.bg{position:fixed;inset:0;opacity:0;overflow:hidden;
+    will-change:opacity,transform;transform:translate3d(0,0,0);backface-visibility:hidden}
+#fx{position:fixed;inset:0;z-index:2;pointer-events:none}
+#grain{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:.17;
+  mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='180' height='180' filter='url(%23n)'/></svg>");
+  background-size:180px 180px}
+.copy{position:fixed;inset:0;z-index:4;opacity:0;pointer-events:none;
+  will-change:opacity,transform;transform:translate3d(0,0,0)}
+#ui{position:fixed;inset:0;z-index:6;pointer-events:none}
+#ui a,#ui button,.copy.active .hot{pointer-events:auto}
+
+/* =========================================================
+   SCENE BACKGROUNDS
+   ========================================================= */
+/* 1 DAWN ------------------------------------------------- */
+.b1{
+  background:
+    radial-gradient(58% 46% at 51% 27%, rgba(232,240,168,.55), rgba(232,240,168,0) 62%),
+    radial-gradient(72% 66% at 16% 58%, rgba(185,166,224,.50), rgba(185,166,224,0) 66%),
+    radial-gradient(60% 50% at 88% 84%, rgba(255,214,190,.45), rgba(255,214,190,0) 70%),
+    linear-gradient(158deg,#faf6fb 0%,#f2ecf5 42%,#eee4ec 74%,#f5ece6 100%);
+}
+.b1::after{content:"";position:absolute;inset:0;
+  background:radial-gradient(110% 100% at 50% 50%, rgba(255,255,255,0) 48%, rgba(120,100,150,.16) 100%)}
+/* 2 RISE ------------------------------------------------- */
+.b2{
+  background:
+    radial-gradient(70% 55% at 50% 108%, rgba(255,122,47,.75), rgba(255,122,47,0) 66%),
+    radial-gradient(46% 40% at 50% 78%, rgba(255,225,170,.75), rgba(255,225,170,0) 70%),
+    radial-gradient(80% 70% at 14% 12%, rgba(214,196,235,.55), rgba(214,196,235,0) 70%),
+    linear-gradient(180deg,#f6eef4 0%,#f9e6d8 46%,#f6cdb0 72%,#eda877 100%);
+}
+/* 3 HALO ------------------------------------------------- */
+.b3{
+  background:
+    radial-gradient(circle at 50% 47%,
+      #fffdf1 0 4.5%,
+      rgba(255,244,196,.96) 8.5%,
+      rgba(255,206,132,.90) 13.5%,
+      rgba(255,158,120,.80) 19%,
+      rgba(246,132,158,.70) 24.5%,
+      rgba(190,140,232,.62) 31%,
+      rgba(128,168,236,.55) 38%,
+      rgba(132,214,204,.44) 45.5%,
+      rgba(84,120,150,.38) 53%,
+      rgba(28,22,52,.86) 74%,
+      #0f0a1e 100%);
+}
+.b3::after{content:"";position:absolute;inset:-10%;
+  background:conic-gradient(from 0deg,rgba(255,255,255,.055),rgba(255,255,255,0) 12%,rgba(255,255,255,.05) 25%,rgba(255,255,255,0) 38%,rgba(255,255,255,.055) 50%,rgba(255,255,255,0) 63%,rgba(255,255,255,.05) 75%,rgba(255,255,255,0) 88%,rgba(255,255,255,.055));
+  animation:slowspin 90s linear infinite}
+/* 4/5 NIGHT ---------------------------------------------- */
+.b4{background:
+    radial-gradient(48% 40% at 50% 42%, rgba(46,74,150,.50), rgba(46,74,150,0) 70%),
+    radial-gradient(90% 70% at 50% 108%, rgba(20,32,84,.9), rgba(10,16,48,0) 70%),
+    linear-gradient(180deg,#070b22 0%,#0a1030 46%,#0d1338 72%,#070a1e 100%)}
+.b5{background:
+    radial-gradient(40% 34% at 62% 40%, rgba(60,140,170,.34), rgba(60,140,170,0) 72%),
+    radial-gradient(46% 40% at 28% 62%, rgba(120,90,190,.30), rgba(120,90,190,0) 72%),
+    linear-gradient(180deg,#06091d 0%,#0a1030 50%,#0b1136 78%,#05081a 100%)}
+/* 6 FINALE ----------------------------------------------- */
+.b6{background:linear-gradient(180deg,
+    #1d0c2c 0%,#3f1230 18%,#7b1c28 34%,#b73520 50%,
+    #e2652a 60%,#ffab60 65%,#ffd7a4 65.5%,#c8542c 66%,
+    #7e2724 74%,#3a1330 88%,#1b0a24 100%)}
+.b6 .sun{position:absolute;left:50%;top:65.5%;width:46vh;height:46vh;transform:translate(-50%,-50%);
+  background:radial-gradient(circle,rgba(255,238,196,.9) 0 14%,rgba(255,168,84,.55) 34%,rgba(255,120,50,0) 68%);
+  filter:blur(2px)}
+.b6 .mtn{position:absolute;left:-2%;right:-2%;bottom:34%;height:24vh;background:#37101f;
+  clip-path:polygon(0 100%,0 52%,9% 30%,17% 46%,27% 16%,36% 40%,47% 20%,57% 44%,66% 24%,76% 46%,86% 28%,94% 48%,100% 34%,100% 100%)}
+.b6 .mtn.far{bottom:34%;height:31vh;background:#5a1a26;opacity:.75;
+  clip-path:polygon(0 100%,0 62%,12% 38%,23% 58%,33% 26%,45% 52%,56% 30%,68% 56%,79% 34%,90% 56%,100% 42%,100% 100%)}
+.b6 .water{position:absolute;left:0;right:0;bottom:0;height:34%;overflow:hidden;
+  background:linear-gradient(180deg,rgba(255,190,120,.42) 0%,rgba(190,66,34,.42) 16%,rgba(60,18,44,.86) 62%,#150720 100%)}
+.b6 .water .rmtn{position:absolute;left:-2%;right:-2%;top:0;height:24vh;background:#37101f;opacity:.42;
+  filter:blur(3px);transform:scaleY(-1);transform-origin:top;
+  clip-path:polygon(0 100%,0 52%,9% 30%,17% 46%,27% 16%,36% 40%,47% 20%,57% 44%,66% 24%,76% 46%,86% 28%,94% 48%,100% 34%,100% 100%)}
+.b6 .water::after{content:"";position:absolute;inset:-20% 0 0;
+  background:repeating-linear-gradient(180deg,rgba(255,215,170,.10) 0 1px,rgba(255,215,170,0) 1px 9px);
+  animation:ripple 9s linear infinite}
+@keyframes ripple{to{transform:translateY(9px)}}
+@keyframes slowspin{to{transform:rotate(360deg)}}
+
+/* =========================================================
+   TYPOGRAPHY
+   ========================================================= */
+.poem{position:absolute;font-family:var(--serif);font-style:italic;font-weight:400;
+  font-size:var(--poem);line-height:1.5;letter-spacing:.04em}
+.poem i,.poem em{font-style:italic;font-weight:600;letter-spacing:.05em}
+.poem .jp{font-family:var(--mincho);font-style:normal;font-weight:500;letter-spacing:.08em}
+.line{display:block}
+.w{display:inline-block;opacity:0;filter:blur(7px);
+  transform:translateY(calc(var(--dy,0) * 1px + 38px));
+  transition:
+    opacity 1.15s cubic-bezier(.2,.8,.2,1) calc(var(--i,0) * 72ms),
+    transform 1.25s cubic-bezier(.16,1,.3,1) calc(var(--i,0) * 72ms),
+    filter 1.05s ease calc(var(--i,0) * 72ms)}
+.copy.in .w{opacity:1;filter:blur(0);transform:translateY(calc(var(--dy,0) * 1px))}
+
+.chapter{position:absolute;left:6vw;bottom:16vh;font-family:var(--ui);font-weight:300;
+  font-size:.75rem;letter-spacing:.34em;text-transform:uppercase;opacity:.8;
+  display:flex;align-items:center;gap:.9em}
+.chapter .rule{display:block;width:44px;height:1px;background:currentColor;opacity:.5}
+.chapter .jp{font-family:var(--mincho);letter-spacing:.22em;text-transform:none}
+.sub-en{font-family:var(--serif);font-style:italic;font-size:clamp(.9rem,1.5vw,1.15rem);
+  letter-spacing:.16em;opacity:.85}
+.tiny{font-family:var(--ui);font-weight:300;font-size:.78rem;letter-spacing:.24em;opacity:.72}
+
+/* --- s1 ------------------------------------------------- */
+.s1{color:#4b3f60}
+.s1 .poem{right:6vw;top:47%;transform:translateY(-50%);max-width:46vw;text-align:right}
+.s1 .poem i{color:#7a5aa8}
+.s1 .poem .jp{display:inline-block;margin-top:1.1em;font-size:.52em;letter-spacing:.2em;color:#6b5c85}
+.s1 .chapter{color:#5c4f74}
+/* --- s2 ------------------------------------------------- */
+.s2{color:#4a2a24}
+.s2 .stack{position:absolute;inset:0;display:grid;place-content:center;text-align:center;padding:0 6vw}
+.jp-huge{font-family:var(--mincho);font-weight:600;
+  font-size:clamp(2.8rem,9vw,7.4rem);letter-spacing:.14em;line-height:1.18;
+  color:#3b1d1c;text-shadow:0 0 42px rgba(255,180,110,.55)}
+.s2 .jp-huge .w{will-change:filter}
+.copy.in .jp-huge .w:nth-of-type(3),
+.copy.in .jp-huge .w:nth-of-type(5){animation:softblur 7s ease-in-out 1.4s infinite}
+@keyframes softblur{0%,100%{filter:blur(0)}45%{filter:blur(9px);opacity:.6}}
+.s2 .sub-en{margin-top:2.2em;color:#6b3020}
+.s2 .chapter{color:#6b3a26}
+/* --- s3 ------------------------------------------------- */
+.s3{color:#f4ecdd}
+.s3 .stack{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.kanji{font-family:var(--mincho);font-weight:400;font-size:clamp(6rem,20vw,17rem);
+  line-height:1;letter-spacing:.02em;color:#fffdf2;
+  text-shadow:0 0 70px rgba(255,224,150,.85),0 0 160px rgba(255,150,110,.55);
+  animation:pulseK 5.5s ease-in-out infinite}
+@keyframes pulseK{0%,100%{opacity:.96;text-shadow:0 0 60px rgba(255,224,150,.7),0 0 150px rgba(255,150,110,.4)}
+  50%{opacity:.55;text-shadow:0 0 110px rgba(255,240,200,1),0 0 220px rgba(255,170,120,.7)}}
+.s3 .sub-en{margin-top:1.4em;color:#fbf1de;opacity:.9}
+.s3 .chapter{color:#f6ecdb}
+/* --- s4 ------------------------------------------------- */
+.s4{color:#dbe6ff}
+.s4 .v-block{position:absolute;top:50%;transform:translateY(-50%);
+  writing-mode:vertical-rl;font-family:var(--mincho);font-weight:400;
+  font-size:clamp(.78rem,1.05vw,.95rem);letter-spacing:.34em;line-height:2.4;
+  color:rgba(200,220,255,.78);display:flex;gap:1.6em}
+.s4 .v-block.l{left:6vw}
+.s4 .v-block.r{right:6vw;color:rgba(160,190,240,.62)}
+.s4 .v-block .em{color:#bfe0ff}
+.s4 .poem{left:50%;transform:translateX(-50%);bottom:19vh;width:88vw;max-width:960px;
+  text-align:center;font-size:clamp(1.15rem,2.5vw,1.9rem);color:#e6efff}
+.s4 .poem i{color:#8fc4ff}
+.s4 .poem .jp{color:#fff}
+.s4 .chapter{color:#a9c2ea;bottom:11vh}
+/* --- s5 ------------------------------------------------- */
+.s5{color:#dbe6ff}
+.crystals{position:absolute;inset:0;perspective:1300px}
+.cwrap{position:absolute;transform:translate(-50%,-50%);
+  transform-style:preserve-3d;cursor:crosshair}
+.cwrap::after{content:"";position:absolute;left:50%;top:50%;width:340%;height:340%;
+  transform:translate(-50%,-50%);pointer-events:none;
+  background:radial-gradient(circle,rgba(150,200,255,.22),rgba(190,140,255,.10) 44%,rgba(0,0,0,0) 72%)}
+.cube{position:relative;width:var(--sz);height:var(--sz);transform-style:preserve-3d;
+  animation:tumble var(--sp) linear infinite}
+.cwrap:hover .cube{animation-play-state:running;filter:brightness(1.45) saturate(1.2)}
+.cwrap:hover{animation:shake .55s cubic-bezier(.36,.07,.19,.97) infinite}
+@keyframes shake{0%,100%{transform:translate(-50%,-50%) rotate(0)}
+  25%{transform:translate(calc(-50% + 5px),calc(-50% - 3px)) rotate(.6deg)}
+  75%{transform:translate(calc(-50% - 5px),calc(-50% + 3px)) rotate(-.6deg)}}
+.face{position:absolute;inset:0;
+  background:linear-gradient(138deg,rgba(127,184,255,.20),rgba(255,150,190,.10) 42%,rgba(232,240,168,.18));
+  border:1px solid rgba(214,234,255,.42);
+  box-shadow:inset 0 0 46px rgba(150,196,255,.20),0 0 34px rgba(120,170,255,.14);
+  backdrop-filter:blur(1px)}
+.f1{transform:translateZ(calc(var(--sz) / 2))}
+.f2{transform:rotateY(180deg) translateZ(calc(var(--sz) / 2))}
+.f3{transform:rotateY(90deg)  translateZ(calc(var(--sz) / 2))}
+.f4{transform:rotateY(-90deg) translateZ(calc(var(--sz) / 2))}
+.f5{transform:rotateX(90deg)  translateZ(calc(var(--sz) / 2))}
+.f6{transform:rotateX(-90deg) translateZ(calc(var(--sz) / 2))}
+@keyframes tumble{
+  0%{transform:rotateX(-16deg) rotateY(0deg) rotateZ(0deg)}
+  100%{transform:rotateX(344deg) rotateY(360deg) rotateZ(90deg)}}
+.s5 .poem{right:6vw;bottom:22vh;max-width:40vw;text-align:right;
+  font-size:clamp(1.05rem,2.1vw,1.6rem);color:#e2ecff}
+.s5 .poem i{color:#9fd0ff}
+.s5 .chapter{color:#a9c2ea}
+/* --- s6 ------------------------------------------------- */
+.s6{color:#ffeedd}
+.s6 .poem{left:50%;transform:translateX(-50%);bottom:20vh;width:90vw;max-width:1020px;
+  text-align:center;font-size:clamp(1.2rem,2.8vw,2.1rem);
+  color:#fff1e2;text-shadow:0 2px 30px rgba(60,10,20,.65)}
+.s6 .poem i{color:#ffc27a}
+.s6 .poem .jp{color:#fff}
+.s6 .cta{position:absolute;left:50%;bottom:11.5vh;transform:translateX(-50%);
+  font-family:var(--ui);font-weight:300;font-size:.78rem;letter-spacing:.3em;
+  color:#ffeedd;border:1px solid rgba(255,220,190,.45);border-radius:999px;
+  padding:.95em 2.2em;text-decoration:none;background:rgba(60,12,20,.18);
+  transition:background .5s ease,letter-spacing .5s ease,border-color .5s ease}
+.s6 .cta:hover{background:rgba(255,150,80,.24);border-color:rgba(255,220,190,.9);letter-spacing:.38em}
+.s6 .chapter{color:#ffdcc2}
+
+/* =========================================================
+   PERSISTENT UI
+   ========================================================= */
+#ui{color:rgb(var(--ui-rgb));transition:color .25s linear}
+.brand{position:absolute;left:6vw;top:4.2vh;display:flex;align-items:center;gap:.8rem}
+.brand .bird{width:30px;height:26px;overflow:visible;animation:bob 4.6s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-4px) rotate(3deg)}}
+.logo{font-family:var(--serif);font-weight:500;font-size:1.02rem;letter-spacing:.44em;line-height:1}
+.brand .sub{font-size:.6rem;letter-spacing:.28em;opacity:.7;margin-top:.5em;font-weight:300}
+nav{position:absolute;right:6vw;top:4.6vh;display:flex;gap:2.1rem}
+nav a{font-family:var(--mincho);font-size:.78rem;letter-spacing:.26em;
+  color:inherit;text-decoration:none;opacity:.78;position:relative;padding-bottom:.4em}
+nav a::after{content:"";position:absolute;left:0;bottom:0;width:100%;height:1px;
+  background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .55s cubic-bezier(.16,1,.3,1)}
+nav a:hover{opacity:1}
+nav a:hover::after{transform:scaleX(1)}
+.prog{position:absolute;left:50%;bottom:5.2vh;transform:translateX(-50%);
+  width:min(24vw,300px);text-align:center}
+.prog .track{height:1px;background:rgba(var(--ui-rgb),.22);overflow:hidden}
+.prog .fill{height:100%;background:rgb(var(--ui-rgb));transform:scaleX(0);transform-origin:left;
+  will-change:transform}
+.prog .lbl{margin-top:1em;font-size:.62rem;letter-spacing:.34em;opacity:.72}
+.sound{position:absolute;left:6vw;bottom:5.5vh;width:56px;height:56px;border:0;background:none;
+  color:inherit;opacity:0;transform:scale(.82) rotate(-25deg);
+  transition:opacity .9s ease,transform .9s cubic-bezier(.16,1,.3,1);cursor:pointer}
+.sound.show{opacity:.85;transform:none}
+.sound:hover{opacity:1}
+.sound svg{width:100%;height:100%;overflow:visible}
+.sound .ring{animation:slowspin 22s linear infinite;transform-origin:28px 28px}
+.sound .bars rect{animation:eq 1.4s ease-in-out infinite}
+.sound .bars rect:nth-child(2){animation-delay:.18s}
+.sound .bars rect:nth-child(3){animation-delay:.36s}
+@keyframes eq{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+.hint{position:absolute;right:6vw;bottom:5.6vh;font-size:.6rem;letter-spacing:.34em;
+  opacity:.75;transition:opacity .8s ease;display:flex;align-items:center;gap:.9em}
+.hint .bar{display:block;width:1px;height:38px;background:currentColor;opacity:.4;overflow:hidden;position:relative}
+.hint .bar::after{content:"";position:absolute;inset:0;background:currentColor;animation:drop 2.4s ease-in-out infinite}
+@keyframes drop{0%{transform:translateY(-100%)}60%,100%{transform:translateY(100%)}}
+.hint.gone{opacity:0}
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+html.reduced *,html.reduced *::before,html.reduced *::after{
+  animation:none !important;transition-duration:.32s !important;transition-delay:0ms !important}
+@media (max-width:720px){
+  :root{--poem:clamp(1.15rem,5.6vw,1.9rem)}
+  .s1 .poem{max-width:80vw}
+  .s5 .poem{max-width:70vw}
+  .s4 .v-block{font-size:.7rem;letter-spacing:.26em}
+  nav{gap:1.2rem}
+  nav a{font-size:.7rem;letter-spacing:.18em}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= BACKGROUND LAYERS ================= -->
+<div id="bgs">
+  <div class="bg b1"></div>
+  <div class="bg b2"></div>
+  <div class="bg b3"></div>
+  <div class="bg b4"></div>
+  <div class="bg b5"></div>
+  <div class="bg b6">
+    <div class="sun"></div>
+    <div class="mtn far"></div>
+    <div class="mtn"></div>
+    <div class="water"><div class="rmtn"></div></div>
+  </div>
+</div>
+
+<!-- ================= CANVAS (all particles) ================= -->
+<canvas id="fx"></canvas>
+<div id="grain"></div>
+
+<!-- ================= COPY LAYERS ================= -->
+<div id="copies">
+
+  <!-- 1 DAWN -->
+  <section class="copy s1">
+    <div class="poem">
+      <p class="line">what guides us through</p>
+      <p class="line"><i>change</i>, <i>reinvention</i>,</p>
+      <p class="line">and the <i>unknown</i>—</p>
+      <p class="line jp">夜明け、羽ばたきのはじまり</p>
+    </div>
+    <div class="chapter">Chapter I <span class="rule"></span> Dawn <span class="jp">夜明</span></div>
+  </section>
+
+  <!-- 2 RISE -->
+  <section class="copy s2">
+    <div class="stack">
+      <div class="jp-huge line by-char">再生である。</div>
+      <p class="poem sub-en line" style="position:static">the flame <i>remembers</i> everything</p>
+    </div>
+    <div class="chapter">Chapter II <span class="rule"></span> Rise <span class="jp">上昇</span></div>
+  </section>
+
+  <!-- 3 HALO -->
+  <section class="copy s3">
+    <div class="stack">
+      <div class="kanji line by-char">音</div>
+      <p class="poem sub-en line" style="position:static">resonance in the <i>backlight</i> — 残響</p>
+    </div>
+    <div class="chapter">Chapter III <span class="rule"></span> Halo <span class="jp">光環</span></div>
+  </section>
+
+  <!-- 4 FEATHER -->
+  <section class="copy s4">
+    <div class="v-block l">
+      <p>羽根は落下ではなく、</p>
+      <p><span class="em">持続する光</span>の記述である。</p>
+    </div>
+    <div class="v-block r">
+      <p>作品 04 ／ Feather, 2024</p>
+      <p>青白い燐光、夜の底へ。</p>
+    </div>
+    <div class="poem">
+      <p class="line">don't just <i>speak</i> to us. they <i>stimulate</i> us.</p>
+      <p class="line">light <i>becomes</i> <span class="jp">私</span>、flare。</p>
+    </div>
+    <div class="chapter">Chapter IV <span class="rule"></span> Feather <span class="jp">一枚の羽</span></div>
+  </section>
+
+  <!-- 5 CRYSTAL -->
+  <section class="copy s5">
+    <div class="crystals">
+      <div class="cwrap hot" style="left:32%;top:44%;--sz:15vh;--sp:26s">
+        <div class="cube"><i class="face f1"></i><i class="face f2"></i><i class="face f3"></i><i class="face f4"></i><i class="face f5"></i><i class="face f6"></i></div>
+      </div>
+      <div class="cwrap hot" style="left:56%;top:59%;--sz:22vh;--sp:38s">
+        <div class="cube"><i class="face f1"></i><i class="face f2"></i><i class="face f3"></i><i class="face f4"></i><i class="face f5"></i><i class="face f6"></i></div>
+      </div>
+      <div class="cwrap hot" style="left:72%;top:34%;--sz:11vh;--sp:20s">
+        <div class="cube"><i class="face f1"></i><i class="face f2"></i><i class="face f3"></i><i class="face f4"></i><i class="face f5"></i><i class="face f6"></i></div>
+      </div>
+    </div>
+    <div class="poem">
+      <p class="line">each facet holds a <i>different</i> <span class="jp">未来</span>。</p>
+      <p class="line jp" style="font-size:.62em">屈折する記憶、触れると揺れる</p>
+    </div>
+    <div class="chapter">Chapter V <span class="rule"></span> Crystal <span class="jp">結晶</span></div>
+  </section>
+
+  <!-- 6 FINALE -->
+  <section class="copy s6">
+    <div class="poem">
+      <p class="line"><i>feel</i> their heat. <span class="jp">焔</span>と <i>interact</i> with。</p>
+    </div>
+    <a class="cta hot" href="#" onclick="return false;">接続する — CONNECT</a>
+    <div class="chapter">Chapter VI <span class="rule"></span> Finale <span class="jp">燃え尽きぬ</span></div>
+  </section>
+</div>
+
+<!-- ================= PERSISTENT UI ================= -->
+<div id="ui">
+  <div class="brand">
+    <svg class="bird" viewBox="0 0 40 34" aria-hidden="true">
+      <path d="M1.5 19.5c7 1.6 12-1.2 15.4-6.3 1.6 4.4 5.6 6.6 9.7 5.4 2.6-.8 4.4-2.6 5.4-5.2l7.5 2.8-6.4 2.1c-1.2 6.6-6.6 11.6-13.9 12.4C11.6 31.6 5.6 27.6 1.5 19.5z" fill="#7fb8ff"/>
+      <path d="M17 13.2c-1.4 4.2-4.6 7-9.4 8.2 4.6 3 9.4 2.4 13-1.4-1.8-1.6-3-3.8-3.6-6.8z" fill="#4a8fe0" opacity=".85"/>
+      <circle cx="28.2" cy="12.2" r="1.15" fill="#0a1030"/>
+    </svg>
+    <div>
+      <div class="logo">HIBANA</div>
+      <div class="sub">SEPT. 29 — 火の記憶</div>
+    </div>
+  </div>
+
+  <nav>
+    <a href="#" onclick="return false;">作品</a>
+    <a href="#" onclick="return false;">思想</a>
+    <a href="#" onclick="return false;">接続</a>
+  </nav>
+
+  <div class="prog">
+    <div class="track"><div class="fill" id="pfill"></div></div>
+    <div class="lbl" id="plbl">01 / 06 — DAWN</div>
+  </div>
+
+  <button class="sound" id="sound" aria-label="ambience (decorative)">
+    <svg viewBox="0 0 56 56" aria-hidden="true">
+      <circle class="ring" cx="28" cy="28" r="26" fill="none" stroke="currentColor"
+              stroke-opacity=".45" stroke-width="1" stroke-dasharray="3 7"/>
+      <circle cx="28" cy="28" r="19.5" fill="none" stroke="currentColor" stroke-opacity=".22" stroke-width="1"/>
+      <g class="bars" fill="currentColor" fill-opacity=".85">
+        <rect x="23" y="22" width="1.4" height="12" style="transform-origin:23.7px 28px"/>
+        <rect x="27.3" y="22" width="1.4" height="12" style="transform-origin:28px 28px"/>
+        <rect x="31.6" y="22" width="1.4" height="12" style="transform-origin:32.3px 28px"/>
+      </g>
+    </svg>
+  </button>
+
+  <div class="hint" id="hint"><span>SCROLL</span><span class="bar"></span></div>
+</div>
+
+<div id="spacer"></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   HIBANA — scroll-driven phoenix
+   single rAF · Canvas 2D · no WebGL
+   ===================================================================== */
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+if (REDUCED) document.documentElement.classList.add("reduced");
+const D = REDUCED ? 0.25 : 1;              // particle density factor
+
+const N = 6;
+const bgs    = [...document.querySelectorAll(".bg")];
+const copies = [...document.querySelectorAll(".copy")];
+const pfill  = document.getElementById("pfill");
+const plbl   = document.getElementById("plbl");
+const sound  = document.getElementById("sound");
+const hint   = document.getElementById("hint");
+const NAMES  = ["DAWN","RISE","HALO","FEATHER","CRYSTAL","FINALE"];
+
+/* ---------- text splitter: word / char staircase ---------- */
+const STAIR = [0,-14,-27,-9,-22,-35,-17,-5,-30,-12,-24,-7];
+function splitLine(line){
+  const byChar = line.classList.contains("by-char") ||
+                 line.parentElement?.classList.contains("by-char");
+  const out = [];
+  [...line.childNodes].forEach(node => {
+    if (node.nodeType === 3){
+      const parts = byChar ? [...node.textContent]
+                           : node.textContent.split(/(\s+)/);
+      parts.forEach(p => {
+        if (p === "") return;
+        if (/^\s+$/.test(p)){ out.push(document.createTextNode(p)); return; }
+        const s = document.createElement("span");
+        s.className = "w"; s.textContent = p; out.push(s);
+      });
+    } else {
+      const s = document.createElement("span");
+      s.className = "w"; s.appendChild(node.cloneNode(true)); out.push(s);
+    }
+  });
+  line.textContent = "";
+  out.forEach(o => line.appendChild(o));
+  line.querySelectorAll(".w").forEach((w,i) => {
+    w.style.setProperty("--i", i);
+    w.style.setProperty("--dy", STAIR[i % STAIR.length]);
+  });
+}
+document.querySelectorAll(".line").forEach(splitLine);
+
+/* =====================================================================
+   CANVAS SETUP
+   ===================================================================== */
+const cv = document.getElementById("fx");
+const ctx = cv.getContext("2d", { alpha:true });
+let Wd = 0, Ht = 0, MIN = 0, dpr = 1;
+function resize(){
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  Wd = window.innerWidth; Ht = window.innerHeight; MIN = Math.min(Wd, Ht);
+  cv.width = Math.round(Wd * dpr); cv.height = Math.round(Ht * dpr);
+  cv.style.width = Wd + "px"; cv.style.height = Ht + "px";
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  maxScroll = Math.max(1, document.documentElement.scrollHeight - Ht);
+}
+let maxScroll = 1;
+addEventListener("resize", resize, { passive:true });
+
+/* ---------- sprites ---------- */
+const CL = {
+  lav:[178,158,222], lav2:[214,200,242], warm:[255,222,198],
+  orb:[232,240,168], cream:[255,250,232], gold:[255,214,140],
+  flame:[255,122,47], ember:[255,179,107], rose:[255,150,160],
+  feath:[127,184,255], cyan:[186,232,255], white:[255,255,255],
+  sunset:[194,58,31], violet:[152,122,224]
+};
+const rgba = (c,a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+const sprCache = new Map();
+function spr(c, hard){
+  const k = c[0]+"_"+c[1]+"_"+c[2]+(hard?"h":"s");
+  let s = sprCache.get(k); if (s) return s;
+  s = document.createElement("canvas"); s.width = s.height = 128;
+  const g = s.getContext("2d");
+  const gr = g.createRadialGradient(64,64,0,64,64,64);
+  if (hard){
+    gr.addColorStop(0,   "rgba(255,255,255,1)");
+    gr.addColorStop(.16, rgba(c,.95));
+    gr.addColorStop(.42, rgba(c,.34));
+    gr.addColorStop(1,   rgba(c,0));
+  } else {
+    gr.addColorStop(0,   rgba(c,.80));
+    gr.addColorStop(.34, rgba(c,.34));
+    gr.addColorStop(.68, rgba(c,.09));
+    gr.addColorStop(1,   rgba(c,0));
+  }
+  g.fillStyle = gr; g.fillRect(0,0,128,128);
+  sprCache.set(k,s); return s;
+}
+function blob(s, x, y, r, a){
+  if (a <= .002 || r <= .05) return;
+  ctx.globalAlpha = a > 1 ? 1 : a;
+  ctx.drawImage(s, x-r, y-r, r*2, r*2);
+}
+function streak(s, x, y, w, h, a, rot){
+  if (a <= .002) return;
+  ctx.globalAlpha = a > 1 ? 1 : a;
+  ctx.save(); ctx.translate(x,y); if (rot) ctx.rotate(rot);
+  ctx.drawImage(s, -w/2, -h/2, w, h); ctx.restore();
+}
+const R  = Math.random;
+const rr = (a,b) => a + (b-a)*Math.random();
+const clamp = (v,a,b) => v<a?a:v>b?b:v;
+const TAU = Math.PI*2;
+
+/* =====================================================================
+   PARTICLE POOLS
+   ===================================================================== */
+const Pblot=[], Pmote=[], Pember=[], Phalo=[], Pbeam=[], Pdust=[], Pflame=[];
+let T = 0;
+
+function step(arr, dt){
+  for (let i = arr.length-1; i >= 0; i--){
+    const p = arr[i]; p.l += dt;
+    if (p.l >= p.L){ arr[i] = arr[arr.length-1]; arr.pop(); continue; }
+    p.x += p.vx*dt; p.y += p.vy*dt;
+    if (p.g) p.vy += p.g*dt;
+    if (p.dr){ p.vx *= p.dr; p.vy *= p.dr; }
+  }
+}
+
+/* --------------------------------------------------------------- 1 DAWN */
+function wingPt(u,k){                       /* watercolor wing stroke */
+  const P0 = k ? [0.11,0.92] : [0.06,0.88];
+  const P1 = k ? [0.10,0.44] : [0.02,0.40];
+  const P2 = k ? [0.40,0.20] : [0.34,0.10];
+  const m = 1-u;
+  return [ m*m*P0[0] + 2*m*u*P1[0] + u*u*P2[0],
+           m*m*P0[1] + 2*m*u*P1[1] + u*u*P2[1] ];
+}
+const dawnMotes = [];
+for (let i = 0; i < Math.round(90*D); i++)
+  dawnMotes.push({ x:R(), y:R(), r:rr(.7,2.4), ph:R()*TAU, sp:rr(.006,.022) });
+let accBlot = 0;
+function dawnUpdate(dt,w){
+  accBlot += dt*w*7*D;
+  while (accBlot >= 1){
+    accBlot--;
+    const k = R() < .42 ? 1 : 0, u = R();
+    const [fx,fy] = wingPt(u,k);
+    const [gx,gy] = wingPt(Math.min(1,u+.02),k);
+    let tx = gx-fx, ty = gy-fy;
+    const len = Math.hypot(tx,ty) || 1; tx/=len; ty/=len;
+    const wd = (0.055 + 0.075*Math.sin(Math.PI*Math.pow(u,.72))) * MIN;
+    const off = Math.pow(R(),1.4) * (R()<.5?-1:1) * wd;
+    const c = R()<.24 ? CL.warm : (R()<.55 ? CL.lav2 : CL.lav);
+    Pblot.push({ x:fx*Wd - ty*off, y:fy*Ht + tx*off,
+      vx:rr(-3,7), vy:rr(-11,-2), l:0, L:rr(6,13),
+      r0:rr(18,42), gr:rr(6,20), a:rr(.020,.052), c, dr:1 });
+  }
+  step(Pblot, dt);
+  for (const m of dawnMotes){
+    m.y -= m.sp*dt*(REDUCED?.4:1);
+    m.x += Math.sin(T*.5 + m.ph)*.00035;
+    if (m.y < -.06){ m.y = 1.06; m.x = R(); }
+  }
+}
+function dawnDraw(a){
+  ctx.globalCompositeOperation = "source-over";
+  for (const p of Pblot){
+    const t = p.l/p.L, env = Math.sin(Math.PI*t);
+    blob(spr(p.c,false), p.x, p.y, p.r0 + p.gr*p.l, p.a*env*a*2.2);
+  }
+  ctx.globalCompositeOperation = "lighter";
+  const ox = .5*Wd, oy = .265*Ht, pulse = 1 + .05*Math.sin(T*1.3);
+  blob(spr(CL.orb,false),   ox, oy, .175*MIN*pulse, .40*a);
+  blob(spr(CL.orb,true),    ox, oy, .072*MIN*pulse, .55*a);
+  blob(spr(CL.cream,true),  ox, oy, .026*MIN,       .85*a);
+  const sOrb = spr(CL.orb,true), sLav = spr(CL.lav2,true);
+  for (const m of dawnMotes){
+    const tw = .32 + .3*Math.sin(T*1.6 + m.ph);
+    blob(m.y < .5 ? sOrb : sLav, m.x*Wd, m.y*Ht, m.r*2.6, tw*a*.7);
+  }
+  ctx.globalCompositeOperation = "source-over";
+}
+
+/* --------------------------------------------------------------- 2 RISE */
+function riseState(){
+  const loop = (T*0.108) % 1;
+  return {
+    cx: (0.5 + 0.085*Math.sin(loop*TAU*1.15 + .4)) * Wd,
+    cy: (1.20 - 1.06*loop) * Ht,
+    fade: clamp(Math.min(loop*7, (1-loop)*4.5), 0, 1),
+    flap: Math.sin(T*5.1)
+  };
+}
+let accEm = 0;
+function riseUpdate(dt,w){
+  const s = riseState();
+  accEm += dt*w*s.fade*260*D;
+  const span = .19*Wd*(0.52 + 0.48*Math.abs(s.flap));
+  while (accEm >= 1){
+    accEm--;
+    if (R() < .30){                                 /* tail from body */
+      Pember.push({ x:s.cx + rr(-7,7), y:s.cy + rr(0,26),
+        vx:rr(-14,14), vy:rr(90,220), l:0, L:rr(.9,1.7),
+        r:rr(4,9), c: R()<.5?CL.gold:CL.ember, dr:.985, g:0 });
+    } else {                                        /* wing tips */
+      const d = R()<.5?-1:1, u = Math.pow(R(),.62);
+      const x = s.cx + d*span*u;
+      const y = s.cy - Math.sin(u*Math.PI*.92)*span*.42*s.flap - u*span*.14;
+      Pember.push({ x, y, vx:d*u*38 + rr(-14,14),
+        vy: 70 + u*150 + rr(-20,40), l:0, L:rr(.7,1.5),
+        r: 3 + 6*(1-u*.5), c: u>.7?CL.flame:(R()<.5?CL.ember:CL.gold),
+        dr:.978, g:20 });
+    }
+  }
+  step(Pember, dt);
+}
+function riseDraw(a){
+  const s = riseState(), f = s.fade*a;
+  ctx.globalCompositeOperation = "lighter";
+  for (const p of Pember){
+    const t = p.l/p.L;
+    blob(spr(p.c,true), p.x, p.y, p.r*(1-t*.72)+.6, (1-t)*(1-t)*.55*a);
+  }
+  /* body core + wing smear */
+  blob(spr(CL.flame,false), s.cx, s.cy, .13*MIN, .28*f);
+  blob(spr(CL.ember,true),  s.cx, s.cy, .05*MIN, .55*f);
+  blob(spr(CL.cream,true),  s.cx, s.cy - .012*Ht, .018*MIN, .9*f);
+  const span = .19*Wd*(0.52 + 0.48*Math.abs(s.flap));
+  for (let d = -1; d <= 1; d += 2)
+    for (let i = 1; i <= 5; i++){
+      const u = i/5;
+      blob(spr(CL.ember,false),
+        s.cx + d*span*u,
+        s.cy - Math.sin(u*Math.PI*.92)*span*.42*s.flap - u*span*.14,
+        (.045 - .006*i)*MIN, .13*f);
+    }
+  ctx.globalCompositeOperation = "source-over";
+}
+
+/* --------------------------------------------------------------- 3 HALO */
+/* silhouette bird (half path, mirrored) */
+function birdHalf(s, flap){
+  ctx.beginPath();
+  ctx.moveTo(0, -0.20*s);
+  ctx.bezierCurveTo(0.14*s,-0.26*s, 0.42*s,(-0.42-0.10*flap)*s, 1.00*s,(-0.76-0.16*flap)*s);
+  ctx.bezierCurveTo(0.86*s,(-0.50-0.10*flap)*s, 0.60*s,(-0.24-0.04*flap)*s, 0.34*s, 0.02*s);
+  ctx.bezierCurveTo(0.30*s, 0.16*s, 0.18*s, 0.28*s, 0.10*s, 0.34*s);
+  ctx.bezierCurveTo(0.16*s, 0.52*s, 0.10*s, 0.72*s, 0.02*s, 0.86*s);
+  ctx.lineTo(0, 0.86*s);
+  ctx.closePath();
+}
+let accHalo = 0;
+function haloUpdate(dt,w){
+  accHalo += dt*w*130*D;
+  while (accHalo >= 1){
+    accHalo--;
+    const ang = R()*TAU, sp = rr(30,150);
+    const hue = R();
+    const c = hue<.2?CL.gold : hue<.4?CL.rose : hue<.6?CL.violet :
+              hue<.8?CL.feath: CL.cream;
+    Phalo.push({ x:.5*Wd + Math.cos(ang)*.03*MIN, y:.47*Ht + Math.sin(ang)*.03*MIN,
+      vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp*.8, l:0, L:rr(2.4,4.6),
+      r:rr(1.6,5), c, dr:.997 });
+  }
+  step(Phalo, dt);
+}
+function haloDraw(a){
+  const cx = .5*Wd, cy = .47*Ht;
+  ctx.globalCompositeOperation = "lighter";
+  /* rotating god-rays */
+  ctx.save(); ctx.translate(cx,cy); ctx.rotate(T*.045);
+  ctx.fillStyle = `rgba(255,238,205,${(.030*a).toFixed(4)})`;
+  const RL = MIN*1.15;
+  for (let i = 0; i < 18; i++){
+    const wd = (.012 + .012*Math.abs(Math.sin(i*2.1 + T*.6)));
+    ctx.beginPath(); ctx.moveTo(0,0);
+    ctx.lineTo(Math.cos(-wd)*RL, Math.sin(-wd)*RL);
+    ctx.lineTo(Math.cos( wd)*RL, Math.sin( wd)*RL);
+    ctx.closePath(); ctx.fill();
+    ctx.rotate(TAU/18);
+  }
+  ctx.restore();
+  blob(spr(CL.cream,false), cx, cy, .30*MIN, .22*a);
+  ctx.globalAlpha = 1;
+
+  /* silhouette */
+  const flap = Math.sin(T*.9)*.5 + .1, s = .40*Math.min(Wd*1.05, Ht*1.9);
+  ctx.globalCompositeOperation = "source-over";
+  ctx.save(); ctx.translate(cx, cy + .04*Ht);
+  const gr = ctx.createLinearGradient(0,-.6*s,0,.9*s);
+  gr.addColorStop(0, `rgba(26,16,42,${(.80*a).toFixed(3)})`);
+  gr.addColorStop(1, `rgba(10,6,26,${(.94*a).toFixed(3)})`);
+  ctx.fillStyle = gr;
+  birdHalf(s, flap); ctx.fill();
+  ctx.scale(-1,1); birdHalf(s, flap); ctx.fill();
+  ctx.restore();
+  /* head */
+  ctx.globalAlpha = .9*a;
+  ctx.fillStyle = "rgba(16,10,32,1)";
+  ctx.beginPath(); ctx.ellipse(cx, cy + .04*Ht - .21*s, .055*s, .075*s, 0, 0, TAU); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  /* motes */
+  ctx.globalCompositeOperation = "lighter";
+  for (const p of Phalo){
+    const t = p.l/p.L;
+    blob(spr(p.c,true), p.x, p.y, p.r*(1+t*1.5), Math.sin(Math.PI*t)*.45*a);
+  }
+  ctx.globalCompositeOperation = "source-over";
+}
+
+/* ------------------------------------------------------------ 4 FEATHER */
+const stars = [];
+for (let i = 0; i < Math.round(150*D); i++)
+  stars.push({ x:R(), y:R()*.92, r:rr(.5,1.7), ph:R()*TAU, sp:rr(.6,2.1) });
+function feathState(){
+  const loop = (T*0.052) % 1;
+  return { x:(.5 + .055*Math.sin(T*.55))*Wd, y:(-.16 + 1.36*loop)*Ht,
+           rot:Math.sin(T*.46)*.36 };
+}
+let accBeam = 0;
+function feathUpdate(dt,w){
+  const f = feathState();
+  accBeam += dt*w*90*D;
+  while (accBeam >= 1){
+    accBeam--;
+    if (R() < .62){
+      Pbeam.push({ x:f.x + rr(-14,14), y:f.y + rr(-30,20),
+        vx:rr(-5,5), vy:rr(-46,-14), l:0, L:rr(1.6,3.2),
+        r:rr(2.5,6.5), h:rr(50,190), c:R()<.35?CL.cyan:CL.feath, kind:0, dr:1 });
+    } else {
+      Pbeam.push({ x:f.x + rr(-40,40), y:f.y + rr(-16,46),
+        vx:rr(-16,16), vy:rr(-24,26), l:0, L:rr(1.1,2.4),
+        r:rr(1,2.8), h:0, c:R()<.5?CL.white:CL.cyan, kind:1, dr:.99 });
+    }
+  }
+  step(Pbeam, dt);
+}
+function drawStars(a){
+  if (a <= .004) return;
+  ctx.globalCompositeOperation = "lighter";
+  const sW = spr(CL.white,true), sF = spr(CL.feath,true);
+  for (const s of stars){
+    const tw = .28 + .5*(0.5 + 0.5*Math.sin(T*s.sp + s.ph));
+    blob(s.ph > 3 ? sF : sW, s.x*Wd, s.y*Ht, s.r*2.3, tw*a*.75);
+  }
+  ctx.globalCompositeOperation = "source-over";
+}
+function drawFeather(f, a){
+  ctx.save();
+  ctx.translate(f.x, f.y); ctx.rotate(f.rot);
+  const k = MIN/900;
+  ctx.scale(k,k);
+  ctx.globalCompositeOperation = "lighter";
+  blob(spr(CL.feath,false), 0, 0, 210, .34*a);
+  blob(spr(CL.cyan,false),  0, 0, 90,  .40*a);
+  streak(spr(CL.feath,false), 0, -190, 130, 620, .18*a, 0);
+  /* vane */
+  const g = ctx.createLinearGradient(0,-95,0,105);
+  g.addColorStop(0,   `rgba(255,255,255,${(.92*a).toFixed(3)})`);
+  g.addColorStop(.45, `rgba(178,216,255,${(.72*a).toFixed(3)})`);
+  g.addColorStop(1,   `rgba(127,184,255,${(.06*a).toFixed(3)})`);
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(0,-98);
+  ctx.bezierCurveTo(34,-52, 30, 34, 3, 104);
+  ctx.bezierCurveTo(-30, 34, -34,-52, 0,-98);
+  ctx.closePath(); ctx.fill();
+  /* barbs + rachis */
+  ctx.strokeStyle = `rgba(255,255,255,${(.5*a).toFixed(3)})`;
+  ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(0,-98); ctx.lineTo(3,110); ctx.stroke();
+  ctx.strokeStyle = `rgba(210,236,255,${(.24*a).toFixed(3)})`;
+  ctx.lineWidth = 1;
+  for (let i = 1; i <= 11; i++){
+    const t = i/12, y = -95 + t*195, wdt = Math.sin(Math.PI*t)*31;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo( wdt, y-9); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(-wdt, y-9); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.globalCompositeOperation = "source-over";
+}
+function feathDraw(a){
+  ctx.globalCompositeOperation = "lighter";
+  for (const p of Pbeam){
+    const t = p.l/p.L, env = Math.sin(Math.PI*t);
+    if (p.kind === 0) streak(spr(p.c,false), p.x, p.y, p.r*4, p.h, env*.20*a, 0);
+    else              blob(spr(p.c,true),   p.x, p.y, p.r*2.2, env*.65*a);
+  }
+  drawFeather(feathState(), a);
+}
+
+/* ------------------------------------------------------------ 5 CRYSTAL */
+const CPOS = [[.32,.44],[.56,.59],[.72,.34]];
+const dust = [];
+for (let i = 0; i < Math.round(80*D); i++)
+  dust.push({ x:R(), y:R(), r:rr(.6,2.2), ph:R()*TAU, sp:rr(.004,.014) });
+let accSpark = 0;
+function crysUpdate(dt,w){
+  for (const m of dust){
+    m.y -= m.sp*dt*(REDUCED?.4:1);
+    m.x += Math.sin(T*.4 + m.ph)*.0004;
+    if (m.y < -.05){ m.y = 1.05; m.x = R(); }
+  }
+  accSpark += dt*w*26*D;
+  while (accSpark >= 1){
+    accSpark--;
+    const p = CPOS[(R()*CPOS.length)|0];
+    const ang = R()*TAU, rad = rr(.02,.10)*MIN;
+    const hue = R();
+    const c = hue<.3?CL.feath : hue<.55?CL.rose : hue<.8?CL.orb : CL.white;
+    Pdust.push({ x:p[0]*Wd + Math.cos(ang)*rad, y:p[1]*Ht + Math.sin(ang)*rad,
+      vx:Math.cos(ang)*rr(6,26), vy:Math.sin(ang)*rr(6,26) - 8,
+      l:0, L:rr(1.2,2.8), r:rr(1.2,3.4), c, dr:.99 });
+  }
+  step(Pdust, dt);
+}
+function crysDraw(a){
+  ctx.globalCompositeOperation = "lighter";
+  const sD = spr(CL.cyan,true);
+  for (const m of dust){
+    const tw = .2 + .35*Math.sin(T*1.1 + m.ph);
+    blob(sD, m.x*Wd, m.y*Ht, m.r*2.4, Math.max(0,tw)*a*.55);
+  }
+  for (const p of Pdust){
+    const t = p.l/p.L;
+    blob(spr(p.c,true), p.x, p.y, p.r*(1.4-t), Math.sin(Math.PI*t)*.7*a);
+  }
+  ctx.globalCompositeOperation = "source-over";
+}
+
+/* ------------------------------------------------------------- 6 FINALE */
+const FE = [];                                    /* wing-shaped emitter */
+for (let i = 0; i <= 12; i++){ const u = i/12;
+  FE.push({ x:.10 + .92*u, y:-.04 - .74*Math.pow(u,.82), w:u }); }
+for (let i = 0; i <= 7; i++){ const u = i/7;
+  FE.push({ x:.08 + .62*u, y:.14 - .40*Math.pow(u,1.25), w:u*.75 }); }
+for (let i = 0; i <= 9; i++){ const u = i/9;
+  FE.push({ x:0, y:-.30 + 1.05*u, w:0 }); }
+let accFl = 0;
+function finState(){
+  return { cx:.5*Wd, cy:.45*Ht, s:.30*Math.min(Wd, Ht*1.7),
+           flap:1 + .17*Math.sin(T*1.65), hz:.655*Ht };
+}
+function finUpdate(dt,w){
+  const st = finState();
+  accFl += dt*w*300*D;
+  while (accFl >= 1){
+    accFl--;
+    const e = FE[(R()*FE.length)|0], d = R()<.5?-1:1;
+    const x = st.cx + d*e.x*st.s + rr(-6,6);
+    const y = st.cy + e.y*st.s*(e.y<0?st.flap:1) + rr(-6,6);
+    Pflame.push({ x, y,
+      vx: d*(12 + 46*e.w)*R() + rr(-16,16),
+      vy: -(58 + 105*R() + e.w*46),
+      l:0, L:rr(1.0,1.8), r: 6 + 9*R(), sw:rr(.6,1.8), ph:R()*TAU, dr:.995, g:-14 });
+  }
+  step(Pflame, dt);
+  for (const p of Pflame) p.x += Math.sin(p.y*.012 + T*1.7 + p.ph)*26*dt*p.sw;
+}
+function flameColor(t){
+  return t < .22 ? CL.cream : t < .40 ? CL.gold : t < .68 ? CL.ember
+       : t < .86 ? CL.flame : CL.sunset;
+}
+function finDraw(a){
+  const st = finState();
+  ctx.globalCompositeOperation = "lighter";
+  /* core radiance */
+  blob(spr(CL.flame,false), st.cx, st.cy, .34*MIN, .20*a);
+  blob(spr(CL.gold,false),  st.cx, st.cy, .15*MIN, .26*a);
+  blob(spr(CL.cream,true),  st.cx, st.cy - .02*Ht, .035*MIN, .55*a);
+  /* flame body */
+  for (const p of Pflame){
+    const t = p.l/p.L;
+    blob(spr(flameColor(t), t < .4), p.x, p.y,
+         p.r*(1.15-t*.85)+.6, (1-t)*(1-t)*.60*a);
+  }
+  /* water reflection: mirrored, softened, rippled */
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, st.hz, Wd, Ht-st.hz); ctx.clip();
+  const rip = Math.sin(T*1.4);
+  for (const p of Pflame){
+    const my = 2*st.hz - p.y;
+    if (my < st.hz) continue;
+    const t = p.l/p.L;
+    blob(spr(flameColor(t), false),
+         p.x + Math.sin(my*.045 + T*2.1)*8*(1+rip*.2), my,
+         p.r*(1.15-t*.85)*1.9 + 1, (1-t)*(1-t)*.20*a);
+  }
+  blob(spr(CL.flame,false), st.cx, 2*st.hz - st.cy, .40*MIN, .11*a);
+  ctx.restore();
+  ctx.globalCompositeOperation = "source-over";
+}
+
+/* =====================================================================
+   SCROLL + MAIN LOOP  (all DOM writes happen here only)
+   ===================================================================== */
+let target = window.scrollY || 0, smooth = target;
+addEventListener("scroll", () => { target = window.scrollY; }, { passive:true });
+
+const Wt = new Array(N).fill(0);
+const prevIn = new Array(N).fill(false);
+const prevAct = new Array(N).fill(false);
+const UIC = [ [42,36,56], [58,32,26], [246,238,222], [219,230,255], [219,230,255], [255,238,222] ];
+let lastUI = "", lastIdx = -1, hintGone = false, soundOn = false;
+
+resize();
+let last = performance.now();
+function tick(now){
+  let dt = (now - last)/1000; last = now;
+  if (dt > .05) dt = .05;
+  T += dt * (REDUCED ? .45 : 1);
+
+  /* lerp-smoothed scroll */
+  smooth += (target - smooth) * 0.08;
+  const t = clamp(smooth / maxScroll, 0, 1);
+  const pos = t * (N - 1);
+
+  /* ---- scene weights + layer transforms ---- */
+  let ur = 0, ug = 0, ub = 0, us = 0;
+  for (let i = 0; i < N; i++){
+    let w = clamp(1 - Math.abs(pos - i), 0, 1);
+    w = w*w*(3 - 2*w);
+    Wt[i] = w;
+    const loc = clamp(pos - i, -1, 1);
+
+    bgs[i].style.opacity = w.toFixed(3);
+    bgs[i].style.transform =
+      `translate3d(0,${(-loc*3.6).toFixed(2)}vh,0) scale(${(1 + .055*Math.abs(loc)).toFixed(4)})`;
+
+    const cw = clamp((w - .22) / .58, 0, 1);
+    copies[i].style.opacity = cw.toFixed(3);
+    copies[i].style.transform = `translate3d(0,${(-loc*3.2).toFixed(2)}vh,0)`;
+
+    const isIn = w > .52, isAct = w > .5;
+    if (isIn !== prevIn[i]){ copies[i].classList.toggle("in", isIn); prevIn[i] = isIn; }
+    if (isAct !== prevAct[i]){ copies[i].classList.toggle("active", isAct); prevAct[i] = isAct; }
+
+    if (w > 0){ ur += UIC[i][0]*w; ug += UIC[i][1]*w; ub += UIC[i][2]*w; us += w; }
+  }
+  if (us > 0){
+    const s = `${Math.round(ur/us)},${Math.round(ug/us)},${Math.round(ub/us)}`;
+    if (s !== lastUI){ document.getElementById("ui").style.setProperty("--ui-rgb", s); lastUI = s; }
+  }
+
+  /* ---- UI ---- */
+  pfill.style.transform = `scaleX(${t.toFixed(4)})`;
+  const idx = Math.min(N-1, Math.round(pos));
+  if (idx !== lastIdx){
+    plbl.textContent = String(idx+1).padStart(2,"0") + " / 06 — " + NAMES[idx];
+    lastIdx = idx;
+  }
+  const wantSound = pos >= 2.55;
+  if (wantSound !== soundOn){ sound.classList.toggle("show", wantSound); soundOn = wantSound; }
+  if (!hintGone && t > .012){ hint.classList.add("gone"); hintGone = true; }
+
+  /* ---- particles: emit only for active scenes ---- */
+  const A = .008;
+  if (Wt[0] > A || Pblot.length)  dawnUpdate(dt,  Wt[0]);
+  if (Wt[1] > A || Pember.length) riseUpdate(dt,  Wt[1]);
+  if (Wt[2] > A || Phalo.length)  haloUpdate(dt,  Wt[2]);
+  if (Wt[3] > A || Pbeam.length)  feathUpdate(dt, Wt[3]);
+  if (Wt[4] > A || Pdust.length)  crysUpdate(dt,  Wt[4]);
+  if (Wt[5] > A || Pflame.length) finUpdate(dt,   Wt[5]);
+
+  /* ---- draw ---- */
+  ctx.clearRect(0,0,Wd,Ht);
+  ctx.globalAlpha = 1;
+  if (Wt[0] > A) dawnDraw(Wt[0]);
+  if (Wt[1] > A) riseDraw(Wt[1]);
+  if (Wt[2] > A) haloDraw(Wt[2]);
+  const night = Math.max(Wt[3], Wt[4]);
+  if (night > A) drawStars(night);
+  if (Wt[3] > A) feathDraw(Wt[3]);
+  if (Wt[4] > A) crysDraw(Wt[4]);
+  if (Wt[5] > A) finDraw(Wt[5]);
+  ctx.globalAlpha = 1;
+
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+/* decorative sound ring toggle */
+sound.addEventListener("click", () => {
+  const on = sound.dataset.on !== "1";
+  sound.dataset.on = on ? "1" : "0";
+  sound.style.opacity = on ? "1" : ".85";
+  sound.querySelector(".bars").style.animationPlayState = "running";
+  sound.querySelectorAll(".bars rect").forEach(r => {
+    r.style.animationPlayState = on ? "running" : "paused";
+  });
+});
+
+/* keyboard nudge (accessibility) */
+addEventListener("keydown", e => {
+  if (e.key === "ArrowDown" || e.key === "PageDown")
+    window.scrollBy({ top: innerHeight * 1.5, behavior: "smooth" });
+  if (e.key === "ArrowUp" || e.key === "PageUp")
+    window.scrollBy({ top: -innerHeight * 1.5, behavior: "smooth" });
+});
+</script>
+</body>
+</html>

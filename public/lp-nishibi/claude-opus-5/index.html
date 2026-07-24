@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NISHIBI ｜ 西日だけの日焼けスタジオ</title>
+<meta name="description" content="NISHIBI（西日）— 紫外線ランプを一台も持たない日焼けスタジオ。南西に開いた四枚の窓と、日没までの二時間だけで肌をつくります。東京・西原。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Jost:wght@200;300;400&family=Shippori+Mincho:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============ base ============ */
+:root{
+  --ink:#241a14;
+  --ink-2:#1a1210;
+  --paper:#f7f1e7;
+  --sand:#ece0d1;
+  --sand-2:#e2d3c1;
+  --terracotta:#b0543a;
+  --amber:#d18a45;
+  --gold:#e3ad68;
+  --line:rgba(36,26,20,.16);
+  --line-l:rgba(247,241,231,.18);
+  --serif:"Cormorant Garamond","Shippori Mincho",serif;
+  --mincho:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  --sans:"Jost","Helvetica Neue",sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--mincho);
+  font-weight:400;
+  line-height:2.15;
+  letter-spacing:.06em;
+  font-size:15px;
+  overflow-x:hidden;
+}
+body::after{ /* grain */
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:9;opacity:.35;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.14'/></svg>");
+  mix-blend-mode:multiply;
+}
+img,svg{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+
+/* ============ typography helpers ============ */
+.label{
+  font-family:var(--sans);font-weight:300;font-size:10px;
+  letter-spacing:.42em;text-transform:uppercase;
+  color:var(--terracotta);
+}
+.dark .label{color:var(--gold)}
+.num{
+  font-family:var(--sans);font-weight:200;font-size:10px;
+  letter-spacing:.3em;opacity:.5;
+}
+h1,h2,h3,.display{
+  font-family:var(--serif);font-weight:300;
+  letter-spacing:.1em;line-height:1.35;
+}
+.jp-display{
+  font-family:var(--mincho);font-weight:400;
+  letter-spacing:.16em;line-height:1.6;
+}
+.lede{
+  font-size:clamp(13px,1.05vw,15px);
+  line-height:2.5;letter-spacing:.1em;
+  opacity:.82;
+}
+
+/* ============ layout ============ */
+.wrap{width:min(1180px,88vw);margin:0 auto}
+.narrow{width:min(720px,86vw);margin:0 auto}
+section{position:relative}
+.pad{padding:clamp(110px,15vw,220px) 0}
+.dark{background:var(--ink);color:var(--paper)}
+.dark .lede{opacity:.7}
+.rule{height:1px;background:var(--line);width:100%}
+.dark .rule{background:var(--line-l)}
+.sec-head{display:flex;gap:clamp(20px,5vw,80px);align-items:baseline;margin-bottom:clamp(48px,7vw,110px)}
+.sec-head .stack{flex:1}
+.sec-head h2{font-size:clamp(28px,4.4vw,58px)}
+.sec-head .label{margin-bottom:26px;display:block}
+
+/* ============ nav ============ */
+header{
+  position:fixed;top:0;left:0;right:0;z-index:20;
+  padding:26px 6vw;display:flex;align-items:center;justify-content:space-between;
+  transition:background .8s ease,padding .6s ease,color .6s ease;
+  color:var(--paper);
+  mix-blend-mode:normal;
+}
+header.solid{
+  background:rgba(36,26,20,.9);
+  backdrop-filter:blur(14px) saturate(120%);
+  padding:16px 6vw;
+}
+.brand{
+  font-family:var(--serif);font-size:17px;letter-spacing:.62em;font-weight:400;
+  text-transform:uppercase;padding-left:.62em;
+}
+.brand small{
+  display:block;font-family:var(--mincho);font-size:9px;letter-spacing:.5em;
+  opacity:.55;margin-top:4px;padding-left:.2em;
+}
+nav ul{list-style:none;display:flex;gap:34px;align-items:center}
+nav a{font-family:var(--sans);font-size:10.5px;letter-spacing:.3em;text-transform:uppercase;opacity:.75;transition:opacity .4s}
+nav a:hover{opacity:1}
+.nav-cta{
+  border:1px solid rgba(247,241,231,.4);padding:11px 22px;
+  font-family:var(--sans);font-size:10px;letter-spacing:.3em;text-transform:uppercase;
+  transition:background .5s,color .5s,border-color .5s;
+}
+.nav-cta:hover{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+@media(max-width:860px){nav ul li:not(.only-cta){display:none}}
+
+/* ============ hero ============ */
+.hero{
+  min-height:100svh;background:var(--ink-2);color:var(--paper);
+  display:flex;flex-direction:column;justify-content:flex-end;
+  position:relative;overflow:hidden;
+}
+.hero-glow{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(120% 90% at 88% 18%, rgba(227,173,104,.42) 0%, rgba(176,84,58,.24) 32%, rgba(26,18,16,0) 68%),
+    radial-gradient(80% 60% at 100% 0%, rgba(255,214,150,.35) 0%, rgba(26,18,16,0) 60%),
+    linear-gradient(190deg,#2c1f18 0%,#1a1210 60%,#14100e 100%);
+}
+.shaft{
+  position:absolute;top:-30%;height:170%;
+  background:linear-gradient(90deg,rgba(255,205,140,0) 0%,rgba(255,205,140,.13) 45%,rgba(255,205,140,0) 100%);
+  filter:blur(14px);transform:skewX(-19deg);
+  animation:drift 26s ease-in-out infinite alternate;
+}
+.shaft.a{right:6%;width:16vw}
+.shaft.b{right:26%;width:9vw;animation-delay:-9s;opacity:.7}
+.shaft.c{right:42%;width:5vw;animation-delay:-15s;opacity:.45}
+@keyframes drift{from{transform:skewX(-19deg) translateX(0)}to{transform:skewX(-16deg) translateX(-3vw)}}
+.hero-floor{
+  position:absolute;left:0;right:0;bottom:0;height:38%;
+  background:linear-gradient(0deg,rgba(255,190,120,.10),rgba(255,190,120,0));
+  pointer-events:none;
+}
+.hero-inner{position:relative;z-index:2;padding:0 6vw clamp(52px,7vw,96px)}
+.hero-top{
+  position:absolute;top:calc(50% - 4px);left:6vw;right:6vw;
+}
+.hero h1{
+  font-family:var(--mincho);font-weight:400;
+  font-size:clamp(40px,8.6vw,124px);
+  letter-spacing:.1em;line-height:1.18;
+  margin:0 0 clamp(26px,3.6vw,44px);
+  text-indent:-.06em;
+}
+.hero h1 em{font-family:var(--serif);font-style:italic;font-weight:300;letter-spacing:.02em}
+.hero .sub{max-width:34em;font-size:clamp(12.5px,1.1vw,15px);line-height:2.5;opacity:.78;letter-spacing:.11em}
+.hero-meta{
+  display:flex;flex-wrap:wrap;gap:clamp(20px,4vw,64px);align-items:flex-end;
+  margin-top:clamp(40px,5vw,72px);
+}
+.cta{
+  display:inline-flex;align-items:center;gap:16px;
+  border:1px solid rgba(247,241,231,.45);
+  padding:19px 34px;
+  font-family:var(--sans);font-size:10.5px;letter-spacing:.34em;text-transform:uppercase;
+  transition:background .6s cubic-bezier(.2,.8,.2,1),color .6s,border-color .6s,letter-spacing .6s;
+}
+.cta:hover{background:var(--paper);color:var(--ink);border-color:var(--paper);letter-spacing:.4em}
+.cta.on-light{border-color:var(--line);color:var(--ink)}
+.cta.on-light:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.suninfo{font-family:var(--sans);font-size:10.5px;letter-spacing:.26em;opacity:.6;line-height:2.2}
+.suninfo b{font-weight:300;color:var(--gold);letter-spacing:.2em}
+.hero-scroll{
+  position:absolute;right:6vw;bottom:clamp(52px,7vw,96px);z-index:2;
+  writing-mode:vertical-rl;font-family:var(--sans);font-size:9.5px;letter-spacing:.42em;
+  text-transform:uppercase;opacity:.5;
+}
+.hero-scroll::after{content:"";display:block;width:1px;height:64px;background:linear-gradient(rgba(247,241,231,.6),transparent);margin:14px auto 0}
+@media(max-width:860px){
+  .hero-top{position:static}
+  .hero{justify-content:flex-end}
+  .hero-inner{padding-top:34vh}
+  .hero-scroll{display:none}
+}
+
+/* ============ philosophy ============ */
+.phil{background:var(--paper)}
+.phil-grid{display:grid;grid-template-columns:1fr 1.35fr;gap:clamp(40px,8vw,120px);align-items:start}
+.vert{
+  writing-mode:vertical-rl;font-family:var(--mincho);
+  font-size:clamp(17px,1.9vw,25px);letter-spacing:.4em;line-height:2.4;
+  height:min(58vh,520px);margin-left:auto;color:var(--ink);
+}
+.phil p+p{margin-top:2.1em}
+.sig{margin-top:clamp(48px,6vw,80px);font-family:var(--serif);font-style:italic;font-size:17px;opacity:.6;letter-spacing:.08em}
+@media(max-width:860px){
+  .phil-grid{grid-template-columns:1fr}
+  .vert{writing-mode:horizontal-tb;height:auto;margin:0 0 40px;font-size:20px;letter-spacing:.22em;line-height:2.1}
+}
+
+/* ============ quote band ============ */
+.band{background:var(--sand);text-align:center}
+.band .big{
+  font-family:var(--serif);font-weight:300;font-style:italic;
+  font-size:clamp(24px,4.6vw,64px);letter-spacing:.04em;line-height:1.5;
+}
+.band .jp{margin-top:28px;font-size:12px;letter-spacing:.3em;opacity:.55}
+
+/* ============ plans ============ */
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line-l);border-top:1px solid var(--line-l);border-bottom:1px solid var(--line-l)}
+.plan{
+  background:var(--ink);padding:clamp(38px,3.6vw,58px) clamp(24px,2.6vw,44px) clamp(44px,4vw,64px);
+  display:flex;flex-direction:column;min-height:min(70vh,660px);
+  position:relative;transition:background .8s ease;
+}
+.plan:hover{background:#2c1f18}
+.plan .time{font-family:var(--sans);font-size:10px;letter-spacing:.34em;opacity:.5;margin-bottom:34px}
+.plan h3{font-size:clamp(26px,2.7vw,38px);font-family:var(--mincho);font-weight:400;letter-spacing:.2em;margin-bottom:10px}
+.plan .en{font-family:var(--serif);font-style:italic;font-size:15px;opacity:.5;letter-spacing:.12em;margin-bottom:34px}
+.plan .desc{font-size:12.5px;line-height:2.4;opacity:.72;letter-spacing:.1em;margin-bottom:38px}
+.plan ul{list-style:none;margin-top:auto;font-size:12px;letter-spacing:.09em;opacity:.72;line-height:2}
+.plan ul li{padding:11px 0;border-top:1px solid var(--line-l);display:flex;gap:12px}
+.plan ul li::before{content:"—";opacity:.45}
+.price{margin-top:34px;font-family:var(--serif);font-size:clamp(28px,3vw,42px);font-weight:300;letter-spacing:.04em;color:var(--gold)}
+.price span{font-family:var(--sans);font-size:10px;letter-spacing:.28em;opacity:.55;margin-left:12px;color:var(--paper)}
+.plan .tag{
+  position:absolute;top:0;right:0;
+  background:var(--terracotta);color:var(--paper);
+  font-family:var(--sans);font-size:9px;letter-spacing:.3em;padding:8px 14px;text-transform:uppercase;
+}
+@media(max-width:900px){.plans{grid-template-columns:1fr}.plan{min-height:auto}}
+.plan-note{margin-top:clamp(36px,4vw,60px);font-size:11.5px;letter-spacing:.1em;opacity:.45;line-height:2.3}
+
+/* ============ science ============ */
+.sci-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line)}
+.sci{background:var(--paper);padding:clamp(34px,3.4vw,54px) clamp(20px,2.2vw,38px);min-height:min(46vh,380px);display:flex;flex-direction:column}
+.sci .num{margin-bottom:30px}
+.sci .val{font-family:var(--serif);font-weight:300;font-size:clamp(40px,5.4vw,74px);line-height:1;letter-spacing:-.01em;color:var(--terracotta)}
+.sci .val u{text-decoration:none;font-family:var(--sans);font-weight:300;font-size:13px;letter-spacing:.16em;margin-left:8px;color:var(--ink);opacity:.7}
+.sci .cap{margin-top:22px;font-size:12.5px;letter-spacing:.14em;font-weight:500}
+.sci .txt{margin-top:16px;font-size:11.5px;line-height:2.2;letter-spacing:.08em;opacity:.62}
+@media(max-width:1000px){.sci-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.sci-grid{grid-template-columns:1fr}.sci{min-height:auto}}
+.source{margin-top:38px;font-family:var(--sans);font-size:10px;letter-spacing:.2em;opacity:.4;line-height:2.2}
+
+/* ============ studio ============ */
+.studio-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(34px,5vw,80px)}
+.st ico{display:block;margin-bottom:34px;opacity:.85}
+.st h3{font-family:var(--mincho);font-weight:400;font-size:clamp(17px,1.7vw,22px);letter-spacing:.2em;margin-bottom:20px}
+.st p{font-size:12.5px;line-height:2.4;letter-spacing:.09em;opacity:.72}
+.st .spec{margin-top:24px;font-family:var(--sans);font-size:10px;letter-spacing:.28em;opacity:.45}
+@media(max-width:860px){.studio-grid{grid-template-columns:1fr}}
+.window-figure{margin-top:clamp(70px,8vw,130px);border-top:1px solid var(--line-l);padding-top:clamp(40px,5vw,70px)}
+
+/* ============ testimonial ============ */
+.tst{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}
+.t{background:var(--paper);padding:clamp(40px,4.6vw,74px) clamp(26px,3vw,54px)}
+.t .q{font-family:var(--mincho);font-size:clamp(15px,1.5vw,19px);line-height:2.3;letter-spacing:.12em}
+.t .who{margin-top:34px;font-family:var(--sans);font-size:10px;letter-spacing:.3em;text-transform:uppercase;opacity:.55}
+.t .who b{display:block;font-family:var(--mincho);font-weight:500;font-size:12.5px;letter-spacing:.2em;text-transform:none;opacity:.9;margin-top:8px}
+.t.wide{grid-column:span 2}
+@media(max-width:860px){.tst{grid-template-columns:1fr}.t.wide{grid-column:span 1}}
+
+/* ============ closing ============ */
+.closing{background:var(--ink);color:var(--paper);text-align:center;position:relative;overflow:hidden}
+.closing .glow{position:absolute;inset:0;background:radial-gradient(60% 70% at 50% 120%,rgba(227,173,104,.28),transparent 70%)}
+.closing .inner{position:relative;z-index:2}
+.closing h2{font-family:var(--mincho);font-weight:400;font-size:clamp(26px,4.4vw,58px);letter-spacing:.2em;line-height:1.6}
+.closing .lede{margin:34px auto 52px;max-width:30em}
+
+/* ============ footer ============ */
+footer{background:var(--ink-2);color:var(--paper);padding:clamp(72px,8vw,120px) 0 40px}
+.f-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:clamp(30px,4vw,60px)}
+footer .brand{font-size:20px;margin-bottom:26px}
+footer p,footer li{font-size:11.5px;line-height:2.3;letter-spacing:.12em;opacity:.6}
+footer h4{font-family:var(--sans);font-size:9.5px;letter-spacing:.34em;text-transform:uppercase;opacity:.45;margin-bottom:22px;font-weight:300}
+footer ul{list-style:none}
+footer ul a{opacity:.65;transition:opacity .4s}
+footer ul a:hover{opacity:1}
+.f-bottom{margin-top:clamp(60px,7vw,100px);padding-top:26px;border-top:1px solid var(--line-l);display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px}
+.f-bottom span{font-family:var(--sans);font-size:9.5px;letter-spacing:.28em;opacity:.4;text-transform:uppercase}
+@media(max-width:860px){.f-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.f-grid{grid-template-columns:1fr}}
+
+/* ============ reveal ============ */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity 1.4s cubic-bezier(.2,.8,.2,1),transform 1.4s cubic-bezier(.2,.8,.2,1);transition-delay:var(--d,0s)}
+.reveal.in{opacity:1;transform:none}
+.line-grow{transform:scaleX(0);transform-origin:left;transition:transform 1.6s cubic-bezier(.2,.8,.2,1)}
+.line-grow.in{transform:scaleX(1)}
+@media(prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none}.line-grow{transform:none}.shaft{animation:none}
+}
+</style>
+</head>
+<body>
+
+<header id="hdr">
+  <a href="#" class="brand">Nishibi<small>西日</small></a>
+  <nav>
+    <ul>
+      <li><a href="#philosophy">Philosophy</a></li>
+      <li><a href="#plan">Hours</a></li>
+      <li><a href="#science">Science</a></li>
+      <li><a href="#studio">Studio</a></li>
+      <li class="only-cta"><a href="#reserve" class="nav-cta">Reserve</a></li>
+    </ul>
+  </nav>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="shaft a"></div><div class="shaft b"></div><div class="shaft c"></div>
+  <div class="hero-floor"></div>
+
+  <div class="hero-top reveal">
+    <span class="label">Natural Tanning Studio — Est. 2019, Tokyo</span>
+  </div>
+
+  <div class="hero-inner">
+    <h1 class="reveal" style="--d:.15s">傾いた光で、<br><em>焼く</em>。</h1>
+    <p class="sub reveal" style="--d:.35s">
+      紫外線ランプを一台も持たない日焼けスタジオ。<br>
+      南西に開いた四枚の窓と、日没までのおよそ二時間だけを用いて、肌の色を整えます。
+    </p>
+    <div class="hero-meta">
+      <a href="#reserve" class="cta reveal" style="--d:.5s">光の時間を予約する</a>
+      <div class="suninfo reveal" style="--d:.65s">
+        本日の日没　<b id="sunset">—:—</b>　／　最終入室　<b id="lastentry">—:—</b><br>
+        東京・西原　北緯35.66°／東経139.70°
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-scroll">Scroll</div>
+</section>
+
+<!-- ============ PHILOSOPHY ============ -->
+<section class="pad phil" id="philosophy">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="num reveal">01</span>
+      <div class="stack">
+        <span class="label reveal">Philosophy</span>
+        <h2 class="jp-display reveal" style="--d:.1s">なぜ、西日なのか。</h2>
+      </div>
+    </div>
+
+    <div class="phil-grid">
+      <div>
+        <p class="vert reveal" style="--d:.2s">光は、傾いてはじめて<br>人の輪郭にふれる。</p>
+      </div>
+      <div class="lede">
+        <p class="reveal" style="--d:.15s">
+          正午の光は、垂直に落ちる。それは肌の上を通過するだけで、肌に留まることをしない。対して西日は、地表とほとんど平行に近い角度で人体へ届く。届くまでに大気を長く旅した光は、鋭さを失い、密度を得る。私たちが用いるのは、その「疲れた光」だけです。
+        </p>
+        <p class="reveal" style="--d:.25s">
+          東洋には、時刻を色で数える習わしがありました。黄金、茜、残光。いずれも失われていく途中の名であり、完成した色の名ではない。日焼けもまた本来、到達ではなく経過であるべきだと私たちは考えます。西日は、その経過を最も緩やかに記録する媒体です。
+        </p>
+        <p class="reveal" style="--d:.35s">
+          機械の光は、時間を持ちません。何時に浴びても同じ強度で、同じ結果を返します。しかし人の身体は、一日のどこでその光に出会ったかを覚えています。NISHIBI は、色を与える施設ではなく、時刻を身体に返す施設です。
+        </p>
+        <p class="sig reveal" style="--d:.45s">NISHIBI 主宰　西原 暁生</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BAND ============ -->
+<section class="pad band">
+  <div class="narrow">
+    <p class="big reveal">Light that arrives late<br>stays longer on the skin.</p>
+    <p class="jp reveal" style="--d:.2s">遅く届いた光は、長く残る。</p>
+  </div>
+</section>
+
+<!-- ============ PLAN ============ -->
+<section class="pad dark" id="plan">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="num reveal">02</span>
+      <div class="stack">
+        <span class="label reveal">Hours &amp; Plans</span>
+        <h2 class="jp-display reveal" style="--d:.1s">三つの、傾き。</h2>
+      </div>
+    </div>
+
+    <p class="lede reveal" style="--d:.15s;max-width:36em;margin-bottom:clamp(48px,6vw,90px)">
+      当スタジオの単位は「分」ではなく「太陽高度」です。入室時刻は季節ごとの日没時刻から逆算され、毎日わずかに移動します。下記はいずれも春分・秋分期を基準とした標準値です。
+    </p>
+
+    <div class="plans">
+      <article class="plan reveal">
+        <div class="time">Golden ／ 太陽高度 22°–14°</div>
+        <h3>黄金時間</h3>
+        <div class="en">Golden Hour</div>
+        <p class="desc">最も広い面積に、最も長く光が滞留する時間帯。初回の方、または肌の基礎を整える段階の方に。床面に落ちる窓枠の影が、まだ長方形を保っています。</p>
+        <ul>
+          <li>50分／窓辺席</li>
+          <li>入室 15:40 前後</li>
+          <li>白湯（黒文字）一服</li>
+          <li>光量記録カード発行</li>
+        </ul>
+        <div class="price">¥6,800<span>／回</span></div>
+      </article>
+
+      <article class="plan reveal" style="--d:.12s">
+        <span class="tag">Recommended</span>
+        <div class="time">Akane ／ 太陽高度 14°–6°</div>
+        <h3>茜時間</h3>
+        <div class="en">Akane Hour</div>
+        <p class="desc">光が色を持ちはじめ、室内の無垢材が反射体として機能しはじめる時間帯。当スタジオが最も推奨する帯であり、年間予約の六割がここに集中します。</p>
+        <ul>
+          <li>50分／中央床席（傾斜台）</li>
+          <li>入室 16:30 前後</li>
+          <li>季節の湯（三種より選択）</li>
+          <li>入射角の記録・写像の保存</li>
+          <li>次回最適時刻の算出</li>
+        </ul>
+        <div class="price">¥9,800<span>／回</span></div>
+      </article>
+
+      <article class="plan reveal" style="--d:.24s">
+        <div class="time">Afterglow ／ 太陽高度 6°–0°</div>
+        <h3>残光時間</h3>
+        <div class="en">Afterglow</div>
+        <p class="desc">日没直前、直射がほぼ失われ、大気そのものが光源となる帯。焼けるためではなく、静止するために訪れる時間です。一日一組、三席のみ。</p>
+        <ul>
+          <li>40分／一日一組・三席限定</li>
+          <li>入室 17:20 前後</li>
+          <li>無言（会話を伴いません）</li>
+          <li>薫香一種・湯・果実</li>
+          <li>日没時刻証明書</li>
+          <li>年二回の観測会へ招待</li>
+        </ul>
+        <div class="price">¥12,800<span>／回</span></div>
+      </article>
+    </div>
+
+    <p class="plan-note reveal">
+      회수券（六回）は各帯 一割引にて。悪天候により所定の太陽高度に達しない場合、施術は行わず、次回へ繰り越します。当スタジオは補助光源を一切保有していないため、代替はございません。
+    </p>
+  </div>
+</section>
+
+<!-- ============ SCIENCE ============ -->
+<section class="pad" id="science">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="num reveal">03</span>
+      <div class="stack">
+        <span class="label reveal">Science</span>
+        <h2 class="jp-display reveal" style="--d:.1s">数値としての、夕方。</h2>
+      </div>
+    </div>
+
+    <div class="sci-grid">
+      <div class="sci reveal">
+        <span class="num">i</span>
+        <div class="val"><span class="count" data-to="18.4" data-dec="1">0</span><u>度</u></div>
+        <div class="cap">平均入射角</div>
+        <p class="txt">当スタジオ窓面における西日の平均入射角。正午光（約78度）と比較して、皮膚表層を通過する光路長は約2.7倍に延伸します。</p>
+      </div>
+      <div class="sci reveal" style="--d:.1s">
+        <span class="num">ii</span>
+        <div class="val"><span class="count" data-to="0.31" data-dec="2">0</span><u>相対値</u></div>
+        <div class="cap">UV-B 相対強度</div>
+        <p class="txt">正午値を1.00とした場合の16時台の実測平均。短波成分が大気により選択的に減衰し、真皮への負荷を抑えたまま色素反応のみを誘導します。</p>
+      </div>
+      <div class="sci reveal" style="--d:.2s">
+        <span class="num">iii</span>
+        <div class="val"><span class="count" data-to="2300" data-dec="0">0</span><u>K</u></div>
+        <div class="cap">平均色温度</div>
+        <p class="txt">室内到達光の平均相関色温度。長波長優位の光環境下では、被験者の主観的体感温度が同室温比で1.8度高く報告されます。</p>
+      </div>
+      <div class="sci reveal" style="--d:.3s">
+        <span class="num">iv</span>
+        <div class="val">−<span class="count" data-to="47" data-dec="0">0</span><u>分</u></div>
+        <div class="cap">概日位相の前進量</div>
+        <p class="txt">週二回・八週間の来訪者における入眠時刻の平均変化。夕光暴露は概日リズムの位相を整え、睡眠潜時の短縮に寄与すると考えられます。</p>
+      </div>
+    </div>
+
+    <p class="source reveal">
+      出典：NISHIBI 光環境研究室『西向窓面における夕方光の分光特性と皮膚応答に関する観測記録（2019–2024）』／被験者 n=214、東京・西原スタジオ実測。数値は季節・気象条件により変動します。本記述は医療上の効果を保証するものではありません。
+    </p>
+  </div>
+</section>
+
+<!-- ============ STUDIO ============ -->
+<section class="pad dark" id="studio">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="num reveal">04</span>
+      <div class="stack">
+        <span class="label reveal">Studio</span>
+        <h2 class="jp-display reveal" style="--d:.1s">光のためだけの、一室。</h2>
+      </div>
+    </div>
+
+    <div class="studio-grid">
+      <div class="st reveal">
+        <ico>
+          <svg width="56" height="56" viewBox="0 0 56 56" fill="none" stroke="#e3ad68" stroke-width=".9">
+            <rect x="8" y="6" width="40" height="44"/><path d="M28 6v44M8 28h40"/>
+            <path d="M14 50l12-14M24 50l12-14M34 50l12-14" stroke-opacity=".45"/>
+          </svg>
+        </ico>
+        <h3>南西向き　全面窓</h3>
+        <p>高さ4.2メートル、幅7.8メートル。方位角238度。無鉄分の白板ガラスを用い、可視域から近紫外域までの透過率を確保しています。UVカット層は施しておりません。</p>
+        <div class="spec">GLASS ／ LOW-IRON, 12mm</div>
+      </div>
+      <div class="st reveal" style="--d:.12s">
+        <ico>
+          <svg width="56" height="56" viewBox="0 0 56 56" fill="none" stroke="#e3ad68" stroke-width=".9">
+            <path d="M6 16c10-4 20 4 30 0s12-2 14 0M6 28c10-4 20 4 30 0s12-2 14 0M6 40c10-4 20 4 30 0s12-2 14 0"/>
+          </svg>
+        </ico>
+        <h3>無垢の楢　床</h3>
+        <p>厚さ30ミリの楢材を無塗装のまま敷設。西日を受けた木材が二次反射体となり、身体の陰の側にも弱い光をまわします。年月とともに床の色は濃くなり、光の質は変わります。</p>
+        <div class="spec">OAK ／ UNTREATED, 30mm</div>
+      </div>
+      <div class="st reveal" style="--d:.24s">
+        <ico>
+          <svg width="56" height="56" viewBox="0 0 56 56" fill="none" stroke="#e3ad68" stroke-width=".9">
+            <circle cx="28" cy="28" r="20"/><path d="M14 42L42 14"/>
+            <path d="M22 24v8M28 20v16M34 24v8" stroke-opacity=".45"/>
+          </svg>
+        </ico>
+        <h3>無音・無香</h3>
+        <p>室内騒音レベル NC-20。空調は稼働させず、施術中は対流を止めます。音楽、香料、会話をいずれも置きません。聞こえるのは、窓の外の時刻の音だけです。</p>
+        <div class="spec">NC-20 ／ NO SCENT, NO SOUND</div>
+      </div>
+    </div>
+
+    <div class="window-figure reveal">
+      <div class="lede" style="max-width:34em">
+        施術は、寝台の上ではなく床の上で行われます。角度8度の楢の傾斜台に身体を預け、光の来る方向にただ面を向ける。これを当スタジオでは「面を出す」と呼びます。技術ではなく、姿勢の問題です。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TESTIMONIAL ============ -->
+<section class="pad" id="voice">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="num reveal">05</span>
+      <div class="stack">
+        <span class="label reveal">Voices</span>
+        <h2 class="jp-display reveal" style="--d:.1s">通う人の、言葉。</h2>
+      </div>
+    </div>
+
+    <div class="tst">
+      <div class="t reveal">
+        <p class="q">「以前は機械の光で焼いていました。仕上がりは均一で、けれども自分がいつ焼いたのか思い出せない。ここでの色は、その日の天気を覚えています。窯の火と同じで、記録なのだと思います。」</p>
+        <div class="who">Ceramicist<b>陶芸家・37歳／茜時間</b></div>
+      </div>
+      <div class="t reveal" style="--d:.12s">
+        <p class="q">「都市の余白について十年考えてきましたが、余白とは面積ではなく時刻でした。十七時二十分から日没まで、この街には確かに空白があります。そこに横になるだけで、一日の設計が変わります。」</p>
+        <div class="who">Urban Planner<b>都市計画家・44歳／残光時間</b></div>
+      </div>
+      <div class="t wide reveal" style="--d:.24s">
+        <p class="q">「香りを扱う仕事なので、無香の場所を探していました。ここには何も置かれていない。強い光が木を温めて、木がわずかに立ち上がる匂いだけがある。あれは香料では再現できません。四十分間、私は何も判断しないでいられます。」</p>
+        <div class="who">Perfumer<b>調香師・31歳／残光時間</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CLOSING ============ -->
+<section class="pad closing" id="reserve">
+  <div class="glow"></div>
+  <div class="inner narrow">
+    <span class="label reveal">Reservation</span>
+    <h2 class="reveal" style="--d:.1s;margin-top:26px">光は、待たない。</h2>
+    <p class="lede reveal" style="--d:.2s">
+      予約は前日十八時までに承ります。当日の受付は、日没時刻の四十分前をもって終了いたします。
+      天候により施術が成立しない日がございますことを、あらかじめご了承ください。
+    </p>
+    <a href="#" class="cta reveal" style="--d:.3s">空いている時刻を確認する</a>
+    <p class="suninfo reveal" style="--d:.4s;margin-top:44px">
+      本日の日没　<b id="sunset2">—:—</b>　／　残光時間　<b id="afterglow">—:—</b> 以降
+    </p>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div class="f-grid">
+      <div class="reveal">
+        <div class="brand">Nishibi<small>西日</small></div>
+        <p>西日のみを用いる天然日焼けスタジオ。<br>紫外線ランプ・補助光源を保有しておりません。</p>
+      </div>
+      <div class="reveal" style="--d:.1s">
+        <h4>Studio</h4>
+        <p>
+          東京都渋谷区西原三丁目18-4<br>
+          西日ビル 2階<br>
+          03-6427-0084
+        </p>
+      </div>
+      <div class="reveal" style="--d:.2s">
+        <h4>Hours</h4>
+        <p>
+          15:00 — 日没<br>
+          最終入室 日没40分前<br>
+          休：雨天・曇天・冬至前後二週
+        </p>
+      </div>
+      <div class="reveal" style="--d:.3s">
+        <h4>Elsewhere</h4>
+        <ul>
+          <li><a href="#">Instagram ／ @nishibi.studio</a></li>
+          <li><a href="#">Journal ／ 光の記録</a></li>
+          <li><a href="#">Newsletter ／ 日没通知</a></li>
+          <li><a href="#">Atelier Shop ／ 楢の傾斜台</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="f-bottom">
+      <span>© <span id="yr">2025</span> NISHIBI Light Environment Laboratory</span>
+      <span>Tokyo ／ 35.66°N 139.70°E ／ Azimuth 238°</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ---------- reveal ---------- */
+(function(){
+  var els = document.querySelectorAll('.reveal, .line-grow');
+  if(!('IntersectionObserver' in window)){
+    els.forEach(function(e){e.classList.add('in')}); return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); }
+    });
+  },{threshold:.12, rootMargin:'0px 0px -8% 0px'});
+  els.forEach(function(e){io.observe(e)});
+})();
+
+/* ---------- header state ---------- */
+(function(){
+  var hdr = document.getElementById('hdr');
+  var onScroll = function(){
+    if(window.scrollY > window.innerHeight*.85) hdr.classList.add('solid');
+    else hdr.classList.remove('solid');
+  };
+  window.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+})();
+
+/* ---------- number counters ---------- */
+(function(){
+  var nums = document.querySelectorAll('.count');
+  var ease = function(t){ return 1-Math.pow(1-t,3); };
+  var run = function(el){
+    var to = parseFloat(el.dataset.to), dec = parseInt(el.dataset.dec,10)||0;
+    var dur = 1800, t0 = performance.now();
+    var step = function(now){
+      var p = Math.min((now-t0)/dur,1);
+      var v = to*ease(p);
+      el.textContent = dec ? v.toFixed(dec) : Math.round(v).toLocaleString('ja-JP');
+      if(p<1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+  if(!('IntersectionObserver' in window)){ nums.forEach(run); return; }
+  var io = new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ run(e.target); io.unobserve(e.target); } });
+  },{threshold:.6});
+  nums.forEach(function(n){io.observe(n)});
+})();
+
+/* ---------- sunset (Tokyo, JST) : NOAA approximation ---------- */
+(function(){
+  var LAT = 35.6586, LON = 139.7016, TZ = 540; // minutes
+  var now = new Date();
+  var start = Date.UTC(now.getUTCFullYear(),0,1);
+  var doy = Math.floor((Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()) - start)/86400000) + 1;
+  var rad = Math.PI/180;
+  var g = 2*Math.PI/365*(doy-1);
+  var eqt = 229.18*(0.000075+0.001868*Math.cos(g)-0.032077*Math.sin(g)-0.014615*Math.cos(2*g)-0.040849*Math.sin(2*g));
+  var dec = 0.006918-0.399912*Math.cos(g)+0.070257*Math.sin(g)-0.006758*Math.cos(2*g)
+          +0.000907*Math.sin(2*g)-0.002697*Math.cos(3*g)+0.00148*Math.sin(3*g);
+  var cosH = Math.cos(90.833*rad)/(Math.cos(LAT*rad)*Math.cos(dec)) - Math.tan(LAT*rad)*Math.tan(dec);
+  cosH = Math.max(-1,Math.min(1,cosH));
+  var ha = Math.acos(cosH)/rad;
+  var noonUTC = 720 - 4*LON - eqt;
+  var sunsetLocal = noonUTC + 4*ha + TZ;
+  var fmt = function(m){
+    m = ((m%1440)+1440)%1440;
+    var h = Math.floor(m/60), mi = Math.round(m%60);
+    if(mi===60){mi=0;h=(h+1)%24;}
+    return (h<10?'0':'')+h+':'+(mi<10?'0':'')+mi;
+  };
+  var set = function(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; };
+  set('sunset', fmt(sunsetLocal));
+  set('sunset2', fmt(sunsetLocal));
+  set('lastentry', fmt(sunsetLocal-40));
+  set('afterglow', fmt(sunsetLocal-40));
+  var y=document.getElementById('yr'); if(y) y.textContent = now.getFullYear();
+})();
+</script>
+</body>
+</html>

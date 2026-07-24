@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>地底遺構ヴェルナ / Vernaa Depths</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: #07080c;
+    color: #cfd3e0;
+    font-family: "Courier New", Consolas, monospace;
+  }
+  #wrap {
+    width: 1000px;
+    margin: 12px auto 40px;
+  }
+  h1 {
+    font-size: 18px;
+    letter-spacing: 4px;
+    margin: 4px 0 10px;
+    color: #9fe0c0;
+    font-weight: normal;
+  }
+  h1 span { color: #6a7080; font-size: 12px; letter-spacing: 1px; }
+  #hud {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    flex-wrap: wrap;
+    background: #10121a;
+    border: 1px solid #262a38;
+    padding: 8px 12px;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .hudItem { white-space: nowrap; }
+  .lbl { color: #6a7080; }
+  .val { color: #e8ecf6; }
+  #hpbar {
+    display: inline-block;
+    width: 120px; height: 10px;
+    background: #2a1d22; border: 1px solid #40303a;
+    vertical-align: middle; position: relative;
+  }
+  #hpfill { position: absolute; left: 0; top: 0; bottom: 0; background: #d8556a; width: 100%; }
+  #inv {
+    background: #10121a;
+    border: 1px solid #262a38;
+    padding: 6px 12px;
+    font-size: 13px;
+    margin-bottom: 8px;
+    min-height: 30px;
+  }
+  #inv .slot { display: inline-block; margin-right: 14px; }
+  #inv .num { color: #ffd479; }
+  #inv .empty { color: #454b5c; }
+  canvas {
+    display: block;
+    background: #07080c;
+    border: 1px solid #262a38;
+  }
+  #log {
+    margin-top: 8px;
+    background: #10121a;
+    border: 1px solid #262a38;
+    padding: 8px 12px;
+    font-size: 13px;
+    height: 108px;
+    overflow: hidden;
+  }
+  #log div { line-height: 1.6; }
+  .m0 { color: #e8ecf6; }
+  .m1 { color: #a8aec0; }
+  .m2 { color: #7e8496; }
+  .m3 { color: #5d6274; }
+  .m4 { color: #464b5b; }
+  .good { color: #8fe0a8 !important; }
+  .bad  { color: #f08090 !important; }
+  .warn { color: #ffd479 !important; }
+  #help {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #5d6274;
+    line-height: 1.7;
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <h1>地底遺構ヴェルナ <span>VERNAA DEPTHS</span></h1>
+  <div id="hud">
+    <div class="hudItem"><span class="lbl">HP</span> <span class="val" id="hpTxt">0/0</span> <span id="hpbar"><span id="hpfill"></span></span></div>
+    <div class="hudItem"><span class="lbl">Lv</span> <span class="val" id="lvTxt">1</span></div>
+    <div class="hudItem"><span class="lbl">EXP</span> <span class="val" id="xpTxt">0/0</span></div>
+    <div class="hudItem"><span class="lbl">攻撃力</span> <span class="val" id="atkTxt">0</span></div>
+    <div class="hudItem"><span class="lbl">階層</span> <span class="val" id="flTxt">地下1階</span></div>
+    <div class="hudItem"><span class="lbl">ターン</span> <span class="val" id="tnTxt">0</span></div>
+  </div>
+  <div id="inv"></div>
+  <canvas id="cv" width="960" height="644"></canvas>
+  <div id="log"></div>
+  <div id="help">
+    移動: 矢印キー / W A S D　　アイテム使用: 1 - 9　　階段を降りる: Enter または &gt;　　やり直し: R
+  </div>
+</div>
+<script>
+"use strict";
+
+/* ============================================================
+   地底遺構ヴェルナ  -  ターン制ローグライク (single file)
+   ============================================================ */
+
+const MW = 48, MH = 28;          // マップサイズ (48 x 28 = 1344 タイル)
+const TW = 20, TH = 23;          // タイル描画サイズ
+const MAX_DEPTH = 3;             // 地下3階の階段を降りたらクリア
+const FOV_R = 8.2;               // 視界半径
+
+const WALL = 0, FLOOR = 1;
+
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+
+/* ---------- 乱数 (毎回シードを変える) ---------- */
+let seed = (Date.now() ^ (Math.random() * 0x7fffffff)) >>> 0;
+function rnd() {           // xorshift32
+  seed ^= seed << 13; seed >>>= 0;
+  seed ^= seed >>> 17;
+  seed ^= seed << 5;  seed >>>= 0;
+  return seed / 4294967296;
+}
+function ri(n) { return Math.floor(rnd() * n); }              // 0..n-1
+function rr(a, b) { return a + Math.floor(rnd() * (b - a + 1)); } // a..b
+function pick(a) { return a[ri(a.length)]; }
+
+/* ---------- モンスター定義 ---------- */
+const MONSTERS = [
+  { id:"slime", ch:"s", name:"泥スライム",  col:"#7fd88c", hp:10, atk:3, def:0, xp:6,  ai:"chase",   minD:1, w:5 },
+  { id:"bat",   ch:"b", name:"洞窟コウモリ", col:"#c79ce0", hp:6,  atk:2, def:0, xp:5,  ai:"erratic", minD:1, w:4 },
+  { id:"rat",   ch:"r", name:"灰鼠",        col:"#c9b28a", hp:8,  atk:3, def:0, xp:5,  ai:"erratic", minD:1, w:3 },
+  { id:"guard", ch:"g", name:"岩兵",        col:"#8fb4e0", hp:16, atk:5, def:1, xp:12, ai:"chase",   minD:2, w:4 },
+  { id:"wolf",  ch:"w", name:"影狼",        col:"#e08a6a", hp:14, atk:7, def:1, xp:16, ai:"chase",   minD:3, w:4 },
+  { id:"wisp",  ch:"y", name:"呪炎ウィスプ", col:"#ffd479", hp:12, atk:8, def:2, xp:20, ai:"chase",   minD:3, w:2 },
+];
+
+/* ---------- アイテム定義 ---------- */
+const ITEMS = [
+  { id:"potion", ch:"!", name:"治癒薬",     col:"#ff8fa3", w:6, desc:"HPを18回復" },
+  { id:"elixir", ch:"?", name:"大治癒薬",   col:"#ff5f7d", w:2, desc:"HPを全回復" },
+  { id:"blade",  ch:"/", name:"研磨刃",     col:"#bfe8ff", w:4, desc:"攻撃力 +2" },
+  { id:"axe",    ch:"(", name:"重斧",       col:"#ffe2a0", w:2, desc:"攻撃力 +4" },
+  { id:"heart",  ch:"*", name:"生命の結晶", col:"#9fe0c0", w:3, desc:"最大HP +8 / 全回復" },
+];
+
+/* ---------- ゲーム状態 ---------- */
+let state = "title";   // title | play | dead | win
+let map, explored, visible, rooms;
+let depth, turn, stairs;
+let monsters, items;
+let player;
+let log = [];
+
+function newGame() {
+  seed = (seed ^ Date.now() ^ (Math.random() * 0x7fffffff)) >>> 0;
+  player = {
+    x:0, y:0, hp:32, maxhp:32, atk:4, lv:1, xp:0, next:14,
+    inv: []
+  };
+  depth = 1; turn = 0; log = [];
+  msg("地底遺構ヴェルナへ降りた。地下3階の奥へ進め。", "warn");
+  buildFloor();
+  state = "play";
+  render();
+}
+
+/* ============================================================
+   ダンジョン生成
+   ============================================================ */
+function buildFloor() {
+  let ok = false, guard = 0;
+  while (!ok && guard++ < 60) ok = tryBuild();
+  placeEntities();
+  computeFOV();
+}
+
+function tryBuild() {
+  map = [];
+  explored = [];
+  for (let y = 0; y < MH; y++) {
+    map.push(new Array(MW).fill(WALL));
+    explored.push(new Array(MW).fill(false));
+  }
+  rooms = [];
+  const target = rr(8, 11);
+  let att = 0;
+  while (rooms.length < target && att++ < 500) {
+    const w = rr(4, 9), h = rr(3, 6);
+    const x = rr(1, MW - w - 2), y = rr(1, MH - h - 2);
+    const r = { x, y, w, h, cx: x + (w >> 1), cy: y + (h >> 1) };
+    let bad = false;
+    for (const o of rooms) {
+      if (r.x - 1 < o.x + o.w + 1 && r.x + r.w + 1 > o.x - 1 &&
+          r.y - 1 < o.y + o.h + 1 && r.y + r.h + 1 > o.y - 1) { bad = true; break; }
+    }
+    if (bad) continue;
+    rooms.push(r);
+    for (let yy = r.y; yy < r.y + r.h; yy++)
+      for (let xx = r.x; xx < r.x + r.w; xx++) map[yy][xx] = FLOOR;
+  }
+  if (rooms.length < 6) return false;
+
+  // 部屋を x 座標順につないで全連結を保証
+  const order = rooms.slice().sort((a, b) => a.cx - b.cx || a.cy - b.cy);
+  for (let i = 1; i < order.length; i++) corridor(order[i - 1], order[i]);
+  // ループを作るための追加通路
+  const extra = 2 + ri(2);
+  for (let i = 0; i < extra; i++) corridor(pick(rooms), pick(rooms));
+
+  // 連結確認 (念のため)
+  const start = rooms[0];
+  const seen = flood(start.cx, start.cy);
+  for (const r of rooms) if (!seen[r.cy][r.cx]) return false;
+  return true;
+}
+
+function carve(x, y) {
+  if (x > 0 && y > 0 && x < MW - 1 && y < MH - 1) map[y][x] = FLOOR;
+}
+function corridor(a, b) {
+  let x = a.cx, y = a.cy;
+  if (rnd() < 0.5) {
+    while (x !== b.cx) { x += Math.sign(b.cx - x); carve(x, y); }
+    while (y !== b.cy) { y += Math.sign(b.cy - y); carve(x, y); }
+  } else {
+    while (y !== b.cy) { y += Math.sign(b.cy - y); carve(x, y); }
+    while (x !== b.cx) { x += Math.sign(b.cx - x); carve(x, y); }
+  }
+}
+function flood(sx, sy) {
+  const seen = [];
+  for (let y = 0; y < MH; y++) seen.push(new Array(MW).fill(false));
+  const st = [[sx, sy]]; seen[sy][sx] = true;
+  while (st.length) {
+    const [x, y] = st.pop();
+    const dd = [[1,0],[-1,0],[0,1],[0,-1]];
+    for (const [dx, dy] of dd) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= MW || ny >= MH) continue;
+      if (seen[ny][nx] || map[ny][nx] === WALL) continue;
+      seen[ny][nx] = true; st.push([nx, ny]);
+    }
+  }
+  return seen;
+}
+
+function placeEntities() {
+  monsters = []; items = [];
+  const home = rooms[0];
+  player.x = home.cx; player.y = home.cy;
+
+  // 階段 : プレイヤーから最も遠い部屋
+  let far = rooms[1] || rooms[0], best = -1;
+  for (const r of rooms) {
+    const d = Math.abs(r.cx - home.cx) + Math.abs(r.cy - home.cy);
+    if (d > best) { best = d; far = r; }
+  }
+  stairs = { x: far.cx, y: far.cy };
+
+  const occupied = () => {
+    const s = new Set();
+    s.add(player.x + "," + player.y);
+    s.add(stairs.x + "," + stairs.y);
+    for (const m of monsters) s.add(m.x + "," + m.y);
+    for (const it of items) s.add(it.x + "," + it.y);
+    return s;
+  };
+
+  const freeSpot = (minDistFromPlayer) => {
+    const occ = occupied();
+    for (let t = 0; t < 400; t++) {
+      const r = pick(rooms);
+      const x = rr(r.x, r.x + r.w - 1), y = rr(r.y, r.y + r.h - 1);
+      if (map[y][x] !== FLOOR) continue;
+      if (occ.has(x + "," + y)) continue;
+      if (Math.abs(x - player.x) + Math.abs(y - player.y) < minDistFromPlayer) continue;
+      return { x, y };
+    }
+    return null;
+  };
+
+  // 敵 (深いほど多く強い)
+  const nMon = 6 + depth * 2 + ri(2);
+  const pool = MONSTERS.filter(m => m.minD <= depth);
+  for (let i = 0; i < nMon; i++) {
+    const sp = freeSpot(7);
+    if (!sp) break;
+    const base = weighted(pool);
+    const s = depth - 1;
+    monsters.push({
+      x: sp.x, y: sp.y, ch: base.ch, name: base.name, col: base.col, ai: base.ai,
+      hp: base.hp + s * 5, maxhp: base.hp + s * 5,
+      atk: base.atk + s * 2, def: base.def + Math.floor(s / 2),
+      xp: base.xp + s * 5, alert: false
+    });
+  }
+  // アイテム
+  const nItem = 4 + ri(3);
+  for (let i = 0; i < nItem; i++) {
+    const sp = freeSpot(2);
+    if (!sp) break;
+    const base = weighted(ITEMS);
+    items.push({ x: sp.x, y: sp.y, id: base.id, ch: base.ch, name: base.name, col: base.col, desc: base.desc });
+  }
+}
+function weighted(list) {
+  let tot = 0; for (const e of list) tot += e.w;
+  let r = rnd() * tot;
+  for (const e of list) { r -= e.w; if (r <= 0) return e; }
+  return list[list.length - 1];
+}
+
+/* ============================================================
+   視界 (レイキャスト)
+   ============================================================ */
+function computeFOV() {
+  visible = [];
+  for (let y = 0; y < MH; y++) visible.push(new Array(MW).fill(false));
+  visible[player.y][player.x] = true;
+  explored[player.y][player.x] = true;
+  const rays = 900;
+  for (let i = 0; i < rays; i++) {
+    const a = (i / rays) * Math.PI * 2;
+    const dx = Math.cos(a), dy = Math.sin(a);
+    let x = player.x + 0.5, y = player.y + 0.5;
+    for (let s = 0; s < FOV_R; s++) {
+      x += dx; y += dy;
+      const ix = Math.floor(x), iy = Math.floor(y);
+      if (ix < 0 || iy < 0 || ix >= MW || iy >= MH) break;
+      visible[iy][ix] = true;
+      explored[iy][ix] = true;
+      if (map[iy][ix] === WALL) break;
+    }
+  }
+  // 部屋の中にいる時はその部屋全体を照らす
+  for (const r of rooms) {
+    if (player.x >= r.x - 1 && player.x <= r.x + r.w && player.y >= r.y - 1 && player.y <= r.y + r.h) {
+      for (let y = r.y - 1; y <= r.y + r.h; y++)
+        for (let x = r.x - 1; x <= r.x + r.w; x++) {
+          if (x < 0 || y < 0 || x >= MW || y >= MH) continue;
+          visible[y][x] = true; explored[y][x] = true;
+        }
+    }
+  }
+}
+
+function los(x0, y0, x1, y1, maxd) {
+  const dx = x1 - x0, dy = y1 - y0;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  if (dist > maxd) return false;
+  const steps = Math.ceil(dist * 2);
+  for (let i = 1; i < steps; i++) {
+    const t = i / steps;
+    const x = Math.floor(x0 + dx * t + 0.5), y = Math.floor(y0 + dy * t + 0.5);
+    if (x === x1 && y === y1) break;
+    if (map[y] === undefined || map[y][x] === WALL) return false;
+  }
+  return true;
+}
+
+/* ============================================================
+   ログ
+   ============================================================ */
+function msg(text, cls) {
+  log.unshift({ t: text, c: cls || "" });
+  if (log.length > 40) log.pop();
+}
+
+/* ============================================================
+   ターン処理
+   ============================================================ */
+function monsterAt(x, y) {
+  for (const m of monsters) if (m.x === x && m.y === y) return m;
+  return null;
+}
+function walkable(x, y) {
+  return x >= 0 && y >= 0 && x < MW && y < MH && map[y][x] === FLOOR;
+}
+
+function tryMove(dx, dy) {
+  const nx = player.x + dx, ny = player.y + dy;
+  if (!walkable(nx, ny)) { return false; }
+  const m = monsterAt(nx, ny);
+  if (m) { playerAttack(m); endTurn(); return true; }
+  player.x = nx; player.y = ny;
+  pickup();
+  endTurn();
+  return true;
+}
+
+function playerAttack(m) {
+  const dmg = Math.max(1, player.atk + ri(3) - m.def);
+  m.hp -= dmg;
+  msg(m.name + "に " + dmg + " ダメージ", "");
+  if (m.hp <= 0) {
+    monsters.splice(monsters.indexOf(m), 1);
+    msg(m.name + "を倒した！ 経験値 " + m.xp, "good");
+    gainXP(m.xp);
+  } else {
+    m.alert = true;
+  }
+}
+
+function gainXP(v) {
+  player.xp += v;
+  while (player.xp >= player.next) {
+    player.xp -= player.next;
+    player.lv++;
+    player.next = 14 + (player.lv - 1) * 12;
+    player.maxhp += 7;
+    player.atk += 1;
+    player.hp = Math.min(player.maxhp, player.hp + 8);
+    msg("レベルアップ！ Lv" + player.lv + " (最大HP+7 / 攻撃力+1)", "warn");
+  }
+}
+
+function pickup() {
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    if (it.x === player.x && it.y === player.y) {
+      if (player.inv.length >= 9) { msg("持ち物がいっぱいで " + it.name + " を拾えない。", "bad"); return; }
+      player.inv.push(it);
+      items.splice(i, 1);
+      msg(it.name + " を拾った。", "good");
+      return;
+    }
+  }
+}
+
+function useItem(slot) {
+  if (slot < 0 || slot >= player.inv.length) { msg("スロット " + (slot + 1) + " は空だ。", ""); render(); return; }
+  const it = player.inv[slot];
+  let used = true;
+  switch (it.id) {
+    case "potion": {
+      const before = player.hp;
+      player.hp = Math.min(player.maxhp, player.hp + 18);
+      msg("治癒薬を飲んだ。HPが " + (player.hp - before) + " 回復。", "good");
+      break;
+    }
+    case "elixir": {
+      const before = player.hp;
+      player.hp = player.maxhp;
+      msg("大治癒薬を飲んだ。HPが " + (player.hp - before) + " 回復。", "good");
+      break;
+    }
+    case "blade":
+      player.atk += 2; msg("研磨刃を装備した。攻撃力 +2 (" + player.atk + ")", "good"); break;
+    case "axe":
+      player.atk += 4; msg("重斧を構えた。攻撃力 +4 (" + player.atk + ")", "good"); break;
+    case "heart":
+      player.maxhp += 8; player.hp = player.maxhp;
+      msg("生命の結晶が砕けた。最大HP +8 / 全回復", "good"); break;
+    default: used = false;
+  }
+  if (used) {
+    player.inv.splice(slot, 1);
+    endTurn();
+  } else render();
+}
+
+function descend() {
+  if (player.x !== stairs.x || player.y !== stairs.y) {
+    msg("ここには階段がない。", "");
+    render();
+    return;
+  }
+  if (depth >= MAX_DEPTH) {
+    state = "win";
+    msg("地下3階の階段を降り、遺構の底へ到達した！", "warn");
+    render();
+    return;
+  }
+  depth++;
+  msg("階段を降りた。地下" + depth + "階。", "warn");
+  buildFloor();
+  render();
+}
+
+function endTurn() {
+  turn++;
+  monstersAct();
+  computeFOV();
+  if (player.hp <= 0) {
+    player.hp = 0;
+    state = "dead";
+    msg("あなたは地底で力尽きた……  R で再挑戦", "bad");
+  }
+  render();
+}
+
+function monstersAct() {
+  for (const m of monsters.slice()) {
+    if (m.hp <= 0) continue;
+    const dist = Math.max(Math.abs(m.x - player.x), Math.abs(m.y - player.y));
+    const sees = los(m.x, m.y, player.x, player.y, 9);
+    if (sees) m.alert = true;
+    else if (dist > 12) m.alert = false;
+
+    // 隣接なら攻撃
+    if (Math.abs(m.x - player.x) + Math.abs(m.y - player.y) === 1) {
+      const dmg = Math.max(1, m.atk + ri(2) - Math.floor(player.lv / 2));
+      player.hp -= dmg;
+      msg(m.name + "の攻撃！ " + dmg + " ダメージ", "bad");
+      if (player.hp <= 0) return;
+      continue;
+    }
+
+    let doChase = m.alert;
+    if (m.ai === "erratic" && rnd() < 0.5) doChase = false;
+    if (m.ai === "chase" && !m.alert && rnd() < 0.3) doChase = false;
+
+    if (doChase && m.alert) stepToward(m);
+    else stepRandom(m);
+  }
+}
+
+function blocked(x, y, self) {
+  if (!walkable(x, y)) return true;
+  if (x === player.x && y === player.y) return true;
+  for (const o of monsters) if (o !== self && o.x === x && o.y === y) return true;
+  return false;
+}
+
+function stepToward(m) {
+  const dx = Math.sign(player.x - m.x), dy = Math.sign(player.y - m.y);
+  const opts = [];
+  if (Math.abs(player.x - m.x) >= Math.abs(player.y - m.y)) {
+    if (dx) opts.push([dx, 0]);
+    if (dy) opts.push([0, dy]);
+  } else {
+    if (dy) opts.push([0, dy]);
+    if (dx) opts.push([dx, 0]);
+  }
+  opts.push([dx || (rnd() < .5 ? 1 : -1), 0], [0, dy || (rnd() < .5 ? 1 : -1)]);
+  for (const [ax, ay] of opts) {
+    if (!ax && !ay) continue;
+    if (!blocked(m.x + ax, m.y + ay, m)) { m.x += ax; m.y += ay; return; }
+  }
+}
+function stepRandom(m) {
+  const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+  for (let i = dirs.length - 1; i > 0; i--) { const j = ri(i + 1); const t = dirs[i]; dirs[i] = dirs[j]; dirs[j] = t; }
+  for (const [dx, dy] of dirs) {
+    if (!blocked(m.x + dx, m.y + dy, m)) { m.x += dx; m.y += dy; return; }
+  }
+}
+
+/* ============================================================
+   描画
+   ============================================================ */
+function render() {
+  ctx.fillStyle = "#07080c";
+  ctx.fillRect(0, 0, cv.width, cv.height);
+
+  if (state === "title") { drawTitle(); updateHUD(); return; }
+
+  ctx.font = "bold 16px 'Courier New', monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  for (let y = 0; y < MH; y++) {
+    for (let x = 0; x < MW; x++) {
+      const vis = visible[y][x], exp = explored[y][x];
+      if (!exp) continue;
+      const px = x * TW + TW / 2, py = y * TH + TH / 2;
+      if (vis) { ctx.fillStyle = "#171a24"; ctx.fillRect(x * TW, y * TH, TW, TH); }
+      if (map[y][x] === WALL) {
+        ctx.fillStyle = vis ? "#7d7869" : "#333642";
+        ctx.fillText("#", px, py);
+      } else {
+        ctx.fillStyle = vis ? "#4e5566" : "#262a34";
+        ctx.fillText("\u00b7", px, py);
+      }
+    }
+  }
+
+  // 階段
+  if (explored[stairs.y][stairs.x]) {
+    ctx.fillStyle = visible[stairs.y][stairs.x] ? "#ffd479" : "#6b5a34";
+    ctx.fillText(">", stairs.x * TW + TW / 2, stairs.y * TH + TH / 2);
+  }
+  // アイテム
+  for (const it of items) {
+    if (!explored[it.y][it.x]) continue;
+    ctx.fillStyle = visible[it.y][it.x] ? it.col : dim(it.col);
+    ctx.fillText(it.ch, it.x * TW + TW / 2, it.y * TH + TH / 2);
+  }
+  // 敵 (視界内のみ)
+  for (const m of monsters) {
+    if (!visible[m.y][m.x]) continue;
+    ctx.fillStyle = m.col;
+    ctx.fillText(m.ch, m.x * TW + TW / 2, m.y * TH + TH / 2);
+    // HPゲージ
+    const w = TW - 6, ratio = m.hp / m.maxhp;
+    ctx.fillStyle = "#3a2028";
+    ctx.fillRect(m.x * TW + 3, m.y * TH + TH - 4, w, 2);
+    ctx.fillStyle = "#d8556a";
+    ctx.fillRect(m.x * TW + 3, m.y * TH + TH - 4, w * ratio, 2);
+  }
+  // プレイヤー
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText("@", player.x * TW + TW / 2, player.y * TH + TH / 2);
+
+  if (state === "dead") drawBanner("Y O U   D I E D", "地下" + depth + "階で力尽きた  —  R キーで再挑戦", "#f08090");
+  if (state === "win")  drawBanner("E S C A P E   C O M P L E T E", "遺構の底に到達！  Lv" + player.lv + " / " + turn + "ターン  —  R キーで再挑戦", "#9fe0c0");
+
+  updateHUD();
+}
+
+function dim(hex) {
+  const r = parseInt(hex.substr(1, 2), 16), g = parseInt(hex.substr(3, 2), 16), b = parseInt(hex.substr(5, 2), 16);
+  return "rgb(" + ((r * 0.32) | 0) + "," + ((g * 0.32) | 0) + "," + ((b * 0.32) | 0) + ")";
+}
+
+function drawTitle() {
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const cx = cv.width / 2;
+  ctx.fillStyle = "#9fe0c0";
+  ctx.font = "bold 44px 'Courier New', monospace";
+  ctx.fillText("地底遺構ヴェルナ", cx, 180);
+  ctx.fillStyle = "#5d6274";
+  ctx.font = "16px 'Courier New', monospace";
+  ctx.fillText("V E R N A A   D E P T H S", cx, 226);
+  ctx.fillStyle = "#cfd3e0";
+  ctx.font = "16px 'Courier New', monospace";
+  const lines = [
+    "ターン制ローグライク  —  自動生成される地下3階を踏破せよ",
+    "",
+    "移動 : 矢印キー / W A S D  (1入力 = 1ターン)",
+    "攻撃 : 敵のいるマスへ移動",
+    "アイテム : 1 - 9 で使用     階段 : > または Enter",
+    "やり直し : R",
+    "",
+    "@ = あなた    s b r g w y = 敵    ! ? / ( * = アイテム    > = 階段"
+  ];
+  lines.forEach((t, i) => {
+    ctx.fillStyle = i === 0 ? "#a8aec0" : "#7e8496";
+    ctx.fillText(t, cx, 300 + i * 26);
+  });
+  ctx.fillStyle = "#ffd479";
+  ctx.font = "bold 20px 'Courier New', monospace";
+  ctx.fillText("Enter または Space で開始", cx, 560);
+}
+
+function drawBanner(title, sub, col) {
+  ctx.fillStyle = "rgba(4,5,9,0.82)";
+  ctx.fillRect(0, cv.height / 2 - 90, cv.width, 180);
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillStyle = col;
+  ctx.font = "bold 38px 'Courier New', monospace";
+  ctx.fillText(title, cv.width / 2, cv.height / 2 - 20);
+  ctx.fillStyle = "#cfd3e0";
+  ctx.font = "16px 'Courier New', monospace";
+  ctx.fillText(sub, cv.width / 2, cv.height / 2 + 34);
+}
+
+/* ---------- HUD / ログ ---------- */
+const el = id => document.getElementById(id);
+function updateHUD() {
+  if (!player) return;
+  el("hpTxt").textContent = player.hp + "/" + player.maxhp;
+  el("hpfill").style.width = Math.max(0, (player.hp / player.maxhp) * 100) + "%";
+  el("lvTxt").textContent = player.lv;
+  el("xpTxt").textContent = player.xp + "/" + player.next;
+  el("atkTxt").textContent = player.atk;
+  el("flTxt").textContent = "地下" + depth + "階 / " + MAX_DEPTH;
+  el("tnTxt").textContent = turn;
+
+  let h = "<span class='lbl'>持ち物</span>&nbsp;&nbsp;";
+  for (let i = 0; i < 9; i++) {
+    const it = player.inv[i];
+    if (it) h += "<span class='slot'><span class='num'>" + (i + 1) + "</span>:<span style='color:" + it.col + "'>" + it.ch + "</span> " + it.name + "</span>";
+    else h += "<span class='slot empty'>" + (i + 1) + ":-</span>";
+  }
+  el("inv").innerHTML = h;
+
+  let lh = "";
+  for (let i = 0; i < 5; i++) {
+    const m = log[i];
+    if (!m) { lh += "<div>&nbsp;</div>"; continue; }
+    lh += "<div class='m" + i + " " + (i === 0 ? m.c : "") + "'>" + (i === 0 ? "&gt; " : "&nbsp;&nbsp;") + m.t + "</div>";
+  }
+  el("log").innerHTML = lh;
+}
+
+/* ============================================================
+   入力
+   ============================================================ */
+window.addEventListener("keydown", e => {
+  const k = e.key;
+  if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ","Enter"].includes(k)) e.preventDefault();
+
+  if (k === "r" || k === "R") { newGame(); return; }
+
+  if (state === "title") {
+    if (k === "Enter" || k === " ") newGame();
+    return;
+  }
+  if (state !== "play") return;
+
+  switch (k) {
+    case "ArrowUp": case "w": case "W": tryMove(0, -1); return;
+    case "ArrowDown": case "s": case "S": tryMove(0, 1); return;
+    case "ArrowLeft": case "a": case "A": tryMove(-1, 0); return;
+    case "ArrowRight": case "d": case "D": tryMove(1, 0); return;
+    case "Enter": case ">": descend(); return;
+  }
+  if (k >= "1" && k <= "9") { useItem(parseInt(k, 10) - 1); return; }
+});
+
+/* 初期表示 */
+depth = 1; turn = 0;
+player = { hp:0, maxhp:1, atk:0, lv:1, xp:0, next:1, inv:[], x:0, y:0 };
+render();
+</script>
+</body>
+</html>
