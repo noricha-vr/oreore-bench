@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>オセロ - 人間(黒) vs CPU(白)</title>
+<style>
+  :root{
+    --board-line:#0b3f25;
+    --cell:#1a8a4f;
+    --cell-hover:#22a35e;
+    --black:#161616;
+    --white:#f5f7f3;
+    --hint:rgba(255,240,120,.65);
+    --bg:#101d17;
+    --fg:#e8f2ec;
+    --panel:#182b21;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--fg);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
+    display:flex;justify-content:center;
+    padding:14px 12px 28px;
+    -webkit-text-size-adjust:100%;
+  }
+  .wrap{width:100%;max-width:480px;}
+  h1{
+    font-size:clamp(18px,5vw,24px);
+    margin:2px 0 12px;
+    letter-spacing:.08em;
+    text-align:center;
+    font-weight:700;
+  }
+  .panel{
+    background:var(--panel);
+    border-radius:10px;
+    padding:10px 12px;
+    margin-bottom:10px;
+  }
+  .scores{
+    display:flex;gap:8px;align-items:stretch;
+  }
+  .side{
+    flex:1;display:flex;align-items:center;gap:8px;
+    padding:8px 10px;border-radius:8px;
+    background:rgba(255,255,255,.05);
+    border:2px solid transparent;
+    transition:border-color .2s, background-color .2s;
+  }
+  .side.active{border-color:#4fd18b;background:rgba(79,209,139,.12);}
+  .stone{
+    width:22px;height:22px;border-radius:50%;flex:0 0 auto;
+  }
+  .stone.b{background:var(--black);box-shadow:inset 0 2px 3px rgba(255,255,255,.22);}
+  .stone.w{background:var(--white);box-shadow:inset 0 -2px 3px rgba(0,0,0,.28);}
+  .label{font-size:12px;opacity:.8;line-height:1.2;}
+  .num{font-size:20px;font-weight:700;margin-left:auto;font-variant-numeric:tabular-nums;}
+  .status{
+    margin-top:10px;font-size:13px;line-height:1.5;min-height:2.6em;
+    color:#cfe6da;
+  }
+  .status strong{color:#ffe66d;font-weight:700;}
+
+  .board{
+    display:grid;
+    grid-template-columns:repeat(8,1fr);
+    gap:2px;
+    background:var(--board-line);
+    padding:3px;
+    border-radius:8px;
+    width:100%;
+    aspect-ratio:1 / 1;
+    box-shadow:0 8px 26px rgba(0,0,0,.45);
+    touch-action:manipulation;
+  }
+  .cell{
+    position:relative;
+    background:var(--cell);
+    display:flex;align-items:center;justify-content:center;
+    border-radius:2px;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .cell.playable{cursor:pointer;}
+  @media (hover:hover){
+    .cell.playable:hover{background:var(--cell-hover);}
+  }
+  .cell.last::after{
+    content:"";position:absolute;inset:8%;
+    border:2px solid rgba(255,230,109,.85);
+    border-radius:4px;pointer-events:none;
+  }
+  .disc{
+    width:80%;height:80%;border-radius:50%;
+    transform:scale(0);
+    background:var(--black);
+    transition:transform .16s ease-out, background-color .26s ease, box-shadow .26s ease;
+    pointer-events:none;
+  }
+  .cell[data-state="1"] .disc{
+    transform:scale(1);
+    background:var(--black);
+    box-shadow:inset 0 3px 4px rgba(255,255,255,.2), 0 1px 2px rgba(0,0,0,.5);
+  }
+  .cell[data-state="2"] .disc{
+    transform:scale(1);
+    background:var(--white);
+    box-shadow:inset 0 -3px 4px rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.5);
+  }
+  .hint{
+    position:absolute;width:28%;height:28%;border-radius:50%;
+    background:var(--hint);
+    opacity:0;transform:scale(.4);
+    transition:opacity .18s, transform .18s;
+    pointer-events:none;
+  }
+  .cell.playable .hint{opacity:1;transform:scale(1);}
+
+  .controls{display:flex;gap:10px;margin-top:12px;}
+  button{
+    flex:1;
+    font:inherit;font-size:15px;font-weight:600;
+    padding:12px 14px;border:0;border-radius:8px;
+    background:#2f7d55;color:#fff;cursor:pointer;
+    transition:background-color .2s, transform .06s;
+  }
+  button:hover{background:#3a9968;}
+  button:active{transform:translateY(1px);}
+  .foot{
+    margin-top:12px;font-size:12px;line-height:1.6;color:#9dbcac;text-align:center;
+  }
+  @media (max-width:360px){
+    .num{font-size:18px;}
+    .stone{width:18px;height:18px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>オセロ</h1>
+
+  <div class="panel">
+    <div class="scores">
+      <div class="side" id="sideBlack">
+        <span class="stone b"></span>
+        <span class="label">あなた<br>黒</span>
+        <span class="num" id="countBlack">2</span>
+      </div>
+      <div class="side" id="sideWhite">
+        <span class="stone w"></span>
+        <span class="label">CPU<br>白</span>
+        <span class="num" id="countWhite">2</span>
+      </div>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <div class="controls">
+    <button id="resetBtn" type="button">リセット</button>
+  </div>
+
+  <p class="foot">黄色い点が置ける場所です。石は8方向の挟み込みで反転します。</p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var SIZE = 8, EMPTY = 0, BLACK = 1, WHITE = 2;
+  var HUMAN = BLACK, CPU = WHITE;
+  var DIRS = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+
+  /* 位置評価: 角を最優先、辺を加点、角隣(C/X)を減点 */
+  var WEIGHT = [
+    [120, -25,  20,   8,   8,  20, -25, 120],
+    [-25, -45,  -6,  -4,  -4,  -6, -45, -25],
+    [ 20,  -6,  14,   3,   3,  14,  -6,  20],
+    [  8,  -4,   3,   1,   1,   3,  -4,   8],
+    [  8,  -4,   3,   1,   1,   3,  -4,   8],
+    [ 20,  -6,  14,   3,   3,  14,  -6,  20],
+    [-25, -45,  -6,  -4,  -4,  -6, -45, -25],
+    [120, -25,  20,   8,   8,  20, -25, 120]
+  ];
+
+  var boardEl   = document.getElementById("board");
+  var statusEl  = document.getElementById("status");
+  var cbEl      = document.getElementById("countBlack");
+  var cwEl      = document.getElementById("countWhite");
+  var sideBEl   = document.getElementById("sideBlack");
+  var sideWEl   = document.getElementById("sideWhite");
+  var resetBtn  = document.getElementById("resetBtn");
+
+  var cells = [];
+  var board, current, gameOver, busy, lastMove, notice;
+
+  /* ---------- 盤面 DOM 生成 ---------- */
+  for (var r = 0; r < SIZE; r++) {
+    for (var c = 0; c < SIZE; c++) {
+      var cell = document.createElement("div");
+      cell.className = "cell";
+      cell.setAttribute("data-state", "0");
+      var disc = document.createElement("div");
+      disc.className = "disc";
+      var hint = document.createElement("div");
+      hint.className = "hint";
+      cell.appendChild(disc);
+      cell.appendChild(hint);
+      (function (rr, cc) {
+        cell.addEventListener("click", function () { onCellClick(rr, cc); });
+      })(r, c);
+      boardEl.appendChild(cell);
+      cells.push(cell);
+    }
+  }
+
+  /* ---------- ルール ---------- */
+  function inside(r, c) { return r >= 0 && r < SIZE && c >= 0 && c < SIZE; }
+  function opponent(p) { return p === BLACK ? WHITE : BLACK; }
+
+  function flipsFor(bd, r, c, p) {
+    if (bd[r][c] !== EMPTY) return [];
+    var opp = opponent(p), out = [];
+    for (var i = 0; i < DIRS.length; i++) {
+      var dr = DIRS[i][0], dc = DIRS[i][1];
+      var rr = r + dr, cc = c + dc, line = [];
+      while (inside(rr, cc) && bd[rr][cc] === opp) {
+        line.push([rr, cc]);
+        rr += dr; cc += dc;
+      }
+      if (line.length && inside(rr, cc) && bd[rr][cc] === p) {
+        out = out.concat(line);
+      }
+    }
+    return out;
+  }
+
+  function legalMoves(bd, p) {
+    var list = [];
+    for (var r = 0; r < SIZE; r++) {
+      for (var c = 0; c < SIZE; c++) {
+        var f = flipsFor(bd, r, c, p);
+        if (f.length) list.push({ r: r, c: c, flips: f });
+      }
+    }
+    return list;
+  }
+
+  function applyMove(bd, mv, p) {
+    bd[mv.r][mv.c] = p;
+    for (var i = 0; i < mv.flips.length; i++) {
+      bd[mv.flips[i][0]][mv.flips[i][1]] = p;
+    }
+  }
+
+  function counts(bd) {
+    var b = 0, w = 0, e = 0;
+    for (var r = 0; r < SIZE; r++) {
+      for (var c = 0; c < SIZE; c++) {
+        if (bd[r][c] === BLACK) b++;
+        else if (bd[r][c] === WHITE) w++;
+        else e++;
+      }
+    }
+    return { black: b, white: w, empty: e };
+  }
+
+  /* ---------- CPU ヒューリスティック ---------- */
+  function isCorner(r, c) {
+    return (r === 0 || r === SIZE - 1) && (c === 0 || c === SIZE - 1);
+  }
+  function isEdge(r, c) {
+    return r === 0 || r === SIZE - 1 || c === 0 || c === SIZE - 1;
+  }
+
+  function scoreMove(mv) {
+    var s = WEIGHT[mv.r][mv.c];
+    if (isCorner(mv.r, mv.c)) s += 200;          /* 角優先 */
+    else if (isEdge(mv.r, mv.c)) s += 12;        /* 辺加点 */
+    s += mv.flips.length * 3;                    /* 反転数加点 */
+    return s;
+  }
+
+  function chooseCpuMove(moves) {
+    var best = [], bestScore = -Infinity;
+    for (var i = 0; i < moves.length; i++) {
+      var s = scoreMove(moves[i]);
+      if (s > bestScore) { bestScore = s; best = [moves[i]]; }
+      else if (s === bestScore) { best.push(moves[i]); }
+    }
+    return best[Math.floor(Math.random() * best.length)];
+  }
+
+  /* ---------- 描画 ---------- */
+  function render() {
+    var moves = (!gameOver && current === HUMAN) ? legalMoves(board, HUMAN) : [];
+    var playable = {};
+    for (var i = 0; i < moves.length; i++) playable[moves[i].r * SIZE + moves[i].c] = true;
+
+    for (var r = 0; r < SIZE; r++) {
+      for (var c = 0; c < SIZE; c++) {
+        var idx = r * SIZE + c, cell = cells[idx];
+        cell.setAttribute("data-state", String(board[r][c]));
+        if (playable[idx]) cell.classList.add("playable");
+        else cell.classList.remove("playable");
+        if (lastMove && lastMove.r === r && lastMove.c === c) cell.classList.add("last");
+        else cell.classList.remove("last");
+      }
+    }
+
+    var n = counts(board);
+    cbEl.textContent = n.black;
+    cwEl.textContent = n.white;
+    sideBEl.classList.toggle("active", !gameOver && current === BLACK);
+    sideWEl.classList.toggle("active", !gameOver && current === WHITE);
+
+    var msg;
+    if (gameOver) {
+      var result;
+      if (n.black > n.white) result = "<strong>あなた(黒)の勝ちです。</strong>";
+      else if (n.white > n.black) result = "<strong>CPU(白)の勝ちです。</strong>";
+      else result = "<strong>引き分けです。</strong>";
+      msg = "終局 - 黒 " + n.black + " 対 白 " + n.white + "<br>" + result;
+    } else if (current === HUMAN) {
+      msg = "あなた(黒)の番です。置ける場所は " + moves.length + " ヶ所。";
+    } else {
+      msg = "CPU(白)の番です。思考中。";
+    }
+    if (notice) msg = notice + "<br>" + msg;
+    statusEl.innerHTML = msg;
+  }
+
+  /* ---------- 手番進行 ---------- */
+  function advanceTurn() {
+    var next = opponent(current);
+    notice = "";
+    if (legalMoves(board, next).length > 0) {
+      current = next;
+    } else if (legalMoves(board, current).length > 0) {
+      notice = (next === BLACK ? "黒" : "白") + "は合法手がないためパスしました。";
+      /* current は交代せず継続 */
+    } else {
+      gameOver = true;
+    }
+    if (counts(board).empty === 0) gameOver = true;
+  }
+
+  function proceed() {
+    render();
+    if (gameOver) { busy = false; return; }
+    if (current === CPU) {
+      busy = true;
+      setTimeout(cpuTurn, 480);
+    } else {
+      busy = false;
+    }
+  }
+
+  function cpuTurn() {
+    if (gameOver) { busy = false; return; }
+    var moves = legalMoves(board, CPU);
+    if (moves.length === 0) { advanceTurn(); proceed(); return; }
+    var mv = chooseCpuMove(moves);
+    applyMove(board, mv, CPU);
+    lastMove = { r: mv.r, c: mv.c };
+    advanceTurn();
+    proceed();
+  }
+
+  function onCellClick(r, c) {
+    if (gameOver || busy || current !== HUMAN) return;
+    var flips = flipsFor(board, r, c, HUMAN);
+    if (!flips.length) return;
+    applyMove(board, { r: r, c: c, flips: flips }, HUMAN);
+    lastMove = { r: r, c: c };
+    advanceTurn();
+    proceed();
+  }
+
+  /* ---------- 初期化 ---------- */
+  function init() {
+    board = [];
+    for (var r = 0; r < SIZE; r++) {
+      var row = [];
+      for (var c = 0; c < SIZE; c++) row.push(EMPTY);
+      board.push(row);
+    }
+    board[3][3] = WHITE; board[4][4] = WHITE;
+    board[3][4] = BLACK; board[4][3] = BLACK;
+    current = BLACK;
+    gameOver = false;
+    busy = false;
+    lastMove = null;
+    notice = "";
+    proceed();
+  }
+
+  resetBtn.addEventListener("click", init);
+  init();
+})();
+</script>
+</body>
+</html>

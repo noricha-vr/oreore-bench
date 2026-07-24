@@ -74,6 +74,42 @@
       "pricing_fetched_at": "2026-07-16"
     }
   },
+  "extract-questions/claude-opus-5": {
+    "schema_version": 1,
+    "theme": "extract-questions",
+    "model": "claude-opus-5",
+    "model_id": "anthropic/claude-opus-5",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-25T07:57:58+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 2207,
+      "completion_tokens": 2522,
+      "note": "OpenRouter API 実測。completion に reasoning 0 tokens を含む"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 0.074085,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 5.0,
+      "completion_usd_per_mtok": 25.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "anthropic/claude-opus-5",
+      "pricing_fetched_at": "2026-07-25"
+    }
+  },
   "extract-questions/gemma-4-12b-qat": {
     "schema_version": 1,
     "theme": "extract-questions",
@@ -341,6 +377,42 @@
       "pricing_fetched_at": "2026-07-16"
     }
   },
+  "extract-questions-v2/claude-opus-5": {
+    "schema_version": 1,
+    "theme": "extract-questions-v2",
+    "model": "claude-opus-5",
+    "model_id": "anthropic/claude-opus-5",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-25T07:58:35+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 3623,
+      "completion_tokens": 6904,
+      "note": "OpenRouter API 実測。completion に reasoning 177 tokens を含む"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 0.190715,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 5.0,
+      "completion_usd_per_mtok": 25.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "anthropic/claude-opus-5",
+      "pricing_fetched_at": "2026-07-25"
+    }
+  },
   "extract-questions-v2/gemma-4-12b-qat": {
     "schema_version": 1,
     "theme": "extract-questions-v2",
@@ -570,6 +642,42 @@
       "pricing_source": "openrouter",
       "pricing_model": "anthropic/claude-opus-4.8",
       "pricing_fetched_at": "2026-07-16"
+    }
+  },
+  "hasami-shogi/claude-opus-5": {
+    "schema_version": 1,
+    "theme": "hasami-shogi",
+    "model": "claude-opus-5",
+    "model_id": "anthropic/claude-opus-5",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-25T08:00:03+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "extract-fenced-html",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 1038,
+      "completion_tokens": 12568,
+      "note": "OpenRouter API 実測。completion に reasoning 537 tokens を含む"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 0.31939,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 5.0,
+      "completion_usd_per_mtok": 25.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "anthropic/claude-opus-5",
+      "pricing_fetched_at": "2026-07-25"
     }
   },
   "hasami-shogi/gemma-4-12b-qat": {
@@ -873,6 +981,42 @@
       "pricing_source": "openrouter",
       "pricing_model": "anthropic/claude-opus-4.8",
       "pricing_fetched_at": "2026-07-16"
+    }
+  },
+  "lp-fable5/claude-opus-5": {
+    "schema_version": 1,
+    "theme": "lp-fable5",
+    "model": "claude-opus-5",
+    "model_id": "anthropic/claude-opus-5",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-25T08:06:20+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "extract-fenced-html",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 1459,
+      "completion_tokens": 42246,
+      "note": "OpenRouter API 実測。completion に reasoning 1805 tokens を含む"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 1.063445,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 5.0,
+      "completion_usd_per_mtok": 25.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "anthropic/claude-opus-5",
+      "pricing_fetched_at": "2026-07-25"
     }
   },
   "lp-fable5/gemini-3-1-pro": {
@@ -1322,6 +1466,42 @@
       "pricing_fetched_at": "2026-07-16"
     }
   },
+  "lp-nishibi/claude-opus-5": {
+    "schema_version": 1,
+    "theme": "lp-nishibi",
+    "model": "claude-opus-5",
+    "model_id": "anthropic/claude-opus-5",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-25T08:01:50+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "extract-fenced-html",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 1029,
+      "completion_tokens": 19628,
+      "note": "OpenRouter API 実測。completion に reasoning 996 tokens を含む"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 0.495845,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 5.0,
+      "completion_usd_per_mtok": 25.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "anthropic/claude-opus-5",
+      "pricing_fetched_at": "2026-07-25"
+    }
+  },
   "lp-nishibi/gemma-4-12b-qat": {
     "schema_version": 1,
     "theme": "lp-nishibi",
@@ -1511,6 +1691,42 @@
       "pricing_source": "local-no-reference",
       "pricing_model": null,
       "pricing_fetched_at": null
+    }
+  },
+  "othello/claude-opus-5": {
+    "schema_version": 1,
+    "theme": "othello",
+    "model": "claude-opus-5",
+    "model_id": "anthropic/claude-opus-5",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-25T07:59:19+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "extract-fenced-html",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 330,
+      "completion_tokens": 9537,
+      "note": "OpenRouter API 実測。completion に reasoning 309 tokens を含む"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 0.240075,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 5.0,
+      "completion_usd_per_mtok": 25.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "anthropic/claude-opus-5",
+      "pricing_fetched_at": "2026-07-25"
     }
   },
   "othello/gemma-4-12b-qat": {
@@ -1814,6 +2030,42 @@
       "pricing_source": "openrouter",
       "pricing_model": "anthropic/claude-opus-4.8",
       "pricing_fetched_at": "2026-07-17"
+    }
+  },
+  "phoenix-lp/claude-opus-5": {
+    "schema_version": 1,
+    "theme": "phoenix-lp",
+    "model": "claude-opus-5",
+    "model_id": "anthropic/claude-opus-5",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-25T08:32:00+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "extract-fenced-html",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 2136,
+      "completion_tokens": 47114,
+      "note": "OpenRouter API 実測。completion に reasoning 4255 tokens を含む"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 1.18853,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 5.0,
+      "completion_usd_per_mtok": 25.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "anthropic/claude-opus-5",
+      "pricing_fetched_at": "2026-07-25"
     }
   },
   "phoenix-lp/gemini-3-1-pro": {
@@ -2263,6 +2515,42 @@
       "pricing_fetched_at": "2026-07-16"
     }
   },
+  "pr-triage/claude-opus-5": {
+    "schema_version": 1,
+    "theme": "pr-triage",
+    "model": "claude-opus-5",
+    "model_id": "anthropic/claude-opus-5",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-25T07:58:38+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 3585,
+      "completion_tokens": 4037,
+      "note": "OpenRouter API 実測。completion に reasoning 268 tokens を含む"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 0.11885,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 5.0,
+      "completion_usd_per_mtok": 25.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "anthropic/claude-opus-5",
+      "pricing_fetched_at": "2026-07-25"
+    }
+  },
   "pr-triage/gemma-4-12b-qat": {
     "schema_version": 1,
     "theme": "pr-triage",
@@ -2492,6 +2780,42 @@
       "pricing_source": "local-no-reference",
       "pricing_model": null,
       "pricing_fetched_at": null
+    }
+  },
+  "roguelike/claude-opus-5": {
+    "schema_version": 1,
+    "theme": "roguelike",
+    "model": "claude-opus-5",
+    "model_id": "anthropic/claude-opus-5",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-25T08:00:21+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 1371,
+      "completion_tokens": 15171,
+      "note": "OpenRouter API 実測。completion に reasoning 1011 tokens を含む"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 0.38613,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 5.0,
+      "completion_usd_per_mtok": 25.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "anthropic/claude-opus-5",
+      "pricing_fetched_at": "2026-07-25"
     }
   },
   "roguelike/gemini-3-1-pro": {
@@ -2975,6 +3299,42 @@
       "pricing_source": "openrouter",
       "pricing_model": "anthropic/claude-opus-4.8",
       "pricing_fetched_at": "2026-07-16"
+    }
+  },
+  "suminagashi/claude-opus-5": {
+    "schema_version": 1,
+    "theme": "suminagashi",
+    "model": "claude-opus-5",
+    "model_id": "anthropic/claude-opus-5",
+    "harness": "openrouter-api",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-07-25T08:06:40+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "extract-fenced-html",
+    "runtime": null,
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 933,
+      "completion_tokens": 45320,
+      "note": "OpenRouter API 実測。completion に reasoning 5311 tokens を含む"
+    },
+    "cost": {
+      "estimated": false,
+      "usd": 1.137665,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": 5.0,
+      "completion_usd_per_mtok": 25.0,
+      "pricing_source": "openrouter",
+      "pricing_model": "anthropic/claude-opus-5",
+      "pricing_fetched_at": "2026-07-25"
     }
   },
   "suminagashi/gemini-3-1-pro": {

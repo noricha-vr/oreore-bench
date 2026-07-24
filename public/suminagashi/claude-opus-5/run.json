@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "theme": "suminagashi",
+  "model": "claude-opus-5",
+  "model_id": "anthropic/claude-opus-5",
+  "harness": "openrouter-api",
+  "reasoning_effort": "high",
+  "attempts": 1,
+  "generated_at": "2026-07-25T08:06:40+09:00",
+  "generated_at_source": "measured",
+  "sampling": {
+    "temperature": "default",
+    "max_tokens": 65000,
+    "top_p": "default"
+  },
+  "system_prompt": "none",
+  "post_processing": "extract-fenced-html",
+  "runtime": null,
+  "usage": {
+    "estimated": false,
+    "method": "api-usage",
+    "prompt_tokens": 933,
+    "completion_tokens": 45320,
+    "note": "OpenRouter API 実測。completion に reasoning 5311 tokens を含む"
+  },
+  "cost": {
+    "estimated": false,
+    "usd": 1.137665,
+    "actual_usd": null,
+    "prompt_usd_per_mtok": 5.0,
+    "completion_usd_per_mtok": 25.0,
+    "pricing_source": "openrouter",
+    "pricing_model": "anthropic/claude-opus-5",
+    "pricing_fetched_at": "2026-07-25"
+  }
+}

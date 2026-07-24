@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fable 5 — 今、いちばん賢いClaudeが、誰でも使える形に。</title>
+<meta name="description" content="Mythosクラス初のモデル Fable 5。長く複雑な仕事ほど、その差は開いていきます。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   BASE
+   ============================================================ */
+:root{
+  --paper:#faf6ee;
+  --paper-2:#fffdf7;
+  --paper-3:#f5eddd;
+  --ink:#2f2a25;
+  --ink-2:#4a423a;
+  --ink-soft:#7b7065;
+  --terra:#c65d3b;
+  --terra-l:#d97757;
+  --terra-d:#a8462b;
+  --sand:#e8dcc4;
+  --line:#e5dac2;
+  --gold:#c9a05a;
+  --sepia:#b08a63;
+  --serif:"Zen Old Mincho","Noto Serif JP",'Hiragino Mincho ProN',"Yu Mincho",serif;
+  --sans:"Zen Kaku Gothic New","Noto Sans JP",'Hiragino Sans',"Yu Gothic",sans-serif;
+  --head-h:68px;
+  --maxw:1140px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-weight:400;
+  line-height:1.95;
+  letter-spacing:.02em;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+/* 紙のざらつき */
+body::before{
+  content:"";position:fixed;inset:0;z-index:200;pointer-events:none;
+  mix-blend-mode:multiply;opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E");
+}
+img,svg{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:600;color:var(--ink);letter-spacing:.01em;margin:0}
+
+.wrap{width:100%;max-width:var(--maxw);margin:0 auto;padding:0 28px}
+.section{padding:clamp(84px,11vw,164px) 0;position:relative}
+.section--tight{padding-bottom:clamp(60px,7vw,110px)}
+
+/* キッカー（番号 + 英字/和字） */
+.kicker{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 26px}
+.kicker .num{
+  font-family:var(--serif);font-size:.78rem;letter-spacing:.22em;color:var(--terra);
+  border:1px solid rgba(198,93,59,.35);border-radius:999px;padding:3px 11px 2px;line-height:1.6;
+}
+.kicker .en{font-size:.7rem;letter-spacing:.34em;text-transform:uppercase;color:var(--ink-soft)}
+.kicker .sep{color:var(--line)}
+.kicker .ja{font-family:var(--serif);font-size:.82rem;letter-spacing:.2em;color:var(--ink-soft)}
+
+h2.title{
+  font-size:clamp(1.85rem,4.3vw,3.15rem);
+  line-height:1.42;margin:0 0 22px;letter-spacing:.005em;
+}
+h2.title .dot{color:var(--terra)}
+.lead{
+  max-width:44em;color:var(--ink-2);font-size:clamp(.94rem,1.15vw,1.02rem);
+  font-weight:300;line-height:2.1;margin:0;
+}
+.hr-soft{height:1px;background:linear-gradient(90deg,var(--line),rgba(229,218,194,0));border:0;margin:0}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+header.top{
+  position:fixed;top:0;left:0;right:0;height:var(--head-h);z-index:100;
+  background:rgba(250,246,238,.86);
+  -webkit-backdrop-filter:blur(12px) saturate(1.1);backdrop-filter:blur(12px) saturate(1.1);
+  border-bottom:1px solid rgba(229,218,194,.85);
+}
+.top-in{
+  max-width:1280px;height:100%;margin:0 auto;padding:0 clamp(18px,3vw,38px);
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .logo-text{font-family:var(--serif);font-size:1.14rem;letter-spacing:.06em;color:var(--ink)}
+.brand svg{width:26px;height:26px;flex:none}
+.nav{display:flex;align-items:center;gap:clamp(18px,2.6vw,34px)}
+.nav a.link{
+  font-size:.84rem;letter-spacing:.09em;color:var(--ink-2);position:relative;padding:4px 0;
+  transition:color .3s ease;
+}
+.nav a.link::after{
+  content:"";position:absolute;left:0;right:100%;bottom:0;height:1px;background:var(--terra);
+  transition:right .35s cubic-bezier(.2,.7,.2,1);
+}
+.nav a.link:hover{color:var(--terra)}
+.nav a.link:hover::after{right:0}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font-family:var(--sans);font-size:.86rem;letter-spacing:.08em;
+  background:var(--terra);color:#fff7ef;border:0;border-radius:999px;
+  padding:11px 22px;cursor:pointer;white-space:nowrap;
+  box-shadow:0 6px 18px -10px rgba(166,72,44,.7);
+  transition:background .3s ease,transform .3s ease,box-shadow .3s ease;
+}
+.btn:hover{background:var(--terra-l);transform:translateY(-1px);box-shadow:0 12px 26px -12px rgba(166,72,44,.75)}
+.btn--lg{font-size:1rem;padding:17px 40px;letter-spacing:.1em}
+
+/* ============================================================
+   1. HERO
+   ============================================================ */
+.hero{
+  min-height:100svh;padding-top:var(--head-h);
+  display:grid;grid-template-rows:1fr auto;position:relative;overflow:hidden;
+}
+.hero-copy{align-self:center;padding:clamp(34px,6vw,80px) 0 clamp(24px,4vw,54px)}
+.eyebrow{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 clamp(18px,3vw,30px);
+  font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-soft);
+}
+.eyebrow .pill{
+  font-family:var(--serif);letter-spacing:.22em;text-transform:none;font-size:.78rem;
+  color:var(--terra);border:1px solid rgba(198,93,59,.35);border-radius:999px;padding:3px 11px 2px;
+}
+.eyebrow .ja-lab{font-family:var(--serif);letter-spacing:.2em;text-transform:none;font-size:.8rem}
+h1.hero-title{
+  font-size:clamp(4.2rem,16.4vw,15rem);
+  line-height:.86;letter-spacing:-.035em;margin:0 0 clamp(22px,3.4vw,42px);
+  color:#282320;
+}
+h1.hero-title .p{color:var(--terra)}
+.hero-tag{
+  font-family:var(--serif);font-size:clamp(1.12rem,2.5vw,1.85rem);line-height:1.85;
+  margin:0 0 18px;color:var(--ink);letter-spacing:.02em;max-width:26em;
+}
+.hero-sub{
+  max-width:34em;color:var(--ink-soft);font-weight:300;
+  font-size:clamp(.88rem,1.05vw,.97rem);line-height:2.05;margin:0;
+}
+.hero-art{width:100%;line-height:0;position:relative}
+.hero-art svg{width:100%;height:clamp(268px,48vh,470px)}
+.sun-breathe{transform-box:fill-box;transform-origin:center;animation:breathe 11s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+.drift-a{animation:drift 46s linear infinite}
+.drift-b{animation:drift 66s linear infinite}
+@keyframes drift{0%{transform:translateX(0)}50%{transform:translateX(26px)}100%{transform:translateX(0)}}
+
+/* ============================================================
+   2. FAMILY / BARS
+   ============================================================ */
+.family-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:clamp(34px,6vw,80px);align-items:end}
+.chart-card{
+  position:relative;border:1px solid var(--line);border-radius:22px;
+  background:linear-gradient(180deg,#fffdf8,#faf4e8);
+  padding:clamp(24px,3vw,38px) clamp(20px,3vw,34px) clamp(18px,2.4vw,26px);
+  overflow:hidden;
+}
+.chart-card .bg-sun{position:absolute;right:-40px;top:-50px;width:220px;opacity:.5;pointer-events:none}
+.chart-bars{
+  position:relative;display:grid;grid-template-columns:repeat(4,1fr);
+  gap:clamp(8px,2.2vw,26px);align-items:end;height:clamp(210px,32vw,320px);
+}
+.bar-col{display:flex;flex-direction:column;justify-content:flex-end;height:100%;text-align:center}
+.bar{height:calc(var(--h) * 1%);position:relative}
+.bar > i{
+  display:block;height:100%;border-radius:12px 12px 4px 4px;
+  transform:scaleY(0);transform-origin:bottom;
+  transition:transform 1.15s cubic-bezier(.18,.82,.22,1);
+  background:linear-gradient(180deg,#e9dcc0,#dcc9a4);
+  box-shadow:inset 0 0 0 1px rgba(176,138,99,.22);
+}
+.bar-col:nth-child(1) > .bar > i{transition-delay:.05s}
+.bar-col:nth-child(2) > .bar > i{transition-delay:.19s}
+.bar-col:nth-child(3) > .bar > i{transition-delay:.33s}
+.bar-col:nth-child(4) > .bar > i{transition-delay:.47s}
+.in .bar > i{transform:scaleY(1)}
+.bar.mythos > i{background:linear-gradient(180deg,var(--terra-l),var(--terra-d));box-shadow:0 14px 30px -18px rgba(166,72,44,.8)}
+.bar-flag{
+  font-family:var(--serif);font-size:.74rem;letter-spacing:.16em;color:var(--terra);
+  margin-bottom:9px;opacity:0;transform:translateY(6px);
+  transition:opacity .7s ease .95s,transform .7s ease .95s;
+}
+.in .bar-flag{opacity:1;transform:none}
+.bar-name{font-family:var(--serif);font-size:clamp(.82rem,1.5vw,1rem);margin-top:14px;letter-spacing:.06em}
+.bar-sub{font-size:.62rem;letter-spacing:.16em;color:var(--ink-soft);margin-top:2px}
+.bar-col.is-top .bar-name{color:var(--terra)}
+.baseline{height:1px;background:var(--line);margin-top:0}
+.family-note{margin-top:26px;display:flex;gap:12px;align-items:flex-start;color:var(--ink-soft);font-size:.82rem;font-weight:300;line-height:1.95}
+.family-note .b{color:var(--terra);font-family:var(--serif)}
+
+/* ============================================================
+   3. CARDS
+   ============================================================ */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:clamp(18px,2.4vw,30px);margin-top:clamp(34px,5vw,58px)}
+.card{
+  display:flex;gap:clamp(16px,2vw,24px);align-items:flex-start;
+  background:linear-gradient(180deg,#fffdf8,#fbf6ec);
+  border:1px solid var(--line);border-radius:20px;
+  padding:clamp(22px,2.6vw,32px);
+  transition:transform .5s cubic-bezier(.2,.7,.2,1),box-shadow .5s ease,border-color .5s ease;
+}
+.card:hover{transform:translateY(-4px);box-shadow:0 24px 46px -34px rgba(101,74,48,.55);border-color:#dbcba9}
+.card-art{flex:none;width:clamp(78px,9vw,104px)}
+.card-body h3{font-size:clamp(1rem,1.6vw,1.16rem);line-height:1.7;margin:0 0 10px;letter-spacing:.02em}
+.card-body p{margin:0;font-size:.86rem;font-weight:300;color:var(--ink-soft);line-height:1.95}
+.card-tag{
+  display:inline-block;font-size:.6rem;letter-spacing:.2em;color:var(--terra);
+  border-bottom:1px solid rgba(198,93,59,.3);padding-bottom:2px;margin-bottom:12px;
+}
+
+/* ============================================================
+   4. GRAPH
+   ============================================================ */
+.graph-wrap{
+  margin-top:clamp(30px,4vw,54px);border:1px solid var(--line);border-radius:22px;
+  background:linear-gradient(180deg,#fffdf8,#faf4e8);padding:clamp(18px,3vw,34px);
+}
+.graph-svg{width:100%;height:auto}
+.graph-svg .axis-t{font-family:var(--sans);font-size:15px;fill:#8b8073;letter-spacing:.14em}
+.graph-svg .lab{font-family:var(--serif);font-size:18px;letter-spacing:.08em}
+.graph-svg .lab-g{font-family:var(--sans);font-size:14px;fill:#a49a8c;letter-spacing:.1em}
+.gline{fill:none;stroke-linecap:round}
+.gfade{opacity:0;transition:opacity .8s ease 1.5s}
+.in .gfade{opacity:1}
+.graph-legend{display:flex;gap:26px;flex-wrap:wrap;margin-top:22px;font-size:.78rem;color:var(--ink-soft);font-weight:300}
+.graph-legend span{display:inline-flex;align-items:center;gap:9px}
+.graph-legend i{width:22px;height:3px;border-radius:2px;background:#cdc4b6;display:block}
+.graph-legend i.t{background:var(--terra);height:4px}
+.graph-note{margin-top:18px;font-size:.78rem;color:var(--ink-soft);font-weight:300}
+
+/* ============================================================
+   5. SAFETY
+   ============================================================ */
+.safety{background:linear-gradient(180deg,rgba(245,237,221,0),rgba(245,237,221,.75) 40%,rgba(245,237,221,0))}
+.safety-art{margin-top:clamp(30px,4.5vw,56px);border-radius:24px;overflow:hidden;border:1px solid var(--line)}
+.safety-art svg{width:100%;height:clamp(250px,38vw,430px)}
+.safety-cols{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,4vw,60px);margin-top:clamp(28px,3.4vw,44px)}
+.safety-cols p{margin:0;color:var(--ink-2);font-weight:300;font-size:.9rem;line-height:2.1}
+.safety-cols .em{font-family:var(--serif);color:var(--ink);font-size:1.02rem;line-height:2}
+
+/* ============================================================
+   6. STEPS
+   ============================================================ */
+.steps-wrap{display:grid;grid-template-columns:.85fr 1.15fr;gap:clamp(30px,5vw,72px);align-items:center;margin-top:clamp(28px,4vw,48px)}
+.laptop-art{width:min(100%,320px);margin:0 auto}
+.steps{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.steps li{display:flex;gap:clamp(16px,2.4vw,30px);padding:22px 4px;border-bottom:1px solid var(--line);align-items:baseline}
+.steps .st-num{font-family:var(--serif);font-size:.78rem;letter-spacing:.2em;color:var(--terra);flex:none;padding-top:4px}
+.steps h3{font-size:1.02rem;margin:0 0 6px;line-height:1.7}
+.steps p{margin:0;font-size:.83rem;color:var(--ink-soft);font-weight:300;line-height:1.9}
+.steps code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.79rem;background:#f3ebda;border:1px solid var(--line);border-radius:6px;padding:2px 7px;color:var(--terra-d)}
+
+/* ============================================================
+   7. CTA + FOOTER
+   ============================================================ */
+.cta{position:relative;overflow:hidden;padding:clamp(96px,12vw,170px) 0 0;text-align:center}
+.cta-bg{position:absolute;left:0;right:0;bottom:0;top:0;z-index:0;line-height:0}
+.cta-bg svg{width:100%;height:100%;object-fit:cover}
+.cta-in{position:relative;z-index:1;padding-bottom:clamp(220px,30vw,360px)}
+.cta .kicker{justify-content:center}
+.cta h2{font-size:clamp(1.9rem,4.6vw,3.3rem);margin-bottom:20px}
+.cta p.lead{margin:0 auto 40px;text-align:center}
+footer{position:relative;z-index:2;border-top:1px solid var(--line);background:rgba(250,246,238,.9);padding:38px 0 46px}
+.foot-in{display:flex;justify-content:space-between;gap:22px;flex-wrap:wrap;align-items:center}
+.foot-links{display:flex;gap:22px;flex-wrap:wrap;font-size:.78rem;color:var(--ink-soft)}
+.foot-note{font-size:.7rem;color:#9b9084;font-weight:300;line-height:1.9;max-width:52em;margin-top:22px}
+
+/* ============================================================
+   REVEAL
+   ============================================================ */
+html.js .reveal{opacity:0;transform:translateY(28px)}
+html.js .reveal.in{
+  opacity:1;transform:none;
+  transition:opacity 1.05s ease,transform 1.05s cubic-bezier(.2,.7,.2,1);
+}
+html.js .reveal[data-d="1"].in{transition-delay:.12s}
+html.js .reveal[data-d="2"].in{transition-delay:.24s}
+html.js .reveal[data-d="3"].in{transition-delay:.36s}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:900px){
+  .family-grid,.cards,.safety-cols,.steps-wrap{grid-template-columns:1fr}
+  .family-grid{gap:34px}
+  .steps-wrap{gap:34px}
+  .laptop-art{width:min(80%,260px)}
+}
+@media (max-width:760px){
+  .nav .link{display:none}
+  h1.hero-title{font-size:clamp(3.6rem,20vw,7rem)}
+  .hero-art svg{height:clamp(230px,40vh,320px)}
+  .card{flex-direction:row}
+  .card-art{width:66px}
+  .bar-sub{display:none}
+}
+@media (max-width:420px){
+  .card{flex-direction:column}
+  .card-art{width:82px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition-duration:.01ms !important}
+  html.js .reveal{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ==========================================================
+     共通 SVG DEFS（水彩フィルタ・部品）
+     ========================================================== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <!-- 水彩にじみフィルタ -->
+    <filter id="wc" x="-18%" y="-18%" width="136%" height="136%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.014 0.024" numOctaves="3" seed="9" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="16" xChannelSelector="R" yChannelSelector="G"/>
+      <feGaussianBlur stdDeviation="0.9"/>
+    </filter>
+    <filter id="wc2" x="-18%" y="-18%" width="136%" height="136%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.02 0.03" numOctaves="3" seed="21" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="11" xChannelSelector="R" yChannelSelector="G"/>
+      <feGaussianBlur stdDeviation="0.7"/>
+    </filter>
+    <filter id="wcS" x="-25%" y="-25%" width="150%" height="150%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3.4" xChannelSelector="R" yChannelSelector="G"/>
+      <feGaussianBlur stdDeviation="0.35"/>
+    </filter>
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="24"/></filter>
+    <filter id="blur10" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="10"/></filter>
+    <filter id="blur6" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="blur3" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="3"/></filter>
+
+    <!-- 丘のグラデーション（生成り→砂→黄土→淡セピア） -->
+    <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbf8f1"/><stop offset="0.6" stop-color="#f8f0e0"/><stop offset="1" stop-color="#f4e8d3"/>
+    </linearGradient>
+    <linearGradient id="h1g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f5ecd9"/><stop offset="1" stop-color="#ebe0c8"/></linearGradient>
+    <linearGradient id="h2g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eee1c4"/><stop offset="1" stop-color="#e1d0aa"/></linearGradient>
+    <linearGradient id="h3g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e6d3ae"/><stop offset="1" stop-color="#d4bb8c"/></linearGradient>
+    <linearGradient id="h4g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dcc494"/><stop offset="1" stop-color="#c5a56f"/></linearGradient>
+    <linearGradient id="h5g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#cfae76"/><stop offset="1" stop-color="#b28c58"/></linearGradient>
+    <linearGradient id="roadG" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#fffdf6"/><stop offset="1" stop-color="#f8f1e0"/></linearGradient>
+
+    <!-- 夕暮れ用 -->
+    <linearGradient id="duskSky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#faf5ec"/><stop offset="0.5" stop-color="#f8ead4"/><stop offset="1" stop-color="#f3ddbe"/>
+    </linearGradient>
+    <linearGradient id="d1g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2e2c6"/><stop offset="1" stop-color="#e6d0a9"/></linearGradient>
+    <linearGradient id="d2g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e5cc9f"/><stop offset="1" stop-color="#d2b07e"/></linearGradient>
+    <linearGradient id="d3g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d3ad78"/><stop offset="1" stop-color="#b98b5c"/></linearGradient>
+    <linearGradient id="d4g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#bb8b5a"/><stop offset="1" stop-color="#9c6b44"/></linearGradient>
+
+    <!-- 雲 -->
+    <g id="cloud" filter="url(#blur6)">
+      <ellipse cx="0" cy="0" rx="74" ry="17" fill="#fffdf6" opacity=".88"/>
+      <ellipse cx="-30" cy="-9" rx="34" ry="15" fill="#fffdf6" opacity=".8"/>
+      <ellipse cx="26" cy="-11" rx="42" ry="17" fill="#fdf5e6" opacity=".82"/>
+      <ellipse cx="4" cy="7" rx="58" ry="11" fill="#f6ead6" opacity=".55"/>
+    </g>
+
+    <!-- 茂み（朱） -->
+    <g id="bushA" filter="url(#wc2)">
+      <path d="M0 0 C-15 -3 -22 -18 -10 -27 C-6 -40 13 -43 20 -32 C35 -34 42 -19 31 -8 C24 -1 10 4 0 0 Z" fill="#b8503a"/>
+      <path d="M6 -6 C-2 -12 0 -24 9 -26 C18 -28 25 -20 22 -11 C19 -4 12 -2 6 -6 Z" fill="#cd6d47" opacity=".85"/>
+    </g>
+    <!-- 茂み（くすみ金） -->
+    <g id="bushB" filter="url(#wc2)">
+      <path d="M0 0 C-13 -2 -19 -15 -9 -23 C-5 -34 11 -37 17 -27 C30 -29 36 -16 27 -7 C21 -1 9 3 0 0 Z" fill="#c9a05a"/>
+      <path d="M5 -5 C-1 -10 1 -20 9 -22 C16 -23 21 -16 19 -9 C16 -3 10 -1 5 -5 Z" fill="#dbba7c" opacity=".8"/>
+    </g>
+    <!-- 茂み（赤茶） -->
+    <g id="bushC" filter="url(#wc2)">
+      <path d="M0 0 C-11 -2 -16 -13 -8 -20 C-4 -29 9 -32 15 -23 C26 -25 31 -13 23 -6 C18 -1 8 2 0 0 Z" fill="#9a4a30"/>
+    </g>
+    <!-- 草の穂 -->
+    <g id="ear">
+      <path d="M0 0 C-1 -10 -1 -18 0 -26" stroke="#b0743f" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <ellipse cx="0" cy="-30" rx="3.2" ry="7" fill="#c9a05a" opacity=".95" filter="url(#wcS)"/>
+      <path d="M6 -2 C6 -11 5 -17 4 -22" stroke="#c19a68" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+      <ellipse cx="4" cy="-26" rx="2.6" ry="5.6" fill="#d5b477" opacity=".9"/>
+      <path d="M-6 -1 C-7 -9 -7 -14 -6 -19" stroke="#c19a68" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+      <ellipse cx="-6" cy="-22" rx="2.4" ry="5" fill="#c9884f" opacity=".85"/>
+    </g>
+    <!-- 草むら -->
+    <g id="tuft" stroke-linecap="round" fill="none">
+      <path d="M0 0 C-4 -8 -8 -13 -13 -17" stroke="#b0743f" stroke-width="1.8"/>
+      <path d="M0 0 C-1 -9 -1 -16 0 -22" stroke="#a86a3a" stroke-width="1.8"/>
+      <path d="M0 0 C4 -8 8 -13 13 -18" stroke="#c08b52" stroke-width="1.8"/>
+      <path d="M0 0 C7 -6 12 -9 17 -11" stroke="#c9a05a" stroke-width="1.6"/>
+    </g>
+    <!-- 小さな花 -->
+    <g id="flower">
+      <path d="M0 0 L0 -9" stroke="#b0743f" stroke-width="1.2"/>
+      <circle cx="0" cy="-11" r="2.6" fill="#c65d3b"/>
+    </g>
+
+    <!-- 歩く二人（後ろ姿）: 赤い服の人物 + クリーム色のふわふわ相棒 -->
+    <g id="walkers">
+      <ellipse cx="72" cy="92" rx="56" ry="7" fill="#a4784f" opacity=".22" filter="url(#blur3)"/>
+      <!-- 相棒（大きい／クリーム） -->
+      <g filter="url(#wcS)">
+        <path d="M60 34 C62 16 82 6 100 10 C120 6 138 20 138 40 C146 50 146 70 134 80 C120 92 92 94 78 84 C62 76 54 56 60 34 Z" fill="#f7edd9"/>
+        <path d="M64 30 C54 20 56 6 68 5 C78 4 84 16 83 28" fill="#f7edd9"/>
+        <path d="M132 26 C140 12 154 12 156 24 C157 34 148 44 140 44" fill="#f1e4cb"/>
+        <path d="M84 82 C74 88 62 84 58 74 C70 68 82 70 90 78 Z" fill="#eadfc6"/>
+        <rect x="82" y="80" width="11" height="14" rx="5.5" fill="#e7d9be"/>
+        <rect x="112" y="80" width="11" height="14" rx="5.5" fill="#e3d3b4"/>
+      </g>
+      <path d="M74 44 C84 36 100 33 114 37" stroke="#e6d6b6" stroke-width="3" fill="none" stroke-linecap="round" opacity=".9"/>
+      <path d="M78 58 C88 52 104 50 118 54" stroke="#ece0c4" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".8"/>
+      <!-- 人物（小さい／赤い服） -->
+      <g filter="url(#wcS)">
+        <path d="M28 92 C19 92 14 84 16 73 L21 50 C23 39 31 34 39 35 C48 36 53 44 52 55 L54 76 C55 87 49 93 40 92 Z" fill="#c1462f"/>
+        <path d="M18 70 C26 66 42 66 52 70 L52 76 C42 72 27 72 17 76 Z" fill="#a83d28" opacity=".7"/>
+        <circle cx="36" cy="25" r="12.5" fill="#efdcc0"/>
+        <path d="M23 24 C25 10 47 8 50 21 C43 16 30 16 23 24 Z" fill="#7f3524"/>
+        <rect x="22" y="89" width="10" height="8" rx="4" fill="#5e4632"/>
+        <rect x="40" y="89" width="10" height="8" rx="4" fill="#5e4632"/>
+      </g>
+      <path d="M53 60 C60 57 68 57 74 60" stroke="#c1462f" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+    </g>
+
+    <!-- 座る二人（後ろ姿） -->
+    <g id="sitters">
+      <g filter="url(#wcS)">
+        <path d="M104 138 C74 140 50 122 46 96 C41 68 58 42 84 34 C100 18 132 18 148 34 C172 42 186 68 179 96 C173 122 148 140 118 138 Z" fill="#f7edd9"/>
+        <path d="M60 44 C48 30 52 12 66 12 C78 12 85 26 84 40" fill="#f7edd9"/>
+        <path d="M168 40 C177 22 193 22 195 36 C196 48 186 60 177 60" fill="#f0e3c9"/>
+        <path d="M108 132 C92 142 66 140 58 128 C74 118 96 118 110 126 Z" fill="#e9ddc2"/>
+      </g>
+      <path d="M72 60 C88 50 116 47 138 53" stroke="#e8d8b8" stroke-width="3.4" fill="none" stroke-linecap="round" opacity=".85"/>
+      <path d="M70 84 C88 74 122 72 148 79" stroke="#ece0c4" stroke-width="2.8" fill="none" stroke-linecap="round" opacity=".75"/>
+      <g filter="url(#wcS)">
+        <path d="M22 140 C6 138 -2 124 3 108 L14 74 C19 60 33 55 43 58 C55 62 59 74 56 88 L52 124 C50 136 38 142 22 140 Z" fill="#c1462f"/>
+        <path d="M4 118 C16 112 44 111 55 116 L54 124 C42 119 16 120 4 126 Z" fill="#a83d28" opacity=".65"/>
+        <circle cx="31" cy="44" r="15" fill="#efdcc0"/>
+        <path d="M15 43 C17 26 47 24 50 40 C42 34 24 34 15 43 Z" fill="#7f3524"/>
+        <path d="M52 128 C64 124 76 124 84 128 C74 136 60 136 52 132 Z" fill="#a83d28"/>
+      </g>
+    </g>
+  </defs>
+</svg>
+
+<!-- ==========================================================
+     HEADER
+     ========================================================== -->
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="#top" aria-label="Claude ホーム">
+      <svg viewBox="0 0 40 40" aria-hidden="true">
+        <circle cx="20" cy="20" r="12" fill="#d97757" opacity=".22" filter="url(#blur3)"/>
+        <circle cx="20" cy="20" r="8.4" fill="#c65d3b"/>
+        <g stroke="#c65d3b" stroke-width="2" stroke-linecap="round">
+          <path d="M20 3.6V8"/><path d="M20 32V36.4"/><path d="M3.6 20H8"/><path d="M32 20h4.4"/>
+          <path d="M8.4 8.4l3.1 3.1"/><path d="M28.5 28.5l3.1 3.1"/><path d="M31.6 8.4l-3.1 3.1"/><path d="M11.5 28.5l-3.1 3.1"/>
+        </g>
+      </svg>
+      <span class="logo-text">Claude</span>
+    </a>
+    <nav class="nav" aria-label="メインナビゲーション">
+      <a class="link" href="#family">モデル</a>
+      <a class="link" href="#can">できること</a>
+      <a class="link" href="#safety">安全性</a>
+      <a class="btn" href="#cta">使ってみる</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ==========================================================
+     1. HERO
+     ========================================================== -->
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-copy">
+    <div class="wrap">
+      <p class="eyebrow reveal">
+        <span class="pill">01</span>
+        <span>MYTHOS-CLASS</span>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="ja-lab">一般提供モデル</span>
+      </p>
+      <h1 class="hero-title reveal" id="hero-title" data-d="1">Fable&nbsp;5<span class="p">.</span></h1>
+      <p class="hero-tag reveal" data-d="2">今、いちばん賢いClaudeが、<br>誰でも使える形に。</p>
+      <p class="hero-sub reveal" data-d="3">長い道のりを、途中で投げ出さずに。数時間にわたる複雑な仕事も、最後の一歩まで並んで歩きます。</p>
+    </div>
+  </div>
+
+  <div class="hero-art" aria-hidden="false">
+    <svg viewBox="0 0 1440 520" preserveAspectRatio="xMidYMax slice" role="img"
+         aria-label="秋の丘を縫う白い小道を、赤い服の小さな人物とクリーム色のふわふわした大きな相棒が並んで歩いていく水彩画">
+      <rect width="1440" height="520" fill="url(#skyGrad)"/>
+
+      <!-- 太陽 -->
+      <g class="p-sun">
+        <g class="sun-breathe">
+          <circle cx="1096" cy="126" r="128" fill="#d97757" opacity=".13" filter="url(#soft)"/>
+          <circle cx="1096" cy="126" r="74" fill="#d97757" opacity=".55" filter="url(#blur10)"/>
+          <circle cx="1090" cy="120" r="46" fill="#c65d3b" opacity=".5" filter="url(#blur6)"/>
+        </g>
+      </g>
+
+      <!-- 雲 -->
+      <g class="p-cloud" data-speed="0.05"><g class="drift-a"><use href="#cloud" transform="translate(250,104) scale(1.15)" opacity=".9"/></g></g>
+      <g class="p-cloud" data-speed="0.09"><g class="drift-b"><use href="#cloud" transform="translate(640,66) scale(.8)" opacity=".75"/></g></g>
+      <g class="p-cloud" data-speed="0.13"><g class="drift-a"><use href="#cloud" transform="translate(1230,190) scale(.62)" opacity=".6"/></g></g>
+
+      <!-- 丘（遠→近） -->
+      <g filter="url(#wc)">
+        <path d="M0 268 C120 240 246 248 362 258 C520 272 606 232 762 238 C900 244 1012 268 1160 254 C1288 242 1372 252 1440 244 L1440 520 L0 520 Z" fill="url(#h1g)"/>
+      </g>
+      <path d="M0 268 C120 240 246 248 362 258 C520 272 606 232 762 238 C900 244 1012 268 1160 254 C1288 242 1372 252 1440 244" fill="none" stroke="#e2d4b6" stroke-width="6" opacity=".45" filter="url(#blur6)"/>
+
+      <g filter="url(#wc)">
+        <path d="M0 320 C142 296 262 310 420 300 C562 291 682 266 832 282 C980 297 1082 320 1232 306 C1332 297 1392 308 1440 302 L1440 520 L0 520 Z" fill="url(#h2g)"/>
+      </g>
+      <g filter="url(#wc)">
+        <path d="M0 374 C160 352 302 366 470 352 C620 340 762 316 902 332 C1052 348 1182 374 1440 356 L1440 520 L0 520 Z" fill="url(#h3g)"/>
+      </g>
+      <g filter="url(#wc)">
+        <path d="M0 434 C200 406 362 422 562 404 C742 388 902 366 1082 384 C1242 400 1342 422 1440 414 L1440 520 L0 520 Z" fill="url(#h4g)"/>
+      </g>
+
+      <!-- 小道（丘を縫って遠くへ） -->
+      <g filter="url(#wc2)">
+        <path d="M528 520 C614 462 700 418 752 384 C788 360 818 342 836 332 L852 334 C844 350 840 368 844 394 C852 444 902 482 992 520 Z" fill="url(#roadG)" opacity=".96"/>
+      </g>
+      <path d="M836 332 C818 344 786 364 750 390 C700 424 612 468 526 520" fill="none" stroke="#c9ad80" stroke-width="2" opacity=".35" filter="url(#blur3)"/>
+      <path d="M852 336 C846 356 848 386 858 412 C880 464 918 492 994 520" fill="none" stroke="#bb9a6c" stroke-width="2.4" opacity=".3" filter="url(#blur3)"/>
+
+      <!-- 手前の丘（左右） -->
+      <g filter="url(#wc)">
+        <path d="M0 452 C120 434 244 458 336 494 C382 512 420 520 442 520 L0 520 Z" fill="url(#h5g)"/>
+        <path d="M1440 434 C1330 424 1198 450 1098 492 C1058 508 1030 520 1010 520 L1440 520 Z" fill="url(#h5g)"/>
+      </g>
+
+      <!-- 茂み・草花・穂 -->
+      <use href="#bushB" transform="translate(196,344) scale(.7)" opacity=".9"/>
+      <use href="#bushC" transform="translate(300,336) scale(.55)" opacity=".8"/>
+      <use href="#bushA" transform="translate(1246,364) scale(.75)"/>
+      <use href="#bushB" transform="translate(1330,372) scale(.6)"/>
+      <use href="#bushA" transform="translate(112,470) scale(1.3)"/>
+      <use href="#bushC" transform="translate(212,486) scale(1.05)"/>
+      <use href="#bushB" transform="translate(304,502) scale(1.15)"/>
+      <use href="#bushA" transform="translate(1200,492) scale(1.35)"/>
+      <use href="#bushB" transform="translate(1090,506) scale(1.05)"/>
+      <use href="#bushC" transform="translate(1352,478) scale(.95)"/>
+      <use href="#tuft" transform="translate(462,470) scale(1.2)"/>
+      <use href="#tuft" transform="translate(508,498) scale(1.5)"/>
+      <use href="#tuft" transform="translate(1024,486) scale(1.4)"/>
+      <use href="#tuft" transform="translate(978,512) scale(1.6)"/>
+      <use href="#ear" transform="translate(420,506) scale(1.5)"/>
+      <use href="#ear" transform="translate(444,516) scale(1.15)"/>
+      <use href="#ear" transform="translate(1054,514) scale(1.4)"/>
+      <use href="#ear" transform="translate(1082,498) scale(1.1)"/>
+      <use href="#flower" transform="translate(566,502) scale(1.4)"/>
+      <use href="#flower" transform="translate(596,514) scale(1.1)"/>
+      <use href="#flower" transform="translate(940,506) scale(1.3)"/>
+      <use href="#bushB" transform="translate(704,392) scale(.5)" opacity=".85"/>
+      <use href="#bushA" transform="translate(884,404) scale(.55)" opacity=".9"/>
+      <use href="#ear" transform="translate(866,392) scale(.8)"/>
+
+      <!-- 歩く二人 -->
+      <g transform="translate(618,376) scale(1.02)"><use href="#walkers"/></g>
+    </svg>
+  </div>
+</section>
+
+<!-- ==========================================================
+     2. FAMILY
+     ========================================================== -->
+<section class="section" id="family">
+  <div class="wrap">
+    <div class="kicker reveal">
+      <span class="num">02</span><span class="en">The Family</span>
+      <span class="sep">/</span><span class="ja">Claudeファミリー</span>
+    </div>
+    <div class="family-grid">
+      <div>
+        <h2 class="title reveal">Claudeのいちばん上へ<span class="dot">。</span></h2>
+        <p class="lead reveal" data-d="1">
+          軽やかな Haiku、日々を支える Sonnet、深く考える Opus。
+          その先に、新しい最上位クラス「Mythos」が加わりました。
+          Fable 5 は、その一号機です。段をひとつ上がるたび、
+          任せられる仕事の「長さ」と「複雑さ」が変わります。
+        </p>
+        <div class="family-note reveal" data-d="2">
+          <span class="b">↑</span>
+          <span>縦軸は、ひとつづきの仕事を最後までやり切る力のめやすです。</span>
+        </div>
+      </div>
+
+      <div class="chart-card reveal" data-d="1">
+        <svg class="bg-sun" viewBox="0 0 200 200" aria-hidden="true">
+          <circle cx="100" cy="100" r="70" fill="#d97757" opacity=".16" filter="url(#blur10)"/>
+          <circle cx="100" cy="100" r="40" fill="#d97757" opacity=".28" filter="url(#blur6)"/>
+        </svg>
+        <div class="chart-bars">
+          <div class="bar-col">
+            <div class="bar" style="--h:26"><i></i></div>
+            <div class="bar-name">Haiku</div>
+            <div class="bar-sub">HAIKU-CLASS</div>
+          </div>
+          <div class="bar-col">
+            <div class="bar" style="--h:48"><i></i></div>
+            <div class="bar-name">Sonnet</div>
+            <div class="bar-sub">SONNET-CLASS</div>
+          </div>
+          <div class="bar-col">
+            <div class="bar" style="--h:72"><i></i></div>
+            <div class="bar-name">Opus</div>
+            <div class="bar-sub">OPUS-CLASS</div>
+          </div>
+          <div class="bar-col is-top">
+            <div class="bar-flag">Fable 5</div>
+            <div class="bar mythos" style="--h:100"><i></i></div>
+            <div class="bar-name">Mythos</div>
+            <div class="bar-sub">MYTHOS-CLASS</div>
+          </div>
+        </div>
+        <div class="baseline"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================
+     3. CAPABILITIES
+     ========================================================== -->
+<section class="section" id="can">
+  <div class="wrap">
+    <div class="kicker reveal">
+      <span class="num">03</span><span class="en">Capabilities</span>
+      <span class="sep">/</span><span class="ja">できること</span>
+    </div>
+    <h2 class="title reveal">頼れる仕事の、そのさきまで<span class="dot">。</span></h2>
+    <p class="lead reveal" data-d="1">賢さは、机の上だけのものではありません。実際に手を動かし、долгい道のりを歩き通せるかどうか。Fable 5 が変えたのは、そこです。</p>
+
+    <div class="cards">
+      <!-- ① ゲーム -->
+      <article class="card reveal" data-d="1">
+        <div class="card-art">
+          <svg viewBox="0 0 120 110" role="img" aria-label="ゲーム画面の水彩イラスト">
+            <ellipse cx="60" cy="100" rx="44" ry="6" fill="#b08a63" opacity=".18" filter="url(#blur3)"/>
+            <g filter="url(#wcS)">
+              <rect x="10" y="14" width="100" height="70" rx="10" fill="#e9dcc0"/>
+              <rect x="17" y="21" width="86" height="50" rx="6" fill="#fbf5e7"/>
+              <path d="M17 58 C34 48 48 54 62 50 C76 46 92 52 103 47 L103 71 L17 71 Z" fill="#d9bd8c"/>
+              <path d="M17 66 C36 60 54 64 74 60 C86 58 96 60 103 58 L103 71 L17 71 Z" fill="#c19a63"/>
+              <circle cx="88" cy="33" r="8" fill="#d97757" opacity=".8"/>
+              <rect x="40" y="52" width="7" height="11" rx="3" fill="#c1462f"/>
+              <circle cx="43.5" cy="49" r="3.4" fill="#efdcc0"/>
+              <rect x="60" y="55" width="10" height="7" rx="3" fill="#c9a05a"/>
+            </g>
+            <rect x="46" y="84" width="28" height="6" rx="3" fill="#b08a63" opacity=".55"/>
+            <rect x="34" y="90" width="52" height="6" rx="3" fill="#c9a880" opacity=".6"/>
+            <circle cx="27" cy="30" r="2.6" fill="#c65d3b" opacity=".7"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <span class="card-tag">GAME</span>
+          <h3>画面を見るだけで、ゲームを最後までクリア。</h3>
+          <p>攻略情報もマニュアルもなし。映っている絵だけを頼りに、<br>はじまりからエンディングまで自分で辿り着きます。</p>
+        </div>
+      </article>
+
+      <!-- ② コード移行 -->
+      <article class="card reveal" data-d="2">
+        <div class="card-art">
+          <svg viewBox="0 0 120 110" role="img" aria-label="積み上がったコードの紙束の水彩イラスト">
+            <ellipse cx="60" cy="99" rx="42" ry="6" fill="#b08a63" opacity=".18" filter="url(#blur3)"/>
+            <g filter="url(#wcS)">
+              <rect x="16" y="76" width="88" height="14" rx="4" fill="#e0cfa8" transform="rotate(-2 60 83)"/>
+              <rect x="18" y="60" width="84" height="14" rx="4" fill="#eee0c2" transform="rotate(2 60 67)"/>
+              <rect x="14" y="44" width="88" height="14" rx="4" fill="#e6d5b0" transform="rotate(-3 60 51)"/>
+              <rect x="20" y="16" width="76" height="30" rx="5" fill="#fbf5e7" transform="rotate(1.5 58 31)"/>
+            </g>
+            <g stroke-linecap="round" transform="rotate(1.5 58 31)">
+              <path d="M28 25h20" stroke="#c65d3b" stroke-width="2.6"/>
+              <path d="M28 32h34" stroke="#c9a05a" stroke-width="2.6"/>
+              <path d="M34 39h28" stroke="#b08a63" stroke-width="2.6" opacity=".8"/>
+            </g>
+            <g stroke="#b08a63" stroke-width="2" stroke-linecap="round" opacity=".6">
+              <path d="M28 51h30"/><path d="M28 67h26"/><path d="M28 83h34"/>
+            </g>
+            <path d="M92 30 C102 34 104 44 98 50" stroke="#c65d3b" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+            <path d="M99 44 l-1 7 l7 -2" fill="none" stroke="#c65d3b" stroke-width="2.4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <span class="card-tag">MIGRATION</span>
+          <h3>5,000万行のコードを、1日で移行。</h3>
+          <p>巨大な社内システムの引っ越しも、丸一日走り続けて完了。<br>人の手なら数か月かかっていた道のりです。</p>
+        </div>
+      </article>
+
+      <!-- ③ 新薬 -->
+      <article class="card reveal" data-d="1">
+        <div class="card-art">
+          <svg viewBox="0 0 120 110" role="img" aria-label="分子とフラスコの水彩イラスト">
+            <ellipse cx="60" cy="100" rx="42" ry="6" fill="#b08a63" opacity=".18" filter="url(#blur3)"/>
+            <g filter="url(#wcS)">
+              <path d="M52 22 h20 v20 l16 34 c4 9 -2 18 -12 18 H48 c-10 0 -16 -9 -12 -18 l16 -34 Z" fill="#f6efdf"/>
+              <path d="M40 66 c-3 8 2 15 10 15 h20 c8 0 13 -7 10 -15 l-6 -12 c-8 5 -20 5 -28 0 Z" fill="#d97757"/>
+              <rect x="49" y="17" width="26" height="7" rx="3.4" fill="#e0cfa8"/>
+            </g>
+            <circle cx="47" cy="69" r="2.4" fill="#fdf6e8" opacity=".8"/>
+            <circle cx="66" cy="74" r="1.8" fill="#fdf6e8" opacity=".7"/>
+            <g stroke="#b08a63" stroke-width="2" stroke-linecap="round">
+              <path d="M92 20 l14 8"/><path d="M106 28 l0 16"/><path d="M106 44 l-14 8"/><path d="M92 52 l-14 -8" opacity=".55"/>
+            </g>
+            <g filter="url(#wcS)">
+              <circle cx="92" cy="19" r="6.4" fill="#c65d3b"/>
+              <circle cx="107" cy="28" r="5.4" fill="#c9a05a"/>
+              <circle cx="107" cy="45" r="5" fill="#9a4a30"/>
+              <circle cx="92" cy="53" r="5.6" fill="#d9bd8c"/>
+            </g>
+            <path d="M22 36 c6 -4 6 6 12 2" stroke="#c9a05a" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <span class="card-tag">SCIENCE</span>
+          <h3>新薬の設計を、約10倍のスピードで。</h3>
+          <p>候補分子の設計と検証のループを高速で回し、<br>研究者の「試せる回数」を何倍にも増やします。</p>
+        </div>
+      </article>
+
+      <!-- ④ 長時間 -->
+      <article class="card reveal" data-d="2">
+        <div class="card-art">
+          <svg viewBox="0 0 120 110" role="img" aria-label="遠くへ続く道と時計の水彩イラスト">
+            <g filter="url(#wcS)">
+              <path d="M4 92 C16 74 30 62 44 52 C56 44 66 38 74 34 L84 36 C74 44 62 54 52 66 C38 82 28 92 24 100 L4 100 Z" fill="#f8f1e0"/>
+              <path d="M0 100 C14 84 30 70 48 58 C62 48 74 42 84 36 L92 100 Z" fill="#dcc494" opacity=".35"/>
+              <path d="M0 66 C22 58 44 60 66 52 C82 46 96 40 120 36 L120 100 L0 100 Z" fill="#e6d3ae" opacity=".55"/>
+            </g>
+            <use href="#tuft" transform="translate(16,96) scale(.9)"/>
+            <use href="#bushA" transform="translate(96,96) scale(.75)"/>
+            <use href="#ear" transform="translate(38,100) scale(.8)"/>
+            <g filter="url(#wcS)">
+              <circle cx="84" cy="26" r="21" fill="#f6efdf"/>
+              <circle cx="84" cy="26" r="21" fill="none" stroke="#c9a05a" stroke-width="3"/>
+            </g>
+            <g stroke="#c65d3b" stroke-width="2.8" stroke-linecap="round">
+              <path d="M84 26 V14"/><path d="M84 26 l9 6"/>
+            </g>
+            <circle cx="84" cy="26" r="2.2" fill="#9a4a30"/>
+            <path d="M62 16 C64 8 74 4 80 6" stroke="#d97757" stroke-width="2" fill="none" stroke-linecap="round" opacity=".7"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <span class="card-tag">LONG RUN</span>
+          <h3>長い作業も、休まず走りきる。</h3>
+          <p>30時間を超える連続作業でも集中を切らさず、<br>最後の見直しまで自分で面倒を見ます。</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================
+     4. GRAPH
+     ========================================================== -->
+<section class="section" id="strength">
+  <div class="wrap">
+    <div class="kicker reveal">
+      <span class="num">04</span><span class="en">Long-Horizon</span>
+      <span class="sep">/</span><span class="ja">いちばんの強み</span>
+    </div>
+    <h2 class="title reveal">長く複雑な仕事ほど、<br>差は開いていく<span class="dot">。</span></h2>
+    <p class="lead reveal" data-d="1">短い問いなら、どのモデルも上手にこたえます。ちがいが出るのは、何十手も先を見て、途中でつまずいても立て直しながら歩き続ける仕事。そこで Fable 5 の線は、まっすぐ上へ伸びていきます。</p>
+
+    <div class="graph-wrap reveal" data-d="2" id="graph-wrap">
+      <svg id="graph" viewBox="0 0 900 440" role="img" aria-label="仕事の長さ・複雑さが増すにつれて、Fable 5 の成果だけが指数関数的に伸びていく折れ線グラフ">
+        <g stroke="#e5dac2" stroke-width="1" stroke-dasharray="3 7">
+          <line x1="70" y1="70" x2="862" y2="70"/>
+          <line x1="70" y1="148" x2="862" y2="148"/>
+          <line x1="70" y1="226" x2="862" y2="226"/>
+          <line x1="70" y1="304" x2="862" y2="304"/>
+        </g>
+        <line x1="70" y1="380" x2="866" y2="380" stroke="#d8ccb4" stroke-width="1.6"/>
+        <line x1="70" y1="46" x2="70" y2="380" stroke="#d8ccb4" stroke-width="1.6"/>
+
+        <!-- 他モデル -->
+        <path class="gline" d="M70 366 C200 361 340 358 480 353 C620 349 750 346 856 344" stroke="#d3cabc" stroke-width="2.6"/>
+        <path class="gline" d="M70 358 C210 350 350 342 490 334 C630 327 760 322 856 318" stroke="#c8bfb0" stroke-width="2.6"/>
+        <path class="gline" d="M70 350 C220 336 380 318 520 302 C660 288 780 280 856 276" stroke="#bab1a2" stroke-width="2.8"/>
+        <!-- Fable 5 -->
+        <path class="gline" id="fableLine" d="M70 352 C210 336 340 306 470 258 C590 214 700 146 858 56" stroke="#c65d3b" stroke-width="4.6"/>
+
+        <g class="gfade">
+          <circle cx="858" cy="56" r="7.5" fill="#c65d3b"/>
+          <circle cx="858" cy="56" r="15" fill="#c65d3b" opacity=".18"/>
+          <text class="lab" x="852" y="32" text-anchor="end" fill="#c65d3b">Fable 5</text>
+          <text class="lab-g" x="850" y="266" text-anchor="end">前世代 Opus</text>
+          <text class="lab-g" x="850" y="310" text-anchor="end">他社モデル A</text>
+          <text class="lab-g" x="850" y="338" text-anchor="end">他社モデル B</text>
+        </g>
+
+        <text class="axis-t" x="70" y="416">仕事の長さ・複雑さ →</text>
+        <text class="axis-t" x="0" y="0" transform="translate(48,258) rotate(-90)">成果の質・完遂率 →</text>
+      </svg>
+
+      <div class="graph-legend">
+        <span><i class="t"></i>Fable 5（Mythos-class）</span>
+        <span><i></i>従来モデル</span>
+      </div>
+      <p class="graph-note">※ グラフは特性を伝えるためのイメージであり、実測値ではありません。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================
+     5. SAFETY
+     ========================================================== -->
+<section class="section safety" id="safety">
+  <div class="wrap">
+    <div class="kicker reveal">
+      <span class="num">05</span><span class="en">Safety</span>
+      <span class="sep">/</span><span class="ja">安全性</span>
+    </div>
+    <h2 class="title reveal">強い力には、やさしいブレーキを<span class="dot">。</span></h2>
+
+    <div class="safety-art reveal" data-d="1">
+      <svg viewBox="0 0 1200 460" preserveAspectRatio="xMidYMax slice" role="img"
+           aria-label="夕日を眺めて丘の上に並んで座る、赤い服の人物とクリーム色の大きな相棒の水彩画">
+        <rect width="1200" height="460" fill="url(#duskSky)"/>
+        <g>
+          <circle cx="600" cy="252" r="170" fill="#d97757" opacity=".14" filter="url(#soft)"/>
+          <circle cx="600" cy="252" r="96" fill="#d97757" opacity=".5" filter="url(#blur10)"/>
+          <circle cx="598" cy="248" r="60" fill="#c65d3b" opacity=".45" filter="url(#blur6)"/>
+        </g>
+        <use href="#cloud" transform="translate(220,120) scale(1.0)" opacity=".7"/>
+        <use href="#cloud" transform="translate(940,96) scale(.75)" opacity=".55"/>
+
+        <g filter="url(#wc)">
+          <path d="M0 288 C130 268 260 280 400 274 C540 268 660 246 810 258 C950 269 1070 286 1200 276 L1200 460 L0 460 Z" fill="url(#d1g)"/>
+        </g>
+        <g filter="url(#wc)">
+          <path d="M0 336 C160 316 300 330 460 322 C620 314 760 294 900 306 C1030 317 1120 334 1200 328 L1200 460 L0 460 Z" fill="url(#d2g)"/>
+        </g>
+        <g filter="url(#wc2)">
+          <path d="M462 460 C500 420 546 398 580 380 L596 378 C592 400 596 424 610 460 Z" fill="#fdf7ea" opacity=".55"/>
+        </g>
+        <g filter="url(#wc)">
+          <path d="M0 400 C180 372 340 392 520 378 C700 364 880 344 1060 366 C1140 376 1180 388 1200 384 L1200 460 L0 460 Z" fill="url(#d3g)"/>
+        </g>
+
+        <!-- 座る二人 -->
+        <g transform="translate(462,222) scale(.9)">
+          <ellipse cx="120" cy="152" rx="130" ry="12" fill="#8a5f3c" opacity=".2" filter="url(#blur6)"/>
+          <use href="#sitters"/>
+        </g>
+
+        <g filter="url(#wc)">
+          <path d="M0 432 C160 416 300 430 460 440 C620 450 800 448 1000 436 C1100 430 1160 430 1200 428 L1200 460 L0 460 Z" fill="url(#d4g)"/>
+        </g>
+        <use href="#bushA" transform="translate(160,436) scale(1.5)"/>
+        <use href="#bushC" transform="translate(268,452) scale(1.2)"/>
+        <use href="#bushB" transform="translate(64,456) scale(1.35)"/>
+        <use href="#bushA" transform="translate(1030,442) scale(1.5)"/>
+        <use href="#bushB" transform="translate(1136,456) scale(1.2)"/>
+        <use href="#bushC" transform="translate(936,458) scale(1.1)"/>
+        <use href="#ear" transform="translate(346,456) scale(1.5)"/>
+        <use href="#ear" transform="translate(374,446) scale(1.2)"/>
+        <use href="#tuft" transform="translate(430,452) scale(1.5)"/>
+        <use href="#tuft" transform="translate(820,450) scale(1.4)"/>
+        <use href="#ear" transform="translate(880,458) scale(1.3)"/>
+        <use href="#flower" transform="translate(700,452) scale(1.5)"/>
+        <use href="#flower" transform="translate(736,458) scale(1.2)"/>
+      </svg>
+    </div>
+
+    <div class="safety-cols">
+      <p class="em reveal" data-d="1">いちばん賢いことと、いちばん安心して任せられること。Fable 5 は、これまででもっとも整合的なClaudeです。</p>
+      <p class="reveal" data-d="2">危ない依頼の前では静かに立ち止まり、断るときはその理由をきちんと言葉にします。速く走る力と同じくらい、ていねいに止まる力を育てました。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================
+     6. GET STARTED
+     ========================================================== -->
+<section class="section section--tight" id="start">
+  <div class="wrap">
+    <div class="kicker reveal">
+      <span class="num">06</span><span class="en">Get Started</span>
+      <span class="sep">/</span><span class="ja">はじめかた</span>
+    </div>
+    <h2 class="title reveal">はじめかたは、かんたん<span class="dot">。</span></h2>
+
+    <div class="steps-wrap">
+      <div class="laptop-art reveal" data-d="1">
+        <svg viewBox="0 0 240 180" role="img" aria-label="丘の風景が映るノートパソコンの水彩イラスト">
+          <ellipse cx="120" cy="164" rx="86" ry="8" fill="#b08a63" opacity=".2" filter="url(#blur3)"/>
+          <g filter="url(#wcS)">
+            <rect x="42" y="24" width="156" height="106" rx="9" fill="#e3d2ad"/>
+            <rect x="50" y="32" width="140" height="90" rx="5" fill="#fdf8ec"/>
+            <path d="M50 86 C74 74 96 82 120 76 C144 70 168 78 190 70 L190 122 L50 122 Z" fill="#e6d3ae"/>
+            <path d="M50 100 C78 92 104 98 132 92 C158 87 176 90 190 88 L190 122 L50 122 Z" fill="#cfae76"/>
+            <circle cx="160" cy="54" r="13" fill="#d97757" opacity=".75"/>
+            <path d="M96 122 C104 108 112 100 120 94 L126 95 C122 104 122 112 126 122 Z" fill="#fdf8ec" opacity=".85"/>
+            <path d="M22 130 h196 c6 0 8 6 4 10 H18 c-4 -4 -2 -10 4 -10 Z" fill="#dcc79f"/>
+          </g>
+          <g transform="translate(104,84) scale(.32)"><use href="#walkers"/></g>
+          <rect x="98" y="132" width="44" height="4" rx="2" fill="#c0a276" opacity=".7"/>
+          <use href="#ear" transform="translate(66,120) scale(.6)"/>
+          <use href="#bushA" transform="translate(178,120) scale(.5)"/>
+        </svg>
+      </div>
+
+      <ol class="steps">
+        <li class="reveal">
+          <span class="st-num">01</span>
+          <div>
+            <h3>Claude にログインする</h3>
+            <p>ブラウザでも、デスクトップアプリでも。特別な設定はいりません。</p>
+          </div>
+        </li>
+        <li class="reveal" data-d="1">
+          <span class="st-num">02</span>
+          <div>
+            <h3>モデル切り替えで「Fable 5」を選ぶ</h3>
+            <p>無料プランを含むすべてのプランで、今日から選べます。</p>
+          </div>
+        </li>
+        <li class="reveal" data-d="2">
+          <span class="st-num">03</span>
+          <div>
+            <h3>いつもの言葉で話しかける</h3>
+            <p>開発者は API から <code>claude-fable-5</code> を指定してください。</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================
+     7. CTA + FOOTER
+     ========================================================== -->
+<section class="cta" id="cta">
+  <div class="cta-bg" aria-hidden="true">
+    <svg viewBox="0 0 1440 720" preserveAspectRatio="xMidYMax slice" role="img"
+         aria-label="夕暮れの丘に白い道が遠くまで続く水彩画">
+      <rect width="1440" height="720" fill="url(#duskSky)"/>
+      <g>
+        <circle cx="740" cy="392" r="200" fill="#d97757" opacity=".12" filter="url(#soft)"/>
+        <circle cx="740" cy="392" r="104" fill="#d97757" opacity=".42" filter="url(#blur10)"/>
+        <circle cx="738" cy="388" r="62" fill="#c65d3b" opacity=".4" filter="url(#blur6)"/>
+      </g>
+      <use href="#cloud" transform="translate(300,240) scale(1.1)" opacity=".55"/>
+      <use href="#cloud" transform="translate(1120,206) scale(.8)" opacity=".45"/>
+
+      <g filter="url(#wc)">
+        <path d="M0 432 C140 412 280 424 420 418 C560 412 680 390 830 402 C980 414 1100 430 1240 420 C1340 413 1400 420 1440 416 L1440 720 L0 720 Z" fill="url(#d1g)"/>
+      </g>
+      <g filter="url(#wc)">
+        <path d="M0 486 C160 464 320 478 480 470 C640 462 780 442 920 456 C1060 470 1180 486 1440 470 L1440 720 L0 720 Z" fill="url(#d2g)"/>
+      </g>
+      <!-- 道 -->
+      <g filter="url(#wc2)">
+        <path d="M540 720 C620 636 700 574 748 522 C778 490 796 470 806 458 L822 460 C816 478 816 500 824 528 C840 588 892 650 984 720 Z" fill="#fdf8ec" opacity=".9"/>
+      </g>
+      <g transform="translate(650,556) scale(.86)"><use href="#walkers"/></g>
+      <g filter="url(#wc)">
+        <path d="M0 566 C200 540 360 558 560 542 C740 528 900 506 1080 526 C1240 544 1350 562 1440 554 L1440 720 L0 720 Z" fill="url(#d3g)"/>
+      </g>
+      <g filter="url(#wc)">
+        <path d="M0 646 C160 626 320 644 480 656 C660 670 860 664 1040 648 C1180 636 1340 640 1440 634 L1440 720 L0 720 Z" fill="url(#d4g)"/>
+      </g>
+      <use href="#bushA" transform="translate(150,652) scale(1.7)"/>
+      <use href="#bushC" transform="translate(280,672) scale(1.3)"/>
+      <use href="#bushB" transform="translate(60,684) scale(1.5)"/>
+      <use href="#bushA" transform="translate(1230,656) scale(1.7)"/>
+      <use href="#bushB" transform="translate(1360,678) scale(1.3)"/>
+      <use href="#bushC" transform="translate(1110,684) scale(1.2)"/>
+      <use href="#ear" transform="translate(410,680) scale(1.7)"/>
+      <use href="#ear" transform="translate(444,668) scale(1.3)"/>
+      <use href="#tuft" transform="translate(500,676) scale(1.7)"/>
+      <use href="#tuft" transform="translate(1010,672) scale(1.6)"/>
+      <use href="#ear" transform="translate(1058,684) scale(1.4)"/>
+      <use href="#flower" transform="translate(620,684) scale(1.6)"/>
+      <use href="#flower" transform="translate(880,676) scale(1.4)"/>
+    </svg>
+  </div>
+
+  <div class="cta-in wrap">
+    <div class="kicker reveal">
+      <span class="num">07</span><span class="en">Together</span>
+      <span class="sep">/</span><span class="ja">いっしょに</span>
+    </div>
+    <h2 class="reveal" data-d="1">いちばん遠くまで、いっしょに<span class="dot">。</span></h2>
+    <p class="lead reveal" data-d="2">はじめの一歩は、話しかけるだけ。あとは道の続くところまで、並んで歩いていきましょう。</p>
+    <a class="btn btn--lg reveal" data-d="3" href="#top">Claudeを使ってみる</a>
+  </div>
+
+  <footer>
+    <div class="wrap">
+      <div class="foot-in">
+        <a class="brand" href="#top">
+          <svg viewBox="0 0 40 40" aria-hidden="true" style="width:20px;height:20px">
+            <circle cx="20" cy="20" r="8.4" fill="#c65d3b"/>
+            <g stroke="#c65d3b" stroke-width="2.4" stroke-linecap="round">
+              <path d="M20 3.6V8"/><path d="M20 32V36.4"/><path d="M3.6 20H8"/><path d="M32 20h4.4"/>
+            </g>
+          </svg>
+          <span class="logo-text" style="font-size:.98rem">Claude</span>
+        </a>
+        <div class="foot-links">
+          <a href="#family">モデル</a><a href="#can">できること</a><a href="#safety">安全性</a><a href="#start">はじめかた</a>
+        </div>
+      </div>
+      <p class="foot-note">
+        ※ 本ページは架空のAIモデル「Fable 5」のコンセプト・ランディングページです。記載の性能・数値・グラフはデザイン検証のためのイメージであり、実在の製品仕様や実測値を示すものではありません。<br>
+        © Fable 5 concept page — illustrations drawn in inline SVG.
+      </p>
+    </div>
+  </footer>
+</section>
+
+</main>
+
+<script>
+(function(){
+  var root = document.documentElement;
+  root.classList.add('js');
+
+  var reveals = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
+  var graphWrap = document.getElementById('graph-wrap');
+  var graphDone = false;
+
+  function drawGraph(){
+    if(graphDone) return;
+    graphDone = true;
+    var lines = document.querySelectorAll('#graph .gline');
+    Array.prototype.forEach.call(lines, function(p, i){
+      var len;
+      try { len = p.getTotalLength(); } catch(e){ len = 1200; }
+      p.style.strokeDasharray = len + ' ' + len;
+      p.style.strokeDashoffset = len;
+      // 反映後にアニメーション開始
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+          var isFable = (p.id === 'fableLine');
+          p.style.transition = 'stroke-dashoffset ' + (isFable ? 2.1 : 1.5) + 's cubic-bezier(.22,.72,.2,1) ' + (isFable ? .45 : i * .14) + 's';
+          p.style.strokeDashoffset = '0';
+        });
+      });
+    });
+  }
+
+  function show(el){
+    el.classList.add('in');
+    if(graphWrap && (el === graphWrap || el.contains(graphWrap))) drawGraph();
+  }
+
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){ show(e.target); io.unobserve(e.target); }
+      });
+    }, {rootMargin:'0px 0px -12% 0px', threshold:0.12});
+
+    reveals.forEach(function(el){ io.observe(el); });
+
+    // 最初の画面内にある要素は即表示
+    requestAnimationFrame(function(){
+      reveals.forEach(function(el){
+        var r = el.getBoundingClientRect();
+        if(r.top < window.innerHeight * 0.95) show(el);
+      });
+    });
+  } else {
+    reveals.forEach(show);
+  }
+
+  // フェイルセーフ：万一未発火でも内容が隠れ続けないように
+  setTimeout(function(){ reveals.forEach(show); }, 3600);
+
+  /* ---- ヒーローのパララックス ---- */
+  var sun = document.querySelector('.p-sun');
+  var clouds = Array.prototype.slice.call(document.querySelectorAll('.p-cloud'));
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var ticking = false;
+
+  function onScroll(){
+    if(reduce || ticking) return;
+    ticking = true;
+    requestAnimationFrame(function(){
+      var y = window.pageYOffset || 0;
+      if(y < window.innerHeight * 1.6){
+        if(sun) sun.style.transform = 'translate3d(0,' + (y * 0.14) + 'px,0)';
+        clouds.forEach(function(c, i){
+          var s = parseFloat(c.getAttribute('data-speed')) || 0.06;
+          c.style.transform = 'translate3d(' + (y * s * 1.4) + 'px,' + (y * s * 0.9) + 'px,0)';
+        });
+      }
+      ticking = false;
+    });
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
+</body>
+</html>
