@@ -35,6 +35,8 @@ function tryParseJson(raw) {
     if (first >= 0 && last > first) s = s.slice(first, last + 1);
   }
   try { return JSON.parse(s); } catch {
+    // 壊れたフェンスで raw に再フォールバックするとモデルの不正ペイロードを隠すため、
+    // フェンスがある場合はパース失敗で確定させる
     if (fence) return null;
     try { return JSON.parse(raw); } catch { return null; }
   }

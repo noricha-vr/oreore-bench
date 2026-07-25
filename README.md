@@ -171,8 +171,8 @@ python3 scripts/gen-questions.py --model 12b
 python3 scripts/gen-questions.py --overwrite
 
 # 検証 + HTML ビルド
-node scripts/validate-questions.mjs
-python3 scripts/build-questions-html.py
+node scripts/validate-pr-triage.mjs
+python3 scripts/build-pr-triage-html.py
 ```
 
 ### 2. API モデル（Claude Opus 等）の場合
