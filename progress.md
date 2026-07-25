@@ -63,4 +63,4 @@ sleep-mode / morning-briefing で参照されるエントリーポイント。
 
 ## 変更履歴
 
-- 2026-07-25: extract-questions / extract-questions-v2 テーマを削除（#TBD）
+- 2026-07-25: extract-questions / extract-questions-v2 テーマを削除（#27）
