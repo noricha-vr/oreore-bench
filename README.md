@@ -69,6 +69,7 @@ oreore-bench/
 │   └── runs.json                        ← run.json を集約して index.html が 1 回で fetch
 └── scripts/
     ├── add-model.sh                     ← 新モデル追加の汎用スクリプト
+    ├── openrouter-run.py                ← OpenRouter API で 1 テーマ生成 + usage 実測 run.json
     ├── gen-questions.py                 ← JSON テーマ（pr-triage 等）をローカル LLM で順次生成
     ├── model-map.json                   ← slug → OpenRouter モデル ID の単一情報源
     ├── pricing.json                     ← per-Mtok 単価キャッシュ（fetch-pricing.py で更新）
@@ -177,7 +178,31 @@ python3 scripts/build-pr-triage-html.py
 
 ### 2. API モデル（Claude Opus 等）の場合
 
-Claude Code 上で `Agent` ツール（`subagent_type=implementer`, `model=opus`）にプロンプトを渡して、`Write` で `output.json` を保存させる。生成プロセスはコードベースに固定しない（モデルアクセス方法はユーザー環境依存）。
+OpenRouter 経由なら `add-model.sh --runner openrouter` が生成から run.json までを一括で行う。
+
+```bash
+# 前提: model-map.json に slug を追加 → uv run scripts/fetch-pricing.py で単価を取得
+# 認証: OPENROUTER_API_KEY を環境変数か .env に置く（キー実値はログ・run.json に出ない）
+
+# 前提確認だけ（API を叩かないので課金なし）
+bash scripts/add-model.sh lp-nishibi claude-opus-5 --runner openrouter --dry-run
+
+# 本番生成（reasoning effort は既定 high）
+bash scripts/add-model.sh lp-nishibi claude-opus-5 --runner openrouter
+bash scripts/add-model.sh pr-triage  claude-opus-5 --runner openrouter --reasoning-effort medium
+```
+
+- HTML テーマは `PROMPT.md` をそのまま投げて `index.html` を、JSON テーマは `gen-questions.py` と同じ
+  プロンプト組み立て（`input.md` 展開 + 「JSON 単体で出力してください。」）で `output.json` を書く
+- `usage` は OpenRouter レスポンスの実測値（`usage.include=true`）を使い、`usage.estimated: false` /
+  `method: "api-usage"` の run.json を直接生成する（`estimate-run-cost.py` の推定は経由しない）
+- **フェンス混入対策**: 「前置き文 + ` ```html ` フェンス + 末尾解説」形式で返るモデル
+  （claude-opus-5 は lp 系 7 テーマ中 6 テーマがこの形式）からフェンス内の HTML だけを抽出し、
+  抽出した場合のみ run.json に `post_processing: "extract-fenced-html"` を記録する
+- `usage` が欠損 / 0 トークンの時は run.json を書かずに非ゼロ終了する（コスト $0.00 の隠れ嘘を作らない）
+
+OpenRouter に無いモデルは、Claude Code 上で `Agent` ツール（`subagent_type=implementer`, `model=opus`）に
+プロンプトを渡して `Write` で保存させ、`--runner copy` で取り込む。
 
 ### 3. 新規モデル定数の追加
 
