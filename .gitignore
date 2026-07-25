@@ -9,4 +9,6 @@ build/
 *.log
 .cache/
 _response.json
+__pycache__/
+.pytest_cache/
 
