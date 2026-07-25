@@ -173,57 +173,6 @@ window.THEMES = {
                     "非アクティブシーンのエミッタ停止など 60fps 維持のためのライフサイクル設計"
                 ]
             },
-            "extract-questions": {
-                title: "質問抽出 → フォーム化",
-                short: "JSON / 質問抽出",
-                desc: "AI アシスタントの長文出力からユーザーが返答すべき質問だけを抽出し、フォーム UI 用 JSON にする。本番運用の実運用シナリオと同じスキーマ。20 問入力の基本サイズ。",
-                color: "#0d9488",
-                colorDark: "#0f766e",
-                icon: "fa-solid fa-list-check",
-                difficulty: "中（20 問入力、実運用サイズ）",
-                deliverable: "output.json（左右 2 カラム HTML で入力本文と抽出フォームを並列表示）",
-                criteria: [
-                    "出力が有効な JSON である",
-                    "questions 配列に 15〜25 件（入力 20 問に対する取りこぼし許容範囲）",
-                    "各 question に id / originalText / question / options / confidence が揃う",
-                    "options が配列で、各要素が { label: string }",
-                    "自由記述質問にも「自由に記述する」オプションが必ず補完されている",
-                    "confidence が 0.0〜1.0 の小数",
-                    "JSON 以外の出力（説明文・コードフェンス）が混入していない"
-                ],
-                highlights: [
-                    "説明・見出し・提案を質問と誤抽出しないか",
-                    "原文に選択肢がない質問にも自然な補完オプション（はい/いいえ・承認/別案）を入れられるか",
-                    "全質問に「自由に記述する」を欠かさず追加できるか",
-                    "originalText に原文の正確な引用を入れられるか",
-                    "confidence が問題の確実さに沿った妥当な値か",
-                    "20 件相当の出力長で構造が破綻しないか"
-                ]
-            },
-            "extract-questions-v2": {
-                title: "質問抽出 → フォーム化（長文）",
-                short: "JSON / 質問抽出 v2",
-                desc: "extract-questions と同じ抽出ルール・同じスキーマだが、入力が 40 問規模の長文に拡張されている。出力長が伸びると小型モデルが指示の細部を保てなくなる現象を可視化。",
-                color: "#7C3AED",
-                colorDark: "#5B21B6",
-                icon: "fa-solid fa-list-check",
-                difficulty: "高（40 問入力、長文構造化 + 補完オプション維持）",
-                deliverable: "output.json（左右 2 カラム HTML で入力本文と抽出フォームを並列表示）",
-                criteria: [
-                    "出力が有効な JSON である",
-                    "questions 配列に 30〜45 件（40 問入力の取りこぼし許容）",
-                    "各 question に id / originalText / question / options / confidence が揃う",
-                    "自由記述質問にも「自由に記述する」オプションが全問補完されている",
-                    "long-context 中盤〜終盤でも指示の細部を保つ",
-                    "JSON 以外の出力が混入していない"
-                ],
-                highlights: [
-                    "出力トークンが 12K を超えても構造を維持できるか",
-                    "「自由に記述する」補完ルールを最後まで守れるか（見失いやすい）",
-                    "40 問全てに正しく id を振れるか",
-                    "抽出漏れなく 40 件近くを列挙できるか"
-                ]
-            },
             "pr-triage": {
                 title: "PR トリアージ",
                 short: "JSON / 判断",
@@ -668,19 +617,6 @@ window.ENTRIES = [
             { theme: "phoenix-lp", model: "gemini-3-1-pro",      runner: "AntiGravity CLI (High)", note: "1ショット866行/28KB。スクロール遷移・JSエラー0。所要3分46秒。", kind: "html" },
             { theme: "phoenix-lp", model: "kimi-k3",             runner: "OpenRouter API (reasoning high)", note: "1ショット807行/32KB。スクロール遷移・JSエラー0。completion 15466 tok。", kind: "html" },
 
-            // extract-questions（20 問入力、基本サイズ、全モデル PASS = 実運用サイズは全モデル対応可の証拠）
-            { theme: "extract-questions", model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。20 件抽出、最軽量でも 本番運用スキーマを完全に満たす。", kind: "json" },
-            { theme: "extract-questions", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。MoE モデルも 20 件抽出して構造を保持。", kind: "json" },
-            { theme: "extract-questions", model: "gemma-4-31b",         runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。21 件と若干過剰だが取りこぼしなし。", kind: "json" },
-            { theme: "extract-questions", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "✅ スキーマ準拠 PASS。フロンティアモデルらしい安定。", kind: "json" },
-            { theme: "extract-questions", model: "grok-4-5",            runner: "grok CLI (single-turn)", note: "✅ スキーマ準拠 PASS。20 件抽出、全項目 100%。リリース翌日の初参戦で完走。", kind: "json" },
-
-            // extract-questions-v2（40 問入力、長文で小型モデルが指示の細部を見失う現象を可視化）
-            { theme: "extract-questions-v2", model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "❌ スキーマ準拠 FAIL。40 件抽出はできたが「自由に記述する」補完が 25% のみ。長文で指示の細部を見失う典型例。", kind: "json" },
-            { theme: "extract-questions-v2", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。40 件抽出、MoE でも 12K トークン級の出力を破綻なく完走。", kind: "json" },
-            { theme: "extract-questions-v2", model: "gemma-4-31b",         runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。40 件抽出、dense 31B は長文でも安定。", kind: "json" },
-            { theme: "extract-questions-v2", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "✅ スキーマ準拠 PASS。40 件抽出、指示の細部を最後まで維持。", kind: "json" },
-
             // pr-triage（PR 10件のトリアージ判断を answer-key と突合。一致率は meta.json 参照）
             { theme: "pr-triage", model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。正解キー一致 85%。スコープ肥大 PR の分割要求(fix)を hold と判断。", kind: "json" },
             { theme: "pr-triage", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。正解キー一致 85%。外しどころが 12B と完全に同じで、判断傾向はサイズ非依存。", kind: "json" },
@@ -697,8 +633,6 @@ window.ENTRIES.push(
     { theme: "lp-fable5", model: "agents-a1-4b", runner: "LM Studio API", note: "69秒。全7セクションを描画し、スクロールを完走。JavaScriptエラー0。", kind: "html" },
     { theme: "suminagashi", model: "agents-a1-4b", runner: "LM Studio API", note: "128秒。canvasは出るが、例外で描画が変化しない。", kind: "html" },
     { theme: "phoenix-lp", model: "agents-a1-4b", runner: "LM Studio API", note: "69秒。canvasは出るが、構文エラーでスクロール演出が動かない。", kind: "html" },
-    { theme: "extract-questions", model: "agents-a1-4b", runner: "LM Studio API", note: "FAIL。再試行後も空配列。", kind: "json" },
-    { theme: "extract-questions-v2", model: "agents-a1-4b", runner: "LM Studio API", note: "FAIL。32Kを使い切り回答なし。", kind: "json" },
     { theme: "pr-triage", model: "agents-a1-4b", runner: "LM Studio API", note: "PASS。10件を完走し85%。", kind: "json" }
 );
 
@@ -711,8 +645,6 @@ window.ENTRIES.push(
     { theme: "lp-fable5", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "Anthropic 公式風の配色・7セクション構成を高精度再現。SVG path 途中終端の console error 2件のみで描画は完走。542行/14KB。", kind: "html" },
     { theme: "suminagashi", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "FAIL。和の UI は美麗だが Three.js 初期化が canvas コンテキスト競合で失敗し、墨が一切描画されない。366行/13KB。", kind: "html" },
     { theme: "phoenix-lp", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "FAIL（スクロール変化なし）。1画面の詩的タイポのみでナビ先のセクションが未実装。417行/13KB。", kind: "html" },
-    { theme: "extract-questions", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "FAIL。20問抽出・各項目100%だが、全問必須の「自由に記述する」選択肢を1問も付けず。", kind: "json" },
-    { theme: "extract-questions-v2", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "✅ スキーマ準拠 PASS。40問抽出、v1 で落とした「自由に記述する」も全問付与。", kind: "json" },
     { theme: "pr-triage", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "✅ スキーマ準拠 PASS。正解キー一致 90%（9 primary）。唯一の不一致は PR106 を fix ではなく hold と保守的に判断。", kind: "json" }
 );
 
@@ -726,7 +658,5 @@ window.ENTRIES.push(
     { theme: "lp-fable5", model: "claude-opus-5", runner: "OpenRouter API (reasoning high)", note: "JSエラー0。インラインSVG13点の水彩イラストとスクロール連動の折れ線グラフを再現、架空モデルの免責文まで補完。生出力は前置き+フェンス付きで抽出処理あり。1130行/59KB。", kind: "html" },
     { theme: "suminagashi", model: "claude-opus-5", runner: "OpenRouter API (reasoning high)", note: "JSエラー0で流体が動く。ドラッグ追従の滲みと巡・墨・藍・朱・松葉の色選択、自動演出・洗い流しまで完備。生出力は前置き+フェンス付きで抽出処理あり。795行/30KB。", kind: "html" },
     { theme: "phoenix-lp", model: "claude-opus-5", runner: "OpenRouter API (reasoning high)", note: "JSエラー0。DAWN→FINALE の6シーン遷移をシーンカウンタ連動で完全実装、視覚的完成度は最高水準。生出力は前置き+フェンス付きで抽出処理あり。1041行/44KB。", kind: "html" },
-    { theme: "extract-questions", model: "claude-opus-5", runner: "OpenRouter API (reasoning high)", note: "✅ スキーマ準拠 PASS。20問抽出・全項目100%。前置きなしの JSON 単体で「JSON 単体」指示も遵守。", kind: "json" },
-    { theme: "extract-questions-v2", model: "claude-opus-5", runner: "OpenRouter API (reasoning high)", note: "✅ スキーマ準拠 PASS。40問抽出、長文でも指示の細部を最後まで維持。", kind: "json" },
     { theme: "pr-triage", model: "claude-opus-5", runner: "OpenRouter API (reasoning high)", note: "✅ スキーマ準拠 PASS。全モデル初の正解キー一致 100%（10 primary）。4.8 が破った「JSON 単体」指示も遵守。", kind: "json" }
 );

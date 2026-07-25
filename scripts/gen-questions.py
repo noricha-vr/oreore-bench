@@ -4,8 +4,7 @@
 API モデルは別のハーネス経由で生成する。
 
 使い方:
-  python3 scripts/gen-questions.py                              # extract-questions
-  python3 scripts/gen-questions.py --theme extract-questions-v2 # v2
+  python3 scripts/gen-questions.py                              # pr-triage
   python3 scripts/gen-questions.py --theme pr-triage --temperature default
   python3 scripts/gen-questions.py --model 12b --overwrite
 """
@@ -201,8 +200,8 @@ def _load_pricing_for(model_slug: str) -> dict | None:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--theme", default="extract-questions",
-                    help="テーマ名（デフォルト extract-questions）")
+    ap.add_argument("--theme", default="pr-triage",
+                    help="テーマ名（デフォルト pr-triage）")
     ap.add_argument("--model", help="モデル名の部分一致で絞る")
     ap.add_argument("--overwrite", action="store_true")
     ap.add_argument("--temperature", default="0.2",

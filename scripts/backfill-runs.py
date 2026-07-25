@@ -7,7 +7,6 @@
 
 - generated_at は git log --diff-filter=A --format=%aI -- <path> の初回コミット時刻を使う
   (「手直しなし」ルールにより生成日と一致するはずという計画の前提)
-- sampling: gen-questions.py 由来のローカルモデル × extract-questions 系のみ temperature 0.2 / max_tokens 16000 が確定
 - #5 デフォルトは既存 run.json のあるエントリをスキップする (手動修正の無警告巻き戻しを防ぐ)
 - --overwrite 指定時のみ既存 run.json を再生成 (usage/cost は保持)
 - 実測 (estimated: false) の run.json は --overwrite でも触らない
@@ -43,15 +42,6 @@ RUNNER_MAP: dict[str, tuple[str, str]] = {
     "codex exec (reasoning high)": ("codex-exec", "high"),
     "AntiGravity CLI (High)": ("antigravity-cli", "high"),
 }
-
-# gen-questions.py で生成されるローカルモデル × extract-questions* は sampling 確定。
-GEN_QUESTIONS_MODELS = {
-    "agents-a1-4b",
-    "gemma-4-12b-qat",
-    "gemma-4-26b-a4b-qat",
-    "gemma-4-31b",
-}
-GEN_QUESTIONS_THEMES = {"extract-questions", "extract-questions-v2"}
 
 # ENTRIES 配列・後続 push を抜き出す正規表現。1 行 1 エントリ想定。
 ENTRY_LINE_RE = re.compile(
@@ -126,11 +116,7 @@ def build_run(entry: dict) -> dict[str, Any]:
     if model == "agents-a1-4b":
         effort = "unknown"
 
-    # sampling は gen-questions.py 由来のみ確定
-    if theme in GEN_QUESTIONS_THEMES and model in GEN_QUESTIONS_MODELS:
-        sampling = {"temperature": 0.2, "max_tokens": 16000, "top_p": "default"}
-    else:
-        sampling = {"temperature": "default", "max_tokens": "default", "top_p": "default"}
+    sampling = {"temperature": "default", "max_tokens": "default", "top_p": "default"}
 
     # ローカルモデルは runtime を付ける (量子化・エンジン情報)
     if model.startswith("gemma-"):
