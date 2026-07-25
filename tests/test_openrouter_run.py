@@ -94,6 +94,122 @@ def test_longest_html_fence_wins():
     assert out == full
 
 
+def test_backticks_inside_html_do_not_truncate_body():
+    """回帰: HTML 本文中の ``` を閉じフェンスと誤認して本文が切れないこと。
+
+    <pre><code> 内にコードフェンスを含む LP は珍しくなく、以前は先頭の ``` で
+    切断されて壊れた HTML が保存されていた。
+    """
+    body = (
+        "<!DOCTYPE html>\n<html>\n<body>\n"
+        "<pre><code>```\nsample fence in content\n```</code></pre>\n"
+        "<p>fence より後ろの段落</p>\n</body>\n</html>"
+    )
+    out, extracted = orun.extract_fenced_html(f"どうぞ。\n\n```html\n{body}\n```\n\n以上です。")
+    assert extracted is True
+    assert out == body
+    assert "fence より後ろの段落" in out
+    assert out.rstrip().endswith("</html>")
+
+
+def test_html_fence_after_json_fence_is_found():
+    """回帰: 先行する ```json ブロックで開き/閉じのペアリングがずれないこと。"""
+    body = "<!DOCTYPE html>\n<html><body><h1>real</h1></body></html>"
+    response = f'設定例:\n\n```json\n{{"a": 1}}\n```\n\n本体:\n\n```html\n{body}\n```\n'
+    out, extracted = orun.extract_fenced_html(response)
+    assert extracted is True
+    assert out == body
+    assert '"a": 1' not in out
+
+
+def test_html_after_long_leading_comment_is_detected():
+    """回帰: 先頭の長いコメントで HTML 判定に失敗しないこと（先頭N文字制限の撤廃）。"""
+    body = "<!-- " + "x" * 500 + " -->\n<!DOCTYPE html>\n<html><body>ok</body></html>"
+    out, extracted = orun.extract_fenced_html(f"どうぞ\n\n```html\n{body}\n```\n")
+    assert extracted is True
+    assert out == body
+
+
+def test_unterminated_fence_is_not_extracted():
+    """閉じフェンスが無い（打ち切り）ブロックは抽出対象にしない。"""
+    truncated = "はい。\n\n```html\n<!DOCTYPE html>\n<html><body><h1>途中で"
+    _out, extracted = orun.extract_fenced_html(truncated)
+    assert extracted is False
+
+
+def test_four_backtick_fence_pairs_with_four():
+    """4連バッククォートの開きは、3連の行では閉じない（同数以上で閉じる）。"""
+    body = "<!DOCTYPE html>\n<html><body>\n```\ninner\n```\n</body></html>"
+    out, extracted = orun.extract_fenced_html(f"````html\n{body}\n````")
+    assert extracted is True
+    assert out == body
+
+
+# --- 打ち切り検出 --------------------------------------------------------
+
+
+def test_finish_reason_length_raises():
+    """max_tokens 打ち切りは成果物を書かずに停止する。"""
+    body = {"choices": [{"finish_reason": "length", "message": {"content": "<html>"}}]}
+    with pytest.raises(orun.TruncatedOutputError, match="max_tokens"):
+        orun.check_not_truncated(body, "m")
+
+
+def test_finish_reason_stop_passes():
+    body = {"choices": [{"finish_reason": "stop", "message": {"content": "<html>"}}]}
+    orun.check_not_truncated(body, "m")  # 例外が出ないこと
+
+
+def test_html_without_closing_tag_raises():
+    """finish_reason を返さないプロバイダ向けの二重チェック。"""
+    with pytest.raises(orun.TruncatedOutputError, match="closing </html>"):
+        orun.verify_html_complete("<!DOCTYPE html>\n<html><body>途中で", "m")
+
+
+def test_complete_html_passes_verification():
+    orun.verify_html_complete("<!DOCTYPE html>\n<html><body>ok</body></html>", "m")
+
+
+# --- 機密マスク ----------------------------------------------------------
+
+
+def test_api_key_is_masked_in_error_detail():
+    """エラー本文にリクエストが反射されても鍵を stderr に出さない。"""
+    masked = orun.mask_secrets(
+        '{"error":"bad key sk-or-v1-abc123DEF_ghi","auth":"Bearer sk-or-v1-xyz789"}'
+    )
+    assert "sk-or-v1-abc123DEF_ghi" not in masked
+    assert "sk-or-v1-xyz789" not in masked
+    assert "***" in masked
+
+
+# --- API URL のスキーム制限 ----------------------------------------------
+
+
+def test_api_url_defaults_to_production(monkeypatch):
+    monkeypatch.delenv("OPENROUTER_API_URL", raising=False)
+    assert orun.resolve_api_url() == orun.DEFAULT_API_URL
+
+
+def test_api_url_allows_localhost_http(monkeypatch):
+    """テストスタブ（localhost）は許可する。"""
+    monkeypatch.setenv("OPENROUTER_API_URL", "http://127.0.0.1:8799/v1/chat/completions")
+    assert orun.resolve_api_url() == "http://127.0.0.1:8799/v1/chat/completions"
+
+
+def test_api_url_rejects_plain_http_remote(monkeypatch):
+    """平文 http で外部ホストへ API キーを送らせない。"""
+    monkeypatch.setenv("OPENROUTER_API_URL", "http://evil.example.com/v1")
+    with pytest.raises(RuntimeError, match="must use https"):
+        orun.resolve_api_url()
+
+
+def test_api_url_rejects_non_http_scheme(monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_URL", "file:///etc/passwd")
+    with pytest.raises(RuntimeError, match="must use https"):
+        orun.resolve_api_url()
+
+
 # --- プロンプト組み立て --------------------------------------------------
 
 
@@ -268,6 +384,29 @@ def test_env_var_takes_precedence(monkeypatch, tmp_path):
     assert orun.load_api_key() == "from-env"
 
 
+def test_dotenv_supports_export_prefix(monkeypatch, tmp_path):
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    (tmp_path / ".env").write_text("export OPENROUTER_API_KEY=exported-value\n", encoding="utf-8")
+    monkeypatch.setattr(orun, "ROOT", tmp_path)
+    assert orun.load_api_key() == "exported-value"
+
+
+def test_dotenv_strips_trailing_comment(monkeypatch, tmp_path):
+    """裸の値の行末コメントを鍵に混ぜない（認証失敗の原因になる）。"""
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    (tmp_path / ".env").write_text("OPENROUTER_API_KEY=abc123  # 本番用\n", encoding="utf-8")
+    monkeypatch.setattr(orun, "ROOT", tmp_path)
+    assert orun.load_api_key() == "abc123"
+
+
+def test_dotenv_keeps_hash_inside_quotes(monkeypatch, tmp_path):
+    """クォート内の # は値の一部なので落とさない。"""
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    (tmp_path / ".env").write_text('OPENROUTER_API_KEY="abc#123"\n', encoding="utf-8")
+    monkeypatch.setattr(orun, "ROOT", tmp_path)
+    assert orun.load_api_key() == "abc#123"
+
+
 # --- model-map 検証 ------------------------------------------------------
 
 
@@ -284,6 +423,43 @@ def test_unknown_model_is_rejected():
 
 def test_known_api_model_resolves():
     assert orun.resolve_model_id("claude-opus-5") == "anthropic/claude-opus-5"
+
+
+# --- theme / model のパス検証 --------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "theme,model",
+    [
+        ("../../etc", "claude-opus-5"),
+        ("lp-nishibi", "../../../tmp/evil"),
+        ("lp-nishibi", "a/b"),
+        ("lp nishibi", "claude-opus-5"),
+    ],
+)
+def test_path_traversal_names_are_rejected(monkeypatch, capsys, theme, model):
+    """theme / model はディレクトリ名になるので、区切り文字や .. を弾く。"""
+    monkeypatch.setattr(
+        sys, "argv", ["openrouter-run.py", "--theme", theme, "--model", model, "--dry-run"]
+    )
+    assert orun.main() == 1
+    assert "used as a directory name" in capsys.readouterr().err
+
+
+def test_valid_names_pass_validation(monkeypatch, capsys):
+    """正常な slug は名前検証を通過し、後続の判定へ進む。
+
+    exit code はリポジトリの中身（既存出力の有無）に依存するため、
+    「名前検証で弾かれていない」ことだけを検証する。
+    """
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["openrouter-run.py", "--theme", "lp-nishibi", "--model", "claude-opus-5", "--dry-run"],
+    )
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-test")
+    orun.main()
+    assert "used as a directory name" not in capsys.readouterr().err
 
 
 if __name__ == "__main__":

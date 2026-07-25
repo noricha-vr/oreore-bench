@@ -31,6 +31,7 @@ import os
 import re
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -41,11 +42,32 @@ SCRIPTS = ROOT / "scripts"
 PRICING_PATH = SCRIPTS / "pricing.json"
 MODEL_MAP_PATH = SCRIPTS / "model-map.json"
 
-# 既定は本番エンドポイント。OPENROUTER_API_URL はスタブサーバを差し込んで
-# 非 dry-run 経路を課金なしで検証するためのテスト用フック。
-API_URL = os.environ.get(
-    "OPENROUTER_API_URL", "https://openrouter.ai/api/v1/chat/completions"
-)
+DEFAULT_API_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+# theme / model はディレクトリ名になるため、パス区切りや `..` を含む値を弾く
+NAME_RE = re.compile(r"^[A-Za-z0-9._-]+$")
+
+
+def resolve_api_url() -> str:
+    """API エンドポイントを決める。
+
+    既定は本番。OPENROUTER_API_URL はスタブサーバを差し込んで非 dry-run 経路を
+    課金なしで検証するためのテスト用フックだが、API キーを載せて送る先なので
+    https か localhost のみに限定する（平文 http で外部ホストへ鍵を送らせない）。
+    """
+    url = os.environ.get("OPENROUTER_API_URL", "").strip()
+    if not url:
+        return DEFAULT_API_URL
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme == "https":
+        return url
+    if parsed.scheme == "http" and parsed.hostname in ("127.0.0.1", "localhost", "::1"):
+        return url
+    raise RuntimeError(
+        "OPENROUTER_API_URL must use https, or http on localhost only "
+        f"(got scheme={parsed.scheme!r} host={parsed.hostname!r}). "
+        "The API key is sent to this URL."
+    )
 
 # gen-questions.py の build_prompt と同一の定数（JSON テーマのプロンプト再現）
 JSON_PROMPT_SUFFIX = "\n\n---\n\nJSON 単体で出力してください。"
@@ -55,12 +77,20 @@ INPUT_PLACEHOLDER = "[input.md の本文をここに展開してプロンプト�
 DEFAULT_MAX_TOKENS = 65000
 REQUEST_TIMEOUT_SECONDS = 1800
 
-# ```html ... ``` フェンス。前置き文・末尾解説が付くパターンを拾うため全体マッチにしない。
-# 言語指定は html / なし の両方（Opus 5 実績は ```html）。
-_FENCE_RE = re.compile(
-    r"```(?:html|HTML)?[ \t]*\r?\n(?P<body>.*?)\r?\n?```",
-    re.DOTALL,
+# フェンスは「行頭のバッククォート3個以上 + 任意の言語指定」で開き、
+# 開きと同数以上のバッククォートだけの行で閉じる（CommonMark 準拠の簡易版）。
+#
+# 行頭アンカー (^ + MULTILINE) が必須な理由:
+#   - HTML 本文中の <pre><code>``` を閉じフェンスと誤認して本文が途中で切れる事故を防ぐ
+#     （インデントされた ``` や行内の ``` にマッチしなくなる）
+#   - 先行する ```json 等の別言語ブロックと開き/閉じのペアリングがずれるのを防ぐ
+_FENCE_OPEN_RE = re.compile(
+    r"^[ \t]*(?P<ticks>`{3,})[ \t]*(?P<lang>[A-Za-z0-9._+-]*)[ \t]*$",
+    re.MULTILINE,
 )
+# 本文が HTML かどうかの判定。先頭だけを見るとライセンスコメントや長い
+# <!-- --> が先行した時に取りこぼすため全文を検索する。
+_HTML_MARKER_RE = re.compile(r"<!doctype\s+html|<html[\s>]", re.IGNORECASE)
 
 
 class OpenRouterError(RuntimeError):
@@ -69,6 +99,48 @@ class OpenRouterError(RuntimeError):
 
 class UsageMissingError(RuntimeError):
     """usage 実測が取れず run.json を書けない（exit 3 相当）。"""
+
+
+class TruncatedOutputError(RuntimeError):
+    """応答が途中で切れており、成果物として保存できない（exit 2 相当）。"""
+
+
+# API キーらしき文字列。エラー本文にリクエストが反射された時の漏洩を防ぐ。
+_SECRET_RE = re.compile(r"sk-or-[A-Za-z0-9_-]+|Bearer\s+[A-Za-z0-9._-]{8,}")
+
+
+def mask_secrets(text: str) -> str:
+    """ログ出力前に API キーらしき文字列を伏せる。"""
+    return _SECRET_RE.sub("***", text)
+
+
+def _iter_fenced_blocks(text: str):
+    """行頭フェンスで囲まれたブロックを (lang, body) で順に返す。
+
+    開きフェンスと同数以上のバッククォートだけの行を閉じとみなす。閉じが無い
+    ブロック（max_tokens 打ち切り等）は未完成なので yield しない。
+    """
+    pos = 0
+    while True:
+        open_match = _FENCE_OPEN_RE.search(text, pos)
+        if not open_match:
+            return
+        ticks = open_match.group("ticks")
+        lang = open_match.group("lang").lower()
+        body_start = open_match.end()
+        # 本文直後の改行を1つ食う
+        if text[body_start : body_start + 2] == "\r\n":
+            body_start += 2
+        elif text[body_start : body_start + 1] == "\n":
+            body_start += 1
+
+        close_re = re.compile(rf"^[ \t]*`{{{len(ticks)},}}[ \t]*$", re.MULTILINE)
+        close_match = close_re.search(text, body_start)
+        if not close_match:
+            # 閉じフェンスが無い = 打ち切りの疑い。以降に有効なブロックは無い
+            return
+        yield lang, text[body_start : close_match.start()]
+        pos = close_match.end()
 
 
 def extract_fenced_html(text: str) -> tuple[str, bool]:
@@ -83,9 +155,8 @@ def extract_fenced_html(text: str) -> tuple[str, bool]:
     Returns:
         (html, extracted): extracted=True ならフェンス抽出を行った。
     """
-    candidates = [m.group("body") for m in _FENCE_RE.finditer(text)]
-    # HTML らしいフェンスに限定する（説明中の ```bash 等を誤って拾わない）
-    html_like = [c for c in candidates if _looks_like_html(c)]
+    # HTML らしいフェンスに限定する（説明中の ```bash / ```json 等を誤って拾わない）
+    html_like = [body for _lang, body in _iter_fenced_blocks(text) if _looks_like_html(body)]
     if not html_like:
         return text.strip(), False
     # 複数ある場合は最長を採用（分割説明の断片より本体が長い）
@@ -94,8 +165,12 @@ def extract_fenced_html(text: str) -> tuple[str, bool]:
 
 
 def _looks_like_html(text: str) -> bool:
-    head = text.lstrip()[:400].lower()
-    return "<!doctype html" in head or "<html" in head
+    """HTML 文書らしさを判定する。
+
+    先頭 N 文字に限定すると、ライセンスヘッダや長い <!-- --> コメントが先行した
+    場合に取りこぼすため全文を検索する。
+    """
+    return _HTML_MARKER_RE.search(text) is not None
 
 
 def detect_theme_kind(theme_dir: Path) -> str:
@@ -152,12 +227,31 @@ def load_api_key() -> str:
             if not line or line.startswith("#") or "=" not in line:
                 continue
             name, _, value = line.partition("=")
-            if name.strip() != "OPENROUTER_API_KEY":
+            # `export FOO=bar` 形式にも対応する
+            name = name.strip()
+            if name.startswith("export "):
+                name = name[len("export ") :].strip()
+            if name != "OPENROUTER_API_KEY":
                 continue
-            return value.strip().strip('"').strip("'")
+            parsed = _parse_env_value(value)
+            if parsed:
+                return parsed
     raise RuntimeError(
         "OPENROUTER_API_KEY is not set. Export it or add it to .env (value is never logged)."
     )
+
+
+def _parse_env_value(raw: str) -> str:
+    """.env の値部分を解釈する。
+
+    クォートされていれば中身をそのまま返し、されていなければ行末コメント
+    （` #` 以降）を落とす。クォート内の # はコメントではないので残す。
+    """
+    value = raw.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+        return value[1:-1]
+    # 裸の値は最初の # 以降をコメントとして落とす
+    return value.split("#", 1)[0].strip()
 
 
 def resolve_model_id(model_slug: str) -> str:
@@ -221,7 +315,7 @@ def call_openrouter(
         payload["reasoning"] = {"effort": reasoning_effort}
 
     req = urllib.request.Request(
-        API_URL,
+        resolve_api_url(),
         data=json.dumps(payload).encode("utf-8"),
         headers={
             "Authorization": f"Bearer {api_key}",
@@ -234,7 +328,8 @@ def call_openrouter(
         with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT_SECONDS) as resp:
             body = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")[:500]
+        # エラー本文にリクエストが反射されることがあるため、鍵らしき文字列を必ず伏せる
+        detail = mask_secrets(exc.read().decode("utf-8", errors="replace")[:500])
         raise OpenRouterError(f"HTTP {exc.code} from OpenRouter: {detail}") from exc
     except urllib.error.URLError as exc:
         raise OpenRouterError(f"network error calling OpenRouter: {exc.reason}") from exc
@@ -246,6 +341,34 @@ def call_openrouter(
     if not choices:
         raise OpenRouterError("OpenRouter response has no choices")
     return body
+
+
+def check_not_truncated(body: dict, model_slug: str) -> None:
+    """max_tokens 打ち切りを検出して停止する。
+
+    finish_reason="length" は本文が途中で切れていることを意味する。そのまま保存すると
+    「未終端フェンス付きの壊れた HTML」がベンチ成果物として残り、モデルの実力ではなく
+    こちらの設定ミスを記録してしまう。
+    """
+    finish_reason = (body.get("choices") or [{}])[0].get("finish_reason")
+    if finish_reason == "length":
+        raise TruncatedOutputError(
+            f"{model_slug}: response was truncated by max_tokens (finish_reason='length'). "
+            "Re-run with a larger --max-tokens. Nothing was written."
+        )
+
+
+def verify_html_complete(html: str, model_slug: str) -> None:
+    """抽出後の HTML が文書として閉じているかを確認する。
+
+    finish_reason を返さないプロバイダもあるため、成果物側からも打ち切りを検出する
+    二重の安全網。
+    """
+    if not re.search(r"</html\s*>", html, re.IGNORECASE):
+        raise TruncatedOutputError(
+            f"{model_slug}: extracted HTML has no closing </html> tag "
+            "(truncated response or unterminated fence). Nothing was written."
+        )
 
 
 def read_usage(body: dict, model_slug: str) -> tuple[int, int, int, float | None]:
@@ -360,6 +483,16 @@ def main() -> int:
     )
     args = ap.parse_args()
 
+    # theme / model はそのままパス構成要素になるため、`..` やスラッシュを弾く
+    for label, value in (("--theme", args.theme), ("--model", args.model)):
+        if not NAME_RE.match(value):
+            print(
+                f"[ERROR] {label} must match {NAME_RE.pattern} (got {value!r}). "
+                "It is used as a directory name.",
+                file=sys.stderr,
+            )
+            return 1
+
     theme_dir = PUBLIC / args.theme
     if not (theme_dir / "PROMPT.md").exists():
         print(f"[ERROR] theme not found: {theme_dir}/PROMPT.md", file=sys.stderr)
@@ -369,6 +502,8 @@ def main() -> int:
         model_id = resolve_model_id(args.model)
         pricing = load_pricing(args.model)
         api_key = load_api_key()
+        # 送信先の妥当性は preflight で確認する（dry-run でも検出できるように）
+        resolve_api_url()
     except RuntimeError as exc:
         print(f"[ERROR] {exc}", file=sys.stderr)
         return 1
@@ -416,6 +551,13 @@ def main() -> int:
         print(f"[ERROR] {exc}", file=sys.stderr)
         return 2
 
+    # max_tokens 打ち切りを先に弾く（壊れた成果物を保存しない）
+    try:
+        check_not_truncated(body, args.model)
+    except TruncatedOutputError as exc:
+        print(f"[ERROR] {exc}", file=sys.stderr)
+        return 2
+
     content = body["choices"][0]["message"].get("content") or ""
     if not content.strip():
         print("[ERROR] model returned empty content", file=sys.stderr)
@@ -428,12 +570,28 @@ def main() -> int:
         output_text, extracted = extract_fenced_html(content)
         if extracted:
             post_processing = "extract-fenced-html"
+        # finish_reason を返さないプロバイダ向けの二重チェック
+        try:
+            verify_html_complete(output_text, args.model)
+        except TruncatedOutputError as exc:
+            print(f"[ERROR] {exc}", file=sys.stderr)
+            return 2
 
     try:
         prompt_tokens, completion_tokens, reasoning_tokens, actual_cost = read_usage(body, args.model)
     except UsageMissingError as exc:
         print(f"[ERROR] {exc}", file=sys.stderr)
         return 3
+
+    # 書き込み直前に、出力先が public/ 配下に収まっていることを確認する
+    # （NAME_RE の検証に加えた多層防御。symlink 経由の脱出も resolve() で潰す）
+    resolved_dir = out_dir.resolve()
+    if not resolved_dir.is_relative_to(PUBLIC.resolve()):
+        print(
+            f"[ERROR] refusing to write outside {PUBLIC}: {resolved_dir}",
+            file=sys.stderr,
+        )
+        return 1
 
     out_dir.mkdir(parents=True, exist_ok=True)
     out_file.write_text(output_text + ("\n" if not output_text.endswith("\n") else ""), encoding="utf-8")
