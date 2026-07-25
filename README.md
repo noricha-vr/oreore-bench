@@ -27,7 +27,6 @@ LLM を「業務タスクの一発再現性」で評価する場。現実の制�
 | `roguelike` | HTML | ローグライク仕様 → 1 枚で動くターン制ダンジョン探索 RPG | 生成・戦闘・FOV・成長・階層状態の複数システム統合力 |
 | `lp-fable5` | HTML | 水彩絵本トーンの詳細プロンプト → AI モデル発表 LP | 世界観再現・SVG イラスト表現・構成追従・禁止事項遵守 |
 | `suminagashi` | HTML | 実装方式名指しのプロンプト → WebGL 流体マーブリングアート | GPU シェーダーの一発実装・減法混色・和のミニマル UI |
-| `extract-questions` | JSON | AI アシスタント出力 → ユーザー向け質問フォーム JSON | 本番運用スキーマ準拠・抽出判断・オプション補完 |
 | `pr-triage` | JSON | リポジトリのスナップショット → Open PR 10 件のトリアージ判断 JSON | 判断の妥当性（正解キー一致率）・グレーケースの慎重さ・理由の具体性 |
 
 ## 比較対象モデル（2026-07 時点）
@@ -70,9 +69,7 @@ oreore-bench/
 │   └── runs.json                        ← run.json を集約して index.html が 1 回で fetch
 └── scripts/
     ├── add-model.sh                     ← 新モデル追加の汎用スクリプト
-    ├── gen-questions.py                 ← extract-questions 用、3 Gemma 順次生成
-    ├── validate-questions.mjs           ← extract-questions スキーマ検証
-    ├── build-questions-html.py          ← extract-questions output.html ビルド
+    ├── gen-questions.py                 ← JSON テーマ（pr-triage 等）をローカル LLM で順次生成
     ├── model-map.json                   ← slug → OpenRouter モデル ID の単一情報源
     ├── pricing.json                     ← per-Mtok 単価キャッシュ（fetch-pricing.py で更新）
     ├── fetch-pricing.py                 ← OpenRouter API から単価取得
@@ -164,7 +161,7 @@ node scripts/validate-runs.mjs   # exit 0 で通過
 LM Studio で対象モデルをロード → API サーバを `http://localhost:1234` で立ち上げ → 各テーマ用スクリプトを叩く。
 
 ```bash
-# extract-questions テーマで全 Gemma に投げる（既存ファイルはスキップ）
+# pr-triage テーマで全 Gemma に投げる（既存ファイルはスキップ）
 python3 scripts/gen-questions.py
 
 # 特定モデルだけ
@@ -174,8 +171,8 @@ python3 scripts/gen-questions.py --model 12b
 python3 scripts/gen-questions.py --overwrite
 
 # 検証 + HTML ビルド
-node scripts/validate-questions.mjs
-python3 scripts/build-questions-html.py
+node scripts/validate-pr-triage.mjs
+python3 scripts/build-pr-triage-html.py
 ```
 
 ### 2. API モデル（Claude Opus 等）の場合
@@ -236,7 +233,6 @@ wrangler pages deploy public/ --project-name=oreore-bench --branch=main
 
 - 元の実験リポ（private）: <https://github.com/noricha-vr/note> の `experiments/` 配下
 - lifelog note: `gptme-lmstudio-model-override`, `gemma4-26b-vs-31b-coding-comparison`
-- 本番運用（extract-questions テーマの本番運用元）: 別プロジェクト
 
 ## ライセンス
 
