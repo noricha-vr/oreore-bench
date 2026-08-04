@@ -47,6 +47,7 @@ LLM を「業務タスクの一発再現性」で評価する場。現実の制�
 | Gemma 4 31B | Google | ローカル | 4-bit (MLX / GGUF Q4_K_M) |
 | Gemma 4 26B-A4B (QAT) | Google | ローカル (MoE) | QAT 4-bit |
 | Gemma 4 12B (QAT) | Google | ローカル | QAT 4-bit |
+| Agents A1 4B | InternScience | ローカル | MLX 4-bit |
 | DeepSeek V4 Flash 0731 MLX | InferencerLabs / DeepSeek | ローカル (MoE) | mixed MXFP4 / MXFP8 |
 
 スペック値はサブエージェントによるファクトチェック済み（リリース日 / context window / output 上限などは Google DeepMind / Anthropic / xAI / Hugging Face / LM Studio の一次情報を参照）。
@@ -128,6 +129,7 @@ oreore-bench/
 - `reasoning_effort`: `none` / `low` / `medium` / `high` / `unknown`
 - `system_prompt`: `none` / `harness-default` / `custom` / `unknown` — **ラベルのみ。本文は絶対に記録しない**（公開配信されるためプライバシー保護。`validate-runs.mjs` で enum 外を必ず失敗させる）
 - `"unknown"` = 復元不能、`"default"` = 既定に任せた、`"none"` = 明示的に無し。確定値のみ数値で書く
+- `runtime`: `null` または `engine` / `version` / `framework` / `model_revision` / `quantization` / `api` の構造化フィールド（未知キーは禁止）
 - `runtime.model_revision` には実測したモデルのコミット SHA を記録し、配布元の更新後も再現対象を区別する
 
 ### コスト表示は「推定・下限」
