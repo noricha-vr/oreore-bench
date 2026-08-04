@@ -1,1153 +1,1145 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fable 5 — Claude</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    :root {
-      --paper: #faf6ee;
-      --paper-deep: #f0e8d8;
-      --ink: #2b2b2b;
-      --terracotta: #c65d3b;
-      --terracotta-light: #d97757;
-      --terracotta-dark: #a84a2e;
-      --sand: #e5d5b8;
-      --ochre: #c9a87c;
-      --sepia: #8a6e4b;
-      --gold: #b58a4a;
-      --gray: #9a9a9a;
-      --white: #fffdf8;
-      --serif: "Hiragino Mincho ProN", "Yu Mincho", "Times New Roman", serif;
-      --sans: "Hiragino Sans", "Yu Gothic", sans-serif;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
-    body {
-      background-color: var(--paper);
-      color: var(--ink);
-      font-family: var(--sans);
-      line-height: 1.7;
-      overflow-x: hidden;
-    }
-
-    /* ===== ヘッダー ===== */
-    .site-header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      z-index: 100;
-      background: rgba(250, 246, 238, 0.85);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-      padding: 0 2rem;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .header-logo {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      text-decoration: none;
-      color: var(--ink);
-    }
-
-    .header-logo svg {
-      width: 28px;
-      height: 28px;
-    }
-
-    .header-logo span {
-      font-family: var(--serif);
-      font-size: 1.2rem;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-    }
-
-    .header-nav {
-      display: flex;
-      align-items: center;
-      gap: 2rem;
-    }
-
-    .header-nav a {
-      text-decoration: none;
-      color: var(--ink);
-      font-size: 0.9rem;
-      transition: color 0.2s;
-    }
-
-    .header-nav a:hover {
-      color: var(--terracotta);
-    }
-
-    .header-cta {
-      background: var(--terracotta);
-      color: var(--white);
-      border: none;
-      border-radius: 999px;
-      padding: 0.5rem 1.5rem;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-      text-decoration: none;
-      display: inline-block;
-    }
-
-    .header-cta:hover {
-      background: var(--terracotta-dark);
-    }
-
-    /* ===== 共通 ===== */
-    .section {
-      padding: 6rem 2rem;
-      position: relative;
-    }
-
-    .section-inner {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .section-label {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .section-label .num {
-      font-family: var(--serif);
-      font-size: 0.8rem;
-      color: var(--terracotta);
-      font-weight: 600;
-      letter-spacing: 0.1em;
-    }
-
-    .section-label .kicker {
-      font-size: 0.75rem;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--sepia);
-      font-weight: 500;
-    }
-
-    .section-title {
-      font-family: var(--serif);
-      font-size: 2.2rem;
-      font-weight: 600;
-      line-height: 1.3;
-      margin-bottom: 1.5rem;
-      color: var(--ink);
-    }
-
-    .section-sub {
-      font-size: 1rem;
-      color: var(--sepia);
-      max-width: 600px;
-      margin-bottom: 3rem;
-    }
-
-    /* フェードイン */
-    .fade-in {
-      opacity: 0;
-      transform: translateY(30px);
-      transition: opacity 0.8s ease, transform 0.8s ease;
-    }
-
-    .fade-in.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    /* ===== ヒーロー ===== */
-    .hero {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      padding: 0;
-      position: relative;
-    }
-
-    .hero-content {
-      padding: 8rem 2rem 2rem;
-      max-width: 1200px;
-      margin: 0 auto;
-      width: 100%;
-    }
-
-    .hero-kicker {
-      font-size: 0.8rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--terracotta);
-      font-weight: 600;
-      margin-bottom: 1rem;
-    }
-
-    .hero-title {
-      font-family: var(--serif);
-      font-size: clamp(4rem, 12vw, 9rem);
-      font-weight: 700;
-      line-height: 1.1;
-      color: var(--ink);
-      letter-spacing: -0.02em;
-    }
-
-    .hero-title .dot {
-      color: var(--terracotta);
-    }
-
-    .hero-catch {
-      font-family: var(--serif);
-      font-size: 1.4rem;
-      font-weight: 600;
-      margin-top: 1.5rem;
-      color: var(--ink);
-      max-width: 500px;
-      line-height: 1.5;
-    }
-
-    .hero-desc {
-      font-size: 0.95rem;
-      color: var(--sepia);
-      margin-top: 1rem;
-      max-width: 420px;
-      line-height: 1.8;
-    }
-
-    .hero-illustration {
-      width: 100%;
-      margin-top: auto;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .hero-illustration svg {
-      display: block;
-      width: 100%;
-      height: auto;
-    }
-
-    /* ===== Claudeファミリー ===== */
-    .family-section {
-      background: var(--paper);
-    }
-
-    .chart-container {
-      display: flex;
-      align-items: flex-end;
-      gap: 2rem;
-      max-width: 800px;
-      margin: 3rem auto 0;
-      padding: 2rem 1rem;
-      border-bottom: 2px solid var(--sand);
-      position: relative;
-    }
-
-    .chart-bar {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .bar-fill {
-      width: 100%;
-      border-radius: 8px 8px 0 0;
-      background: linear-gradient(180deg, var(--sand), var(--ochre));
-      position: relative;
-      min-height: 20px;
-      transition: height 1s ease;
-    }
-
-    .bar-fill.mythos {
-      background: linear-gradient(180deg, var(--terracotta-light), var(--terracotta));
-    }
-
-    .bar-label {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--ink);
-      font-family: var(--serif);
-    }
-
-    .bar-value {
-      font-size: 0.7rem;
-      color: var(--sepia);
-    }
-
-    .chart-note {
-      text-align: center;
-      font-size: 0.8rem;
-      color: var(--sepia);
-      margin-top: 1rem;
-    }
-
-    /* ===== できること ===== */
-    .capability-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-      margin-top: 2rem;
-    }
-
-    .capability-card {
-      display: flex;
-      gap: 1.5rem;
-      background: rgba(255, 253, 248, 0.7);
-      border-radius: 16px;
-      padding: 1.5rem;
-      border: 1px solid rgba(0, 0, 0, 0.04);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .capability-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-    }
-
-    .capability-illustration {
-      flex-shrink: 0;
-      width: 100px;
-      height: 100px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .capability-illustration svg {
-      width: 100%;
-      height: 100%;
-    }
-
-    .capability-text h3 {
-      font-family: var(--serif);
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-      color: var(--ink);
-    }
-
-    .capability-text p {
-      font-size: 0.85rem;
-      color: var(--sepia);
-      line-height: 1.6;
-    }
-
-    /* ===== いちばんの強み ===== */
-    .strength-section {
-      background: var(--paper-deep);
-    }
-
-    .graph-container {
-      max-width: 800px;
-      margin: 3rem auto 0;
-      background: rgba(255, 253, 248, 0.8);
-      border-radius: 16px;
-      padding: 2rem;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-    }
-
-    .graph-svg {
-      width: 100%;
-      height: auto;
-    }
-
-    .graph-label {
-      text-align: center;
-      font-size: 0.8rem;
-      color: var(--sepia);
-      margin-top: 1rem;
-    }
-
-    /* ===== 安全性 ===== */
-    .safety-section {
-      background: var(--paper);
-    }
-
-    .safety-illustration {
-      max-width: 700px;
-      margin: 2rem auto;
-    }
-
-    .safety-illustration svg {
-      width: 100%;
-      height: auto;
-    }
-
-    .safety-copy {
-      text-align: center;
-      font-family: var(--serif);
-      font-size: 1.1rem;
-      color: var(--ink);
-      max-width: 500px;
-      margin: 2rem auto 0;
-      line-height: 1.8;
-    }
-
-    /* ===== はじめかた ===== */
-    .start-section {
-      background: var(--paper);
-    }
-
-    .start-content {
-      display: flex;
-      align-items: center;
-      gap: 3rem;
-      max-width: 800px;
-      margin: 2rem auto 0;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .start-illustration {
-      width: 180px;
-      flex-shrink: 0;
-    }
-
-    .start-illustration svg {
-      width: 100%;
-      height: auto;
-    }
-
-    .start-steps {
-      flex: 1;
-      min-width: 250px;
-    }
-
-    .step-item {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-      align-items: flex-start;
-    }
-
-    .step-num {
-      font-family: var(--serif);
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: var(--terracotta);
-      line-height: 1;
-    }
-
-    .step-text h4 {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--ink);
-      margin-bottom: 0.2rem;
-    }
-
-    .step-text p {
-      font-size: 0.8rem;
-      color: var(--sepia);
-    }
-
-    /* ===== 最終CTA ===== */
-    .final-cta {
-      background: var(--paper);
-      text-align: center;
-      padding: 6rem 2rem;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .final-cta-illustration {
-      max-width: 900px;
-      margin: 0 auto 2rem;
-    }
-
-    .final-cta-illustration svg {
-      width: 100%;
-      height: auto;
-    }
-
-    .final-cta-title {
-      font-family: var(--serif);
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: var(--ink);
-      margin-bottom: 1rem;
-    }
-
-    .final-cta-button {
-      display: inline-block;
-      background: var(--terracotta);
-      color: var(--white);
-      border: none;
-      border-radius: 999px;
-      padding: 1rem 2.5rem;
-      font-size: 1.1rem;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
-      transition: background 0.2s, transform 0.2s;
-      margin-top: 1rem;
-    }
-
-    .final-cta-button:hover {
-      background: var(--terracotta-dark);
-      transform: scale(1.02);
-    }
-
-    /* ===== フッター ===== */
-    .site-footer {
-      background: var(--paper-deep);
-      padding: 2rem;
-      text-align: center;
-      border-top: 1px solid rgba(0, 0, 0, 0.05);
-    }
-
-    .footer-logo {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .footer-logo svg {
-      width: 20px;
-      height: 20px;
-    }
-
-    .footer-logo span {
-      font-family: var(--serif);
-      font-size: 1rem;
-      font-weight: 600;
-    }
-
-    .footer-note {
-      font-size: 0.7rem;
-      color: var(--sepia);
-      margin-top: 0.5rem;
-    }
-
-    /* ===== レスポンシブ ===== */
-    @media (max-width: 768px) {
-      .header-nav {
-        display: none;
-      }
-
-      .section {
-        padding: 4rem 1.5rem;
-      }
-
-      .section-title {
-        font-size: 1.8rem;
-      }
-
-      .capability-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .capability-card {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-      }
-
-      .capability-illustration {
-        width: 80px;
-        height: 80px;
-      }
-
-      .chart-container {
-        gap: 1rem;
-      }
-
-      .hero-content {
-        padding: 6rem 1.5rem 2rem;
-      }
-
-      .hero-title {
-        font-size: 3.5rem;
-      }
-
-      .hero-catch {
-        font-size: 1.1rem;
-      }
-
-      .start-content {
-        flex-direction: column;
-        text-align: center;
-      }
-
-      .step-item {
-        justify-content: center;
-        text-align: left;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .hero-title {
-        font-size: 2.8rem;
-      }
-
-      .hero-catch {
-        font-size: 1rem;
-      }
-
-      .section-title {
-        font-size: 1.5rem;
-      }
-
-      .chart-container {
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .chart-bar {
-        width: 100%;
-        flex-direction: row;
-        align-items: center;
-        gap: 1rem;
-      }
-
-      .bar-fill {
-        height: 30px !important;
-        border-radius: 8px;
-        flex: 1;
-      }
-
-      .bar-label {
-        min-width: 60px;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fable 5 — Claude</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --cream: #faf6ee;
+            --terracotta: #c65d3b;
+            --terracotta-light: #d97757;
+            --ink: #2b2b2b;
+            --sand: #e8dcc8;
+            --sepia: #c4b49a;
+            --gold: #b89b6e;
+            --gray: #9a9a9a;
+            --serif: "Georgia", "Times New Roman", "Yu Mincho", "Hiragino Mincho ProN", serif;
+            --sans: "Helvetica Neue", Arial, "Hiragino Sans", sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--cream);
+            color: var(--ink);
+            font-family: var(--sans);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* ヘッダー */
+        .site-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            background: rgba(250, 246, 238, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 0 40px;
+            height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: box-shadow 0.3s;
+        }
+
+        .site-header.scrolled {
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--ink);
+            font-weight: 600;
+            font-size: 18px;
+            letter-spacing: 0.5px;
+        }
+
+        .header-logo svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        .header-nav {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .header-nav a {
+            text-decoration: none;
+            color: var(--ink);
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0.75;
+            transition: opacity 0.2s;
+        }
+
+        .header-nav a:hover {
+            opacity: 1;
+        }
+
+        .header-cta {
+            background: var(--terracotta);
+            color: #fff !important;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 14px;
+            opacity: 1 !important;
+            transition: background 0.2s;
+        }
+
+        .header-cta:hover {
+            background: var(--terracotta-light);
+        }
+
+        /* セクション共通 */
+        .section {
+            padding: 120px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .section-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .section-label .num {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--terracotta);
+            letter-spacing: 1px;
+            border: 1.5px solid var(--terracotta);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .section-label .kicker {
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--terracotta);
+            font-weight: 600;
+        }
+
+        .section-title {
+            font-family: var(--serif);
+            font-size: clamp(28px, 4vw, 44px);
+            font-weight: 700;
+            line-height: 1.3;
+            margin-bottom: 32px;
+            color: var(--ink);
+        }
+
+        .section-sub {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #555;
+            max-width: 640px;
+        }
+
+        /* フェード+スライドイン */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ヒーロー */
+        .hero {
+            padding: 0 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            position: relative;
+            padding-top: 120px;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            padding-bottom: 0;
+        }
+
+        .hero-eyebrow {
+            font-size: 13px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--terracotta);
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .hero-title {
+            font-family: var(--serif);
+            font-size: clamp(80px, 14vw, 180px);
+            font-weight: 700;
+            line-height: 0.95;
+            letter-spacing: -2px;
+            color: var(--ink);
+            margin-bottom: 24px;
+        }
+
+        .hero-title .dot {
+            color: var(--terracotta);
+        }
+
+        .hero-catch {
+            font-size: clamp(20px, 2.5vw, 28px);
+            font-weight: 600;
+            line-height: 1.5;
+            margin-bottom: 12px;
+            max-width: 600px;
+        }
+
+        .hero-desc {
+            font-size: 15px;
+            color: #666;
+            max-width: 480px;
+            line-height: 1.8;
+        }
+
+        .hero-illustration {
+            width: 100%;
+            margin-top: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-illustration svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* パララックス用 */
+        .parallax-layer {
+            transition: transform 0.1s ease-out;
+        }
+
+        /* Claudeファミリー */
+        .family-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 24px;
+            margin-top: 60px;
+            padding: 0 20px;
+            height: 360px;
+            position: relative;
+        }
+
+        .family-bar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            height: 100%;
+            position: relative;
+        }
+
+        .family-bar .bar {
+            width: 100%;
+            max-width: 140px;
+            border-radius: 12px 12px 0 0;
+            position: relative;
+            transition: height 1s ease;
+            background: linear-gradient(180deg, var(--sand), var(--sepia));
+        }
+
+        .family-bar .bar.mythos {
+            background: linear-gradient(180deg, var(--terracotta-light), var(--terracotta));
+            box-shadow: 0 4px 20px rgba(198, 93, 59, 0.3);
+        }
+
+        .family-bar .bar-label {
+            margin-top: 16px;
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--ink);
+        }
+
+        .family-bar .bar-sub {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .family-bar .bar-value {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        /* できること */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            margin-top: 60px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            padding: 32px;
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+        }
+
+        .card-illustration {
+            flex-shrink: 0;
+            width: 100px;
+            height: 100px;
+        }
+
+        .card-illustration svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .card-content h3 {
+            font-family: var(--serif);
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .card-content p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.7;
+        }
+
+        /* グラフ */
+        .chart-container {
+            margin-top: 60px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .chart-svg {
+            width: 100%;
+            height: auto;
+        }
+
+        .chart-axis-label {
+            text-align: right;
+            font-size: 13px;
+            color: #999;
+            margin-top: 8px;
+            padding-right: 20px;
+        }
+
+        /* 安全性 */
+        .safety-section {
+            background: linear-gradient(180deg, transparent, rgba(232, 220, 200, 0.3));
+        }
+
+        .safety-illustration {
+            margin-top: 60px;
+            text-align: center;
+        }
+
+        .safety-illustration svg {
+            max-width: 800px;
+            width: 100%;
+            height: auto;
+        }
+
+        .safety-copy {
+            text-align: center;
+            max-width: 600px;
+            margin: 40px auto 0;
+            font-size: 16px;
+            color: #555;
+            line-height: 1.9;
+        }
+
+        /* はじめかた */
+        .steps-container {
+            display: flex;
+            gap: 48px;
+            margin-top: 60px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .steps-illustration {
+            flex-shrink: 0;
+            width: 240px;
+        }
+
+        .steps-illustration svg {
+            width: 100%;
+            height: auto;
+        }
+
+        .steps-list {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .step-item {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 32px;
+            align-items: flex-start;
+        }
+
+        .step-num {
+            font-family: var(--serif);
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--terracotta);
+            line-height: 1;
+            min-width: 48px;
+        }
+
+        .step-content h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .step-content p {
+            font-size: 14px;
+            color: #777;
+        }
+
+        /* 最終CTA */
+        .final-cta {
+            padding: 0;
+            max-width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .final-cta-inner {
+            position: relative;
+            padding: 160px 40px;
+            text-align: center;
+            background: linear-gradient(180deg, var(--cream) 0%, rgba(232, 220, 200, 0.4) 100%);
+        }
+
+        .final-cta-illustration {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 0;
+            opacity: 0.7;
+        }
+
+        .final-cta-illustration svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .final-cta-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .final-cta-title {
+            font-family: var(--serif);
+            font-size: clamp(32px, 5vw, 56px);
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .final-cta-sub {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 40px;
+        }
+
+        .final-cta-button {
+            display: inline-block;
+            background: var(--terracotta);
+            color: #fff;
+            padding: 18px 48px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.3s, transform 0.2s;
+            box-shadow: 0 4px 20px rgba(198, 93, 59, 0.3);
+        }
+
+        .final-cta-button:hover {
+            background: var(--terracotta-light);
+            transform: translateY(-2px);
+        }
+
+        /* フッター */
+        .site-footer {
+            padding: 40px;
+            text-align: center;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            background: var(--cream);
+        }
+
+        .site-footer .footer-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .site-footer .footer-logo svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .site-footer p {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 768px) {
+            .section {
+                padding: 80px 24px;
+            }
+
+            .hero {
+                padding: 100px 24px 0;
+            }
+
+            .hero-title {
+                font-size: 72px;
+            }
+
+            .header-nav {
+                gap: 16px;
+            }
+
+            .header-nav a:not(.header-cta) {
+                display: none;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .family-chart {
+                gap: 12px;
+                padding: 0 10px;
+            }
+
+            .family-bar .bar-label {
+                font-size: 12px;
+            }
+
+            .steps-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .final-cta-inner {
+                padding: 100px 24px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-title {
+                font-size: 56px;
+            }
+
+            .hero-catch {
+                font-size: 18px;
+            }
+
+            .section-title {
+                font-size: 26px;
+            }
+        }
+    </style>
 </head>
 <body>
 
-  <!-- ヘッダー -->
-  <header class="site-header">
-    <a href="#" class="header-logo">
-      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="16" cy="16" r="12" fill="#c65d3b" opacity="0.8"/>
-        <circle cx="16" cy="16" r="8" fill="#faf6ee" opacity="0.9"/>
-        <circle cx="16" cy="16" r="4" fill="#c65d3b"/>
-      </svg>
-      <span>Claude</span>
-    </a>
-    <nav class="header-nav">
-      <a href="#family">モデル</a>
-      <a href="#capability">できること</a>
-      <a href="#safety">安全性</a>
-    </nav>
-    <a href="#" class="header-cta">使ってみる</a>
-  </header>
-
-  <!-- ヒーロー -->
-  <section class="hero">
-    <div class="hero-content">
-      <div class="hero-kicker">MYTHOS-CLASS / 一般提供モデル</div>
-      <h1 class="hero-title">Fable 5<span class="dot">.</span></h1>
-      <p class="hero-catch">今、いちばん賢いClaudeが、<br>誰でも使える形に。</p>
-      <p class="hero-desc">複雑な推論、長い文脈、創造的な仕事。Fable 5は、これまでの限界を超えて、あなたのパートナーとして寄り添います。</p>
-    </div>
-    <div class="hero-illustration">
-      <!-- 水彩の丘陵風景 -->
-      <svg viewBox="0 0 1440 500" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#faf6ee"/>
-            <stop offset="100%" stop-color="#f0e0c8"/>
-          </linearGradient>
-          <linearGradient id="hill1" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#e5d5b8"/>
-            <stop offset="100%" stop-color="#d4c0a0"/>
-          </linearGradient>
-          <linearGradient id="hill2" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#d4b890"/>
-            <stop offset="100%" stop-color="#c0a070"/>
-          </linearGradient>
-          <linearGradient id="hill3" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#c9a87c"/>
-            <stop offset="100%" stop-color="#a08050"/>
-          </linearGradient>
-          <filter id="blur1">
-            <feGaussianBlur stdDeviation="8"/>
-          </filter>
-          <filter id="blur2">
-            <feGaussianBlur stdDeviation="4"/>
-          </filter>
-        </defs>
-
-        <!-- 空 -->
-        <rect width="1440" height="500" fill="url(#skyGrad)"/>
-
-        <!-- 太陽 -->
-        <circle cx="1100" cy="120" r="60" fill="#c65d3b" opacity="0.6" filter="url(#blur1)"/>
-        <circle cx="1100" cy="120" r="40" fill="#d97757" opacity="0.7"/>
-
-        <!-- 雲 -->
-        <g opacity="0.4" filter="url(#blur2)">
-          <ellipse cx="200" cy="80" rx="80" ry="25" fill="#faf6ee"/>
-          <ellipse cx="250" cy="70" rx="60" ry="20" fill="#faf6ee"/>
-          <ellipse cx="900" cy="60" rx="100" ry="30" fill="#faf6ee"/>
-        </g>
-
-        <!-- 後方の丘 -->
-        <path d="M0,350 Q200,200 450,300 Q700,400 900,280 Q1100,160 1440,300 L1440,500 L0,500 Z" fill="url(#hill1)" opacity="0.7"/>
-        <!-- 中間の丘 -->
-        <path d="M0,400 Q300,280 600,380 Q900,480 1200,350 Q1350,280 1440,320 L1440,500 L0,500 Z" fill="url(#hill2)" opacity="0.8"/>
-        <!-- 手前の丘 -->
-        <path d="M0,450 Q200,380 500,430 Q800,480 1100,420 Q1300,380 1440,420 L1440,500 L0,500 Z" fill="url(#hill3)"/>
-
-        <!-- 小道 -->
-        <path d="M200,500 Q300,450 350,420 Q450,380 500,350 Q600,300 700,280 Q800,260 900,250 Q1000,240 1100,230 Q1200,220 1300,210" stroke="#faf6ee" stroke-width="12" fill="none" stroke-linecap="round" opacity="0.8"/>
-        <path d="M200,500 Q300,450 350,420 Q450,380 500,350 Q600,300 700,280 Q800,260 900,250 Q1000,240 1100,230 Q1200,220 1300,210" stroke="#fffdf8" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.9"/>
-
-        <!-- 茂み・草花 -->
-        <g opacity="0.8">
-          <circle cx="300" cy="420" r="8" fill="#c65d3b" opacity="0.6"/>
-          <circle cx="320" cy="430" r="6" fill="#d97757" opacity="0.5"/>
-          <circle cx="280" cy="435" r="5" fill="#b58a4a" opacity="0.6"/>
-          <circle cx="600" cy="380" r="10" fill="#a84a2e" opacity="0.5"/>
-          <circle cx="620" cy="390" r="7" fill="#c65d3b" opacity="0.4"/>
-          <circle cx="850" cy="340" r="6" fill="#b58a4a" opacity="0.6"/>
-          <circle cx="870" cy="350" r="4" fill="#d97757" opacity="0.5"/>
-          <circle cx="1050" cy="300" r="8" fill="#c65d3b" opacity="0.5"/>
-        </g>
-
-        <!-- 穂 -->
-        <g stroke="#b58a4a" stroke-width="2" fill="none" opacity="0.7">
-          <path d="M350,410 Q355,390 360,370"/>
-          <path d="M355,410 Q360,395 365,375"/>
-          <path d="M700,370 Q705,350 710,330"/>
-          <path d="M705,370 Q710,355 715,335"/>
-          <path d="M950,320 Q955,300 960,280"/>
-          <path d="M955,320 Q960,305 965,285"/>
-        </g>
-
-        <!-- 人物（赤い服） -->
-        <g transform="translate(600, 360)">
-          <!-- 体 -->
-          <ellipse cx="0" cy="0" rx="10" ry="14" fill="#c65d3b"/>
-          <!-- 頭 -->
-          <circle cx="0" cy="-18" r="7" fill="#f0d0b0"/>
-          <!-- 足 -->
-          <line x1="-4" y1="12" x2="-6" y2="20" stroke="#2b2b2b" stroke-width="2"/>
-          <line x1="4" y1="12" x2="6" y2="20" stroke="#2b2b2b" stroke-width="2"/>
-        </g>
-
-        <!-- 相棒（クリーム色のふわふわ） -->
-        <g transform="translate(640, 350)">
-          <ellipse cx="0" cy="0" rx="20" ry="16" fill="#faf6ee" opacity="0.9"/>
-          <ellipse cx="0" cy="-5" rx="16" ry="12" fill="#fffdf8" opacity="0.8"/>
-          <circle cx="-8" cy="-8" r="4" fill="#2b2b2b" opacity="0.6"/>
-          <circle cx="8" cy="-8" r="4" fill="#2b2b2b" opacity="0.6"/>
-          <ellipse cx="0" cy="2" rx="6" ry="4" fill="#e5d5b8"/>
-        </g>
-      </svg>
-    </div>
-  </section>
-
-  <!-- Claudeファミリー -->
-  <section class="section family-section" id="family">
-    <div class="section-inner fade-in">
-      <div class="section-label">
-        <span class="num">01</span>
-        <span class="kicker">Family / ファミリー</span>
-      </div>
-      <h2 class="section-title">Claudeのいちばん上へ。</h2>
-      <p class="section-sub">HaikuからMythosまで。Fable 5は、最上位クラス「Mythos」に位置する、最も賢いモデルです。</p>
-
-      <div class="chart-container">
-        <div class="chart-bar">
-          <div class="bar-fill" style="height: 40px;"></div>
-          <span class="bar-label">Haiku</span>
-          <span class="bar-value">軽快</span>
-        </div>
-        <div class="chart-bar">
-          <div class="bar-fill" style="height: 70px;"></div>
-          <span class="bar-label">Sonnet</span>
-          <span class="bar-value">標準</span>
-        </div>
-        <div class="chart-bar">
-          <div class="bar-fill" style="height: 100px;"></div>
-          <span class="bar-label">Opus</span>
-          <span class="bar-value">高能力</span>
-        </div>
-        <div class="chart-bar">
-          <div class="bar-fill mythos" style="height: 140px;"></div>
-          <span class="bar-label">Mythos</span>
-          <span class="bar-value">最上位</span>
-        </div>
-      </div>
-      <p class="chart-note">Fable 5はMythosクラスに属します</p>
-    </div>
-  </section>
-
-  <!-- できること -->
-  <section class="section capability-section" id="capability">
-    <div class="section-inner fade-in">
-      <div class="section-label">
-        <span class="num">02</span>
-        <span class="kicker">Capabilities / できること</span>
-      </div>
-      <h2 class="section-title">頼れる仕事のその先まで。</h2>
-      <p class="section-sub">Fable 5は、これまでのAIでは難しかった複雑なタスクを、驚くべき精度で完遂します。</p>
-
-      <div class="capability-grid">
-        <!-- カード1 -->
-        <div class="capability-card">
-          <div class="capability-illustration">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-              <rect width="100" height="100" rx="12" fill="#f0e8d8"/>
-              <rect x="15" y="20" width="70" height="50" rx="4" fill="#2b2b2b" opacity="0.8"/>
-              <rect x="20" y="25" width="60" height="40" rx="2" fill="#faf6ee"/>
-              <circle cx="50" cy="45" r="12" fill="#c65d3b" opacity="0.6"/>
-              <rect x="20" y="70" width="60" height="6" rx="3" fill="#c9a87c"/>
-              <rect x="30" y="80" width="40" height="4" rx="2" fill="#e5d5b8"/>
+    <!-- ヘッダー -->
+    <header class="site-header" id="siteHeader">
+        <a href="#" class="header-logo">
+            <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="12" fill="#c65d3b" opacity="0.8"/>
+                <circle cx="16" cy="16" r="8" fill="#faf6ee"/>
+                <circle cx="16" cy="16" r="4" fill="#c65d3b"/>
             </svg>
-          </div>
-          <div class="capability-text">
-            <h3>画面を見るだけでゲームを最後までクリア</h3>
-            <p>実況プレイを見て、次の操作を予測。複雑なゲームも完全攻略。</p>
-          </div>
-        </div>
+            Claude
+        </a>
+        <nav class="header-nav">
+            <a href="#family">モデル</a>
+            <a href="#capabilities">できること</a>
+            <a href="#safety">安全性</a>
+            <a href="#get-started" class="header-cta">使ってみる</a>
+        </nav>
+    </header>
 
-        <!-- カード2 -->
-        <div class="capability-card">
-          <div class="capability-illustration">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-              <rect width="100" height="100" rx="12" fill="#f0e8d8"/>
-              <rect x="20" y="30" width="60" height="8" rx="2" fill="#c9a87c"/>
-              <rect x="20" y="42" width="60" height="8" rx="2" fill="#d4b890"/>
-              <rect x="20" y="54" width="60" height="8" rx="2" fill="#c9a87c"/>
-              <rect x="20" y="66" width="60" height="8" rx="2" fill="#e5d5b8"/>
-              <rect x="25" y="20" width="50" height="6" rx="3" fill="#c65d3b" opacity="0.7"/>
+    <!-- 1. ヒーロー -->
+    <section class="hero" id="hero">
+        <div class="hero-content">
+            <div class="hero-eyebrow">MYTHOS-CLASS / 一般提供モデル</div>
+            <h1 class="hero-title">Fable 5<span class="dot">.</span></h1>
+            <p class="hero-catch">今、いちばん賢いClaudeが、<br>誰でも使える形に。</p>
+            <p class="hero-desc">複雑な推論、長い文脈、深い創造性。これまで最高峰だったMythosクラスの能力を、すべてのユーザーへ。</p>
+        </div>
+        <div class="hero-illustration">
+            <svg viewBox="0 0 1440 500" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <filter id="blur1" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="8"/>
+                    </filter>
+                    <filter id="blur2" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="4"/>
+                    </filter>
+                    <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#faf6ee"/>
+                        <stop offset="100%" stop-color="#f0e6d6"/>
+                    </linearGradient>
+                    <linearGradient id="hill1" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#e8dcc8"/>
+                        <stop offset="100%" stop-color="#d4c4a8"/>
+                    </linearGradient>
+                    <linearGradient id="hill2" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#d4c4a8"/>
+                        <stop offset="100%" stop-color="#b8a88c"/>
+                    </linearGradient>
+                    <linearGradient id="hill3" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#c4b49a"/>
+                        <stop offset="100%" stop-color="#a09078"/>
+                    </linearGradient>
+                </defs>
+
+                <!-- 空 -->
+                <rect width="1440" height="500" fill="url(#skyGrad)"/>
+
+                <!-- 太陽 -->
+                <circle cx="1150" cy="120" r="60" fill="#d97757" opacity="0.6" filter="url(#blur1)"/>
+                <circle cx="1150" cy="120" r="40" fill="#c65d3b" opacity="0.7" filter="url(#blur2)"/>
+                <circle cx="1150" cy="120" r="28" fill="#e8a07a" opacity="0.9"/>
+
+                <!-- 雲 -->
+                <g opacity="0.4" filter="url(#blur1)">
+                    <ellipse cx="200" cy="80" rx="80" ry="20" fill="#fff"/>
+                    <ellipse cx="250" cy="70" rx="60" ry="18" fill="#fff"/>
+                    <ellipse cx="900" cy="60" rx="100" ry="22" fill="#fff"/>
+                    <ellipse cx="960" cy="50" rx="70" ry="16" fill="#fff"/>
+                </g>
+
+                <!-- 後方の丘 -->
+                <path d="M0 350 Q200 250 400 320 Q600 390 800 300 Q1000 210 1200 280 Q1350 320 1440 280 L1440 500 L0 500 Z" fill="url(#hill3)" opacity="0.5"/>
+
+                <!-- 中間の丘 -->
+                <path d="M0 400 Q150 320 350 380 Q550 440 750 360 Q950 280 1150 350 Q1300 400 1440 360 L1440 500 L0 500 Z" fill="url(#hill2)" opacity="0.7"/>
+
+                <!-- 手前の丘 -->
+                <path d="M0 450 Q200 380 400 430 Q600 480 800 420 Q1000 360 1200 420 Q1350 460 1440 430 L1440 500 L0 500 Z" fill="url(#hill1)"/>
+
+                <!-- 小道 -->
+                <path d="M200 500 Q300 450 350 420 Q420 380 480 400 Q550 420 600 380 Q680 320 750 350 Q830 390 900 360 Q980 320 1050 360 Q1150 410 1250 380 Q1350 350 1440 370" stroke="#faf6ee" stroke-width="18" fill="none" stroke-linecap="round" opacity="0.8"/>
+                <path d="M200 500 Q300 450 350 420 Q420 380 480 400 Q550 420 600 380 Q680 320 750 350 Q830 390 900 360 Q980 320 1050 360 Q1150 410 1250 380 Q1350 350 1440 370" stroke="#fff" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="4 8" opacity="0.6"/>
+
+                <!-- 茂み・草花 -->
+                <g opacity="0.7">
+                    <circle cx="300" cy="430" r="12" fill="#c65d3b" opacity="0.5" filter="url(#blur2)"/>
+                    <circle cx="320" cy="440" r="8" fill="#d97757" opacity="0.6"/>
+                    <circle cx="700" cy="400" r="10" fill="#b89b6e" opacity="0.5"/>
+                    <circle cx="720" cy="410" r="6" fill="#c65d3b" opacity="0.4"/>
+                    <circle cx="1000" cy="380" r="14" fill="#d97757" opacity="0.4" filter="url(#blur2)"/>
+                    <circle cx="1020" cy="390" r="7" fill="#b89b6e" opacity="0.6"/>
+                    <circle cx="500" cy="450" r="5" fill="#c65d3b" opacity="0.5"/>
+                    <circle cx="850" cy="430" r="9" fill="#d97757" opacity="0.5"/>
+                </g>
+
+                <!-- 穂 -->
+                <g stroke="#b89b6e" stroke-width="2" fill="none" opacity="0.6">
+                    <path d="M400 440 Q410 420 420 440"/>
+                    <path d="M410 440 Q420 415 430 440"/>
+                    <path d="M600 420 Q610 400 620 420"/>
+                    <path d="M900 400 Q910 380 920 400"/>
+                    <path d="M1100 420 Q1110 400 1120 420"/>
+                </g>
+
+                <!-- 人物（赤い服） -->
+                <g transform="translate(620, 360)">
+                    <!-- 影 -->
+                    <ellipse cx="0" cy="30" rx="12" ry="4" fill="#a09078" opacity="0.4"/>
+                    <!-- 体 -->
+                    <path d="M-6 10 Q0 -5 6 10 L8 28 L-8 28 Z" fill="#c65d3b"/>
+                    <!-- 頭 -->
+                    <circle cx="0" cy="2" r="6" fill="#e8dcc8"/>
+                    <!-- 足 -->
+                    <path d="M-4 28 L-6 34 M4 28 L6 34" stroke="#2b2b2b" stroke-width="2" stroke-linecap="round"/>
+                </g>
+
+                <!-- 相棒（クリーム色のふわふわ） -->
+                <g transform="translate(680, 340)">
+                    <ellipse cx="0" cy="25" rx="18" ry="6" fill="#a09078" opacity="0.3"/>
+                    <ellipse cx="0" cy="0" rx="22" ry="18" fill="#faf6ee"/>
+                    <ellipse cx="0" cy="-5" rx="18" ry="14" fill="#fff" opacity="0.6"/>
+                    <circle cx="-8" cy="-6" r="3" fill="#2b2b2b"/>
+                    <circle cx="8" cy="-6" r="3" fill="#2b2b2b"/>
+                    <ellipse cx="0" cy="2" rx="4" ry="3" fill="#e8dcc8"/>
+                    <!-- 耳 -->
+                    <ellipse cx="-16" cy="-10" rx="6" ry="8" fill="#faf6ee"/>
+                    <ellipse cx="16" cy="-10" rx="6" ry="8" fill="#faf6ee"/>
+                    <!-- しっぽ -->
+                    <path d="M20 5 Q35 0 30 -10 Q28 -15 32 -18" stroke="#faf6ee" stroke-width="4" fill="none" stroke-linecap="round"/>
+                </g>
             </svg>
-          </div>
-          <div class="capability-text">
-            <h3>5,000万行のコードを1日で移行</h3>
-            <p>大規模なレガシーコードも、Fable 5なら一晩でモダンに。</p>
-          </div>
         </div>
+    </section>
 
-        <!-- カード3 -->
-        <div class="capability-card">
-          <div class="capability-illustration">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-              <rect width="100" height="100" rx="12" fill="#f0e8d8"/>
-              <circle cx="40" cy="40" r="12" fill="#c65d3b" opacity="0.5"/>
-              <circle cx="60" cy="60" r="10" fill="#d97757" opacity="0.5"/>
-              <line x1="45" y1="45" x2="55" y2="55" stroke="#2b2b2b" stroke-width="2"/>
-              <path d="M70,30 Q80,20 90,30" stroke="#b58a4a" stroke-width="3" fill="none"/>
-              <rect x="20" y="70" width="60" height="15" rx="4" fill="#e5d5b8"/>
-              <rect x="25" y="75" width="50" height="5" rx="2" fill="#c9a87c"/>
-            </svg>
-          </div>
-          <div class="capability-text">
-            <h3>新薬の設計を約10倍のスピードで</h3>
-            <p>分子構造の解析から候補化合物の提案まで、研究を加速。</p>
-          </div>
+    <!-- 2. Claudeファミリー -->
+    <section class="section" id="family">
+        <div class="section-label reveal">
+            <span class="num">2</span>
+            <span class="kicker">Family / ファミリー</span>
         </div>
+        <h2 class="section-title reveal">Claudeのいちばん上へ。</h2>
+        <p class="section-sub reveal">HaikuからMythosまで、それぞれの役割を持つClaudeファミリー。Fable 5はその頂点に立つ、最高峰のモデルです。</p>
 
-        <!-- カード4 -->
-        <div class="capability-card">
-          <div class="capability-illustration">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-              <rect width="100" height="100" rx="12" fill="#f0e8d8"/>
-              <path d="M10,80 Q30,60 50,70 Q70,80 90,50" stroke="#c65d3b" stroke-width="3" fill="none"/>
-              <circle cx="50" cy="30" r="10" fill="#c9a87c" opacity="0.6"/>
-              <line x1="50" y1="40" x2="50" y2="55" stroke="#2b2b2b" stroke-width="2"/>
-              <circle cx="50" cy="58" r="4" fill="#c65d3b"/>
-            </svg>
-          </div>
-          <div class="capability-text">
-            <h3>長い作業も休まず走りきる</h3>
-            <p>数時間かかる複雑なタスクも、安定して最後まで完遂。</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- いちばんの強み -->
-  <section class="section strength-section" id="strength">
-    <div class="section-inner fade-in">
-      <div class="section-label">
-        <span class="num">03</span>
-        <span class="kicker">Strength / いちばんの強み</span>
-      </div>
-      <h2 class="section-title">長く複雑な仕事ほど差は開いていく。</h2>
-      <p class="section-sub">タスクが長く、複雑になるほど、Fable 5の性能は他モデルを圧倒します。</p>
-
-      <div class="graph-container">
-        <svg class="graph-svg" viewBox="0 0 600 300" xmlns="http://www.w3.org/2000/svg">
-          <!-- グリッド -->
-          <line x1="50" y1="250" x2="550" y2="250" stroke="#e5d5b8" stroke-width="1"/>
-          <line x1="50" y1="200" x2="550" y2="200" stroke="#e5d5b8" stroke-width="1"/>
-          <line x1="50" y1="150" x2="550" y2="150" stroke="#e5d5b8" stroke-width="1"/>
-          <line x1="50" y1="100" x2="550" y2="100" stroke="#e5d5b8" stroke-width="1"/>
-          <line x1="50" y1="50" x2="550" y2="50" stroke="#e5d5b8" stroke-width="1"/>
-
-          <!-- 他モデル（灰色） -->
-          <path id="otherModelPath" d="M50,240 Q150,230 250,220 Q350,210 450,200 Q500,195 550,190" stroke="#9a9a9a" stroke-width="3" fill="none" stroke-dasharray="6,4"/>
-
-          <!-- Fable 5（朱色） -->
-          <path id="fablePath" d="M50,240 Q150,200 250,150 Q350,90 450,50 Q500,30 550,20" stroke="#c65d3b" stroke-width="4" fill="none" stroke-linecap="round"/>
-
-          <!-- 軸ラベル -->
-          <text x="300" y="285" text-anchor="middle" font-size="12" fill="#8a6e4b">仕事の長さ・複雑さ →</text>
-          <text x="30" y="150" text-anchor="middle" font-size="12" fill="#8a6e4b" transform="rotate(-90,30,150)">性能</text>
-
-          <!-- 凡例 -->
-          <circle cx="420" cy="30" r="6" fill="#c65d3b"/>
-          <text x="435" y="35" font-size="12" fill="#2b2b2b">Fable 5</text>
-          <circle cx="420" cy="55" r="6" fill="#9a9a9a"/>
-          <text x="435" y="60" font-size="12" fill="#2b2b2b">他モデル</text>
-        </svg>
-        <p class="graph-label">タスクが長くなるほど、Fable 5の優位性は拡大します</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- 安全性 -->
-  <section class="section safety-section" id="safety">
-    <div class="section-inner fade-in">
-      <div class="section-label">
-        <span class="num">04</span>
-        <span class="kicker">Safety / 安全性</span>
-      </div>
-      <h2 class="section-title">強い力にはやさしいブレーキを。</h2>
-
-      <div class="safety-illustration">
-        <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="safetySky" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#faf6ee"/>
-              <stop offset="100%" stop-color="#f0d8b8"/>
-            </linearGradient>
-            <filter id="safetyBlur">
-              <feGaussianBlur stdDeviation="6"/>
-            </filter>
-          </defs>
-          <rect width="700" height="300" fill="url(#safetySky)"/>
-
-          <!-- 夕日 -->
-          <circle cx="350" cy="180" r="50" fill="#c65d3b" opacity="0.5" filter="url(#safetyBlur)"/>
-          <circle cx="350" cy="180" r="35" fill="#d97757" opacity="0.7"/>
-
-          <!-- 丘 -->
-          <path d="M0,250 Q150,180 350,220 Q550,260 700,200 L700,300 L0,300 Z" fill="#e5d5b8" opacity="0.7"/>
-          <path d="M0,280 Q200,230 450,260 Q600,280 700,250 L700,300 L0,300 Z" fill="#d4b890" opacity="0.8"/>
-
-          <!-- 人物と相棒 -->
-          <g transform="translate(300, 220)">
-            <!-- 相棒 -->
-            <ellipse cx="40" cy="0" rx="25" ry="20" fill="#faf6ee" opacity="0.9"/>
-            <ellipse cx="40" cy="-5" rx="20" ry="15" fill="#fffdf8" opacity="0.8"/>
-            <circle cx="30" cy="-10" r="5" fill="#2b2b2b" opacity="0.5"/>
-            <circle cx="50" cy="-10" r="5" fill="#2b2b2b" opacity="0.5"/>
-            <!-- 人物 -->
-            <ellipse cx="0" cy="5" rx="8" ry="12" fill="#c65d3b"/>
-            <circle cx="0" cy="-10" r="6" fill="#f0d0b0"/>
-          </g>
-        </svg>
-      </div>
-
-      <p class="safety-copy">Fable 5は、強力な能力を安全に使うための<br>「やさしいブレーキ」を内蔵しています。</p>
-    </div>
-  </section>
-
-  <!-- はじめかた -->
-  <section class="section start-section" id="start">
-    <div class="section-inner fade-in">
-      <div class="section-label">
-        <span class="num">05</span>
-        <span class="kicker">Getting Started / はじめかた</span>
-      </div>
-      <h2 class="section-title">はじめかたはかんたん。</h2>
-
-      <div class="start-content">
-        <div class="start-illustration">
-          <svg viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg">
-            <rect x="10" y="20" width="100" height="60" rx="8" fill="#e5d5b8"/>
-            <rect x="15" y="25" width="90" height="50" rx="4" fill="#faf6ee"/>
-            <rect x="20" y="30" width="80" height="5" rx="2" fill="#c9a87c"/>
-            <rect x="20" y="40" width="60" height="5" rx="2" fill="#d4b890"/>
-            <rect x="20" y="50" width="70" height="5" rx="2" fill="#c9a87c"/>
-            <rect x="45" y="80" width="30" height="8" rx="3" fill="#c65d3b"/>
-          </svg>
-        </div>
-        <div class="start-steps">
-          <div class="step-item">
-            <span class="step-num">1</span>
-            <div class="step-text">
-              <h4>アカウントを作成</h4>
-              <p>メールアドレスだけでOK</p>
+        <div class="family-chart reveal">
+            <div class="family-bar">
+                <div class="bar" style="height: 20%;"></div>
+                <div class="bar-label">Haiku</div>
+                <div class="bar-sub">最速・軽量</div>
             </div>
-          </div>
-          <div class="step-item">
-            <span class="step-num">2</span>
-            <div class="step-text">
-              <h4>Fable 5を選択</h4>
-              <p>モデル一覧から選ぶだけ</p>
+            <div class="family-bar">
+                <div class="bar" style="height: 40%;"></div>
+                <div class="bar-label">Sonnet</div>
+                <div class="bar-sub">バランス</div>
             </div>
-          </div>
-          <div class="step-item">
-            <span class="step-num">3</span>
-            <div class="step-text">
-              <h4>話しかける</h4>
-              <p>あとは自然に話すだけ</p>
+            <div class="family-bar">
+                <div class="bar" style="height: 65%;"></div>
+                <div class="bar-label">Opus</div>
+                <div class="bar-sub">高性能</div>
             </div>
-          </div>
+            <div class="family-bar">
+                <div class="bar mythos" style="height: 95%;"></div>
+                <div class="bar-label">Mythos</div>
+                <div class="bar-sub">最高峰</div>
+            </div>
         </div>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- 最終CTA -->
-  <section class="final-cta">
-    <div class="final-cta-illustration">
-      <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="ctaSky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#faf6ee"/>
-            <stop offset="100%" stop-color="#f0d0b0"/>
-          </linearGradient>
-          <filter id="ctaBlur">
-            <feGaussianBlur stdDeviation="8"/>
-          </filter>
-        </defs>
-        <rect width="900" height="300" fill="url(#ctaSky)"/>
+    <!-- 3. できること -->
+    <section class="section" id="capabilities">
+        <div class="section-label reveal">
+            <span class="num">3</span>
+            <span class="kicker">Capabilities / できること</span>
+        </div>
+        <h2 class="section-title reveal">頼れる仕事のその先まで。</h2>
+        <p class="section-sub reveal">Fable 5は、これまでのAIの限界を超えて、現実世界の複雑な課題に挑みます。</p>
 
-        <!-- 夕日 -->
-        <circle cx="450" cy="150" r="70" fill="#c65d3b" opacity="0.4" filter="url(#ctaBlur)"/>
-        <circle cx="450" cy="150" r="45" fill="#d97757" opacity="0.6"/>
+        <div class="cards-grid">
+            <!-- カード1 -->
+            <div class="card reveal">
+                <div class="card-illustration">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="100" height="100" fill="#f0e6d6" rx="12"/>
+                        <rect x="15" y="20" width="70" height="50" rx="4" fill="#fff" stroke="#d4c4a8"/>
+                        <rect x="20" y="30" width="20" height="4" fill="#c65d3b" opacity="0.6"/>
+                        <rect x="20" y="40" width="30" height="4" fill="#b89b6e" opacity="0.5"/>
+                        <rect x="20" y="50" width="15" height="4" fill="#d97757" opacity="0.5"/>
+                        <circle cx="65" cy="45" r="8" fill="#c65d3b" opacity="0.4"/>
+                        <path d="M60 45 L65 40 L70 45 L65 50 Z" fill="#c65d3b" opacity="0.7"/>
+                    </svg>
+                </div>
+                <div class="card-content">
+                    <h3>画面を見るだけで<br>ゲームを最後までクリア</h3>
+                    <p>実機の画面を理解し、人間のように操作。複雑なゲームも完全攻略。</p>
+                </div>
+            </div>
 
-        <!-- 丘 -->
-        <path d="M0,220 Q200,150 450,200 Q700,250 900,180 L900,300 L0,300 Z" fill="#e5d5b8" opacity="0.7"/>
-        <path d="M0,260 Q250,200 500,240 Q750,280 900,230 L900,300 L0,300 Z" fill="#d4b890" opacity="0.8"/>
+            <!-- カード2 -->
+            <div class="card reveal">
+                <div class="card-illustration">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="100" height="100" fill="#f0e6d6" rx="12"/>
+                        <rect x="20" y="30" width="60" height="8" fill="#e8dcc8" stroke="#d4c4a8" rx="2"/>
+                        <rect x="20" y="42" width="60" height="8" fill="#e8dcc8" stroke="#d4c4a8" rx="2"/>
+                        <rect x="20" y="54" width="60" height="8" fill="#e8dcc8" stroke="#d4c4a8" rx="2"/>
+                        <rect x="20" y="66" width="60" height="8" fill="#e8dcc8" stroke="#d4c4a8" rx="2"/>
+                        <rect x="25" y="34" width="50" height="4" fill="#c65d3b" opacity="0.5"/>
+                        <rect x="25" y="46" width="40" height="4" fill="#b89b6e" opacity="0.5"/>
+                        <rect x="25" y="58" width="45" height="4" fill="#d97757" opacity="0.5"/>
+                    </svg>
+                </div>
+                <div class="card-content">
+                    <h3>5,000万行のコードを<br>1日で移行</h3>
+                    <p>大規模なレガシーコードを理解し、安全にモダンな環境へ移行。</p>
+                </div>
+            </div>
 
-        <!-- 道 -->
-        <path d="M200,300 Q300,260 400,240 Q500,220 600,210 Q700,200 800,195" stroke="#faf6ee" stroke-width="15" fill="none" stroke-linecap="round" opacity="0.8"/>
-        <path d="M200,300 Q300,260 400,240 Q500,220 600,210 Q700,200 800,195" stroke="#fffdf8" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.9"/>
+            <!-- カード3 -->
+            <div class="card reveal">
+                <div class="card-illustration">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="100" height="100" fill="#f0e6d6" rx="12"/>
+                        <circle cx="40" cy="50" r="12" fill="none" stroke="#c65d3b" stroke-width="2"/>
+                        <circle cx="40" cy="50" r="5" fill="#c65d3b" opacity="0.5"/>
+                        <circle cx="60" cy="40" r="8" fill="none" stroke="#b89b6e" stroke-width="2"/>
+                        <circle cx="60" cy="40" r="3" fill="#b89b6e" opacity="0.5"/>
+                        <path d="M45 45 L55 42" stroke="#d97757" stroke-width="2"/>
+                        <rect x="65" y="55" width="15" height="25" rx="3" fill="#e8dcc8" stroke="#d4c4a8"/>
+                        <path d="M70 55 L70 50 Q70 45 75 45 L75 55" stroke="#d4c4a8" fill="none"/>
+                    </svg>
+                </div>
+                <div class="card-content">
+                    <h3>新薬の設計を<br>約10倍のスピードで</h3>
+                    <p>分子構造の理解と生成により、創薬プロセスを劇的に加速。</p>
+                </div>
+            </div>
 
-        <!-- 人物と相棒 -->
-        <g transform="translate(480, 210)">
-          <ellipse cx="30" cy="0" rx="20" ry="16" fill="#faf6ee" opacity="0.9"/>
-          <ellipse cx="0" cy="5" rx="8" ry="12" fill="#c65d3b"/>
-          <circle cx="0" cy="-10" r="6" fill="#f0d0b0"/>
-        </g>
-      </svg>
-    </div>
+            <!-- カード4 -->
+            <div class="card reveal">
+                <div class="card-illustration">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="100" height="100" fill="#f0e6d6" rx="12"/>
+                        <path d="M10 80 Q30 60 50 70 Q70 80 90 60" stroke="#c65d3b" stroke-width="3" fill="none" stroke-linecap="round"/>
+                        <circle cx="50" cy="30" r="10" fill="#e8dcc8" stroke="#d4c4a8"/>
+                        <circle cx="50" cy="30" r="6" fill="#fff"/>
+                        <path d="M50 20 L50 15 M50 40 L50 45 M40 30 L35 30 M60 30 L65 30" stroke="#b89b6e" stroke-width="2"/>
+                        <rect x="46" y="32" width="8" height="8" rx="1" fill="#c65d3b" opacity="0.6"/>
+                    </svg>
+                </div>
+                <div class="card-content">
+                    <h3>長い作業も<br>休まず走りきる</h3>
+                    <p>数時間に及ぶ複雑なタスクも、安定して最後まで完遂。</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <h2 class="final-cta-title">いちばん遠くまでいっしょに。</h2>
-    <a href="#" class="final-cta-button">Claudeを使ってみる</a>
-  </section>
+    <!-- 4. いちばんの強み -->
+    <section class="section" id="strength">
+        <div class="section-label reveal">
+            <span class="num">4</span>
+            <span class="kicker">Strength / 強み</span>
+        </div>
+        <h2 class="section-title reveal">長く複雑な仕事ほど<br>差は開いていく。</h2>
+        <p class="section-sub reveal">タスクが長く複雑になるほど、Fable 5の能力は指数関数的に発揮されます。</p>
 
-  <!-- フッター -->
-  <footer class="site-footer">
-    <div class="footer-logo">
-      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="16" cy="16" r="12" fill="#c65d3b" opacity="0.8"/>
-        <circle cx="16" cy="16" r="8" fill="#faf6ee" opacity="0.9"/>
-        <circle cx="16" cy="16" r="4" fill="#c65d3b"/>
-      </svg>
-      <span>Claude</span>
-    </div>
-    <p class="footer-note">© 2025 Anthropic. All rights reserved.</p>
-  </footer>
+        <div class="chart-container reveal">
+            <svg class="chart-svg" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stop-color="#c65d3b"/>
+                        <stop offset="100%" stop-color="#d97757"/>
+                    </linearGradient>
+                </defs>
 
-  <script>
-    // IntersectionObserver によるフェードイン
-    document.addEventListener('DOMContentLoaded', function() {
-      const fadeElements = document.querySelectorAll('.fade-in');
+                <!-- グリッド -->
+                <g stroke="#e0d8c8" stroke-width="1" opacity="0.5">
+                    <line x1="60" y1="50" x2="60" y2="350"/>
+                    <line x1="60" y1="350" x2="760" y2="350"/>
+                    <line x1="60" y1="100" x2="760" y2="100"/>
+                    <line x1="60" y1="200" x2="760" y2="200"/>
+                    <line x1="60" y1="300" x2="760" y2="300"/>
+                </g>
 
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-          }
-        });
-      }, {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-      });
+                <!-- 他モデルの線（灰色） -->
+                <path d="M60 340 Q200 330 400 310 Q600 290 760 270" stroke="#b0b0b0" stroke-width="3" fill="none" stroke-dasharray="6 4" opacity="0.6"/>
+                <path d="M60 345 Q200 340 400 330 Q600 320 760 310" stroke="#c0c0c0" stroke-width="2" fill="none" stroke-dasharray="4 6" opacity="0.5"/>
 
-      fadeElements.forEach(el => {
-        // 未発火でも非表示のままにしない
-        if (el.getBoundingClientRect().top < window.innerHeight) {
-          el.classList.add('visible');
-        } else {
-          observer.observe(el);
-        }
-      });
+                <!-- Fable 5 の線（朱色・指数関数的） -->
+                <path id="fableLine" d="M60 340 Q150 320 250 280 Q350 220 450 150 Q550 80 650 40 Q720 15 760 5" stroke="url(#lineGrad)" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="2000" stroke-dashoffset="2000"/>
 
-      // ヒーローのパララックス（雲と太陽）
-      const hero = document.querySelector('.hero');
-      const sun = hero.querySelector('circle[cy="120"]');
-      const clouds = hero.querySelectorAll('ellipse');
+                <!-- 軸ラベル -->
+                <text x="400" y="390" text-anchor="middle" font-size="14" fill="#999">仕事の長さ・複雑さ →</text>
+                <text x="20" y="200" text-anchor="middle" font-size="12" fill="#999" transform="rotate(-90 20 200)">性能</text>
 
-      window.addEventListener('scroll', function() {
-        const scrollY = window.scrollY;
-        if (scrollY < window.innerHeight) {
-          const rate = scrollY / window.innerHeight;
+                <!-- 注釈 -->
+                <circle cx="650" cy="40" r="6" fill="#c65d3b" opacity="0.8"/>
+                <text x="670" y="35" font-size="12" fill="#c65d3b" font-weight="bold">Fable 5</text>
+            </svg>
+            <div class="chart-axis-label">タスクの複雑さが増すほど、性能差は拡大</div>
+        </div>
+    </section>
 
-          // 太陽をゆっくり動かす
-          if (sun) {
-            sun.setAttribute('cy', 120 + rate * 30);
-          }
+    <!-- 5. 安全性 -->
+    <section class="section safety-section" id="safety">
+        <div class="section-label reveal">
+            <span class="num">5</span>
+            <span class="kicker">Safety / 安全性</span>
+        </div>
+        <h2 class="section-title reveal">強い力には<br>やさしいブレーキを。</h2>
 
-          // 雲を動かす
-          clouds.forEach((cloud, i) => {
-            const baseX = parseFloat(cloud.getAttribute('cx')) || 0;
-            cloud.setAttribute('cx', baseX + rate * (i + 1) * 10);
-          });
-        }
-      });
+        <div class="safety-illustration reveal">
+            <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <filter id="blurSun" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="15"/>
+                    </filter>
+                    <linearGradient id="skyGrad2" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#faf6ee"/>
+                        <stop offset="100%" stop-color="#f0e0cc"/>
+                    </linearGradient>
+                </defs>
 
-      // グラフの描画アニメーション
-      const graphSection = document.querySelector('.strength-section');
-      const fablePath = document.getElementById('fablePath');
-      const otherPath = document.getElementById('otherModelPath');
+                <rect width="800" height="400" fill="url(#skyGrad2)"/>
 
-      if (graphSection && fablePath) {
-        const graphObserver = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              // Fable 5の線をアニメーション
-              const length = fablePath.getTotalLength();
-              fablePath.style.strokeDasharray = length;
-              fablePath.style.strokeDashoffset = length;
-              fablePath.style.transition = 'stroke-dashoffset 2s ease';
-              fablePath.style.strokeDashoffset = '0';
+                <!-- 夕日 -->
+                <circle cx="400" cy="220" r="60" fill="#d97757" opacity="0.5" filter="url(#blurSun)"/>
+                <circle cx="400" cy="220" r="40" fill="#c65d3b" opacity="0.6"/>
+                <circle cx="400" cy="220" r="25" fill="#e8a07a"/>
 
-              // 他モデルの線も
-              const otherLength = otherPath.getTotalLength();
-              otherPath.style.strokeDasharray = otherLength;
-              otherPath.style.strokeDashoffset = otherLength;
-              otherPath.style.transition = 'stroke-dashoffset 1.5s ease 0.5s';
-              otherPath.style.strokeDashoffset = '0';
+                <!-- 丘 -->
+                <path d="M0 300 Q200 240 400 280 Q600 320 800 260 L800 400 L0 400 Z" fill="#d4c4a8" opacity="0.6"/>
+                <path d="M0 330 Q200 290 400 320 Q600 350 800 310 L800 400 L0 400 Z" fill="#c4b49a" opacity="0.7"/>
 
-              graphObserver.unobserve(entry.target);
+                <!-- 人物と相棒（座っている） -->
+                <g transform="translate(350, 280)">
+                    <!-- 人物 -->
+                    <ellipse cx="0" cy="20" rx="14" ry="4" fill="#a09078" opacity="0.4"/>
+                    <path d="M-8 10 Q0 -5 8 10 L10 25 L-10 25 Z" fill="#c65d3b"/>
+                    <circle cx="0" cy="2" r="7" fill="#e8dcc8"/>
+                    <path d="M-4 25 L-6 30 M4 25 L6 30" stroke="#2b2b2b" stroke-width="2" stroke-linecap="round"/>
+
+                    <!-- 相棒 -->
+                    <ellipse cx="40" cy="15" rx="20" ry="6" fill="#a09078" opacity="0.3"/>
+                    <ellipse cx="40" cy="0" rx="24" ry="20" fill="#faf6ee"/>
+                    <ellipse cx="40" cy="-5" rx="20" ry="16" fill="#fff" opacity="0.6"/>
+                    <circle cx="32" cy="-6" r="3.5" fill="#2b2b2b"/>
+                    <circle cx="48" cy="-6" r="3.5" fill="#2b2b2b"/>
+                    <ellipse cx="40" cy="2" rx="5" ry="3" fill="#e8dcc8"/>
+                    <ellipse cx="22" cy="-12" rx="7" ry="9" fill="#faf6ee"/>
+                    <ellipse cx="58" cy="-12" rx="7" ry="9" fill="#faf6ee"/>
+                </g>
+
+                <!-- 草花 -->
+                <circle cx="200" cy="340" r="8" fill="#c65d3b" opacity="0.4"/>
+                <circle cx="600" cy="320" r="10" fill="#b89b6e" opacity="0.5"/>
+                <circle cx="650" cy="330" r="6" fill="#d97757" opacity="0.4"/>
+            </svg>
+        </div>
+
+        <p class="safety-copy reveal">
+            強力なモデルだからこそ、私たちは安全性を最優先に設計しました。<br>
+            あなたのそばで、いつもやさしく、信頼できる存在であり続けます。
+        </p>
+    </section>
+
+    <!-- 6. はじめかた -->
+    <section class="section" id="get-started">
+        <div class="section-label reveal">
+            <span class="num">6</span>
+            <span class="kicker">Getting Started / はじめかた</span>
+        </div>
+        <h2 class="section-title reveal">はじめかたはかんたん。</h2>
+
+        <div class="steps-container">
+            <div class="steps-illustration reveal">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="200" height="200" fill="#f0e6d6" rx="20"/>
+                    <rect x="40" y="50" width="120" height="80" rx="8" fill="#fff" stroke="#d4c4a8" stroke-width="2"/>
+                    <rect x="50" y="60" width="100" height="6" fill="#c65d3b" opacity="0.5"/>
+                    <rect x="50" y="75" width="80" height="6" fill="#b89b6e" opacity="0.4"/>
+                    <rect x="50" y="90" width="90" height="6" fill="#d97757" opacity="0.4"/>
+                    <rect x="50" y="105" width="60" height="6" fill="#e8dcc8" opacity="0.6"/>
+                    <path d="M80 130 L100 130 L100 145 L80 145 Z" fill="#e8dcc8" stroke="#d4c4a8"/>
+                    <circle cx="100" cy="145" r="4" fill="#c65d3b" opacity="0.6"/>
+                </svg>
+            </div>
+
+            <div class="steps-list">
+                <div class="step-item reveal">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <h4>アカウントを作成</h4>
+                        <p>メールアドレスだけで、すぐに始められます。</p>
+                    </div>
+                </div>
+                <div class="step-item reveal">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <h4>Fable 5を選択</h4>
+                        <p>モデル選択画面で「Fable 5」を選ぶだけ。</p>
+                    </div>
+                </div>
+                <div class="step-item reveal">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <h4>話しかける</h4>
+                        <p>あとは、あなたの言葉で話しかけるだけ。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 7. 最終CTA -->
+    <section class="final-cta" id="cta">
+        <div class="final-cta-inner">
+            <div class="final-cta-illustration">
+                <svg viewBox="0 0 1440 400" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="ctaSky" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#faf6ee"/>
+                            <stop offset="100%" stop-color="#f0e0cc"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="1440" height="400" fill="url(#ctaSky)"/>
+                    <circle cx="1100" cy="100" r="50" fill="#d97757" opacity="0.5" filter="url(#blur1)"/>
+                    <circle cx="1100" cy="100" r="30" fill="#c65d3b" opacity="0.6"/>
+                    <path d="M0 300 Q200 240 400 280 Q600 320 800 260 Q1000 200 1200 250 Q1350 280 1440 250 L1440 400 L0 400 Z" fill="#d4c4a8" opacity="0.6"/>
+                    <path d="M0 340 Q200 300 400 330 Q600 360 800 320 Q1000 280 1200 320 Q1350 350 1440 320 L1440 400 L0 400 Z" fill="#c4b49a" opacity="0.7"/>
+                    <path d="M200 400 Q300 350 400 370 Q500 390 600 360 Q700 330 800 360 Q900 390 1000 360 Q1100 330 1200 360 Q1300 390 1440 360" stroke="#faf6ee" stroke-width="12" fill="none" stroke-linecap="round" opacity="0.7"/>
+                </svg>
+            </div>
+            <div class="final-cta-content">
+                <h2 class="final-cta-title reveal">いちばん遠くまで<br>いっしょに。</h2>
+                <p class="final-cta-sub reveal">Fable 5と、あなたの物語を始めましょう。</p>
+                <a href="#" class="final-cta-button reveal">Claudeを使ってみる</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- フッター -->
+    <footer class="site-footer">
+        <div class="footer-logo">
+            <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" width="20" height="20">
+                <circle cx="16" cy="16" r="12" fill="#c65d3b" opacity="0.8"/>
+                <circle cx="16" cy="16" r="8" fill="#faf6ee"/>
+                <circle cx="16" cy="16" r="4" fill="#c65d3b"/>
+            </svg>
+            Claude
+        </div>
+        <p>© 2025 Anthropic. All rights reserved.</p>
+        <p style="margin-top:4px;">Fable 5はClaudeファミリーの最上位モデルです。</p>
+    </footer>
+
+    <script>
+        // ヘッダーのスクロール影
+        const header = document.getElementById('siteHeader');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
             }
-          });
-        }, { threshold: 0.3 });
+        });
 
-        graphObserver.observe(graphSection);
-      }
-    });
-  </script>
+        // IntersectionObserver によるフェード+スライドイン
+        const revealElements = document.querySelectorAll('.reveal');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, {
+            threshold: 0.15,
+            rootMargin: '0px 0px -50px 0px'
+        });
+
+        revealElements.forEach(el => observer.observe(el));
+
+        // グラフの描画アニメーション
+        const chartContainer = document.querySelector('.chart-container');
+        const fableLine = document.getElementById('fableLine');
+
+        const chartObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // アニメーション開始
+                    fableLine.style.transition = 'stroke-dashoffset 2.5s ease-out';
+                    fableLine.style.strokeDashoffset = '0';
+                }
+            });
+        }, { threshold: 0.4 });
+
+        if (chartContainer && fableLine) {
+            chartObserver.observe(chartContainer);
+        }
+
+        // ヒーローのパララックス（雲と太陽）
+        const hero = document.getElementById('hero');
+        const sun = hero.querySelector('circle[filter="url(#blur1)"]');
+        const clouds = hero.querySelectorAll('g[opacity="0.4"]');
+
+        window.addEventListener('scroll', () => {
+            const scrollY = window.scrollY;
+            if (scrollY < window.innerHeight) {
+                const offset = scrollY * 0.3;
+                if (sun) {
+                    sun.setAttribute('cy', 120 - offset * 0.2);
+                }
+                clouds.forEach(cloud => {
+                    cloud.setAttribute('transform', `translate(0, ${offset * 0.1})`);
+                });
+            }
+        });
+
+        // 丘のパララックス（ヒーロー内）
+        const hills = hero.querySelectorAll('path[fill^="url(#hill"]');
+        window.addEventListener('scroll', () => {
+            const scrollY = window.scrollY;
+            if (scrollY < window.innerHeight) {
+                const offset = scrollY * 0.15;
+                hills.forEach((hill, index) => {
+                    const factor = (index + 1) * 0.05;
+                    hill.setAttribute('transform', `translate(0, ${offset * factor})`);
+                });
+            }
+        });
+    </script>
 
 </body>
 </html>

@@ -100,9 +100,9 @@
 <div class="verify-bar">
   <div class="verify-bar-inner">
     <span class="badge pass">スキーマ準拠 PASS</span>
-    <span class="badge score">agreement 85%</span>
-    <span class="stat">primary <strong>8</strong> / acceptable <strong>1</strong></span>
-    <span class="stat">出力 <strong>2,982</strong> chars</span>
+    <span class="badge score">agreement 95%</span>
+    <span class="stat">primary <strong>9</strong> / acceptable <strong>1</strong></span>
+    <span class="stat">出力 <strong>3,109</strong> chars</span>
   </div>
 </div>
 
@@ -133,8 +133,8 @@
           <td><span class="verdict">merge</span></td>
           <td><span class="verdict">merge</span></td>
           <td><span class="match-primary">✓ primary</span></td>
-          <td><ul><li>Issue #90 のレートリミット追加で、テストも充実</li><li>CI パス、レビューアプルーブ済み、コンフリクトなし</li><li>エラーを握りつぶさずログに集約する設計</li></ul></td>
-          <td><ul><li>マージする</li><li>本番でレートリミットが機能しているか監視する</li></ul></td>
+          <td><ul><li>Issue #90の対策で、レートリミットにより管理者へのメール洪水を防ぐ</li><li>テストが追加され、CIパス、レビューも指摘なし</li><li>実装がシンプルで副作用が限定的</li></ul></td>
+          <td><ul><li>マージする</li><li>マージ後、本番でレートリミットの動作を監視する</li></ul></td>
           <td><span class="verdict">low</span></td>
         </tr>
         <tr>
@@ -142,8 +142,8 @@
           <td><span class="verdict">fix</span></td>
           <td><span class="verdict">fix</span></td>
           <td><span class="match-primary">✓ primary</span></td>
-          <td><ul><li>他人のタスクをアーカイブできる脆弱性の指摘があり、作者未返信</li><li>テストがなく、バグ修正・新機能にはテスト必須の方針に反する</li></ul></td>
-          <td><ul><li>作者に owner 絞り込みの修正とテスト追加を要求する</li><li>修正後に再レビューする</li></ul></td>
+          <td><ul><li>テストがなく、方針（テスト必須）に反する</li><li>レビューで他人のタスクをアーカイブできる可能性が指摘されているが、作者未返信</li><li>セキュリティ/権限の問題が未解決のまま</li></ul></td>
+          <td><ul><li>作者にテスト追加とowner絞り込みの修正を要求する</li><li>修正後、再レビューしてからマージを検討する</li></ul></td>
           <td><span class="verdict">high</span></td>
         </tr>
         <tr>
@@ -151,8 +151,8 @@
           <td><span class="verdict">fix</span></td>
           <td><span class="verdict">close</span></td>
           <td><span class="match-acceptable">△ acceptable</span></td>
-          <td><ul><li>broad except で例外を握りつぶしており、方針に反する</li><li>エラーログ抑制が目的だが、サイレント失敗はデバッグ困難にする</li></ul></td>
-          <td><ul><li>例外の種類を限定し、ログに記録する（例: ConnectionError は WARNING で記録）</li><li>テストを追加する</li></ul></td>
+          <td><ul><li>例外を握りつぶしており、方針（エラーの握りつぶし禁止）に反する</li><li>ログ抑制は必要だが、完全に無視するのではなく、WARNINGレベルで記録すべき</li><li>テストがない</li></ul></td>
+          <td><ul><li>例外をログに残しつつ、レートリミットやサンプリングで量を減らすよう修正を要求</li><li>テスト追加も要求</li></ul></td>
           <td><span class="verdict">medium</span></td>
         </tr>
         <tr>
@@ -160,8 +160,8 @@
           <td><span class="verdict">close</span></td>
           <td><span class="verdict">close</span></td>
           <td><span class="match-primary">✓ primary</span></td>
-          <td><ul><li>依存のバージョン固定解除はサプライチェーン攻撃防止方針に反する</li><li>CI が通っていても、再現性が失われる</li></ul></td>
-          <td><ul><li>クローズする</li><li>依存更新は個別 PR で行う方針を維持する</li></ul></td>
+          <td><ul><li>依存パッケージのバージョン固定方針に反する</li><li>サプライチェーン攻撃のリスクを高める</li><li>CIがパスしても、将来の依存更新で壊れる可能性がある</li></ul></td>
+          <td><ul><li>クローズする</li><li>依存更新は個別PRで行うよう方針を再確認する</li></ul></td>
           <td><span class="verdict">high</span></td>
         </tr>
         <tr>
@@ -169,17 +169,17 @@
           <td><span class="verdict">merge</span></td>
           <td><span class="verdict">merge</span></td>
           <td><span class="match-primary">✓ primary</span></td>
-          <td><ul><li>セキュリティ脆弱性（トークン漏えい）への対応で、テストも追加済み</li><li>CI パス、レビューアプルーブ済み、コンフリクトなし</li><li>互換ウィンドウの設計も妥当</li></ul></td>
-          <td><ul><li>マージする</li><li>マージ後、旧リンクの互換期間を監視し、期限後に削除する</li></ul></td>
+          <td><ul><li>セキュリティ脆弱性（トークン漏えい）を修正するPRで、Issue #92に対応</li><li>テストが追加され、CIもパス、レビューもapprove済み</li><li>旧リンクの互換維持も設計されており、リスクが低い</li></ul></td>
+          <td><ul><li>マージする</li><li>マージ後、リリースノートにセキュリティ修正として記載する</li></ul></td>
           <td><span class="verdict">low</span></td>
         </tr>
         <tr>
           <td class="mono">106</td>
-          <td><span class="verdict">hold</span></td>
           <td><span class="verdict">fix</span></td>
-          <td><span class="match-miss">✗ miss</span></td>
-          <td><ul><li>42 ファイルの巨大な変更で、レビュー不能</li><li>作者が分割を拒否しており、意図が読み取りにくい</li></ul></td>
-          <td><ul><li>作者に機能ごとの分割 PR を要求する</li><li>分割されたら順次レビューする</li></ul></td>
+          <td><span class="verdict">fix</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>42ファイル・3000行超の巨大な変更で、レビュー不能</li><li>作者が分割を拒否しており、レビュー品質が保てない</li><li>複数の目的（ダークモード、通知設定、LP刷新）が混在している</li></ul></td>
+          <td><ul><li>分割を再度要求する（機能ごとにPRを分ける）</li><li>分割されない場合はクローズも検討する</li></ul></td>
           <td><span class="verdict">medium</span></td>
         </tr>
         <tr>
@@ -187,8 +187,8 @@
           <td><span class="verdict">fix</span></td>
           <td><span class="verdict">fix</span></td>
           <td><span class="match-primary">✓ primary</span></td>
-          <td><ul><li>CI が失敗しており、マージ不可</li><li>作者は flaky と主張するが、テストが実際に失敗しているため要調査</li></ul></td>
-          <td><ul><li>CI の失敗を再現・調査する</li><li>DST 境界テストを修正するか、テストが正しいならコードを修正する</li></ul></td>
+          <td><ul><li>CIが失敗しており、マージ不可</li><li>作者はflakyと主張するが、テストが実際に失敗している</li><li>テストが追加されているが、CIで通らない限りマージできない</li></ul></td>
+          <td><ul><li>CIの失敗を再現・調査する</li><li>修正してCIをパスさせるよう作者に依頼する</li></ul></td>
           <td><span class="verdict">medium</span></td>
         </tr>
         <tr>
@@ -196,8 +196,8 @@
           <td><span class="verdict">hold</span></td>
           <td><span class="verdict">hold</span></td>
           <td><span class="match-primary">✓ primary</span></td>
-          <td><ul><li>Issue #94 で未決着の設計変更を先取りしており、パフォーマンス懸念への回答がない</li><li>大規模なリファクタリングで、意図が不明瞭</li></ul></td>
-          <td><ul><li>作者に Issue #94 の結論とパフォーマンス影響の分析を求める</li><li>分割や説明の追加を依頼する</li></ul></td>
+          <td><ul><li>Issue #94で未決着の設計変更を先取りしている</li><li>パフォーマンス懸念への回答がなく、大きなリファクタリング</li><li>意図が不明確で、推測でマージできない</li></ul></td>
+          <td><ul><li>作者にIssue #94の結論を待つか、パフォーマンス影響の分析を要求する</li><li>結論が出るまで保留</li></ul></td>
           <td><span class="verdict">medium</span></td>
         </tr>
         <tr>
@@ -205,8 +205,8 @@
           <td><span class="verdict">close</span></td>
           <td><span class="verdict">close</span></td>
           <td><span class="match-primary">✓ primary</span></td>
-          <td><ul><li>既に docs/setup.md が全面改訂され main にマージ済みで、重複する</li><li>README には既に docs/setup.md へのリンクがあり、この PR の価値が低い</li><li>コンフリクトもあり、30 日放置</li></ul></td>
-          <td><ul><li>クローズする</li><li>README のリンクが正しいか確認する</li></ul></td>
+          <td><ul><li>既にdocs/setup.mdが全面改訂され、READMEにもリンクがある</li><li>コンフリクトがあり、内容が重複している</li><li>30日経過しており、価値が低い</li></ul></td>
+          <td><ul><li>クローズする</li><li>必要ならREADMEのリンク先を最新化するだけにする</li></ul></td>
           <td><span class="verdict">low</span></td>
         </tr>
         <tr>
@@ -214,8 +214,8 @@
           <td><span class="verdict">merge</span></td>
           <td><span class="verdict">merge</span></td>
           <td><span class="match-primary">✓ primary</span></td>
-          <td><ul><li>テストあり、CI パス、レビューアプルーブ済み</li><li>nit のみの指摘で、現状規模では問題なし</li></ul></td>
-          <td><ul><li>マージする</li><li>将来のパフォーマンス改善として StreamingHttpResponse への移行を backlog に記録</li></ul></td>
+          <td><ul><li>テストが追加され、CIパス、レビューapprove済み</li><li>nit指摘は軽微で、現状の規模では問題ないとレビュアーも認めている</li><li>機能追加として独立しており、リスクが低い</li></ul></td>
+          <td><ul><li>マージする</li><li>nit指摘（StreamingHttpResponse）は将来の改善として記録しておく</li></ul></td>
           <td><span class="verdict">low</span></td>
         </tr>
           </tbody>
@@ -226,12 +226,12 @@
 
   <section class="panel">
     <div class="panel-head"><h2>Priority Order</h2></div>
-    <div class="panel-body"><div class="priority"><span>105</span><span>101</span><span>110</span><span>102</span><span>103</span><span>107</span><span>108</span><span>106</span><span>104</span><span>109</span></div></div>
+    <div class="panel-body"><div class="priority"><span>105</span><span>101</span><span>110</span><span>102</span><span>103</span><span>107</span><span>106</span><span>108</span><span>104</span><span>109</span></div></div>
   </section>
 
   <section class="panel">
     <div class="panel-head"><h2>Summary</h2></div>
-    <div class="panel-body"><p class="summary">セキュリティ関連の PR #105 と #101 は即マージすべき。一方、#102 は脆弱性とテスト欠如、#103 はエラー握りつぶし、#104 は依存固定方針違反で対応が必要。#107 は CI 失敗、#108 と #106 は設計・規模の問題で保留。#109 は既に解決済みの内容でクローズ。</p></div>
+    <div class="panel-body"><p class="summary">セキュリティ関連のPR（#105）と緊急のwebhook対策（#101）が最優先。テスト不足・権限問題の#102、例外握りつぶしの#103、CI失敗の#107は修正が必要。方針違反の#104と重複ドキュメントの#109はクローズ。設計未決着の#108は保留。</p></div>
   </section>
 
 

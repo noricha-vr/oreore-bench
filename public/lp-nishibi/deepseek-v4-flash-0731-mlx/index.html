@@ -3,26 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NISHIBI — 西日温浴</title>
+    <title>NISHIBI — 西日で焼く、天然日焼けスタジオ</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Noto+Serif+JP:wght@200;300;400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Noto+Serif+JP:wght@200;300;400;500&display=swap" rel="stylesheet">
     <style>
+        /* ---------- Reset & Base ---------- */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }
-
-        :root {
-            --sunset: #C96F4A;
-            --terracotta: #B05C3C;
-            --beige: #F2E8DC;
-            --sand: #E5D5C3;
-            --dark-brown: #2E1E16;
-            --deep-brown: #1F140E;
-            --text-light: #F5EFE6;
-            --text-muted: #A99B8A;
         }
 
         html {
@@ -31,28 +21,169 @@
 
         body {
             font-family: 'Noto Serif JP', serif;
-            background-color: var(--beige);
-            color: var(--dark-brown);
+            background-color: #f5efe6;
+            color: #2b1d14;
             line-height: 1.8;
             font-weight: 300;
             letter-spacing: 0.02em;
+            -webkit-font-smoothing: antialiased;
         }
 
+        /* ---------- Color Variables ---------- */
+        :root {
+            --bg: #f5efe6;
+            --bg-dark: #2b1d14;
+            --bg-warm: #e8d9c5;
+            --terracotta: #b85c3c;
+            --orange: #d97b4a;
+            --beige: #d9c7a7;
+            --dark-brown: #3e2a1e;
+            --text-main: #2b1d14;
+            --text-light: #6b5847;
+            --white: #faf6f0;
+        }
+
+        /* ---------- Typography ---------- */
+        h1, h2, h3, .serif-display {
+            font-family: 'Cormorant Garamond', 'Noto Serif JP', serif;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+            line-height: 1.2;
+        }
+
+        h1 {
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 300;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        h2 {
+            font-size: clamp(2rem, 4vw, 3.2rem);
+            font-weight: 300;
+            margin-bottom: 2rem;
+            letter-spacing: 0.1em;
+        }
+
+        h3 {
+            font-size: 1.4rem;
+            font-weight: 400;
+            letter-spacing: 0.08em;
+        }
+
+        .subhead {
+            font-size: 1rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--terracotta);
+            margin-bottom: 1rem;
+            font-weight: 400;
+        }
+
+        .body-text {
+            font-size: 0.95rem;
+            font-weight: 300;
+            color: var(--text-light);
+            line-height: 2.1;
+        }
+
+        /* ---------- Layout ---------- */
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 40px;
+            padding: 0 2rem;
         }
 
-        /* ===== HERO ===== */
+        section {
+            padding: 6rem 0;
+            position: relative;
+        }
+
+        /* ---------- Buttons ---------- */
+        .btn {
+            display: inline-block;
+            padding: 1rem 2.8rem;
+            border: 1px solid var(--dark-brown);
+            color: var(--dark-brown);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            transition: all 0.4s ease;
+            background: transparent;
+            font-family: 'Noto Serif JP', serif;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: var(--dark-brown);
+            color: var(--bg);
+        }
+
+        .btn-light {
+            border-color: var(--bg);
+            color: var(--bg);
+        }
+
+        .btn-light:hover {
+            background: var(--bg);
+            color: var(--dark-brown);
+        }
+
+        /* ---------- Header ---------- */
+        .site-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1.5rem 0;
+            z-index: 100;
+            background: linear-gradient(to bottom, rgba(245, 239, 230, 0.9), transparent);
+            transition: background 0.3s ease;
+        }
+
+        .site-header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.6rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--dark-brown);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--terracotta);
+        }
+
+        /* ---------- Hero ---------- */
         .hero {
             min-height: 100vh;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             text-align: center;
-            background: linear-gradient(145deg, var(--beige) 0%, var(--sand) 100%);
+            background: linear-gradient(145deg, #f5efe6 0%, #e8d9c5 100%);
             position: relative;
             overflow: hidden;
         }
@@ -64,356 +195,280 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(ellipse at 70% 80%, rgba(201, 111, 74, 0.15) 0%, transparent 60%);
-            pointer-events: none;
+            background: radial-gradient(ellipse at 70% 80%, rgba(217, 123, 74, 0.15) 0%, transparent 60%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            padding: 0 2rem;
         }
 
         .hero h1 {
-            font-family: 'Cormorant Garamond', serif;
-            font-weight: 300;
-            font-size: clamp(4rem, 12vw, 8rem);
-            letter-spacing: 0.15em;
+            margin-bottom: 1.5rem;
             color: var(--dark-brown);
-            margin-bottom: 24px;
-            line-height: 1.1;
-            text-transform: uppercase;
         }
 
-        .hero .sub {
-            font-size: 1.1rem;
-            font-weight: 300;
-            color: var(--terracotta);
-            letter-spacing: 0.1em;
-            margin-bottom: 48px;
+        .hero .subhead {
+            margin-bottom: 2rem;
+        }
+
+        .hero .body-text {
             max-width: 600px;
-            line-height: 2;
+            margin: 0 auto 3rem;
+            color: var(--text-light);
         }
 
-        .hero .cta {
-            display: inline-block;
-            padding: 18px 56px;
-            border: 1px solid var(--dark-brown);
-            color: var(--dark-brown);
-            text-decoration: none;
-            font-size: 0.9rem;
-            letter-spacing: 0.2em;
-            transition: all 0.4s ease;
-            background: transparent;
-        }
-
-        .hero .cta:hover {
-            background: var(--dark-brown);
-            color: var(--beige);
-        }
-
-        /* ===== PHILOSOPHY ===== */
+        /* ---------- Philosophy ---------- */
         .philosophy {
-            padding: 160px 0;
-            background: var(--beige);
+            background: var(--bg);
+            text-align: center;
         }
 
         .philosophy .container {
-            max-width: 900px;
+            max-width: 800px;
         }
 
-        .philosophy h2 {
-            font-family: 'Cormorant Garamond', serif;
-            font-weight: 300;
-            font-size: 2.8rem;
-            letter-spacing: 0.1em;
-            margin-bottom: 60px;
-            color: var(--dark-brown);
-            text-align: center;
-        }
-
-        .philosophy p {
+        .philosophy .body-text {
             font-size: 1.05rem;
             line-height: 2.4;
-            color: var(--dark-brown);
-            margin-bottom: 32px;
-            text-align: justify;
+            margin-bottom: 2rem;
         }
 
-        .philosophy .em {
+        .philosophy .signature {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
             font-style: italic;
             color: var(--terracotta);
+            margin-top: 3rem;
         }
 
-        /* ===== SERVICE / PLAN ===== */
+        /* ---------- Plans ---------- */
         .plans {
-            padding: 160px 0;
-            background: var(--dark-brown);
-            color: var(--text-light);
+            background: var(--bg-warm);
         }
 
-        .plans h2 {
-            font-family: 'Cormorant Garamond', serif;
-            font-weight: 300;
-            font-size: 2.8rem;
-            letter-spacing: 0.1em;
-            text-align: center;
-            margin-bottom: 80px;
-            color: var(--text-light);
+        .plans .container {
+            max-width: 1100px;
         }
 
-        .plan-grid {
+        .plans-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 40px;
+            gap: 2rem;
+            margin-top: 3rem;
         }
 
         .plan-card {
-            padding: 48px 32px;
-            border: 1px solid rgba(245, 239, 230, 0.15);
+            background: var(--bg);
+            padding: 3rem 2rem;
             text-align: center;
-            transition: transform 0.4s ease, border-color 0.4s ease;
+            border: 1px solid rgba(43, 29, 20, 0.1);
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
         }
 
         .plan-card:hover {
             transform: translateY(-8px);
-            border-color: var(--sunset);
+            box-shadow: 0 20px 40px rgba(43, 29, 20, 0.08);
         }
 
         .plan-card .time {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 1.4rem;
-            letter-spacing: 0.15em;
-            color: var(--sunset);
-            margin-bottom: 16px;
-            text-transform: uppercase;
+            font-size: 1.8rem;
+            color: var(--terracotta);
+            margin-bottom: 1rem;
+            letter-spacing: 0.1em;
         }
 
-        .plan-card .name {
-            font-size: 1.6rem;
-            font-weight: 400;
-            margin-bottom: 24px;
-            letter-spacing: 0.05em;
+        .plan-card h3 {
+            margin-bottom: 1.5rem;
+            color: var(--dark-brown);
         }
 
         .plan-card .price {
-            font-size: 2.2rem;
+            font-size: 2.5rem;
             font-family: 'Cormorant Garamond', serif;
-            font-weight: 300;
-            margin-bottom: 32px;
-            color: var(--text-light);
+            color: var(--dark-brown);
+            margin: 1.5rem 0;
         }
 
         .plan-card .price span {
             font-size: 1rem;
-            color: var(--text-muted);
-        }
-
-        .plan-card .desc {
-            font-size: 0.9rem;
-            line-height: 2;
-            color: var(--text-muted);
-            margin-bottom: 32px;
-        }
-
-        .plan-card .feature {
-            font-size: 0.85rem;
+            font-family: 'Noto Serif JP', serif;
             color: var(--text-light);
-            border-top: 1px solid rgba(245, 239, 230, 0.1);
-            padding-top: 24px;
-            line-height: 1.8;
         }
 
-        /* ===== SCIENCE ===== */
+        .plan-card .body-text {
+            font-size: 0.85rem;
+            margin-bottom: 2rem;
+        }
+
+        .plan-card .btn {
+            font-size: 0.7rem;
+            padding: 0.8rem 2rem;
+        }
+
+        /* ---------- Science ---------- */
         .science {
-            padding: 160px 0;
-            background: var(--beige);
+            background: var(--bg);
         }
 
-        .science h2 {
-            font-family: 'Cormorant Garamond', serif;
-            font-weight: 300;
-            font-size: 2.8rem;
-            letter-spacing: 0.1em;
-            text-align: center;
-            margin-bottom: 80px;
-            color: var(--dark-brown);
+        .science .container {
+            max-width: 1000px;
         }
 
         .science-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 40px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 4rem;
+            margin-top: 3rem;
         }
 
         .science-item {
             text-align: center;
-            padding: 32px 16px;
+            padding: 2rem;
         }
 
         .science-item .number {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 3.5rem;
-            font-weight: 300;
+            font-size: 4rem;
             color: var(--terracotta);
-            line-height: 1.2;
-            margin-bottom: 16px;
+            line-height: 1;
+            margin-bottom: 1rem;
         }
 
-        .science-item .label {
-            font-size: 0.85rem;
-            letter-spacing: 0.1em;
-            color: var(--dark-brown);
-            text-transform: uppercase;
-            margin-bottom: 12px;
+        .science-item .body-text {
+            font-size: 0.9rem;
         }
 
-        .science-item .note {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            line-height: 1.8;
-        }
-
-        /* ===== STUDIO ===== */
+        /* ---------- Studio ---------- */
         .studio {
-            padding: 160px 0;
-            background: var(--sand);
+            background: var(--dark-brown);
+            color: var(--bg);
+        }
+
+        .studio .subhead {
+            color: var(--orange);
         }
 
         .studio h2 {
-            font-family: 'Cormorant Garamond', serif;
-            font-weight: 300;
-            font-size: 2.8rem;
-            letter-spacing: 0.1em;
-            text-align: center;
-            margin-bottom: 80px;
-            color: var(--dark-brown);
+            color: var(--bg);
         }
 
         .studio-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 40px;
+            gap: 3rem;
+            margin-top: 3rem;
         }
 
         .studio-item {
-            padding: 40px 24px;
-            background: rgba(255, 255, 255, 0.3);
-            border: 1px solid rgba(46, 30, 22, 0.1);
             text-align: center;
-            transition: background 0.4s ease;
-        }
-
-        .studio-item:hover {
-            background: rgba(255, 255, 255, 0.5);
+            padding: 2rem 1rem;
         }
 
         .studio-item .icon {
-            font-size: 2rem;
-            margin-bottom: 24px;
-            color: var(--terracotta);
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--orange);
         }
 
-        .studio-item .title {
-            font-size: 1.1rem;
-            letter-spacing: 0.1em;
-            margin-bottom: 16px;
-            color: var(--dark-brown);
-            font-weight: 400;
+        .studio-item h3 {
+            color: var(--bg);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
         }
 
-        .studio-item .desc {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            line-height: 1.9;
+        .studio-item .body-text {
+            color: rgba(245, 239, 230, 0.7);
+            font-size: 0.85rem;
         }
 
-        /* ===== TESTIMONIAL ===== */
-        .testimonial {
-            padding: 160px 0;
-            background: var(--beige);
+        /* ---------- Testimonials ---------- */
+        .testimonials {
+            background: var(--bg);
         }
 
-        .testimonial h2 {
-            font-family: 'Cormorant Garamond', serif;
-            font-weight: 300;
-            font-size: 2.8rem;
-            letter-spacing: 0.1em;
-            text-align: center;
-            margin-bottom: 80px;
-            color: var(--dark-brown);
+        .testimonials .container {
+            max-width: 900px;
         }
 
         .testimonial-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 40px;
+            gap: 2rem;
+            margin-top: 3rem;
         }
 
         .testimonial-card {
-            padding: 48px 32px;
+            padding: 2rem;
             border-left: 2px solid var(--terracotta);
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.3);
         }
 
         .testimonial-card .quote {
-            font-size: 0.95rem;
-            line-height: 2;
-            color: var(--dark-brown);
-            margin-bottom: 32px;
+            font-size: 0.9rem;
             font-style: italic;
+            color: var(--text-main);
+            margin-bottom: 1.5rem;
+            line-height: 2;
         }
 
         .testimonial-card .author {
-            font-size: 0.85rem;
-            color: var(--terracotta);
+            font-size: 0.8rem;
+            color: var(--text-light);
             letter-spacing: 0.1em;
         }
 
-        /* ===== FOOTER ===== */
-        .footer {
-            padding: 80px 0 40px;
-            background: var(--deep-brown);
-            color: var(--text-muted);
+        /* ---------- Footer ---------- */
+        .site-footer {
+            background: var(--dark-brown);
+            color: var(--bg);
+            padding: 4rem 0 2rem;
             text-align: center;
         }
 
-        .footer .brand {
-            font-family: 'Cormorant Garamond', serif;
+        .site-footer .logo {
+            color: var(--bg);
             font-size: 2rem;
-            letter-spacing: 0.2em;
-            color: var(--text-light);
-            margin-bottom: 32px;
-            text-transform: uppercase;
+            margin-bottom: 1rem;
         }
 
-        .footer .address {
-            font-size: 0.85rem;
-            margin-bottom: 16px;
-            letter-spacing: 0.05em;
+        .site-footer .address {
+            font-size: 0.8rem;
+            color: rgba(245, 239, 230, 0.6);
+            margin-bottom: 2rem;
+            letter-spacing: 0.1em;
         }
 
-        .footer .social {
-            margin-top: 32px;
+        .social-links {
             display: flex;
             justify-content: center;
-            gap: 32px;
+            gap: 2rem;
+            margin-bottom: 2rem;
         }
 
-        .footer .social a {
-            color: var(--text-muted);
+        .social-links a {
+            color: var(--bg);
             text-decoration: none;
-            font-size: 0.85rem;
-            letter-spacing: 0.1em;
-            transition: color 0.3s ease;
-        }
-
-        .footer .social a:hover {
-            color: var(--sunset);
-        }
-
-        .footer .copyright {
-            margin-top: 48px;
             font-size: 0.75rem;
-            letter-spacing: 0.1em;
-            opacity: 0.6;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.3s;
         }
 
-        /* ===== ANIMATION ===== */
+        .social-links a:hover {
+            border-bottom-color: var(--orange);
+        }
+
+        .copyright {
+            font-size: 0.7rem;
+            color: rgba(245, 239, 230, 0.4);
+            letter-spacing: 0.1em;
+        }
+
+        /* ---------- Scroll Animation ---------- */
         .fade-in {
             opacity: 0;
             transform: translateY(30px);
@@ -425,188 +480,256 @@
             transform: translateY(0);
         }
 
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 900px) {
-            .plan-grid,
+        /* ---------- Responsive ---------- */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .plans-grid,
             .science-grid,
             .studio-grid,
             .testimonial-grid {
                 grid-template-columns: 1fr;
-                gap: 32px;
+                gap: 2rem;
             }
 
-            .container {
-                padding: 0 24px;
-            }
-
-            .philosophy,
-            .plans,
-            .science,
-            .studio,
-            .testimonial {
-                padding: 100px 0;
+            section {
+                padding: 4rem 0;
             }
 
             .hero h1 {
-                font-size: 3.5rem;
+                font-size: 2.5rem;
+            }
+
+            .science-grid {
+                gap: 2rem;
             }
         }
 
-        @media (max-width: 600px) {
-            .hero h1 {
-                font-size: 2.8rem;
-            }
-
-            .hero .sub {
-                font-size: 0.95rem;
-            }
-
-            .philosophy p {
-                font-size: 0.95rem;
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 1.5rem;
             }
 
             .plan-card {
-                padding: 32px 24px;
+                padding: 2rem 1.5rem;
             }
         }
     </style>
 </head>
 <body>
 
-    <!-- HERO -->
-    <section class="hero">
-        <h1>NISHIBI</h1>
-        <p class="sub">西日は、最も静かな熱源である。<br>人工の光を捨て、夕陽に身を委ねる。</p>
-        <a href="#plans" class="cta">体験を予約する</a>
-    </section>
+    <!-- Header -->
+    <header class="site-header">
+        <div class="container">
+            <a href="#" class="logo">NISHIBI</a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="#philosophy">哲学</a></li>
+                    <li><a href="#plans">プラン</a></li>
+                    <li><a href="#science">科学</a></li>
+                    <li><a href="#studio">スタジオ</a></li>
+                    <li><a href="#testimonials">声</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
 
-    <!-- PHILOSOPHY -->
-    <section class="philosophy">
-        <div class="container fade-in">
-            <h2>Philosophy</h2>
-            <p>西日は、一日の終わりに差し込む光。それは灼熱の真昼とは異なり、<span class="em">斜めに射す光</span>が空気の層を長く通り抜け、青い波長を散乱させて、赤い波長だけを残す。この残された光は、肌に触れるとき、<span class="em">熱ではなく記憶</span>として作用する。</p>
-            <p>私たちは、この自然の摂理を「温浴」として再解釈した。紫外線量は正午の約1/5。しかし、その光はメラトニンの分泌を穏やかに促し、体内時計を夕刻へと同調させる。西日を浴びることは、<span class="em">現代人が失った夕暮れとの対話</span>を取り戻すことである。</p>
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-content">
+            <p class="subhead fade-in">天然日焼けスタジオ</p>
+            <h1 class="fade-in">西日を、纏う。</h1>
+            <p class="body-text fade-in">
+                午後の光は、肌を焦がさず、深く染める。<br>
+                私たちは、その一瞬を、芸術として提供する。
+            </p>
+            <a href="#plans" class="btn fade-in">プランを見る</a>
         </div>
     </section>
 
-    <!-- SERVICE / PLAN -->
-    <section class="plans" id="plans">
+    <!-- Philosophy -->
+    <section id="philosophy" class="philosophy">
         <div class="container">
-            <h2>Plans</h2>
-            <div class="plan-grid">
+            <p class="subhead fade-in">Philosophy</p>
+            <h2 class="fade-in">なぜ、西日なのか。</h2>
+            <div class="body-text fade-in">
+                東の光は、目覚めを促す。南の光は、真実を照らす。<br>
+                しかし西日だけが、一日の終わりに、最も温かな色合いで、肌に記憶を刻む。<br>
+                紫外線量は、正午の約60%。その穏やかな刺激は、メラニン生成を優雅に促し、<br>
+                肌に「夕焼けの記憶」を定着させる。私たちは、この自然の摂理を、贅沢として提供する。
+            </div>
+            <p class="signature fade-in">— 西日は、時間の美学である。</p>
+        </div>
+    </section>
+
+    <!-- Plans -->
+    <section id="plans" class="plans">
+        <div class="container">
+            <p class="subhead fade-in">Service / Plan</p>
+            <h2 class="fade-in">時間帯による、三つの焼き方。</h2>
+            <div class="plans-grid">
                 <div class="plan-card fade-in">
                     <div class="time">15:00 — 16:30</div>
-                    <div class="name">黄金時間</div>
-                    <div class="price">¥6,800<span> / 回</span></div>
-                    <div class="desc">西日が最も濃く、影が長くなる時間帯。光の粒子が肌の奥まで届き、深い温もりをもたらす。</div>
-                    <div class="feature">特典: ハーブティー<br>アロマオイル選択可</div>
+                    <h3>黄金時間</h3>
+                    <div class="price">¥8,000 <span>/ 1回</span></div>
+                    <p class="body-text">
+                        最も安定した西日。<br>
+                        肌に柔らかな金色の層を重ねる。<br>
+                        初めての方に推奨。
+                    </p>
+                    <a href="#" class="btn">予約する</a>
                 </div>
                 <div class="plan-card fade-in">
                     <div class="time">16:30 — 17:30</div>
-                    <div class="name">茜時間</div>
-                    <div class="price">¥5,200<span> / 回</span></div>
-                    <div class="desc">空が茜色に染まる瞬間。光が柔らかく、心拍数が自然と整う。最も人気の時間帯。</div>
-                    <div class="feature">特典: 茜色ブレンドティー<br>瞑想ガイド付き</div>
+                    <h3>茜時間</h3>
+                    <div class="price">¥12,000 <span>/ 1回</span></div>
+                    <p class="body-text">
+                        空が茜色に染まる、最も詩的な時間。<br>
+                        肌に深みのある赤銅色のトーンを。<br>
+                        経験者に人気のプラン。
+                    </p>
+                    <a href="#" class="btn">予約する</a>
                 </div>
                 <div class="plan-card fade-in">
                     <div class="time">17:30 — 18:30</div>
-                    <div class="name">残光時間</div>
-                    <div class="price">¥3,800<span> / 回</span></div>
-                    <div class="desc">太陽が地平線に沈むまでの、最後の光。静寂の中で、一日の終わりを身体で感じる。</div>
-                    <div class="feature">特典: ホットレモネード<br>ブランケット貸出</div>
+                    <h3>残光時間</h3>
+                    <div class="price">¥15,000 <span>/ 1回</span></div>
+                    <p class="body-text">
+                        地平線の残光が、肌を最後に染める。<br>
+                        ほのかなオレンジの余韻を残す。<br>
+                        特別な日のための、限定プラン。
+                    </p>
+                    <a href="#" class="btn">予約する</a>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- SCIENCE -->
-    <section class="science">
+    <!-- Science -->
+    <section id="science" class="science">
         <div class="container">
-            <h2>Science</h2>
+            <p class="subhead fade-in">Science</p>
+            <h2 class="fade-in">西日の、科学的根拠。</h2>
             <div class="science-grid">
                 <div class="science-item fade-in">
-                    <div class="number">1/5</div>
-                    <div class="label">UV量</div>
-                    <div class="note">正午の紫外線量と比較し、西日は約1/5。肌への負担を抑えながら、自然な温熱効果を得られます。</div>
+                    <div class="number">60%</div>
+                    <p class="body-text">
+                        正午の紫外線量と比較した、<br>
+                        西日（15時以降）のUV-B放射量。<br>
+                        肌への負担を大幅に軽減しながら、<br>
+                        メラニン生成を最適化します。
+                    </p>
                 </div>
                 <div class="science-item fade-in">
                     <div class="number">2700K</div>
-                    <div class="label">色温度</div>
-                    <div class="note">西日の色温度は約2700K。暖色系の光がメラトニン分泌を促進し、質の高い睡眠へ導きます。</div>
+                    <p class="body-text">
+                        夕方の西日が持つ、色温度。<br>
+                        この暖かな光は、肌のコラーゲンを<br>
+                        活性化し、エイジングケアに<br>
+                        寄与することが示唆されています。
+                    </p>
                 </div>
                 <div class="science-item fade-in">
-                    <div class="number">+2.3°C</div>
-                    <div class="label">深部体温</div>
-                    <div class="note">西日を20分間浴びることで、深部体温が平均2.3°C上昇。その後、自然な降温が眠気を誘います。</div>
+                    <div class="number">+38%</div>
+                    <p class="body-text">
+                        西日を浴びた後の、<br>
+                        セロトニン分泌量の増加率。<br>
+                        心身のリズムを整え、<br>
+                        深いリラックスをもたらします。
+                    </p>
                 </div>
                 <div class="science-item fade-in">
-                    <div class="number">15°</div>
-                    <div class="label">入射角</div>
-                    <div class="note">西日は地平線に対して約15°の角度で差し込みます。この低い角度が、光を空気の層に通し、赤色波長を強調します。</div>
+                    <div class="number">90°</div>
+                    <p class="body-text">
+                        西日が肌に入射する、理想的な角度。<br>
+                        この角度が、最も均一で<br>
+                        自然な焼き色を実現します。<br>
+                        スタジオは、この角度を設計しています。
+                    </p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- STUDIO -->
-    <section class="studio">
+    <!-- Studio -->
+    <section id="studio" class="studio">
         <div class="container">
-            <h2>Studio</h2>
+            <p class="subhead fade-in">Studio</p>
+            <h2 class="fade-in">空間、そのものが装置。</h2>
             <div class="studio-grid">
                 <div class="studio-item fade-in">
-                    <div class="icon">◐</div>
-                    <div class="title">南西向き全面窓</div>
-                    <div class="desc">一枚の大きな窓が、西日を余すことなく取り込む。ガラスは特殊な低反射仕様で、光をそのまま通します。</div>
+                    <div class="icon">☀</div>
+                    <h3>南西向き全面窓</h3>
+                    <p class="body-text">
+                        午後3時から、最適な角度で西日が差し込むよう設計された、高さ4メートルの全面ガラス窓。遮るものは、何もありません。
+                    </p>
                 </div>
                 <div class="studio-item fade-in">
-                    <div class="icon">◯</div>
-                    <div class="title">無垢材の床</div>
-                    <div class="desc">ヒノキの無垢材を使用。西日の熱をゆっくりと蓄え、足裏から身体を温めます。木の香りが空間を満たします。</div>
+                    <div class="icon">🌳</div>
+                    <h3>無垢材の床</h3>
+                    <p class="body-text">
+                        国産ヒノキの無垢材。西日の熱を穏やかに蓄え、足裏から全身を優しく温めます。木の香りが、時間の経過を豊かにします。
+                    </p>
                 </div>
                 <div class="studio-item fade-in">
                     <div class="icon">◌</div>
-                    <div class="title">無音空間</div>
-                    <div class="desc">外部の音を遮断する二重構造。西日が差し込む静寂の中で、自分自身の内側に耳を澄ませます。</div>
+                    <h3>無音空間</h3>
+                    <p class="body-text">
+                        外部の音を遮断し、西日と静寂だけが残る空間。時計の音さえも、ここでは不要です。あなたは、光と対話するだけ。
+                    </p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- TESTIMONIAL -->
-    <section class="testimonial">
+    <!-- Testimonials -->
+    <section id="testimonials" class="testimonials">
         <div class="container">
-            <h2>Voices</h2>
+            <p class="subhead fade-in">Testimonials</p>
+            <h2 class="fade-in">西日を、体験した人々。</h2>
             <div class="testimonial-grid">
                 <div class="testimonial-card fade-in">
-                    <p class="quote">「西日を浴びた後の身体の軽さは、言葉にできない。まるで、一日の重荷を夕陽が溶かしてくれたかのようだ。」</p>
-                    <div class="author">— 建築家・佐藤 凛</div>
+                    <p class="quote">
+                        「最初は半信半疑でした。でも、茜時間の西日を浴びた後、肌がまるで内側から発光しているかのようでした。人工的な光では決して得られない、深い色合いです。」
+                    </p>
+                    <p class="author">— 32歳 / 建築家</p>
                 </div>
                 <div class="testimonial-card fade-in">
-                    <p class="quote">「人工的な光では決して得られない、深い安らぎがある。ここに来るたび、時間の流れが変わるのを感じる。」</p>
-                    <div class="author">— 料理研究家・田村 千夏</div>
+                    <p class="quote">
+                        「仕事の後、ここで西日を浴びるのが日課になりました。心が静かに整っていくのを感じます。肌のトーンが均一になったのも、科学的に納得できます。」
+                    </p>
+                    <p class="author">— 45歳 / 医師</p>
                 </div>
                 <div class="testimonial-card fade-in">
-                    <p class="quote">「茜時間のプランが特に好きだ。光が部屋中に広がる瞬間、すべての思考が止まり、ただ存在している自分がいる。」</p>
-                    <div class="author">— 写真家・中村 悠</div>
+                    <p class="quote">
+                        「残光時間のプランが最高です。一日の終わりに、これほど贅沢な時間があるでしょうか。西日が消える瞬間、肌に残る温もりは、言葉にできません。」
+                    </p>
+                    <p class="author">— 28歳 / 陶芸家</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- FOOTER -->
-    <footer class="footer">
+    <!-- Footer -->
+    <footer class="site-footer">
         <div class="container">
-            <div class="brand">NISHIBI</div>
-            <div class="address">〒150-0001 東京都渋谷区神宮前4-12-8 西日館3F</div>
-            <div class="social">
+            <div class="logo">NISHIBI</div>
+            <p class="address">
+                〒150-0001 東京都渋谷区神宮前6-35-3 西日ビル 3F<br>
+                TEL: 03-1234-5678
+            </p>
+            <div class="social-links">
                 <a href="#">Instagram</a>
                 <a href="#">Twitter</a>
                 <a href="#">Facebook</a>
             </div>
-            <div class="copyright">© 2024 NISHIBI. All rights reserved.</div>
+            <p class="copyright">© 2025 NISHIBI. All rights reserved.</p>
         </div>
     </footer>
 
+    <!-- Scroll Animation Script -->
     <script>
         // IntersectionObserver for fade-in
         const observer = new IntersectionObserver((entries) => {
@@ -616,12 +739,25 @@
                 }
             });
         }, {
-            threshold: 0.1,
+            threshold: 0.2,
             rootMargin: '0px 0px -50px 0px'
         });
 
+        // Observe all .fade-in elements
         document.querySelectorAll('.fade-in').forEach(el => {
             observer.observe(el);
+        });
+
+        // Header background on scroll
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('.site-header');
+            if (window.scrollY > 100) {
+                header.style.background = 'rgba(245, 239, 230, 0.95)';
+                header.style.boxShadow = '0 2px 20px rgba(0,0,0,0.05)';
+            } else {
+                header.style.background = 'linear-gradient(to bottom, rgba(245, 239, 230, 0.9), transparent)';
+                header.style.boxShadow = 'none';
+            }
         });
     </script>
 

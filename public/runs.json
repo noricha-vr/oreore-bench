@@ -117,12 +117,12 @@
     "model_id": "inferencerlabs/DeepSeek-V4-Flash-0731-MLX",
     "harness": "omlx-api",
     "reasoning_effort": "unknown",
-    "attempts": 1,
-    "generated_at": "2026-08-03T11:27:14+09:00",
+    "attempts": 2,
+    "generated_at": "2026-08-04T12:48:52+09:00",
     "generated_at_source": "measured",
     "sampling": {
       "temperature": 0.3,
-      "max_tokens": 24000,
+      "max_tokens": 65000,
       "top_p": "default"
     },
     "system_prompt": "none",
@@ -139,8 +139,8 @@
       "estimated": false,
       "method": "api-usage",
       "prompt_tokens": 822,
-      "completion_tokens": 24000,
-      "note": "oMLX 0.5.4rc1 / MLX 0.32.0; elapsed 981.187s; 24.460 tok/s; finish_reason=length"
+      "completion_tokens": 65000,
+      "note": "oMLX 0.5.4rc1 / MLX 0.32.0; elapsed 2760.189s; 23.549 tok/s; finish_reason=length"
     },
     "cost": {
       "estimated": true,
@@ -500,11 +500,11 @@
     "harness": "omlx-api",
     "reasoning_effort": "unknown",
     "attempts": 1,
-    "generated_at": "2026-08-03T11:35:19+09:00",
+    "generated_at": "2026-08-04T13:02:47+09:00",
     "generated_at_source": "measured",
     "sampling": {
       "temperature": 0.3,
-      "max_tokens": 24000,
+      "max_tokens": 65000,
       "top_p": "default"
     },
     "system_prompt": "none",
@@ -521,8 +521,8 @@
       "estimated": false,
       "method": "api-usage",
       "prompt_tokens": 1113,
-      "completion_tokens": 12179,
-      "note": "oMLX 0.5.4rc1 / MLX 0.32.0; elapsed 484.857s; 25.119 tok/s; finish_reason=stop"
+      "completion_tokens": 12830,
+      "note": "oMLX 0.5.4rc1 / MLX 0.32.0; elapsed 526.574s; 24.365 tok/s; finish_reason=stop"
     },
     "cost": {
       "estimated": true,
@@ -1026,11 +1026,11 @@
     "harness": "omlx-api",
     "reasoning_effort": "unknown",
     "attempts": 1,
-    "generated_at": "2026-08-03T10:54:36+09:00",
+    "generated_at": "2026-08-04T12:54:00+09:00",
     "generated_at_source": "measured",
     "sampling": {
       "temperature": 0.3,
-      "max_tokens": 24000,
+      "max_tokens": 65000,
       "top_p": "default"
     },
     "system_prompt": "none",
@@ -1047,8 +1047,8 @@
       "estimated": false,
       "method": "api-usage",
       "prompt_tokens": 790,
-      "completion_tokens": 5599,
-      "note": "oMLX 0.5.4rc1 / MLX 0.32.0; elapsed 221.496s; 25.278 tok/s; finish_reason=stop"
+      "completion_tokens": 6321,
+      "note": "oMLX 0.5.4rc1 / MLX 0.32.0; elapsed 247.279s; 25.562 tok/s; finish_reason=stop"
     },
     "cost": {
       "estimated": true,
@@ -1296,11 +1296,11 @@
     "harness": "omlx-api",
     "reasoning_effort": "unknown",
     "attempts": 1,
-    "generated_at": "2026-08-03T11:10:53+09:00",
+    "generated_at": "2026-08-04T11:06:18+09:00",
     "generated_at_source": "measured",
     "sampling": {
       "temperature": 0.3,
-      "max_tokens": 24000,
+      "max_tokens": 65000,
       "top_p": "default"
     },
     "system_prompt": "none",
@@ -1317,8 +1317,8 @@
       "estimated": false,
       "method": "api-usage",
       "prompt_tokens": 275,
-      "completion_tokens": 24000,
-      "note": "oMLX 0.5.4rc1 / MLX 0.32.0; elapsed 976.812s; 24.570 tok/s; finish_reason=length"
+      "completion_tokens": 10804,
+      "note": "oMLX 0.5.4rc1 / MLX 0.32.0; elapsed 438.918s; 24.615 tok/s; finish_reason=stop"
     },
     "cost": {
       "estimated": true,
@@ -1678,11 +1678,11 @@
     "harness": "omlx-api",
     "reasoning_effort": "unknown",
     "attempts": 1,
-    "generated_at": "2026-08-03T12:11:19+09:00",
+    "generated_at": "2026-08-04T13:54:33+09:00",
     "generated_at_source": "measured",
     "sampling": {
       "temperature": 0.3,
-      "max_tokens": 24000,
+      "max_tokens": 65000,
       "top_p": "default"
     },
     "system_prompt": "none",
@@ -1699,8 +1699,8 @@
       "estimated": false,
       "method": "api-usage",
       "prompt_tokens": 1652,
-      "completion_tokens": 9611,
-      "note": "oMLX 0.5.4rc1 / MLX 0.32.0; elapsed 383.112s; 25.087 tok/s; finish_reason=stop"
+      "completion_tokens": 7616,
+      "note": "oMLX 0.5.4rc1 / MLX 0.32.0; elapsed 306.293s; 24.865 tok/s; finish_reason=stop"
     },
     "cost": {
       "estimated": true,
@@ -2204,11 +2204,11 @@
     "harness": "omlx-api",
     "reasoning_effort": "unknown",
     "attempts": 1,
-    "generated_at": "2026-08-03T10:50:54+09:00",
+    "generated_at": "2026-08-04T12:49:53+09:00",
     "generated_at_source": "measured",
     "sampling": {
       "temperature": 0.3,
-      "max_tokens": 24000,
+      "max_tokens": 65000,
       "top_p": "default"
     },
     "system_prompt": "none",
@@ -2225,8 +2225,8 @@
       "estimated": false,
       "method": "api-usage",
       "prompt_tokens": 2672,
-      "completion_tokens": 1315,
-      "note": "oMLX 0.5.4rc1 / MLX 0.32.0; elapsed 65.827s; 19.977 tok/s; finish_reason=stop"
+      "completion_tokens": 1397,
+      "note": "oMLX 0.5.4rc1 / MLX 0.32.0; elapsed 60.445s; 23.112 tok/s; finish_reason=stop"
     },
     "cost": {
       "estimated": true,
@@ -2514,11 +2514,11 @@
     "harness": "omlx-api",
     "reasoning_effort": "unknown",
     "attempts": 1,
-    "generated_at": "2026-08-03T11:51:54+09:00",
+    "generated_at": "2026-08-04T12:00:40+09:00",
     "generated_at_source": "measured",
     "sampling": {
       "temperature": 0.3,
-      "max_tokens": 24000,
+      "max_tokens": 65000,
       "top_p": "default"
     },
     "system_prompt": "none",
@@ -2535,8 +2535,8 @@
       "estimated": false,
       "method": "api-usage",
       "prompt_tokens": 1062,
-      "completion_tokens": 24000,
-      "note": "oMLX 0.5.4rc1 / MLX 0.32.0; elapsed 994.567s; 24.131 tok/s; finish_reason=length"
+      "completion_tokens": 11510,
+      "note": "oMLX 0.5.4rc1 / MLX 0.32.0; elapsed 471.652s; 24.404 tok/s; finish_reason=stop"
     },
     "cost": {
       "estimated": true,
@@ -3076,11 +3076,11 @@
     "harness": "omlx-api",
     "reasoning_effort": "unknown",
     "attempts": 1,
-    "generated_at": "2026-08-03T12:04:56+09:00",
+    "generated_at": "2026-08-04T13:49:27+09:00",
     "generated_at_source": "measured",
     "sampling": {
       "temperature": 0.3,
-      "max_tokens": 24000,
+      "max_tokens": 65000,
       "top_p": "default"
     },
     "system_prompt": "none",
@@ -3097,8 +3097,8 @@
       "estimated": false,
       "method": "api-usage",
       "prompt_tokens": 710,
-      "completion_tokens": 19294,
-      "note": "oMLX 0.5.4rc1 / MLX 0.32.0; elapsed 782.018s; 24.672 tok/s; finish_reason=stop"
+      "completion_tokens": 65000,
+      "note": "oMLX 0.5.4rc1 / MLX 0.32.0; elapsed 2799.838s; 23.216 tok/s; finish_reason=length"
     },
     "cost": {
       "estimated": true,
