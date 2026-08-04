@@ -1,12 +1,12 @@
 {
   "valid_json": true,
-  "generated_at": "2026-08-04T01:26:45.512Z",
-  "raw_length": 2982,
+  "generated_at": "2026-08-04T06:06:24.658Z",
+  "raw_length": 3109,
   "schema_pass": true,
   "triage_count": 10,
-  "primary_match": 8,
+  "primary_match": 9,
   "acceptable_match": 1,
-  "agreement_pct": 85,
+  "agreement_pct": 95,
   "verdicts": [
     {
       "pr": 101,
@@ -40,9 +40,9 @@
     },
     {
       "pr": 106,
-      "verdict": "hold",
+      "verdict": "fix",
       "expected": "fix",
-      "match": "miss"
+      "match": "primary"
     },
     {
       "pr": 107,

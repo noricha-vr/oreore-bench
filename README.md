@@ -188,7 +188,7 @@ oMLX の OpenAI 互換 API で実行した場合は `harness: "omlx-api"` とし
 `engine: "omlx"`、oMLX / MLX のバージョン、量子化方式、実測した `model_revision` を記録する。
 API request で reasoning effort を指定していない場合は、reasoning token 数にかかわらず
 `reasoning_effort: "unknown"` とする。今回の DeepSeek 実測では `temperature: 0.3`、
-`max_tokens: 24000` を指定し、`top_p` は既定値に任せた。
+`max_tokens: 65000` を指定し、`top_p` は既定値に任せた。
 
 ```bash
 node scripts/validate-pr-triage.mjs --model deepseek-v4-flash-0731-mlx

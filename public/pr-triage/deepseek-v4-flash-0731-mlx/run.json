@@ -6,9 +6,9 @@
   "harness": "omlx-api",
   "reasoning_effort": "unknown",
   "attempts": 1,
-  "generated_at": "2026-08-03T10:50:54+09:00",
+  "generated_at": "2026-08-04T12:49:53+09:00",
   "generated_at_source": "measured",
-  "sampling": { "temperature": 0.3, "max_tokens": 24000, "top_p": "default" },
+  "sampling": { "temperature": 0.3, "max_tokens": 65000, "top_p": "default" },
   "system_prompt": "none",
   "post_processing": "none",
   "runtime": { "engine": "omlx", "version": "0.5.4rc1", "framework": "MLX 0.32.0", "model_revision": "750040be1d918280cf1c55ccb56d02dee4520b16", "quantization": "mxfp4-mxfp8-mixed", "api": "openai-compat" },
@@ -16,8 +16,8 @@
     "estimated": false,
     "method": "api-usage",
     "prompt_tokens": 2672,
-    "completion_tokens": 1315,
-    "note": "oMLX 0.5.4rc1 / MLX 0.32.0; elapsed 65.827s; 19.977 tok/s; finish_reason=stop"
+    "completion_tokens": 1397,
+    "note": "oMLX 0.5.4rc1 / MLX 0.32.0; elapsed 60.445s; 23.112 tok/s; finish_reason=stop"
   },
   "cost": {
     "estimated": true,
