@@ -561,8 +561,8 @@ window.MODELS = {
                     { value: "1M", label: "コンテキスト", note: "公式モデルカード" },
                     { value: "23.71 tok/s", label: "今回の実測", note: "8テーマ加重平均" }
                 ],
-                strengths: "Mac Studio M3 Ultra 512GB 上で8テーマを連続生成し、HTTP エラー0・リトライ0で完走。全テーマで 23〜25 tok/s を維持し、加重平均23.71 tok/s（変換版モデルカードの公称31 tok/s（1,000 tokens）とは条件を分けて記録）。PRトリアージはスキーマ準拠で正解キー一致95%。",
-                weaknesses: "はさみ将棋・墨流しでは思考が収束せず、max_tokens 65,000 の上限まで生成し続けて打ち切られた（finish_reason=length）。その際 reasoning が本文と分離されず、中国語の思考文が成果物に混入する。実測temperature 0.3は公式推奨値ではなく今回のベンチ条件。",
+                strengths: "Mac Studio M3 Ultra 512GB 上で8テーマ・約2時間の連続生成をHTTPエラー0・リトライ0で走り切る安定性（成果物として成立したのは6テーマ）。全テーマで 23〜25 tok/s を維持し、加重平均23.71 tok/s（変換版モデルカードの公称31 tok/s（1,000 tokens）とは条件を分けて記録）。PRトリアージはスキーマ準拠で正解キー一致95%。",
+                weaknesses: "出力予算に敏感で、max_tokens 65,000 では はさみ将棋・墨流しの2テーマが生成ループに陥った（同一フレーズの785回反復・コードフェンスの269回反復）。同じ2テーマを 24,000 で追試するとループは消え、墨流しは2回とも自然終了して成功する。つまり上限を上げるほど良い結果になるとは限らない。ループ時は reasoning が本文と分離されず、中国語の思考文が成果物に混入する。はさみ将棋は 24,000 でもループなしのまま上限到達しており、全3試行とも完走しなかった。実測temperature 0.3は公式推奨値ではなく今回のベンチ条件。",
                 links: [
                     { label: "DeepSeek 公式モデル", href: "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731" },
                     { label: "InferencerLabs MLX版", href: "https://huggingface.co/inferencerlabs/DeepSeek-V4-Flash-0731-MLX" }
@@ -691,10 +691,10 @@ window.ENTRIES.push(
 window.ENTRIES.push(
     { theme: "lp-nishibi", model: "deepseek-v4-flash-0731-mlx", runner: "oMLX API", note: "成功。247.3秒・25.562 tok/s。765行/23.7KB。JSエラー0。生成り色のグラデーションに明朝体の大見出しを据え、時間帯別プランから証言カードまでネタを真顔で通し切る。全6セクション（+ヘッダー/フッター）を横溢れなく表示。", kind: "html" },
     { theme: "othello", model: "deepseek-v4-flash-0731-mlx", runner: "oMLX API", note: "成功。438.9秒・24.615 tok/s。392行/12.0KB。console error 0。初期4石配置・合法手ハイライト・8方向反転・CPU応手・リセットまで動作。ただし対局中は石数スコアが表示されず（終局時のみ）優劣が分からない。", kind: "html" },
-    { theme: "hasami-shogi", model: "deepseek-v4-flash-0731-mlx", runner: "oMLX API", note: "FAIL。2760.2秒・23.549 tok/s。8,135行/273.4KB。65,000上限（finish_reason=length）でも思考が収束せず打ち切り。思考文（中国語）が本文冒頭に混入しHTMLとして成立せず。再試行しても同じ結果（attempts=2）。", kind: "html" },
+    { theme: "hasami-shogi", model: "deepseek-v4-flash-0731-mlx", runner: "oMLX API", note: "FAIL。2760.2秒・23.549 tok/s。8,135行/273.4KB。中国語の思考文「让我写代码（コードを書こう）」を785回繰り返す生成ループに陥り、実装に到達しないまま65,000上限（finish_reason=length）。上限24,000での追試ではループは出ないが、それでも上限到達で未完（本テーマは全3試行とも完走せず）。", kind: "html" },
     { theme: "roguelike", model: "deepseek-v4-flash-0731-mlx", runner: "oMLX API", note: "成功。471.7秒・24.404 tok/s。645行/21.7KB。console error 0。矢印キー/WASD移動・40手連打・リロードでのマップ再生成すべて動作。床タイルのコントラストが低め。", kind: "html" },
     { theme: "lp-fable5", model: "deepseek-v4-flash-0731-mlx", runner: "oMLX API", note: "成功。526.6秒・24.365 tok/s。1,145行/42.2KB。JSエラー0。手描き調のSVG11点が水彩絵本のトーンを担い、全7セクション（+ヘッダー/フッター）を破綻なく統一。横溢れなし。", kind: "html" },
-    { theme: "suminagashi", model: "deepseek-v4-flash-0731-mlx", runner: "oMLX API", note: "FAIL。2799.8秒・23.216 tok/s。8,398行/216.7KB。同じく65,000上限（finish_reason=length）で打ち切り・思考文混入（前回24K版では成功していたが、今回は思考が長大化して未完）。", kind: "html" },
+    { theme: "suminagashi", model: "deepseek-v4-flash-0731-mlx", runner: "oMLX API", note: "FAIL。2799.8秒・23.216 tok/s。8,398行/216.7KB。実装を書き直し続ける生成ループ（コードフェンスを269回開く）で65,000上限に到達。ただし上限24,000では2回とも自然終了しPASS（19,294 / 23,220 tokens）しており、失敗は上限設定に起因する（前回24K版では成功していたが、今回は思考が長大化して未完）。", kind: "html" },
     { theme: "phoenix-lp", model: "deepseek-v4-flash-0731-mlx", runner: "oMLX API", note: "成功。306.3秒・24.865 tok/s。769行/27.2KB。JSエラー0。スクロール6点すべてで canvas の描画が変化し、夜明けから炎のフィナーレまで6シーンが色彩ごと入れ替わる。", kind: "html" },
     { theme: "pr-triage", model: "deepseek-v4-flash-0731-mlx", runner: "oMLX API", note: "成功。60.4秒・23.112 tok/s。86行/5.1KB。スキーマ準拠PASS、正解キー一致95%（9 primary・1 acceptable）。前回85%から改善。", kind: "json" }
 );
