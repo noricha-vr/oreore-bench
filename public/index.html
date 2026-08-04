@@ -776,7 +776,13 @@
             'grok-cli': 'grok CLI',
             'openai-api': 'OpenAI API',
             'openrouter-api': 'OpenRouter API',
+            'omlx-api': 'oMLX API',
             'antigravity-cli': 'AntiGravity CLI',
+        };
+
+        const RUNTIME_ENGINE_LABEL = {
+            lmstudio: 'LM Studio',
+            omlx: 'oMLX',
         };
 
         // HTML エスケープ (runs.json 由来の値を innerHTML に入れる前に必ず通す)。
@@ -814,9 +820,12 @@
                 parts.push(`effort: ${escapeHtml(effort)}`);
             }
 
-            // runtime (ローカル: LM Studio + 量子化を短く表示)
+            // runtime (既知エンジン + 量子化を短く表示。未知エンジンは安全のため非表示)
             if (run.runtime && typeof run.runtime === 'object' && run.runtime.quantization) {
-                parts.push(`LM Studio (${escapeHtml(run.runtime.quantization)})`);
+                const engineLabel = RUNTIME_ENGINE_LABEL[run.runtime.engine];
+                if (engineLabel) {
+                    parts.push(`${engineLabel} (${escapeHtml(run.runtime.quantization)})`);
+                }
             }
 
             return parts.join(' ・ ');

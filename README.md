@@ -27,9 +27,10 @@ LLM を「業務タスクの一発再現性」で評価する場。現実の制�
 | `roguelike` | HTML | ローグライク仕様 → 1 枚で動くターン制ダンジョン探索 RPG | 生成・戦闘・FOV・成長・階層状態の複数システム統合力 |
 | `lp-fable5` | HTML | 水彩絵本トーンの詳細プロンプト → AI モデル発表 LP | 世界観再現・SVG イラスト表現・構成追従・禁止事項遵守 |
 | `suminagashi` | HTML | 実装方式名指しのプロンプト → WebGL 流体マーブリングアート | GPU シェーダーの一発実装・減法混色・和のミニマル UI |
+| `phoenix-lp` | HTML | 不死鳥の6シーン仕様 → Canvas 2D の没入型スクロール LP | シーン遷移・描画変化・長尺構成の一発実装 |
 | `pr-triage` | JSON | リポジトリのスナップショット → Open PR 10 件のトリアージ判断 JSON | 判断の妥当性（正解キー一致率）・グレーケースの慎重さ・理由の具体性 |
 
-## 比較対象モデル（2026-07 時点）
+## 比較対象モデル（2026-08 時点）
 
 | モデル | プロバイダー | タイプ | 量子化 |
 |---|---|---|---|
@@ -46,6 +47,7 @@ LLM を「業務タスクの一発再現性」で評価する場。現実の制�
 | Gemma 4 31B | Google | ローカル | 4-bit (MLX / GGUF Q4_K_M) |
 | Gemma 4 26B-A4B (QAT) | Google | ローカル (MoE) | QAT 4-bit |
 | Gemma 4 12B (QAT) | Google | ローカル | QAT 4-bit |
+| DeepSeek V4 Flash 0731 MLX | InferencerLabs / DeepSeek | ローカル (MoE) | mixed MXFP4 / MXFP8 |
 
 スペック値はサブエージェントによるファクトチェック済み（リリース日 / context window / output 上限などは Google DeepMind / Anthropic / xAI / Hugging Face / LM Studio の一次情報を参照）。
 
@@ -121,10 +123,11 @@ oreore-bench/
 
 ### enum / 規約
 
-- `harness`: `lmstudio-api` / `gptme-lmstudio` / `claude-agent-sdk` / `claude-cli-headless` / `grok-cli` / `openai-api` / `openrouter-api` / `antigravity-cli` / `codex-exec` / `unknown`
+- `harness`: `lmstudio-api` / `gptme-lmstudio` / `claude-agent-sdk` / `claude-cli-headless` / `grok-cli` / `openai-api` / `openrouter-api` / `omlx-api` / `antigravity-cli` / `codex-exec` / `unknown`
 - `reasoning_effort`: `none` / `low` / `medium` / `high` / `unknown`
 - `system_prompt`: `none` / `harness-default` / `custom` / `unknown` — **ラベルのみ。本文は絶対に記録しない**（公開配信されるためプライバシー保護。`validate-runs.mjs` で enum 外を必ず失敗させる）
 - `"unknown"` = 復元不能、`"default"` = 既定に任せた、`"none"` = 明示的に無し。確定値のみ数値で書く
+- `runtime.model_revision` には実測したモデルのコミット SHA を記録し、配布元の更新後も再現対象を区別する
 
 ### コスト表示は「推定・下限」
 
@@ -133,7 +136,7 @@ oreore-bench/
 - `cost.pricing_source` の 3 値で「実請求 / 参考仮想 / 参考なし」を区別する:
   - `openrouter`: API モデル（`type=api`）。`actual_usd: null` + `usd` に実請求相当の推定
   - `openrouter-reference`: ローカル実行だが OpenRouter に該当モデルあり（gemma-4-31b / gemma-4-26b-a4b-qat）。`actual_usd: 0` + `usd` に参考仮想コスト
-  - `local-no-reference`: OpenRouter に存在しないローカルモデル（gemma-4-12b-qat のみ）。`actual_usd: 0` + `usd: null`
+  - `local-no-reference`: OpenRouter 対応 ID のないローカルモデル。`actual_usd: 0` + `usd: null`
 - カードでは「$0 (ローカル・参考 $0.004)」のように参考仮想コストを併記
 - **reasoning トークン・ハーネス側 system prompt を含まない**（実測 API `usage` があるモデルのみ完全値）
 
@@ -176,6 +179,19 @@ node scripts/validate-pr-triage.mjs
 python3 scripts/build-pr-triage-html.py
 ```
 
+### 1a. ローカル LLM（oMLX 経由）の記録
+
+oMLX の OpenAI 互換 API で実行した場合は `harness: "omlx-api"` とし、`runtime` に
+`engine: "omlx"`、oMLX / MLX のバージョン、量子化方式、実測した `model_revision` を記録する。
+API request で reasoning effort を指定していない場合は、reasoning token 数にかかわらず
+`reasoning_effort: "unknown"` とする。今回の DeepSeek 実測では `temperature: 0.3`、
+`max_tokens: 24000` を指定し、`top_p` は既定値に任せた。
+
+```bash
+node scripts/validate-pr-triage.mjs --model deepseek-v4-flash-0731-mlx
+python3 scripts/build-pr-triage-html.py --model deepseek-v4-flash-0731-mlx
+```
+
 ### 2. API モデル（Claude Opus 等）の場合
 
 OpenRouter 経由なら `add-model.sh --runner openrouter` が生成から run.json までを一括で行う。
@@ -206,7 +222,7 @@ OpenRouter に無いモデルは、Claude Code 上で `Agent` ツール（`subag
 
 ### 3. 新規モデル定数の追加
 
-`public/index.html` の `MODELS` 定数に追加。スペック値は**必ず一次情報でファクトチェック**してから書く（モデルカード上に出る）。
+`public/data.js` の `MODELS` 定数に追加。スペック値は**必ず一次情報でファクトチェック**してから書く（モデルカード上に出る）。
 
 ```js
 "<model-key>": {

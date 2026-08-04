@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>墨流し</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #efeae0;
+            font-family: "Hiragino Mincho ProN", "Yu Mincho", "MS Mincho", serif;
+        }
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+        .title {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            writing-mode: vertical-rl;
+            font-size: 26px;
+            letter-spacing: 0.35em;
+            color: #3a3a3a;
+            z-index: 10;
+            pointer-events: none;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+        }
+        .caption {
+            position: fixed;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            writing-mode: vertical-rl;
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            font-size: 10px;
+            letter-spacing: 0.6em;
+            color: #b0a89a;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .hint {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 15px;
+            letter-spacing: 0.6em;
+            color: #9a9284;
+            z-index: 10;
+            pointer-events: none;
+            transition: opacity 1.2s ease;
+            white-space: nowrap;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6);
+        }
+        .hint.hidden {
+            opacity: 0;
+        }
+        .dock {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 22px;
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 40px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06);
+            z-index: 10;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .swatch {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .swatch.active {
+            border-color: #4a4a4a;
+            transform: scale(1.15);
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+        }
+        .swatch-label {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: #6a6a6a;
+            font-family: "Hiragino Mincho ProN", serif;
+            letter-spacing: 0.1em;
+            white-space: nowrap;
+        }
+        .divider {
+            width: 1px;
+            height: 22px;
+            background: rgba(0, 0, 0, 0.12);
+            margin: 0 4px;
+        }
+        .toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #5a5a5a;
+            font-family: "Hiragino Mincho ProN", serif;
+            user-select: none;
+            letter-spacing: 0.05em;
+            padding: 4px 6px;
+            border-radius: 20px;
+            transition: background 0.3s;
+        }
+        .toggle:hover {
+            background: rgba(0, 0, 0, 0.04);
+        }
+        .toggle .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #c0b8a8;
+            transition: background 0.3s;
+        }
+        .toggle.active .dot {
+            background: #4a4a4a;
+        }
+        .wash-btn {
+            padding: 5px 16px;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            border-radius: 20px;
+            background: transparent;
+            cursor: pointer;
+            font-size: 12px;
+            color: #5a5a5a;
+            font-family: "Hiragino Mincho ProN", serif;
+            transition: all 0.3s;
+            letter-spacing: 0.05em;
+        }
+        .wash-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            border-color: rgba(0, 0, 0, 0.25);
+        }
+        .credit {
+            position: fixed;
+            bottom: 12px;
+            right: 14px;
+            font-size: 9px;
+            color: #b0a89a;
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            letter-spacing: 0.1em;
+            z-index: 10;
+            pointer-events: none;
+        }
+        @media (max-width: 600px) {
+            .title {
+                font-size: 20px;
+                top: 16px;
+                left: 16px;
+            }
+            .caption {
+                font-size: 8px;
+                left: 4px;
+            }
+            .hint {
+                font-size: 12px;
+                letter-spacing: 0.4em;
+            }
+            .dock {
+                bottom: 16px;
+                padding: 8px 14px;
+                gap: 6px;
+            }
+            .swatch {
+                width: 22px;
+                height: 22px;
+            }
+            .swatch-label {
+                font-size: 8px;
+                bottom: -16px;
+            }
+            .toggle {
+                font-size: 10px;
+            }
+            .wash-btn {
+                font-size: 10px;
+                padding: 4px 10px;
+            }
+            .credit {
+                font-size: 7px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div class="title">墨流し</div>
+    <div class="caption">SUMINAGASHI — INK DISSOLUTION</div>
+    <div class="hint" id="hint">画 面 を な ぞ っ て 墨 を 流 す</div>
+    <div class="dock">
+        <div class="swatch" data-color="cycle" style="background: conic-gradient(#1a1a1f, #16407a, #c8372d, #2e6e52, #1a1a1f);" title="巡">
+            <span class="swatch-label">巡</span>
+        </div>
+        <div class="swatch" data-color="ink" style="background: #1a1a1f;" title="墨">
+            <span class="swatch-label">墨</span>
+        </div>
+        <div class="swatch" data-color="indigo" style="background: #16407a;" title="藍">
+            <span class="swatch-label">藍</span>
+        </div>
+        <div class="swatch" data-color="vermilion" style="background: #c8372d;" title="朱">
+            <span class="swatch-label">朱</span>
+        </div>
+        <div class="swatch" data-color="pine" style="background: #2e6e52;" title="松葉">
+            <span class="swatch-label">松葉</span>
+        </div>
+        <div class="divider"></div>
+        <div class="toggle" id="autoToggle">
+            <span class="dot"></span>
+            <span>自動演出</span>
+        </div>
+        <button class="wash-btn" id="washBtn">洗い流す</button>
+    </div>
+    <div class="credit">THREE.JS · STABLE FLUIDS</div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+            }
+        }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+
+        // ===== 設定 =====
+        const SIM_WIDTH = 256;
+        const SIM_HEIGHT = 256;
+        const DT = 0.016;
+        const VORTICITY_STRENGTH = 25;
+        const PRESSURE_ITERATIONS = 20;
+        const INK_DECAY_RATE = 0.98;
+        const INK_INJECTION_STRENGTH = 0.35;
+        const VELOCITY_INJECTION_STRENGTH = 0.8;
+        const AUTO_INK_INTERVAL = 1200;
+        const AUTO_VELOCITY_INTERVAL = 800;
+
+        // ===== 色定義 =====
+        const INK_COLORS = {
+            ink: new THREE.Color(0x1a1a1f),
+            indigo: new THREE.Color(0x16407a),
+            vermilion: new THREE.Color(0xc8372d),
+            pine: new THREE.Color(0x2e6e52)
+        };
+        const PAPER_COLOR = new THREE.Color(0xefeae0);
+
+        // ===== 状態 =====
+        let currentColor = 'cycle';
+        let autoCycleIndex = 0;
+        const colorOrder = ['ink', 'indigo', 'vermilion', 'pine'];
+        let autoMode = true;
+        let isWashing = false;
+        let isDragging = false;
+        let lastMouse = { x: 0.5, y: 0.5 };
+        let currentPoint = { x: 0.5, y: 0.5 };
+        let lastAutoInkTime = 0;
+        let lastAutoVelocityTime = 0;
+        let hintShown = true;
+        let frame = 0;
+
+        // ===== レンダラー =====
+        const canvas = document.getElementById('canvas');
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setClearColor(PAPER_COLOR, 1);
+
+        // ===== シーン =====
+        const scene = new THREE.Scene();
+        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshBasicMaterial());
+        scene.add(quad);
+
+        // ===== FBO生成 =====
+        function createFBO(width, height) {
+            return new THREE.WebGLRenderTarget(width, height, {
+                format: THREE.RGBAFormat,
+                type: THREE.FloatType,
+                minFilter: THREE.LinearFilter,
+                magFilter: THREE.LinearFilter,
+                wrapS: THREE.ClampToEdgeWrapping,
+                wrapT: THREE.ClampToEdgeWrapping,
+                depthBuffer: false,
+                stencilBuffer: false
+            });
+        }
+
+        const velocityFBO = [createFBO(SIM_WIDTH, SIM_HEIGHT), createFBO(SIM_WIDTH, SIM_HEIGHT)];
+        const dyeFBO = [createFBO(SIM_WIDTH, SIM_HEIGHT), createFBO(SIM_WIDTH, SIM_HEIGHT)];
+        const pressureFBO = [createFBO(SIM_WIDTH, SIM_HEIGHT), createFBO(SIM_WIDTH, SIM_HEIGHT)];
+        const divergenceFBO = createFBO(SIM_WIDTH, SIM_HEIGHT);
+
+        // ===== シェーダー =====
+        const vertexShader = `
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = vec4(position, 1.0);
+        }
+        `;
+
+        const texelSize = new THREE.Vector2(1.0 / SIM_WIDTH, 1.0 / SIM_HEIGHT);
+
+        // Advection
+        const advectionMaterial = new THREE.ShaderMaterial({
+            vertexShader,
+            fragmentShader: `
+            precision highp float;
+            uniform sampler2D velocity;
+            uniform sampler2D source;
+            uniform float dt;
+            uniform vec2 texelSize;
+            varying vec2 vUv;
+            void main() {
+                vec2 coord = vUv - dt * texture2D(velocity, vUv).xy * texelSize;
+                gl_FragColor = texture2D(source, coord);
+            }
+            `,
+            uniforms: {
+                velocity: { value: null },
+                source: { value: null },
+                dt: { value: DT },
+                texelSize: { value: texelSize }
+            },
+            depthWrite: false,
+            depthTest: false
+        });
+
+        // Vorticity
+        const vorticityMaterial = new THREE.ShaderMaterial({
+            vertexShader,
+            fragmentShader: `
+            precision highp float;
+            uniform sampler2D velocity;
+            uniform float curl;
+            uniform vec2 texelSize;
+            varying vec2 vUv;
+            void main() {
+                float L = texture2D(velocity, vUv - vec2(texelSize.x, 0.0)).y;
+                float R = texture2D(velocity, vUv + vec2(texelSize.x, 0.0)).y;
+                float T = texture2D(velocity, vUv + vec2(0.0, texelSize.y)).x;
+                float B = texture2D(velocity, vUv - vec2(0.0, texelSize.y)).x;
+                float vorticity = (R - L) - (T - B);
+                vec2 force = vec2(abs(vorticity) * (T - B), abs(vorticity) * (R - L));
+                force *= curl;
+                gl_FragColor = texture2D(velocity, vUv) + vec4(force, 0.0, 0.0);
+            }
+            `,
+            uniforms: {
+                velocity: { value: null },
+                curl: { value: VORTICITY_STRENGTH },
+                texelSize: { value: texelSize }
+            },
+            depthWrite: false,
+            depthTest: false
+        });
+
+        // Divergence
+        const divergenceMaterial = new THREE.ShaderMaterial({
+            vertexShader,
+            fragmentShader: `
+            precision highp float;
+            uniform sampler2D velocity;
+            uniform vec2 texelSize;
+            varying vec2 vUv;
+            void main() {
+                float L = texture2D(velocity, vUv - vec2(texelSize.x, 0.0)).x;
+                float R = texture2D(velocity, vUv + vec2(texelSize.x, 0.0)).x;
+                float T = texture2D(velocity, vUv + vec2(0.0, texelSize.y)).y;
+                float B = texture2D(velocity, vUv - vec2(0.0, texelSize.y)).y;
+                gl_FragColor = vec4(0.5 * (R - L + T - B), 0.0, 0.0, 1.0);
+            }
+            `,
+            uniforms: {
+                velocity: { value: null },
+                texelSize: { value: texelSize }
+            },
+            depthWrite: false,
+            depthTest: false
+        });
+
+        // Pressure
+        const pressureMaterial = new THREE.ShaderMaterial({
+            vertexShader,
+            fragmentShader: `
+            precision highp float;
+            uniform sampler2D pressure;
+            uniform sampler2D divergence;
+            uniform vec2 texelSize;
+            varying vec2 vUv;
+            void main() {
+                float L = texture2D(pressure, vUv - vec2(texelSize.x, 0.0)).x;
+                float R = texture2D(pressure, vUv + vec2(texelSize.x, 0.0)).x;
+                float T = texture2D(pressure, vUv + vec2(0.0, texelSize.y)).x;
+                float B = texture2D(pressure, vUv - vec2(0.0, texelSize.y)).x;
+                float div = texture2D(divergence, vUv).x;
+                gl_FragColor = vec4((L + R + T + B - div) * 0.25, 0.0, 0.0, 1.0);
+            }
+            `,
+            uniforms: {
+                pressure: { value: null },
+                divergence: { value: null },
+                texelSize: { value: texelSize }
+            },
+            depthWrite: false,
+            depthTest: false
+        });
+
+        // Gradient Subtract
+        const gradientSubtractMaterial = new THREE.ShaderMaterial({
+            vertexShader,
+            fragmentShader: `
+            precision highp float;
+            uniform sampler2D velocity;
+            uniform sampler2D pressure;
+            uniform vec2 texelSize;
+            varying vec2 vUv;
+            void main() {
+                float L = texture2D(pressure, vUv - vec2(texelSize.x, 0.0)).x;
+                float R = texture2D(pressure, vUv + vec2(texelSize.x, 0.0)).x;
+                float T = texture2D(pressure, vUv + vec2(0.0, texelSize.y)).x;
+                float B = texture2D(pressure, vUv - vec2(0.0, texelSize.y)).x;
+                vec2 vel = texture2D(velocity, vUv).xy;
+                vel -= 0.5 * vec2(R - L, T - B);
+                gl_FragColor = vec4(vel, 0.0, 1.0);
+            }
+            `,
+            uniforms: {
+                velocity: { value: null },
+                pressure: { value: null },
+                texelSize: { value: texelSize }
+            },
+            depthWrite: false,
+            depthTest: false
+        });
+
+        // Dye Advection
+        const dyeAdvectionMaterial = new THREE.ShaderMaterial({
+            vertexShader,
+            fragmentShader: `
+            precision highp float;
+            uniform sampler2D velocity;
+            uniform sampler2D dye;
+            uniform float dt;
+            uniform vec2 texelSize;
+            varying vec2 vUv;
+            void main() {
+                vec2 coord = vUv - dt * texture2D(velocity, vUv).xy * texelSize;
+                gl_FragColor = texture2D(dye, coord);
+            }
+            `,
+            uniforms: {
+                velocity: { value: null },
+                dye: { value: null },
+                dt: { value: DT },
+                texelSize: { value: texelSize }
+            },
+            depthWrite: false,
+            depthTest: false
+        });
+
+        // Dye Injection
+        const dyeInjectionMaterial = new THREE.ShaderMaterial({
+            vertexShader,
+            fragmentShader: `
+            precision highp float;
+            uniform sampler2D dye;
+            uniform vec2 point;
+            uniform vec3 color;
+            uniform float radius;
+            uniform float strength;
+            varying vec2 vUv;
+            void main() {
+                vec4 d = texture2D(dye, vUv);
+                float dist = length(vUv - point);
+                float influence = exp(-dist * dist / (radius * radius));
+                d.rgb += color * influence * strength;
+                gl_FragColor = d;
+            }
+            `,
+            uniforms: {
+                dye: { value: null },
+                point: { value: new THREE.Vector2(0.5, 0.5) },
+                color: { value: new THREE.Color(0x1a1a1f) },
+                radius: { value: 0.04 },
+                strength: { value: INK_INJECTION_STRENGTH }
+            },
+            depthWrite: false,
+            depthTest: false
+        });
+
+        // Velocity Injection
+        const velocityInjectionMaterial = new THREE.ShaderMaterial({
+            vertexShader,
+            fragmentShader: `
+            precision highp float;
+            uniform sampler2D velocity;
+            uniform vec2 point;
+            uniform vec2 force;
+            uniform float radius;
+            varying vec2 vUv;
+            void main() {
+                vec2 vel = texture2D(velocity, vUv).xy;
+                float dist = length(vUv - point);
+                float influence = exp(-dist * dist / (radius * radius));
+                vel += force * influence;
+                gl_FragColor = vec4(vel, 0.0, 1.0);
+            }
+            `,
+            uniforms: {
+                velocity: { value: null },
+                point: { value: new THREE.Vector2(0.5, 0.5) },
+                force: { value: new THREE.Vector2(0, 0) },
+                radius: { value: 0.06 }
+            },
+            depthWrite: false,
+            depthTest: false
+        });
+
+        // Dye Decay (for washing)
+        const dyeDecayMaterial = new THREE.ShaderMaterial({
+            vertexShader,
+            fragmentShader: `
+            precision highp float;
+            uniform sampler2D dye;
+            uniform float decay;
+            varying vec2 vUv;
+            void main() {
+                vec4 d = texture2D(dye, vUv);
+                d.rgb *= decay;
+                gl_FragColor = d;
+            }
+            `,
+            uniforms: {
+                dye: { value: null },
+                decay: { value: INK_DECAY_RATE }
+            },
+            depthWrite: false,
+            depthTest: false
+        });
+
+        // Display
+        const displayMaterial = new THREE.ShaderMaterial({
+            vertexShader,
+            fragmentShader: `
+            precision highp float;
+            uniform sampler2D dye;
+            uniform vec3 paperColor;
+            varying vec2 vUv;
+            void main() {
+                vec3 ink = texture2D(dye, vUv).rgb;
+                vec3 color = paperColor * exp(-ink * 2.5);
+                gl_FragColor = vec4(color, 1.0);
+            }
+            `,
+            uniforms: {
+                dye: { value: null },
+                paperColor: { value: PAPER_COLOR }
+            },
+            depthWrite: false,
+            depthTest: false
+        });
+
+        // ===== パス実行関数 =====
+        function runPass(material, target) {
+            quad.material = material;
+            renderer.setRenderTarget(target);
+            renderer.render(scene, camera);
+        }
+
+        function advectVelocity(source, target) {
+            advectionMaterial.uniforms.velocity.value = source;
+            advectionMaterial.uniforms.source.value = source;
+            runPass(advectionMaterial, target);
+        }
+
+        function applyVorticity(source, target) {
+            vorticityMaterial.uniforms.velocity.value = source;
+            runPass(vorticityMaterial, target);
+        }
+
+        function computeDivergence(velocity, target) {
+            divergenceMaterial.uniforms.velocity.value = velocity;
+            runPass(divergenceMaterial, target);
+        }
+
+        function solvePressure(divergence, pressureSource, pressureTarget) {
+            pressureMaterial.uniforms.divergence.value = divergence;
+            pressureMaterial.uniforms.pressure.value = pressureSource;
+            runPass(pressureMaterial, pressureTarget);
+        }
+
+        function subtractGradient(velocity, pressure, target) {
+            gradientSubtractMaterial.uniforms.velocity.value = velocity;
+            gradientSubtractMaterial.uniforms.pressure.value = pressure;
+            runPass(gradientSubtractMaterial, target);
+        }
+
+        function advectDye(velocity, dyeSource, dyeTarget) {
+            dyeAdvectionMaterial.uniforms.velocity.value = velocity;
+            dyeAdvectionMaterial.uniforms.dye.value = dyeSource;
+            runPass(dyeAdvectionMaterial, dyeTarget);
+        }
+
+        function injectDye(dyeSource, dyeTarget, point, color, strength) {
+            dyeInjectionMaterial.uniforms.dye.value = dyeSource;
+            dyeInjectionMaterial.uniforms.point.value.copy(point);
+            dyeInjectionMaterial.uniforms.color.value.copy(color);
+            dyeInjectionMaterial.uniforms.strength.value = strength;
+            runPass(dyeInjectionMaterial, dyeTarget);
+        }
+
+        function injectVelocity(velocitySource, velocityTarget, point, force) {
+            velocityInjectionMaterial.uniforms.velocity.value = velocitySource;
+            velocityInjectionMaterial.uniforms.point.value.copy(point);
+            velocityInjectionMaterial.uniforms.force.value.copy(force);
+            runPass(velocityInjectionMaterial, velocityTarget);
+        }
+
+        function decayDye(dyeSource, dyeTarget, decayRate) {
+            dyeDecayMaterial.uniforms.dye.value = dyeSource;
+            dyeDecayMaterial.uniforms.decay.value = decayRate;
+            runPass(dyeDecayMaterial, dyeTarget);
+        }
+
+        function display(dye) {
+            displayMaterial.uniforms.dye.value = dye;
+            runPass(displayMaterial, null);
+        }
+
+        // ===== シミュレーション =====
+        function simulate(dt) {
+            // 速度場の更新
+            advectVelocity(velocityFBO[0], velocityFBO[1]);
+            applyVorticity(velocityFBO[1], velocityFBO[0]);
+
+            // 発散計算
+            computeDivergence(velocityFBO[0], divergenceFBO);
+
+            // 圧力反復
+            for (let i = 0; i < PRESSURE_ITERATIONS; i++) {
+                solvePressure(divergenceFBO, pressureFBO[i % 2], pressureFBO[(i + 1) % 2]);
+            }
+
+            // 圧力勾配を引く
+            subtractGradient(velocityFBO[0], pressureFBO[PRESSURE_ITERATIONS % 2], velocityFBO[1]);
+
+            // 染料の移流
+            advectDye(velocityFBO[1], dyeFBO[0], dyeFBO[1]);
+
+            // 洗い流し処理
+            if (isWashing) {
+                decayDye(dyeFBO[1], dyeFBO[0], INK_DECAY_RATE);
+                // バッファを入れ替え
+                const tmpDye = dyeFBO[0];
+                dyeFBO[0] = dyeFBO[1];
+                dyeFBO[1] = tmpDye;
+            }
+
+            // 表示
+            display(dyeFBO[1]);
+
+            // バッファを入れ替え
+            const tmpV = velocityFBO[0];
+            velocityFBO[0] = velocityFBO[1];
+            velocityFBO[1] = tmpV;
+
+            const tmpD = dyeFBO[0];
+            dyeFBO[0] = dyeFBO[1];
+            dyeFBO[1] = tmpD;
+        }
+
+        // ===== ユーティリティ =====
+        function getUVFromEvent(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / rect.width;
+            const y = 1.0 - (e.clientY - rect.top) / rect.height;
+            return { x: Math.max(0, Math.min(1, x)), y: Math.max(0, Math.min(1, y)) };
+        }
+
+        function getCurrentColor() {
+            if (currentColor === 'cycle') {
+                return INK_COLORS[colorOrder[autoCycleIndex % colorOrder.length]];
+            }
+            return INK_COLORS[currentColor];
+        }
+
+        function getCurrentColorName() {
+            if (currentColor === 'cycle') {
+                return colorOrder[autoCycleIndex % colorOrder.length];
+            }
+            return currentColor;
+        }
+
+        // ===== インタラクション =====
+        function handlePointerDown(uv) {
+            isDragging = true;
+            lastMouse = uv;
+            currentPoint = uv;
+            if (hintShown) {
+                const hint = document.getElementById('hint');
+                hint.classList.add('hidden');
+                hintShown = false;
+            }
+        }
+
+        function handlePointerMove(uv) {
+            if (isDragging) {
+                const dx = uv.x - lastMouse.x;
+                const dy = uv.y - lastMouse.y;
+                const speed = Math.sqrt(dx * dx + dy * dy);
+
+                if (speed > 0.001) {
+                    // インク注入
+                    const color = getCurrentColor();
+                    const strength = Math.min(0.5, speed * 2.0) * INK_INJECTION_STRENGTH;
+                    injectDye(dyeFBO[0], dyeFBO[1], uv, color, strength);
+                    // バッファを入れ替え
+                    const tmpD = dyeFBO[0];
+                    dyeFBO[0] = dyeFBO[1];
+                    dyeFBO[1] = tmpD;
+
+                    // 速度注入
+                    const force = new THREE.Vector2(dx * 10, dy * 10);
+                    force.clampLength(0, 5);
+                    injectVelocity(velocityFBO[0], velocityFBO[1], uv, force);
+                    // バッファを入れ替え
+                    const tmpV = velocityFBO[0];
+                    velocityFBO[0] = velocityFBO[1];
+                    velocityFBO[1] = tmpV;
+                }
+
+                lastMouse = uv;
+            } else {
+                // ホバーで水流だけを乱す
+                const dx = uv.x - lastMouse.x;
+                const dy = uv.y - lastMouse.y;
+                const speed = Math.sqrt(dx * dx + dy * dy);
+                if (speed > 0.002) {
+                    const force = new THREE.Vector2(dx * 3, dy * 3);
+                    force.clampLength(0, 1.5);
+                    injectVelocity(velocityFBO[0], velocityFBO[1], uv, force);
+                    const tmpV = velocityFBO[0];
+                    velocityFBO[0] = velocityFBO[1];
+                    velocityFBO[1] = tmpV;
+                }
+                lastMouse = uv;
+            }
+            currentPoint = uv;
+        }
+
+        function handlePointerUp() {
+            isDragging = false;
+        }
+
+        // マウスイベント
+        canvas.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            handlePointerDown(getUVFromEvent(e));
+        });
+        canvas.addEventListener('mousemove', (e) => {
+            e.preventDefault();
+            handlePointerMove(getUVFromEvent(e));
+        });
+        canvas.addEventListener('mouseup', (e) => {
+            e.preventDefault();
+            handlePointerUp();
+        });
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+        });
+
+        // タッチイベント
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            handlePointerDown(getUVFromEvent(touch));
+        }, { passive: false });
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            handlePointerMove(getUVFromEvent(touch));
+        }, { passive: false });
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            handlePointerUp();
+        }, { passive: false });
+
+        // ===== UI =====
+        // 色スウォッチ
+        const swatches = document.querySelectorAll('.swatch');
+        swatches.forEach(swatch => {
+            swatch.addEventListener('click', () => {
+                const color = swatch.dataset.color;
+                currentColor = color;
+                swatches.forEach(s => s.classList.remove('active'));
+                swatch.classList.add('active');
+            });
+        });
+
+        // 自動演出トグル
+        const autoToggle = document.getElementById('autoToggle');
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (prefersReducedMotion) {
+            autoMode = false;
+            autoToggle.classList.remove('active');
+        } else {
+            autoMode = true;
+            autoToggle.classList.add('active');
+        }
+        autoToggle.addEventListener('click', () => {
+            autoMode = !autoMode;
+            autoToggle.classList.toggle('active', autoMode);
+        });
+
+        // 洗い流しボタン
+        const washBtn = document.getElementById('washBtn');
+        washBtn.addEventListener('click', () => {
+            isWashing = true;
+            setTimeout(() => {
+                isWashing = false;
+            }, 2000);
+        });
+
+        // ===== 自動演出 =====
+        function autoPerform(now) {
+            if (!autoMode || isWashing) return;
+
+            if (now - lastAutoInkTime > AUTO_INK_INTERVAL) {
+                lastAutoInkTime = now;
+                const x = 0.2 + Math.random() * 0.6;
+                const y = 0.2 + Math.random() * 0.6;
+                const point = new THREE.Vector2(x, y);
+                const color = getCurrentColor();
+                const strength = 0.2 + Math.random() * 0.3;
+                injectDye(dyeFBO[0], dyeFBO[1], point, color, strength);
+                const tmpD = dyeFBO[0];
+                dyeFBO[0] = dyeFBO[1];
+                dyeFBO[1] = tmpD;
+
+                // 自動サイクル
+                if (currentColor === 'cycle') {
+                    autoCycleIndex = (autoCycleIndex + 1) % colorOrder.length;
+                }
+            }
+
+            if (now - lastAutoVelocityTime > AUTO_VELOCITY_INTERVAL) {
+                lastAutoVelocityTime = now;
+                const x = 0.2 + Math.random() * 0.6;
+                const y = 0.2 + Math.random() * 0.6;
+                const point = new THREE.Vector2(x, y);
+                const angle = Math.random() * Math.PI * 2;
+                const force = new THREE.Vector2(Math.cos(angle) * 1.5, Math.sin(angle) * 1.5);
+                injectVelocity(velocityFBO[0], velocityFBO[1], point, force);
+                const tmpV = velocityFBO[0];
+                velocityFBO[0] = velocityFBO[1];
+                velocityFBO[1] = tmpV;
+            }
+        }
+
+        // ===== アニメーションループ =====
+        let lastTime = performance.now();
+
+        function animate(now) {
+            requestAnimationFrame(animate);
+
+            const dt = Math.min((now - lastTime) / 1000, 0.05);
+            lastTime = now;
+
+            // 自動演出
+            autoPerform(now);
+
+            // シミュレーション
+            simulate(dt);
+
+            frame++;
+        }
+
+        // ===== リサイズ =====
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // ===== 開始 =====
+        // 初期化：速度場と染料をゼロに
+        renderer.setRenderTarget(velocityFBO[0]);
+        renderer.clear();
+        renderer.setRenderTarget(velocityFBO[1]);
+        renderer.clear();
+        renderer.setRenderTarget(dyeFBO[0]);
+        renderer.clear();
+        renderer.setRenderTarget(dyeFBO[1]);
+        renderer.clear();
+        renderer.setRenderTarget(pressureFBO[0]);
+        renderer.clear();
+        renderer.setRenderTarget(pressureFBO[1]);
+        renderer.clear();
+        renderer.setRenderTarget(divergenceFBO);
+        renderer.clear();
+        renderer.setRenderTarget(null);
+
+        // 初期表示
+        display(dyeFBO[0]);
+
+        // アニメーション開始
+        requestAnimationFrame(animate);
+    </script>
+</body>
+</html>

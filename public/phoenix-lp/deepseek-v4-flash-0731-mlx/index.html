@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HIBANA — 不死鳥スクロール没入型LP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Shippori+Mincho:wght@400;500&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --dawn-bg: #f2ecf5;
+    --dawn-wing: #b9a6e0;
+    --orb: #e8f0a8;
+    --flame: #ff7a2f;
+    --ember: #ffb36b;
+    --night: #0a1030;
+    --feather: #7fb8ff;
+    --sunset: #c23a1f;
+    --ink: #2a2438;
+    --font-serif: 'Cormorant Garamond', serif;
+    --font-jp: 'Shippori Mincho', serif;
+    --font-ui: 'Zen Kaku Gothic New', sans-serif;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  body {
+    background: var(--dawn-bg);
+    font-family: var(--font-serif);
+    overflow-x: hidden;
+    color: var(--ink);
+  }
+
+  /* スクロール領域 */
+  .scroll-container {
+    height: 900vh; /* 6 scenes × 150vh */
+    position: relative;
+    z-index: 0;
+  }
+
+  /* 固定レイヤー */
+  .scene {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+    will-change: opacity, transform;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .scene.active {
+    pointer-events: auto;
+  }
+
+  /* 各シーンの背景 */
+  .scene-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    will-change: transform;
+  }
+
+  /* シーン1: Dawn */
+  #scene-dawn .scene-bg {
+    background: linear-gradient(135deg, var(--dawn-bg) 0%, #e6d9f0 50%, #d4c5e8 100%);
+  }
+  #scene-dawn .wing-watercolor {
+    position: absolute;
+    left: 5%;
+    top: 20%;
+    width: 40vw;
+    height: 60vh;
+    background: radial-gradient(ellipse at center, var(--dawn-wing) 0%, transparent 70%);
+    filter: blur(30px);
+    opacity: 0.6;
+    transform: rotate(-15deg);
+  }
+  #scene-dawn .orb {
+    position: absolute;
+    left: 50%;
+    top: 30%;
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle, var(--orb) 0%, rgba(232,240,168,0.3) 50%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(10px);
+    animation: orbPulse 4s ease-in-out infinite;
+  }
+  @keyframes orbPulse {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.2); opacity: 1; }
+  }
+
+  /* シーン2: Rise */
+  #scene-rise .scene-bg {
+    background: linear-gradient(to top, #ff7a2f 0%, #ffb36b 40%, #ffd9b0 100%);
+  }
+  #scene-rise .phoenix-rise {
+    position: absolute;
+    bottom: -20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60vw;
+    height: 80vh;
+    background: radial-gradient(ellipse at center, var(--flame) 0%, transparent 70%);
+    filter: blur(20px);
+    opacity: 0.7;
+  }
+
+  /* シーン3: Halo */
+  #scene-halo .scene-bg {
+    background: radial-gradient(circle, #ff9a9e 0%, #fad0c4 30%, #fbc2eb 60%, #a18cd1 100%);
+  }
+  #scene-halo .halo-ring {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 80vmin;
+    height: 80vmin;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, #ff9a9e, #fad0c4, #fbc2eb, #a18cd1, #ff9a9e);
+    filter: blur(20px);
+    opacity: 0.5;
+    transform: translate(-50%, -50%);
+    animation: haloSpin 20s linear infinite;
+  }
+  @keyframes haloSpin {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+  #scene-halo .silhouette {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 50vmin;
+    height: 50vmin;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(5px);
+  }
+
+  /* シーン4: Feather */
+  #scene-feather .scene-bg {
+    background: linear-gradient(to bottom, var(--night) 0%, #0d1440 100%);
+  }
+  #scene-feather .feather-glow {
+    position: absolute;
+    left: 50%;
+    top: 30%;
+    width: 200px;
+    height: 400px;
+    background: linear-gradient(to bottom, var(--feather), transparent);
+    filter: blur(15px);
+    opacity: 0.3;
+    transform: translateX(-50%);
+  }
+
+  /* シーン5: Crystal */
+  #scene-crystal .scene-bg {
+    background: linear-gradient(to bottom, var(--night) 0%, #0a1030 100%);
+  }
+  .crystal {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, rgba(127,184,255,0.3), rgba(255,255,255,0.1));
+    border: 1px solid rgba(127,184,255,0.5);
+    border-radius: 20px;
+    transform-style: preserve-3d;
+    animation: crystalRotate 12s ease-in-out infinite;
+    box-shadow: 0 0 30px rgba(127,184,255,0.3);
+    transition: transform 0.3s ease;
+  }
+  .crystal:hover {
+    transform: rotate(15deg) scale(1.1);
+  }
+  .crystal:nth-child(1) {
+    left: 20%;
+    top: 30%;
+  }
+  .crystal:nth-child(2) {
+    left: 70%;
+    top: 50%;
+    animation-delay: -4s;
+  }
+  .crystal:nth-child(3) {
+    left: 50%;
+    top: 20%;
+    animation-delay: -8s;
+  }
+  @keyframes crystalRotate {
+    0%, 100% { transform: rotateY(0deg) rotateX(0deg); }
+    50% { transform: rotateY(180deg) rotateX(20deg); }
+  }
+
+  /* シーン6: Finale */
+  #scene-finale .scene-bg {
+    background: linear-gradient(to top, #c23a1f 0%, #ff7a2f 30%, #ffb36b 60%, #ffd9b0 100%);
+  }
+  #scene-finale .mountain {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 40%;
+    background: linear-gradient(to top, #2a2438 0%, transparent 100%);
+    clip-path: polygon(0 100%, 0 60%, 20% 40%, 40% 55%, 60% 35%, 80% 50%, 100% 30%, 100% 100%);
+  }
+  #scene-finale .water {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 20%;
+    background: linear-gradient(to top, rgba(194,58,31,0.6), transparent);
+    filter: blur(10px);
+    transform: scaleY(-1);
+    opacity: 0.5;
+  }
+
+  /* テキスト共通 */
+  .scene-text {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    max-width: 80vw;
+    padding: 0 6vw;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: clamp(1.4rem, 3.2vw, 2.6rem);
+    line-height: 1.5;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    text-shadow: 0 2px 10px rgba(255,255,255,0.3);
+  }
+
+  .scene-text .jp {
+    font-family: var(--font-jp);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  .scene-text .stagger-word {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    transition-delay: var(--delay);
+    margin-right: 0.2em;
+  }
+
+  .scene-text .stagger-word.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* シーンごとのテキスト位置 */
+  #scene-dawn .scene-text {
+    position: absolute;
+    right: 8%;
+    top: 50%;
+    transform: translateY(-50%);
+    text-align: right;
+    max-width: 40vw;
+  }
+
+  #scene-rise .scene-text {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.3);
+  }
+
+  #scene-halo .scene-text {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: clamp(4rem, 10vw, 8rem);
+    color: #fff;
+    text-shadow: 0 0 30px rgba(255,255,255,0.5);
+    animation: haloText 3s ease-in-out infinite;
+  }
+  @keyframes haloText {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+  }
+
+  #scene-feather .scene-text {
+    position: absolute;
+    bottom: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  }
+
+  #scene-feather .vertical-text {
+    position: absolute;
+    top: 20%;
+    font-family: var(--font-jp);
+    font-size: 0.9rem;
+    line-height: 1.8;
+    color: rgba(255,255,255,0.7);
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+  }
+  #scene-feather .vertical-text.left {
+    left: 8%;
+  }
+  #scene-feather .vertical-text.right {
+    right: 8%;
+  }
+
+  #scene-crystal .scene-text {
+    position: absolute;
+    bottom: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  }
+
+  #scene-finale .scene-text {
+    position: absolute;
+    bottom: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+  }
+
+  /* UI要素 */
+  .ui-logo {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    color: var(--ink);
+    pointer-events: auto;
+  }
+  .ui-logo .bird-icon {
+    width: 24px;
+    height: 24px;
+    fill: var(--feather);
+  }
+  .ui-logo .date {
+    font-size: 0.6rem;
+    opacity: 0.7;
+  }
+
+  .ui-nav {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+    display: flex;
+    gap: 20px;
+    font-family: var(--font-ui);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    color: var(--ink);
+    pointer-events: auto;
+  }
+  .ui-nav a {
+    color: inherit;
+    text-decoration: none;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+  }
+  .ui-nav a:hover {
+    opacity: 1;
+  }
+
+  .ui-progress {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 2px;
+    background: rgba(42,36,56,0.2);
+    z-index: 100;
+    border-radius: 2px;
+  }
+  .ui-progress-bar {
+    height: 100%;
+    background: var(--flame);
+    width: 0%;
+    border-radius: 2px;
+    transition: width 0.1s linear;
+  }
+
+  .ui-sound {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    color: var(--ink);
+    opacity: 0;
+    transition: opacity 0.5s;
+    z-index: 100;
+    pointer-events: auto;
+    cursor: pointer;
+  }
+  .ui-sound.visible {
+    opacity: 0.6;
+  }
+
+  /* Canvas */
+  #particle-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 50;
+    pointer-events: none;
+  }
+
+  /* レスポンシブ */
+  @media (max-width: 768px) {
+    .scene-text {
+      max-width: 90vw;
+      padding: 0 4vw;
+    }
+    #scene-dawn .scene-text {
+      max-width: 70vw;
+      right: 5%;
+    }
+    .ui-nav {
+      display: none;
+    }
+  }
+
+  /* reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .scene-bg, .orb, .halo-ring, .crystal, .scene-text .stagger-word {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- スクロール領域 -->
+<div class="scroll-container" id="scroll-container"></div>
+
+<!-- シーン1: Dawn -->
+<section class="scene" id="scene-dawn">
+  <div class="scene-bg"></div>
+  <div class="wing-watercolor"></div>
+  <div class="orb"></div>
+  <div class="scene-text" data-stagger>
+    <span class="stagger-word">what</span>
+    <span class="stagger-word">guides</span>
+    <span class="stagger-word">us</span>
+    <span class="stagger-word">through</span>
+    <span class="stagger-word">change,</span>
+    <span class="stagger-word">reinvention,</span>
+    <span class="stagger-word">and</span>
+    <span class="stagger-word">the</span>
+    <span class="stagger-word">unknown—</span>
+  </div>
+</section>
+
+<!-- シーン2: Rise -->
+<section class="scene" id="scene-rise">
+  <div class="scene-bg"></div>
+  <div class="phoenix-rise"></div>
+  <div class="scene-text" data-stagger>
+    <span class="stagger-word jp">再生である。</span>
+  </div>
+</section>
+
+<!-- シーン3: Halo -->
+<section class="scene" id="scene-halo">
+  <div class="scene-bg"></div>
+  <div class="halo-ring"></div>
+  <div class="silhouette"></div>
+  <div class="scene-text" data-stagger>
+    <span class="stagger-word jp">音</span>
+  </div>
+</section>
+
+<!-- シーン4: Feather -->
+<section class="scene" id="scene-feather">
+  <div class="scene-bg"></div>
+  <div class="feather-glow"></div>
+  <div class="vertical-text left">光の羽根が<br>夜を裂いて<br>落ちていく</div>
+  <div class="vertical-text right">その軌跡は<br>祈りのように<br>静かに</div>
+  <div class="scene-text" data-stagger>
+    <span class="stagger-word">don't</span>
+    <span class="stagger-word">just</span>
+    <span class="stagger-word">speak</span>
+    <span class="stagger-word">to</span>
+    <span class="stagger-word">us.</span>
+    <span class="stagger-word">they</span>
+    <span class="stagger-word">stimulate</span>
+    <span class="stagger-word">us.</span>
+    <br>
+    <span class="stagger-word">light</span>
+    <span class="stagger-word">becomes</span>
+    <span class="stagger-word jp">私、</span>
+    <span class="stagger-word">flare。</span>
+  </div>
+</section>
+
+<!-- シーン5: Crystal -->
+<section class="scene" id="scene-crystal">
+  <div class="scene-bg"></div>
+  <div class="crystal"></div>
+  <div class="crystal"></div>
+  <div class="crystal"></div>
+  <div class="scene-text" data-stagger>
+    <span class="stagger-word">crystal</span>
+    <span class="stagger-word">clear</span>
+    <span class="stagger-word">vision</span>
+  </div>
+</section>
+
+<!-- シーン6: Finale -->
+<section class="scene" id="scene-finale">
+  <div class="scene-bg"></div>
+  <div class="mountain"></div>
+  <div class="water"></div>
+  <div class="scene-text" data-stagger>
+    <span class="stagger-word">feel</span>
+    <span class="stagger-word">their</span>
+    <span class="stagger-word">heat.</span>
+    <span class="stagger-word jp">焔と</span>
+    <span class="stagger-word">interact</span>
+    <span class="stagger-word">with。</span>
+  </div>
+</section>
+
+<!-- UI -->
+<div class="ui-logo">
+  <svg class="bird-icon" viewBox="0 0 24 24">
+    <path d="M12 2C8 6 4 8 2 12c2 2 4 4 6 4 2 0 4-2 4-4 0 2 2 4 4 4 2 0 4-2 6-4-2-4-6-6-10-10z"/>
+  </svg>
+  <span>HIBANA</span>
+  <span class="date">Sept. 29</span>
+</div>
+
+<nav class="ui-nav">
+  <a href="#dawn">作品</a>
+  <a href="#halo">思想</a>
+  <a href="#finale">接続</a>
+</nav>
+
+<div class="ui-progress">
+  <div class="ui-progress-bar" id="progress-bar"></div>
+</div>
+
+<div class="ui-sound" id="sound-btn">♪</div>
+
+<canvas id="particle-canvas"></canvas>
+
+<script>
+  // ===== パーティクルシステム =====
+  const canvas = document.getElementById('particle-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, DPR;
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = canvas.width = window.innerWidth * DPR;
+    H = canvas.height = window.innerHeight * DPR;
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // パーティクルクラス
+  class Particle {
+    constructor(x, y, vx, vy, size, color, life, type = 'circle') {
+      this.x = x;
+      this.y = y;
+      this.vx = vx;
+      this.vy = vy;
+      this.size = size;
+      this.color = color;
+      this.life = life;
+      this.maxLife = life;
+      this.type = type;
+      this.alpha = 1;
+      this.rotation = Math.random() * Math.PI * 2;
+      this.rotSpeed = (Math.random() - 0.5) * 0.1;
+    }
+
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      this.life -= 1;
+      this.alpha = Math.max(0, this.life / this.maxLife);
+      this.rotation += this.rotSpeed;
+      // 重力や抵抗
+      if (this.type === 'flame') {
+        this.vy -= 0.02; // 上昇
+        this.vx *= 0.99;
+      } else if (this.type === 'feather') {
+        this.vy += 0.01;
+        this.vx *= 0.995;
+      } else {
+        this.vx *= 0.99;
+        this.vy *= 0.99;
+      }
+    }
+
+    draw() {
+      ctx.save();
+      ctx.globalAlpha = this.alpha;
+      ctx.fillStyle = this.color;
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.rotation);
+      if (this.type === 'feather') {
+        // 羽根の形
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.size, this.size * 0.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (this.type === 'flame') {
+        ctx.beginPath();
+        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.beginPath();
+        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+
+  // エミッター管理
+  const emitters = {
+    dawn: [],
+    rise: [],
+    halo: [],
+    feather: [],
+    crystal: [],
+    finale: []
+  };
+
+  // シーンごとのパーティクル生成関数
+  function spawnDawnParticle() {
+    // 翼の水彩ストローク
+    const x = W * 0.15 + (Math.random() - 0.5) * 100;
+    const y = H * 0.3 + (Math.random() - 0.5) * 200;
+    const size = Math.random() * 8 + 2;
+    const color = `rgba(185, 166, 224, ${Math.random() * 0.5 + 0.2})`;
+    const vx = (Math.random() - 0.5) * 0.5;
+    const vy = (Math.random() - 0.5) * 0.5;
+    const life = Math.random() * 100 + 50;
+    return new Particle(x, y, vx, vy, size, color, life, 'dawn');
+  }
+
+  function spawnRiseParticle() {
+    // 不死鳥の尾
+    const x = W * 0.5 + (Math.random() - 0.5) * 200;
+    const y = H * 0.8 + Math.random() * 100;
+    const size = Math.random() * 12 + 4;
+    const color = `rgba(255, 122, 47, ${Math.random() * 0.7 + 0.3})`;
+    const vx = (Math.random() - 0.5) * 2;
+    const vy = -Math.random() * 3 - 1;
+    const life = Math.random() * 80 + 40;
+    return new Particle(x, y, vx, vy, size, color, life, 'flame');
+  }
+
+  function spawnHaloParticle() {
+    // ハローの光
+    const angle = Math.random() * Math.PI * 2;
+    const radius = Math.random() * 100 + 50;
+    const x = W * 0.5 + Math.cos(angle) * radius;
+    const y = H * 0.5 + Math.sin(angle) * radius;
+    const size = Math.random() * 6 + 2;
+    const hue = Math.random() * 360;
+    const color = `hsla(${hue}, 80%, 70%, ${Math.random() * 0.6 + 0.2})`;
+    const vx = -Math.cos(angle) * 0.5;
+    const vy = -Math.sin(angle) * 0.5;
+    const life = Math.random() * 60 + 30;
+    return new Particle(x, y, vx, vy, size, color, life, 'halo');
+  }
+
+  function spawnFeatherParticle() {
+    // 羽根の落下
+    const x = W * 0.5 + (Math.random() - 0.5) * 100;
+    const y = -20;
+    const size = Math.random() * 10 + 5;
+    const color = `rgba(127, 184, 255, ${Math.random() * 0.8 + 0.2})`;
+    const vx = (Math.random() - 0.5) * 1;
+    const vy = Math.random() * 2 + 1;
+    const life = Math.random() * 200 + 100;
+    return new Particle(x, y, vx, vy, size, color, life, 'feather');
+  }
+
+  function spawnCrystalParticle() {
+    // クリスタルの光
+    const x = W * 0.5 + (Math.random() - 0.5) * 400;
+    const y = H * 0.5 + (Math.random() - 0.5) * 300;
+    const size = Math.random() * 4 + 1;
+    const color = `rgba(127, 184, 255, ${Math.random() * 0.5 + 0.1})`;
+    const vx = (Math.random() - 0.5) * 0.3;
+    const vy = (Math.random() - 0.5) * 0.3;
+    const life = Math.random() * 80 + 40;
+    return new Particle(x, y, vx, vy, size, color, life, 'crystal');
+  }
+
+  function spawnFinaleParticle() {
+    // 炎の不死鳥
+    const angle = Math.random() * Math.PI * 2;
+    const radius = Math.random() * 150 + 50;
+    const x = W * 0.5 + Math.cos(angle) * radius;
+    const y = H * 0.5 + Math.sin(angle) * radius * 0.5;
+    const size = Math.random() * 15 + 5;
+    const color = `rgba(255, ${Math.random() * 100 + 50}, 0, ${Math.random() * 0.8 + 0.2})`;
+    const vx = -Math.cos(angle) * 1.5;
+    const vy = -Math.sin(angle) * 1.5 - 1;
+    const life = Math.random() * 100 + 50;
+    return new Particle(x, y, vx, vy, size, color, life, 'flame');
+  }
+
+  // パーティクル配列
+  let particles = [];
+
+  // アクティブシーン管理
+  let activeScene = 'dawn';
+  const sceneOrder = ['dawn', 'rise', 'halo', 'feather', 'crystal', 'finale'];
+
+  // スクロール管理
+  let scrollTarget = 0;
+  let scrollCurrent = 0;
+  const totalScroll = document.querySelector('.scroll-container').offsetHeight - window.innerHeight;
+
+  // シーン要素
+  const scenes = document.querySelectorAll('.scene');
+  const sceneMap = {};
+  scenes.forEach(scene => {
+    sceneMap[scene.id.replace('scene-', '')] = scene;
+  });
+
+  // テキストスタガード
+  const staggerElements = document.querySelectorAll('[data-stagger]');
+  staggerElements.forEach(el => {
+    const words = el.querySelectorAll('.stagger-word');
+    words.forEach((word, i) => {
+      word.style.setProperty('--delay', `${i * 0.06}s`);
+    });
+  });
+
+  // プログレスバー
+  const progressBar = document.getElementById('progress-bar');
+
+  // サウンドボタン
+  const soundBtn = document.getElementById('sound-btn');
+
+  // パーティクル生成レート
+  const spawnRates = {
+    dawn: 0.5,
+    rise: 1.5,
+    halo: 1,
+    feather: 1.2,
+    crystal: 0.3,
+    finale: 2
+  };
+
+  // メインループ
+  let lastTime = 0;
+  let frameCount = 0;
+
+  function animate(time) {
+    const dt = Math.min((time - lastTime) / 16.67, 3);
+    lastTime = time;
+    frameCount++;
+
+    // スクロール平滑化
+    scrollCurrent += (scrollTarget - scrollCurrent) * 0.08;
+    if (Math.abs(scrollTarget - scrollCurrent) < 0.1) scrollCurrent = scrollTarget;
+
+    // シーン進行度計算
+    const sceneProgress = {};
+    const totalScenes = sceneOrder.length;
+    const sceneHeight = totalScroll / totalScenes;
+
+    sceneOrder.forEach((id, i) => {
+      const start = i * sceneHeight;
+      const end = start + sceneHeight;
+      let progress = (scrollCurrent - start) / (end - start);
+      progress = Math.max(0, Math.min(1, progress));
+      sceneProgress[id] = progress;
+    });
+
+    // アクティブシーン判定
+    let newActive = 'dawn';
+    sceneOrder.forEach((id, i) => {
+      if (scrollCurrent >= i * sceneHeight && scrollCurrent < (i + 1) * sceneHeight) {
+        newActive = id;
+      }
+    });
+    if (scrollCurrent >= totalScroll - 10) newActive = 'finale';
+    if (newActive !== activeScene) {
+      activeScene = newActive;
+      // シーン切り替え
+      scenes.forEach(scene => {
+        const id = scene.id.replace('scene-', '');
+        scene.classList.toggle('active', id === activeScene);
+      });
+      // サウンドボタン表示
+      if (activeScene === 'halo' || activeScene === 'feather' || activeScene === 'crystal' || activeScene === 'finale') {
+        soundBtn.classList.add('visible');
+      } else {
+        soundBtn.classList.remove('visible');
+      }
+    }
+
+    // シーンごとの透明度とtransform
+    sceneOrder.forEach((id, i) => {
+      const scene = sceneMap[id];
+      const progress = sceneProgress[id];
+      // フェード
+      let opacity = 0;
+      if (progress > 0 && progress < 1) {
+        opacity = Math.sin(progress * Math.PI);
+      }
+      scene.style.opacity = opacity;
+
+      // パララックス
+      const translateY = (progress - 0.5) * 100;
+      scene.querySelector('.scene-bg').style.transform = `translateY(${translateY}px) scale(1.1)`;
+    });
+
+    // テキストスタガード表示
+    sceneOrder.forEach((id, i) => {
+      const scene = sceneMap[id];
+      const progress = sceneProgress[id];
+      const staggerEl = scene.querySelector('[data-stagger]');
+      if (staggerEl) {
+        const words = staggerEl.querySelectorAll('.stagger-word');
+        const startProgress = 0.2;
+        const endProgress = 0.6;
+        const wordProgress = Math.max(0, Math.min(1, (progress - startProgress) / (endProgress - startProgress)));
+        const visibleCount = Math.floor(wordProgress * words.length);
+        words.forEach((word, j) => {
+          if (j < visibleCount) {
+            word.classList.add('visible');
+          } else {
+            word.classList.remove('visible');
+          }
+        });
+      }
+    });
+
+    // プログレスバー
+    progressBar.style.width = `${(scrollCurrent / totalScroll) * 100}%`;
+
+    // パーティクル生成
+    const rate = spawnRates[activeScene] || 0.5;
+    if (Math.random() < rate * dt) {
+      let p = null;
+      switch (activeScene) {
+        case 'dawn': p = spawnDawnParticle(); break;
+        case 'rise': p = spawnRiseParticle(); break;
+        case 'halo': p = spawnHaloParticle(); break;
+        case 'feather': p = spawnFeatherParticle(); break;
+        case 'crystal': p = spawnCrystalParticle(); break;
+        case 'finale': p = spawnFinaleParticle(); break;
+      }
+      if (p) particles.push(p);
+    }
+
+    // パーティクル更新・描画
+    ctx.clearRect(0, 0, W, H);
+    particles = particles.filter(p => p.life > 0 && p.alpha > 0);
+    particles.forEach(p => {
+      p.update();
+      p.draw();
+    });
+
+    // パーティクル数制限
+    if (particles.length > 500) {
+      particles.splice(0, particles.length - 500);
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  // スクロールイベント
+  window.addEventListener('scroll', () => {
+    scrollTarget = window.scrollY;
+  });
+
+  // 初期化
+  scrollTarget = 0;
+  scrollCurrent = 0;
+  requestAnimationFrame(animate);
+
+  // サウンドボタン（装飾）
+  soundBtn.addEventListener('click', () => {
+    soundBtn.style.transform = 'scale(1.2)';
+    setTimeout(() => soundBtn.style.transform = 'scale(1)', 200);
+  });
+
+  // ナビゲーション
+  document.querySelectorAll('.ui-nav a').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = link.getAttribute('href').replace('#', '');
+      const idx = sceneOrder.indexOf(target);
+      if (idx !== -1) {
+        const targetScroll = idx * (totalScroll / sceneOrder.length);
+        window.scrollTo({ top: targetScroll, behavior: 'smooth' });
+      }
+    });
+  });
+
+  // 初期シーン
+  scenes.forEach(scene => {
+    const id = scene.id.replace('scene-', '');
+    scene.classList.toggle('active', id === 'dawn');
+  });
+</script>
+</body>
+</html>

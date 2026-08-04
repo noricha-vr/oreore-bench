@@ -4,6 +4,7 @@
 """
 from __future__ import annotations
 
+import argparse
 import html
 import json
 import re
@@ -41,6 +42,13 @@ MODEL_INFO = {
     "laguna-s-2.1": {
         "label": "Laguna S 2.1", "provider": "poolside", "type": "API LLM",
         "color": "#0891B2", "color_dark": "#0E7490",
+    },
+    "deepseek-v4-flash-0731-mlx": {
+        "label": "DeepSeek V4 Flash 0731 MLX",
+        "provider": "InferencerLabs / DeepSeek",
+        "type": "ローカル LLM",
+        "color": "#4D6BFE",
+        "color_dark": "#354FC7",
     },
 }
 
@@ -301,21 +309,21 @@ def render_body(data: object | None, meta: dict[str, object], raw: str) -> str:
 """
 
 
-def render(model_dir: Path) -> None:
+def render(model_dir: Path) -> bool:
     name = model_dir.name
     info = MODEL_INFO.get(name)
     if not info:
         print(f"skip pr-triage/{name}: unknown model", file=sys.stderr)
-        return
+        return False
 
     output_path = model_dir / "output.json"
     meta_path = model_dir / "meta.json"
     if not output_path.exists():
         print(f"skip pr-triage/{name}: output.json", file=sys.stderr)
-        return
+        return False
     if not meta_path.exists():
         print(f"skip pr-triage/{name}: meta.json", file=sys.stderr)
-        return
+        return False
 
     raw = output_path.read_text(encoding="utf-8")
     data = parse_json(raw)
@@ -339,13 +347,28 @@ def render(model_dir: Path) -> None:
     )
     (model_dir / "output.html").write_text(html_text, encoding="utf-8")
     print(f"wrote {model_dir / 'output.html'}")
+    return True
 
 
-def main() -> int:
-    if not THEME_DIR.exists():
-        print(f"theme not found: {THEME_DIR}", file=sys.stderr)
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", help="指定モデルだけを生成する")
+    parser.add_argument("--theme-dir", type=Path, default=THEME_DIR)
+    args = parser.parse_args(argv)
+
+    theme_dir = args.theme_dir.resolve()
+    if not theme_dir.exists():
+        print(f"theme not found: {theme_dir}", file=sys.stderr)
         return 1
-    for model_dir in sorted(THEME_DIR.iterdir()):
+
+    if args.model:
+        model_dir = theme_dir / args.model
+        if not model_dir.is_dir():
+            print(f"model not found: {args.model}", file=sys.stderr)
+            return 1
+        return 0 if render(model_dir) else 1
+
+    for model_dir in sorted(theme_dir.iterdir()):
         if model_dir.is_dir():
             render(model_dir)
     return 0

@@ -19,6 +19,7 @@ function argValue(name, fallback) {
 
 const THEME_DIR = path.resolve(argValue('--theme-dir', path.join(ROOT, 'public', 'pr-triage')));
 const ANSWER_KEY_PATH = path.resolve(argValue('--answer-key', path.join(THEME_DIR, 'answer-key.json')));
+const MODEL_FILTER = argValue('--model', null);
 const EXPECTED_PRS = Array.from({ length: 10 }, (_, i) => 101 + i);
 const EXPECTED_SET = new Set(EXPECTED_PRS);
 const VERDICTS = new Set(['merge', 'fix', 'close', 'hold']);
@@ -212,13 +213,16 @@ async function processModel(modelDir, answerKey) {
 async function main() {
   const answerKey = await loadAnswerKey();
   const entries = await fs.readdir(THEME_DIR, { withFileTypes: true });
-  const modelDirs = entries.filter(e => e.isDirectory()).map(e => path.join(THEME_DIR, e.name));
+  const modelDirs = entries
+    .filter(e => e.isDirectory() && (!MODEL_FILTER || e.name === MODEL_FILTER))
+    .map(e => path.join(THEME_DIR, e.name));
   const results = [];
   for (const d of modelDirs) results.push(await processModel(d, answerKey));
 
   console.log('=== pr-triage validation ===');
   if (results.length === 0) {
-    console.log('no model directories found');
+    console.error(MODEL_FILTER ? `model not found: ${MODEL_FILTER}` : 'no model directories found');
+    if (MODEL_FILTER) process.exitCode = 1;
     return;
   }
   for (const r of results) {
@@ -228,6 +232,7 @@ async function main() {
       : (r.issues?.slice(0, 2).join(' / ') ?? r.reason);
     console.log(`${status}  ${r.model}  ${detail}`);
   }
+  if (MODEL_FILTER && results.some(r => !r.ok)) process.exitCode = 1;
 }
 
 main().catch(e => { console.error(e); process.exit(1); });
