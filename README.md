@@ -58,6 +58,7 @@ oreore-bench/
 ├── README.md
 ├── public/                              ← Cloudflare Pages build root
 │   ├── index.html                       ← トップ（フィルター付きカード一覧）
+│   ├── _headers                         ← 生成HTMLへCSP sandboxを強制
 │   ├── <theme>/
 │   │   ├── PROMPT.md                    ← 凍結プロンプト（再現用、人間用）
 │   │   ├── prompt.html                  ← 凍結プロンプト整形ビュー
@@ -248,6 +249,11 @@ OpenRouter に無いモデルは、Claude Code 上で `Agent` ツール（`subag
 main への push で GitHub Actions（`.github/workflows/deploy.yml`）が wrangler デプロイを実行する。
 Pages プロジェクトは Direct Upload 型のため Cloudflare 側の Git 連携は使えない（Actions 経由が正）。
 Secrets: `CLOUDFLARE_API_TOKEN`（Pages:編集のみ）/ `CLOUDFLARE_ACCOUNT_ID`。
+
+モデル生成HTMLは未信頼入力として扱う。viewerのiframeだけでなく、Cloudflare Pagesが
+`index.html` / `output.html` を拡張子なしURLへ正規化した後の直接アクセスにも
+`public/_headers` で `Content-Security-Policy: sandbox allow-scripts` を付ける。
+`allow-same-origin` は追加しないこと。
 
 手動デプロイ（Actions が使えない時のフォールバック）:
 
