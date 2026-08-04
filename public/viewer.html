@@ -340,11 +340,15 @@
             const theme = THEMES[activeTheme];
             const model = MODELS[activeEntry.model];
             const url = artifactUrl(activeEntry);
+            const viewerParams = new URLSearchParams({
+                theme: activeTheme,
+                model: activeEntry.model
+            });
 
             backLink.href = `./index.html?theme=${encodeURIComponent(activeTheme)}`;
             detailTitle.textContent = model.label;
             entryNote.textContent = activeEntry.note;
-            openLink.href = url;
+            openLink.href = `${location.pathname}?${viewerParams}`;
             promptLink.href = `./${activeTheme}/prompt.html`;
             sourceLink.href = `https://github.com/noricha-vr/oreore-bench/tree/main/public/${activeTheme}/${activeEntry.model}`;
             artifactFrame.title = `${theme.title} — ${model.label}`;

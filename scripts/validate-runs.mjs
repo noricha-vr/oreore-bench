@@ -16,7 +16,7 @@ const RUNS_JSON = path.join(PUBLIC, 'runs.json');
 
 const HARNESS_ENUM = new Set([
   'lmstudio-api', 'gptme-lmstudio', 'claude-agent-sdk', 'claude-cli-headless',
-  'grok-cli', 'openai-api', 'openrouter-api', 'antigravity-cli', 'codex-exec', 'unknown',
+  'grok-cli', 'openai-api', 'openrouter-api', 'omlx-api', 'antigravity-cli', 'codex-exec', 'unknown',
 ]);
 const SYSTEM_PROMPT_ENUM = new Set(['none', 'harness-default', 'custom', 'unknown']);
 const EFFORT_ENUM = new Set(['none', 'low', 'medium', 'high', 'unknown']);
@@ -29,7 +29,9 @@ const RUN_ALLOWED = new Set([
   'post_processing', 'runtime', 'usage', 'cost',
 ]);
 const SAMPLING_ALLOWED = new Set(['temperature', 'max_tokens', 'top_p']);
-const RUNTIME_ALLOWED = new Set(['engine', 'quantization', 'api']);
+const RUNTIME_ALLOWED = new Set([
+  'engine', 'version', 'framework', 'model_revision', 'quantization', 'api',
+]);
 const USAGE_ALLOWED = new Set(['estimated', 'method', 'prompt_tokens', 'completion_tokens', 'note']);
 const COST_ALLOWED = new Set([
   'estimated', 'usd', 'actual_usd',
@@ -39,10 +41,10 @@ const COST_ALLOWED = new Set([
 // pricing_source enum:
 //   openrouter           = 実請求相当 (type=api、単価そのまま cost)
 //   openrouter-reference = 参考仮想コスト (type=local + 参考単価あり。actual_usd=0)
-//   local-no-reference   = 参考単価なし (type=local、gemma-4-12b-qat のみ)
+//   local-no-reference   = 参考単価なし (type=local、OpenRouter 対応 ID なし)
 const PRICING_SOURCE_ENUM = new Set(['openrouter', 'openrouter-reference', 'local-no-reference']);
 
-// runtime の値（engine/quantization/api）は index.html に innerHTML で入るため、
+// runtime の値は index.html に innerHTML で入る可能性があるため、
 // 短く安全な文字列のみ許可（英数 / ハイフン / アンダースコア / ドット / 空白 / 括弧）。
 const RUNTIME_VALUE_RE = /^[A-Za-z0-9._ ()\-]{1,40}$/;
 

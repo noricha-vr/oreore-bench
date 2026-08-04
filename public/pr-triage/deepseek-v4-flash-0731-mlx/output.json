@@ -1,0 +1,86 @@
+{
+  "triage": [
+    {
+      "pr": 105,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": ["セキュリティ脆弱性（トークン漏えい）への対応で、テストも追加済み", "CI パス、レビューアプルーブ済み、コンフリクトなし", "互換ウィンドウの設計も妥当"],
+      "actions": ["マージする", "マージ後、旧リンクの互換期間を監視し、期限後に削除する"],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 101,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": ["Issue #90 のレートリミット追加で、テストも充実", "CI パス、レビューアプルーブ済み、コンフリクトなし", "エラーを握りつぶさずログに集約する設計"],
+      "actions": ["マージする", "本番でレートリミットが機能しているか監視する"],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 110,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": ["テストあり、CI パス、レビューアプルーブ済み", "nit のみの指摘で、現状規模では問題なし"],
+      "actions": ["マージする", "将来のパフォーマンス改善として StreamingHttpResponse への移行を backlog に記録"],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 102,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": ["他人のタスクをアーカイブできる脆弱性の指摘があり、作者未返信", "テストがなく、バグ修正・新機能にはテスト必須の方針に反する"],
+      "actions": ["作者に owner 絞り込みの修正とテスト追加を要求する", "修正後に再レビューする"],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 103,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": ["broad except で例外を握りつぶしており、方針に反する", "エラーログ抑制が目的だが、サイレント失敗はデバッグ困難にする"],
+      "actions": ["例外の種類を限定し、ログに記録する（例: ConnectionError は WARNING で記録）", "テストを追加する"],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 104,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": ["依存のバージョン固定解除はサプライチェーン攻撃防止方針に反する", "CI が通っていても、再現性が失われる"],
+      "actions": ["クローズする", "依存更新は個別 PR で行う方針を維持する"],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 107,
+      "verdict": "fix",
+      "confidence": "medium",
+      "reasons": ["CI が失敗しており、マージ不可", "作者は flaky と主張するが、テストが実際に失敗しているため要調査"],
+      "actions": ["CI の失敗を再現・調査する", "DST 境界テストを修正するか、テストが正しいならコードを修正する"],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 108,
+      "verdict": "hold",
+      "confidence": "medium",
+      "reasons": ["Issue #94 で未決着の設計変更を先取りしており、パフォーマンス懸念への回答がない", "大規模なリファクタリングで、意図が不明瞭"],
+      "actions": ["作者に Issue #94 の結論とパフォーマンス影響の分析を求める", "分割や説明の追加を依頼する"],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 106,
+      "verdict": "hold",
+      "confidence": "medium",
+      "reasons": ["42 ファイルの巨大な変更で、レビュー不能", "作者が分割を拒否しており、意図が読み取りにくい"],
+      "actions": ["作者に機能ごとの分割 PR を要求する", "分割されたら順次レビューする"],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 109,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": ["既に docs/setup.md が全面改訂され main にマージ済みで、重複する", "README には既に docs/setup.md へのリンクがあり、この PR の価値が低い", "コンフリクトもあり、30 日放置"],
+      "actions": ["クローズする", "README のリンクが正しいか確認する"],
+      "risk_if_merged": "low"
+    }
+  ],
+  "priority_order": [105, 101, 110, 102, 103, 107, 108, 106, 104, 109],
+  "summary": "セキュリティ関連の PR #105 と #101 は即マージすべき。一方、#102 は脆弱性とテスト欠如、#103 はエラー握りつぶし、#104 は依存固定方針違反で対応が必要。#107 は CI 失敗、#108 と #106 は設計・規模の問題で保留。#109 は既に解決済みの内容でクローズ。"
+}

@@ -39,6 +39,7 @@ RUNNER_MAP: dict[str, tuple[str, str]] = {
     "grok CLI (single-turn)": ("grok-cli", "none"),
     "OpenRouter API": ("openrouter-api", "none"),
     "OpenRouter API (reasoning high)": ("openrouter-api", "high"),
+    "oMLX API": ("omlx-api", "unknown"),
     "codex exec (reasoning high)": ("codex-exec", "high"),
     "AntiGravity CLI (High)": ("antigravity-cli", "high"),
 }
@@ -123,6 +124,15 @@ def build_run(entry: dict) -> dict[str, Any]:
         runtime = {"engine": "lmstudio", "quantization": "qat-4bit" if "qat" in model else "q4_k_m", "api": "openai-compat"}
     elif model == "agents-a1-4b":
         runtime = {"engine": "lmstudio", "quantization": "mlx-4bit", "api": "openai-compat"}
+    elif model == "deepseek-v4-flash-0731-mlx":
+        runtime = {
+            "engine": "omlx",
+            "version": "0.5.4rc1",
+            "framework": "MLX 0.32.0",
+            "model_revision": "750040be1d918280cf1c55ccb56d02dee4520b16",
+            "quantization": "mxfp4-mxfp8-mixed",
+            "api": "openai-compat",
+        }
     else:
         runtime = None
 
@@ -133,6 +143,8 @@ def build_run(entry: dict) -> dict[str, Any]:
         "model_id": (
             "wcamon/agents-a1-4b-mlx-4bit"
             if model == "agents-a1-4b"
+            else "inferencerlabs/DeepSeek-V4-Flash-0731-MLX"
+            if model == "deepseek-v4-flash-0731-mlx"
             else model
         ),
         "harness": harness,
@@ -141,7 +153,11 @@ def build_run(entry: dict) -> dict[str, Any]:
         "generated_at": generated_at,
         "generated_at_source": "git-first-commit" if generated_at else "unknown",
         "sampling": sampling,
-        "system_prompt": "harness-default" if harness != "unknown" else "unknown",
+        "system_prompt": (
+            "none" if harness == "omlx-api"
+            else "harness-default" if harness != "unknown"
+            else "unknown"
+        ),
         "post_processing": "none",
         "runtime": runtime,
     }

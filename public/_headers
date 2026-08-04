@@ -1,0 +1,16 @@
+# Keep raw model-generated HTML in a unique origin, even when opened directly.
+/:theme/:model/
+  Content-Security-Policy: sandbox allow-scripts
+  Referrer-Policy: no-referrer
+
+/:theme/:model/index.html
+  Content-Security-Policy: sandbox allow-scripts
+  Referrer-Policy: no-referrer
+
+/pr-triage/:model/output
+  Content-Security-Policy: sandbox allow-scripts
+  Referrer-Policy: no-referrer
+
+/pr-triage/:model/output.html
+  Content-Security-Policy: sandbox allow-scripts
+  Referrer-Policy: no-referrer
