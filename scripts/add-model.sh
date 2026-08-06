@@ -74,6 +74,16 @@ if [[ -z "$THEME" || -z "$MODEL" ]]; then
   exit 1
 fi
 
+if [[ "$THEME" == "." || "$THEME" == ".." || ! "$THEME" =~ ^[A-Za-z0-9._-]+$ ]]; then
+  echo "Invalid theme: $THEME (must be a safe directory name)" >&2
+  exit 1
+fi
+
+if [[ "$MODEL" == "." || "$MODEL" == ".." || ! "$MODEL" =~ ^[A-Za-z0-9._-]+$ ]]; then
+  echo "Invalid model: $MODEL (must be a safe directory name)" >&2
+  exit 1
+fi
+
 case "$REASONING_EFFORT" in
   none|low|medium|high) ;;
   *) echo "Invalid --reasoning-effort: $REASONING_EFFORT (none|low|medium|high)" >&2; exit 1 ;;
@@ -100,6 +110,11 @@ if [[ ! -f "$PROMPT_FILE" ]]; then
   echo "Theme not found: $PROMPT_FILE" >&2
   echo "Available themes:" >&2
   ls "$ROOT/public" | grep -v '\.' | sed 's/^/  - /' >&2
+  exit 1
+fi
+
+if [[ -d "$THEME_DIR/levels" ]]; then
+  echo "[ERROR] $THEME is a json-levels theme. Use scripts/json-ladder-run.py instead." >&2
   exit 1
 fi
 

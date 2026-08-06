@@ -179,6 +179,8 @@ def detect_theme_kind(theme_dir: Path) -> str:
     input.md があれば JSON テーマ（pr-triage 等）、無ければ HTML テーマ。
     既存モデルディレクトリの出力ファイル名でも裏取りする。
     """
+    if (theme_dir / "levels").is_dir():
+        return "json-levels"
     if (theme_dir / "input.md").exists():
         return "json"
     for model_dir in sorted(theme_dir.iterdir()):
@@ -498,6 +500,15 @@ def main() -> int:
         print(f"[ERROR] theme not found: {theme_dir}/PROMPT.md", file=sys.stderr)
         return 1
 
+    kind = detect_theme_kind(theme_dir)
+    if kind == "json-levels":
+        print(
+            "[ERROR] json-ladder must use scripts/json-ladder-run.py; "
+            "openrouter-run.py only supports one output per request.",
+            file=sys.stderr,
+        )
+        return 1
+
     try:
         model_id = resolve_model_id(args.model)
         pricing = load_pricing(args.model)
@@ -508,7 +519,6 @@ def main() -> int:
         print(f"[ERROR] {exc}", file=sys.stderr)
         return 1
 
-    kind = detect_theme_kind(theme_dir)
     out_dir = theme_dir / args.model
     out_name = "output.json" if kind == "json" else "index.html"
     out_file = out_dir / out_name
