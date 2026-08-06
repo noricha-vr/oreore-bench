@@ -169,7 +169,7 @@ TEMPLATE = """<!DOCTYPE html>
     <a href="../../" class="back">← OreOre-Bench に戻る</a>
     <span class="tag">json-ladder ・ {provider} ・ {type_label}</span>
     <h1>{model_label}</h1>
-    <p class="sub">長文随筆から、レベル1〜5 のスキーマで JSON を抽出させる書式遵守テスト。</p>
+    <p class="sub">長文随筆から、レベル1〜6 のスキーマで JSON を抽出させる書式遵守テスト。</p>
   </div>
 </header>
 
@@ -336,7 +336,7 @@ def render(model_dir: Path) -> bool:
         type_label=info["type"],
         model_label=info["label"],
         parse_pass_count=escape(str(meta.get("parse_pass_count", 0))),
-        levels_total=escape(str(meta.get("levels_total", 5))),
+        levels_total=escape(str(meta.get("levels_total", 6))),
         score_pct=escape(str(meta.get("score_pct", 0))),
         body=render_body(meta, raw_by_level(data)),
     )

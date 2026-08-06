@@ -8,7 +8,7 @@
       "finish_reason": "stop",
       "usage": {
         "prompt_tokens": 1526,
-        "completion_tokens": 464
+        "completion_tokens": 415
       }
     },
     {
@@ -17,7 +17,7 @@
       "finish_reason": "stop",
       "usage": {
         "prompt_tokens": 1644,
-        "completion_tokens": 1304
+        "completion_tokens": 1321
       }
     },
     {
@@ -26,7 +26,7 @@
       "finish_reason": "stop",
       "usage": {
         "prompt_tokens": 1674,
-        "completion_tokens": 1731
+        "completion_tokens": 1194
       }
     },
     {
@@ -35,7 +35,7 @@
       "finish_reason": "stop",
       "usage": {
         "prompt_tokens": 1671,
-        "completion_tokens": 1705
+        "completion_tokens": 1061
       }
     },
     {
@@ -44,7 +44,16 @@
       "finish_reason": "stop",
       "usage": {
         "prompt_tokens": 2175,
-        "completion_tokens": 3154
+        "completion_tokens": 3692
+      }
+    },
+    {
+      "level": 6,
+      "raw": "```json\n{\n  \"sections\": [\n    {\n      \"index\": 1,\n      \"number_kanji\": \"一\",\n      \"heading\": \"炎の温度\",\n      \"first_sentence\": \"祖父、佐伯宗一郎は硝子職人だった。\",\n      \"last_sentence\": \"その言葉の意味が本当に分かったのは、ずっと後になってからだ。\",\n      \"paragraph_count\": 5,\n      \"sentence_count\": 13,\n      \"paragraph_openings\": [\n        \"祖父、佐伯宗一郎は硝子職人だった。\",\n        \"夏の盛りに訪ねると、工房の中は外よりもずっと熱かった。\",\n        \"窯の火は生き物だと祖父は信じていた。\",\n        \"「ええか、千鶴。急ぐな。硝子より先に、心が割れる」\",\n        \"汗だくの祖父は、よくそう言った。\"\n      ],\n      \"has_direct_quote\": true,\n      \"years\": [\n        1961\n      ]\n    },\n    {\n      \"index\": 2,\n      \"number_kanji\": \"二\",\n      \"heading\": \"姉と火\",\n      \"first_sentence\": \"姉の綾乃は私より三つ上で、手先は私よりずっと器用だった。\",\n      \"last_sentence\": \"それが祖父の口癖だった。\",\n      \"paragraph_count\": 5,\n      \"sentence_count\": 18,\n      \"paragraph_openings\": [\n        \"姉の綾乃は私より三つ上で、手先は私よりずっと器用だった。\",\n        \"「祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い」\",\n        \"姉がそう打ち明けたのは、雪の降る夜だった。\",\n        \"祖父の仕事は、大きく五つの工程に分かれていた。\",\n        \"「硝子は正直や。手ぇ抜いた分だけ、濁る」\"\n      ],\n      \"has_direct_quote\": true,\n      \"years\": []\n    },\n    {\n      \"index\": 3,\n      \"number_kanji\": \"三\",\n      \"heading\": \"マルコの置き土産\",\n      \"first_sentence\": \"1989年の秋、イタリアから留学生のマルコが工房にやって来た。\",\n      \"last_sentence\": \"紙は熱で飴色になり、いつのまにか文字ごと工房の一部になった。\",\n      \"paragraph_count\": 2,\n      \"sentence_count\": 11,\n      \"paragraph_openings\": [\n        \"1989年の秋、イタリアから留学生のマルコが工房にやって来た。\",\n        \"1978年に祖父が県の工芸展で賞を獲った時の盃を、マルコは棚から下ろしては何度も眺めていた。\"\n      ],\n      \"has_direct_quote\": false,\n      \"years\": [\n        1978,\n        1989\n      ]\n    },\n    {\n      \"index\": 4,\n      \"number_kanji\": \"四\",\n      \"heading\": \"窯じまい\",\n      \"first_sentence\": \"祖父が死んだのは2001年である。\",\n      \"last_sentence\": \"そうしていると耳の奥で、あの日の火の音がする。\",\n      \"paragraph_count\": 5,\n      \"sentence_count\": 16,\n      \"paragraph_openings\": [\n        \"祖父が死んだのは2001年である。\",\n        \"遺品を整理していた姉が、私宛ての封筒を見つけた。\",\n        \"> 千鶴へ\",\n        \"葬儀のあと、姉と二人で工房を掃除した。\",\n        \"工房はいま物置になっている。\"\n      ],\n      \"has_direct_quote\": false,\n      \"years\": [\n        2001\n      ]\n    }\n  ],\n  \"claims\": [\n    {\n      \"id\": \"grandfather_wanted_sister_as_successor\",\n      \"verdict\": \"speculated\",\n      \"evidence\": \"祖父は姉に跡を継がせたがっていたのだと思う。\"\n    },\n    {\n      \"id\": \"grandmother_mediated_between_sister_and_grandfather\",\n      \"verdict\": \"speculated\",\n      \"evidence\": \"祖母の美津江が生きていた頃は、祖母が姉と祖父のあいだを上手に取り持っていたらしいが、幼かった私はその頃をよく知らない。\"\n    },\n    {\n      \"id\": \"sister_moved_away_from_the_city\",\n      \"verdict\": \"absent\",\n      \"evidence\": null\n    },\n    {\n      \"id\": \"narrator_did_not_become_glassblower\",\n      \"verdict\": \"stated\",\n      \"evidence\": \"私は硝子職人にはならなかったけれど、いまでも迷うたびにあの工房の戸を開け、冷えた窯の前にしばらく立つ。\"\n    }\n  ],\n  \"stated_facts\": [\n    {\n      \"id\": \"melting_temperature_c\",\n      \"value\": 1400,\n      \"stated\": true\n    },\n    {\n      \"id\": \"workshop_founded_year\",\n      \"value\": 1961,\n      \"stated\": true\n    },\n    {\n      \"id\": \"workshop_closed_year\",\n      \"value\": null,\n      \"stated\": false\n    },\n    {\n      \"id\": \"grandfather_years_at_the_kiln\",\n      \"value\": 40,\n      \"stated\": true\n    },\n    {\n      \"id\": \"sister_age_gap_to_narrator\",\n      \"value\": 3,\n      \"stated\": true\n    }\n  ],\n  \"counts\": {\n    \"sections\": 4,\n    \"direct_quotes\": 3,\n    \"letter_lines\": 3,\n    \"years_in_text\": 4\n  }\n}\n```",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 2685,
+        "completion_tokens": 9127
       }
     }
   ]

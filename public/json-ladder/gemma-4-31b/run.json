@@ -2,10 +2,10 @@
   "schema_version": 1,
   "theme": "json-ladder",
   "model": "gemma-4-31b",
-  "model_id": "gemma-4-31b",
-  "harness": "lmstudio-api",
+  "model_id": "gemma4:31b",
+  "harness": "ollama-api",
   "reasoning_effort": "unknown",
-  "attempts": 1,
+  "attempts": 6,
   "generated_at": null,
   "generated_at_source": "unknown",
   "sampling": {
@@ -16,7 +16,7 @@
   "system_prompt": "none",
   "post_processing": "json-ladder-5-levels",
   "runtime": {
-    "engine": "lmstudio",
+    "engine": "ollama",
     "api": "openai-compat",
     "quantization": "q4_k_m",
     "hardware": "Mac Studio M3 Ultra 512GB"
@@ -24,9 +24,9 @@
   "usage": {
     "estimated": false,
     "method": "api-usage",
-    "prompt_tokens": 8690,
-    "completion_tokens": 8358,
-    "note": "LM Studio API 実測。5段階を独立リクエストで合算。"
+    "prompt_tokens": 11375,
+    "completion_tokens": 16810,
+    "note": "Ollama API 実測。5段階を独立リクエストで合算。"
   },
   "cost": {
     "estimated": true,

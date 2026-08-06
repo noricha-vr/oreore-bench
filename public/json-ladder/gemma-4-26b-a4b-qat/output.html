@@ -92,18 +92,18 @@
     <a href="../../" class="back">← OreOre-Bench に戻る</a>
     <span class="tag">json-ladder ・ Google ・ ローカル LLM</span>
     <h1>Gemma 4 26B-A4B (QAT)</h1>
-    <p class="sub">長文随筆から、レベル1〜5 のスキーマで JSON を抽出させる書式遵守テスト。</p>
+    <p class="sub">長文随筆から、レベル1〜6 のスキーマで JSON を抽出させる書式遵守テスト。</p>
   </div>
 </header>
 
 <div class="headline">
   <div class="headline-inner">
     <div class="metric">
-      <span class="value">parse 5/5</span>
+      <span class="value">parse 6/6</span>
       <span class="label">JSON パース成功</span>
     </div>
     <div class="metric">
-      <span class="value">score 100%</span>
+      <span class="value">score 98%</span>
       <span class="label">answer-key 一致率</span>
     </div>
   </div>
@@ -1003,6 +1003,746 @@
   &quot;analysis&quot;: {
     &quot;grandfather_last_words&quot;: null,
     &quot;narrator_became_glassblower&quot;: false
+  }
+}
+```</pre>
+      </details>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>レベル 6</h2>
+      <div class="badges">
+        <span class="badge pass">JSON パース OK</span>
+        <span class="badge fail">スキーマ準拠 FAIL</span>
+        <span class="badge score">accuracy 92%</span>
+      </div>
+    </div>
+    <div class="panel-body">
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>path</th><th>got</th><th>expected</th><th>match</th></tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="mono">sections</td>
+            <td class="mono">4</td>
+            <td class="mono">4</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[0].index</td>
+            <td class="mono">1</td>
+            <td class="mono">1</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[0].number_kanji</td>
+            <td class="mono">一</td>
+            <td class="mono">一</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[0].heading</td>
+            <td class="mono">炎の温度</td>
+            <td class="mono">炎の温度</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[0].first_sentence</td>
+            <td class="mono">祖父、佐伯宗一郎は硝子職人だった。</td>
+            <td class="mono">祖父、佐伯宗一郎は硝子職人だった。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[0].last_sentence</td>
+            <td class="mono">その言葉の意味が本当に分かったのは、ずっと後になってからだ。</td>
+            <td class="mono">その言葉の意味が本当に分かったのは、ずっと後になってからだ。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[0].paragraph_count</td>
+            <td class="mono">5</td>
+            <td class="mono">5</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[0].sentence_count</td>
+            <td class="mono">14</td>
+            <td class="mono">14</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[0].paragraph_openings</td>
+            <td class="mono">5</td>
+            <td class="mono">5</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[0].paragraph_openings[0]</td>
+            <td class="mono">祖父、佐伯宗一郎は硝子職人だった。</td>
+            <td class="mono">祖父、佐伯宗一郎は硝子職人だった。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[0].paragraph_openings[1]</td>
+            <td class="mono">夏の盛りに訪ねると、工房の中は外よりもずっと熱かった。</td>
+            <td class="mono">夏の盛りに訪ねると、工房の中は外よりもずっと熱かった。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[0].paragraph_openings[2]</td>
+            <td class="mono">窯の火は生き物だと祖父は信じていた。</td>
+            <td class="mono">窯の火は生き物だと祖父は信じていた。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[0].paragraph_openings[3]</td>
+            <td class="mono">「ええか、千鶴。急ぐな。硝子より先に、心が割れる」</td>
+            <td class="mono">「ええか、千鶴。急ぐな。硝子より先に、心が割れる」</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[0].paragraph_openings[4]</td>
+            <td class="mono">汗だくの祖父は、よくそう言った。</td>
+            <td class="mono">汗だくの祖父は、よくそう言った。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[0].has_direct_quote</td>
+            <td class="mono">true</td>
+            <td class="mono">true</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[0].years</td>
+            <td class="mono">1</td>
+            <td class="mono">1</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[0].years[0]</td>
+            <td class="mono">1961</td>
+            <td class="mono">1961</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[1].index</td>
+            <td class="mono">2</td>
+            <td class="mono">2</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[1].number_kanji</td>
+            <td class="mono">二</td>
+            <td class="mono">二</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[1].heading</td>
+            <td class="mono">姉と火</td>
+            <td class="mono">姉と火</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[1].first_sentence</td>
+            <td class="mono">姉の綾乃は私より三つ上で、手先は私よりずっと器用だった。</td>
+            <td class="mono">姉の綾乃は私より三つ上で、手先は私よりずっと器用だった。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[1].last_sentence</td>
+            <td class="mono">それが祖父の口癖だった。</td>
+            <td class="mono">それが祖父の口癖だった。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">sections[1].paragraph_count</td>
+            <td class="mono">4</td>
+            <td class="mono">6</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[1].sentence_count</td>
+            <td class="mono">19</td>
+            <td class="mono">19</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">sections[1].paragraph_openings</td>
+            <td class="mono">4</td>
+            <td class="mono">6</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[1].paragraph_openings[0]</td>
+            <td class="mono">姉の綾乃は私より三つ上で、手先は私よりずっと器用だった。</td>
+            <td class="mono">姉の綾乃は私より三つ上で、手先は私よりずっと器用だった。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[1].paragraph_openings[1]</td>
+            <td class="mono">「祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い」</td>
+            <td class="mono">「祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い」</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">sections[1].paragraph_openings[2]</td>
+            <td class="mono">祖父の仕事は、大きく五つの工程に分かれていた。</td>
+            <td class="mono">姉がそう打ち明けたのは、雪の降る夜だった。</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">sections[1].paragraph_openings[3]</td>
+            <td class="mono">「硝子は正直や。手ぇ抜いた分だけ、濁る」</td>
+            <td class="mono">祖父の仕事は、大きく五つの工程に分かれていた。</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">sections[1].paragraph_openings[4]</td>
+            <td class="mono">null</td>
+            <td class="mono">「硝子は正直や。手ぇ抜いた分だけ、濁る」</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">sections[1].paragraph_openings[5]</td>
+            <td class="mono">null</td>
+            <td class="mono">それが祖父の口癖だった。</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[1].has_direct_quote</td>
+            <td class="mono">true</td>
+            <td class="mono">true</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[1].years</td>
+            <td class="mono">0</td>
+            <td class="mono">0</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[2].index</td>
+            <td class="mono">3</td>
+            <td class="mono">3</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[2].number_kanji</td>
+            <td class="mono">三</td>
+            <td class="mono">三</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[2].heading</td>
+            <td class="mono">マルコの置き土産</td>
+            <td class="mono">マルコの置き土産</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[2].first_sentence</td>
+            <td class="mono">1989年の秋、イタリアから留学生のマルコが工房にやって来た。</td>
+            <td class="mono">1989年の秋、イタリアから留学生のマルコが工房にやって来た。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[2].last_sentence</td>
+            <td class="mono">紙は熱で飴色になり、いつのまにか文字ごと工房の一部になった。</td>
+            <td class="mono">紙は熱で飴色になり、いつのまにか文字ごと工房の一部になった。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[2].paragraph_count</td>
+            <td class="mono">2</td>
+            <td class="mono">2</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[2].sentence_count</td>
+            <td class="mono">11</td>
+            <td class="mono">11</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[2].paragraph_openings</td>
+            <td class="mono">2</td>
+            <td class="mono">2</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[2].paragraph_openings[0]</td>
+            <td class="mono">1989年の秋、イタリアから留学生のマルコが工房にやって来た。</td>
+            <td class="mono">1989年の秋、イタリアから留学生のマルコが工房にやって来た。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[2].paragraph_openings[1]</td>
+            <td class="mono">1978年に祖父が県の工芸展で賞を獲った時の盃を、マルコは棚から下ろしては何度も眺めていた。</td>
+            <td class="mono">1978年に祖父が県の工芸展で賞を獲った時の盃を、マルコは棚から下ろしては何度も眺めていた。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[2].has_direct_quote</td>
+            <td class="mono">false</td>
+            <td class="mono">false</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[2].years</td>
+            <td class="mono">2</td>
+            <td class="mono">2</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[2].years[0]</td>
+            <td class="mono">1978</td>
+            <td class="mono">1978</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[2].years[1]</td>
+            <td class="mono">1989</td>
+            <td class="mono">1989</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[3].index</td>
+            <td class="mono">4</td>
+            <td class="mono">4</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[3].number_kanji</td>
+            <td class="mono">四</td>
+            <td class="mono">四</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[3].heading</td>
+            <td class="mono">窯じまい</td>
+            <td class="mono">窯じまい</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[3].first_sentence</td>
+            <td class="mono">祖父が死んだのは2001年である。</td>
+            <td class="mono">祖父が死んだのは2001年である。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[3].last_sentence</td>
+            <td class="mono">そうしていると耳の奥で、あの日の火の音がする。</td>
+            <td class="mono">そうしていると耳の奥で、あの日の火の音がする。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[3].paragraph_count</td>
+            <td class="mono">5</td>
+            <td class="mono">5</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[3].sentence_count</td>
+            <td class="mono">15</td>
+            <td class="mono">15</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[3].paragraph_openings</td>
+            <td class="mono">5</td>
+            <td class="mono">5</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[3].paragraph_openings[0]</td>
+            <td class="mono">祖父が死んだのは2001年である。</td>
+            <td class="mono">祖父が死んだのは2001年である。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[3].paragraph_openings[1]</td>
+            <td class="mono">遺品を整理していた姉が、私宛ての封筒を見つけた。</td>
+            <td class="mono">遺品を整理していた姉が、私宛ての封筒を見つけた。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">sections[3].paragraph_openings[2]</td>
+            <td class="mono">&gt; 千鶴へ</td>
+            <td class="mono">千鶴へ</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[3].paragraph_openings[3]</td>
+            <td class="mono">葬儀のあと、姉と二人で工房を掃除した。</td>
+            <td class="mono">葬儀のあと、姉と二人で工房を掃除した。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[3].paragraph_openings[4]</td>
+            <td class="mono">工房はいま物置になっている。</td>
+            <td class="mono">工房はいま物置になっている。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[3].has_direct_quote</td>
+            <td class="mono">false</td>
+            <td class="mono">false</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[3].years</td>
+            <td class="mono">1</td>
+            <td class="mono">1</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[3].years[0]</td>
+            <td class="mono">2001</td>
+            <td class="mono">2001</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">claims</td>
+            <td class="mono">4</td>
+            <td class="mono">4</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">claims[0].id</td>
+            <td class="mono">grandfather_wanted_sister_as_successor</td>
+            <td class="mono">grandfather_wanted_sister_as_successor</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">claims[0].verdict</td>
+            <td class="mono">speculated</td>
+            <td class="mono">speculated</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">claims[0].evidence</td>
+            <td class="mono">祖父は姉に跡を継がせたがっていたのだと思う。</td>
+            <td class="mono">祖父は姉に跡を継がせたがっていたのだと思う。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">claims[1].id</td>
+            <td class="mono">grandmother_mediated_between_sister_and_grandfather</td>
+            <td class="mono">grandmother_mediated_between_sister_and_grandfather</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">claims[1].verdict</td>
+            <td class="mono">speculated</td>
+            <td class="mono">speculated</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">claims[1].evidence</td>
+            <td class="mono">祖母が姉と祖父のあいだを上手に取り持っていたらしいが、幼かった私はその頃をよく知らない。</td>
+            <td class="mono">祖母の美津江が生きていた頃は、祖母が姉と祖父のあいだを上手に取り持っていたらしいが、幼かった私はその頃をよく知らない。</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr>
+            <td class="mono">claims[2].id</td>
+            <td class="mono">sister_moved_away_from_the_city</td>
+            <td class="mono">sister_moved_away_from_the_city</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">claims[2].verdict</td>
+            <td class="mono">absent</td>
+            <td class="mono">absent</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">claims[2].evidence</td>
+            <td class="mono">null</td>
+            <td class="mono">null</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">claims[3].id</td>
+            <td class="mono">narrator_did_not_become_glassblower</td>
+            <td class="mono">narrator_did_not_become_glassblower</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">claims[3].verdict</td>
+            <td class="mono">stated</td>
+            <td class="mono">stated</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">claims[3].evidence</td>
+            <td class="mono">私は硝子職人にはならなかったけれど、いまでも迷うたびにあの工房の戸を開け、冷えた窯の前にしばらく立つ。</td>
+            <td class="mono">私は硝子職人にはならなかったけれど、いまでも迷うたびにあの工房の戸を開け、冷えた窯の前にしばらく立つ。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">stated_facts</td>
+            <td class="mono">5</td>
+            <td class="mono">5</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">stated_facts[0].id</td>
+            <td class="mono">melting_temperature_c</td>
+            <td class="mono">melting_temperature_c</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">stated_facts[0].stated</td>
+            <td class="mono">true</td>
+            <td class="mono">true</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">stated_facts[0].value</td>
+            <td class="mono">1400</td>
+            <td class="mono">1400</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">stated_facts[1].id</td>
+            <td class="mono">workshop_founded_year</td>
+            <td class="mono">workshop_founded_year</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">stated_facts[1].stated</td>
+            <td class="mono">true</td>
+            <td class="mono">true</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">stated_facts[1].value</td>
+            <td class="mono">1961</td>
+            <td class="mono">1961</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">stated_facts[2].id</td>
+            <td class="mono">workshop_closed_year</td>
+            <td class="mono">workshop_closed_year</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">stated_facts[2].stated</td>
+            <td class="mono">false</td>
+            <td class="mono">false</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">stated_facts[2].value</td>
+            <td class="mono">null</td>
+            <td class="mono">null</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">stated_facts[3].id</td>
+            <td class="mono">grandfather_years_at_the_kiln</td>
+            <td class="mono">grandfather_years_at_the_kiln</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">stated_facts[3].stated</td>
+            <td class="mono">true</td>
+            <td class="mono">true</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">stated_facts[3].value</td>
+            <td class="mono">40</td>
+            <td class="mono">40</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">stated_facts[4].id</td>
+            <td class="mono">sister_age_gap_to_narrator</td>
+            <td class="mono">sister_age_gap_to_narrator</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">stated_facts[4].stated</td>
+            <td class="mono">true</td>
+            <td class="mono">true</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">stated_facts[4].value</td>
+            <td class="mono">3</td>
+            <td class="mono">3</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">counts.sections</td>
+            <td class="mono">4</td>
+            <td class="mono">4</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">counts.direct_quotes</td>
+            <td class="mono">3</td>
+            <td class="mono">3</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">counts.letter_lines</td>
+            <td class="mono">3</td>
+            <td class="mono">3</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">counts.years_in_text</td>
+            <td class="mono">4</td>
+            <td class="mono">4</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+<ul class="issues"><li>missing: sections[1].paragraph_openings[4]</li><li>missing: sections[1].paragraph_openings[5]</li></ul>
+
+      <details>
+        <summary>生応答を表示（3,189 chars）</summary>
+        <pre class="raw">```json
+{
+  &quot;sections&quot;: [
+    {
+      &quot;index&quot;: 1,
+      &quot;number_kanji&quot;: &quot;一&quot;,
+      &quot;heading&quot;: &quot;炎の温度&quot;,
+      &quot;first_sentence&quot;: &quot;祖父、佐伯宗一郎は硝子職人だった。&quot;,
+      &quot;last_sentence&quot;: &quot;その言葉の意味が本当に分かったのは、ずっと後になってからだ。&quot;,
+      &quot;paragraph_count&quot;: 5,
+      &quot;sentence_count&quot;: 14,
+      &quot;paragraph_openings&quot;: [
+        &quot;祖父、佐伯宗一郎は硝子職人だった。&quot;,
+        &quot;夏の盛りに訪ねると、工房の中は外よりもずっと熱かった。&quot;,
+        &quot;窯の火は生き物だと祖父は信じていた。&quot;,
+        &quot;「ええか、千鶴。急ぐな。硝子より先に、心が割れる」&quot;,
+        &quot;汗だくの祖父は、よくそう言った。&quot;
+      ],
+      &quot;has_direct_quote&quot;: true,
+      &quot;years&quot;: [
+        1961
+      ]
+    },
+    {
+      &quot;index&quot;: 2,
+      &quot;number_kanji&quot;: &quot;二&quot;,
+      &quot;heading&quot;: &quot;姉と火&quot;,
+      &quot;first_sentence&quot;: &quot;姉の綾乃は私より三つ上で、手先は私よりずっと器用だった。&quot;,
+      &quot;last_sentence&quot;: &quot;それが祖父の口癖だった。&quot;,
+      &quot;paragraph_count&quot;: 4,
+      &quot;sentence_count&quot;: 19,
+      &quot;paragraph_openings&quot;: [
+        &quot;姉の綾乃は私より三つ上で、手先は私よりずっと器用だった。&quot;,
+        &quot;「祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い」&quot;,
+        &quot;祖父の仕事は、大きく五つの工程に分かれていた。&quot;,
+        &quot;「硝子は正直や。手ぇ抜いた分だけ、濁る」&quot;
+      ],
+      &quot;has_direct_quote&quot;: true,
+      &quot;years&quot;: []
+    },
+    {
+      &quot;index&quot;: 3,
+      &quot;number_kanji&quot;: &quot;三&quot;,
+      &quot;heading&quot;: &quot;マルコの置き土産&quot;,
+      &quot;first_sentence&quot;: &quot;1989年の秋、イタリアから留学生のマルコが工房にやって来た。&quot;,
+      &quot;last_sentence&quot;: &quot;紙は熱で飴色になり、いつのまにか文字ごと工房の一部になった。&quot;,
+      &quot;paragraph_count&quot;: 2,
+      &quot;sentence_count&quot;: 11,
+      &quot;paragraph_openings&quot;: [
+        &quot;1989年の秋、イタリアから留学生のマルコが工房にやって来た。&quot;,
+        &quot;1978年に祖父が県の工芸展で賞を獲った時の盃を、マルコは棚から下ろしては何度も眺めていた。&quot;
+      ],
+      &quot;has_direct_quote&quot;: false,
+      &quot;years&quot;: [
+        1978,
+        1989
+      ]
+    },
+    {
+      &quot;index&quot;: 4,
+      &quot;number_kanji&quot;: &quot;四&quot;,
+      &quot;heading&quot;: &quot;窯じまい&quot;,
+      &quot;first_sentence&quot;: &quot;祖父が死んだのは2001年である。&quot;,
+      &quot;last_sentence&quot;: &quot;そうしていると耳の奥で、あの日の火の音がする。&quot;,
+      &quot;paragraph_count&quot;: 5,
+      &quot;sentence_count&quot;: 15,
+      &quot;paragraph_openings&quot;: [
+        &quot;祖父が死んだのは2001年である。&quot;,
+        &quot;遺品を整理していた姉が、私宛ての封筒を見つけた。&quot;,
+        &quot;&gt; 千鶴へ&quot;,
+        &quot;葬儀のあと、姉と二人で工房を掃除した。&quot;,
+        &quot;工房はいま物置になっている。&quot;
+      ],
+      &quot;has_direct_quote&quot;: false,
+      &quot;years&quot;: [
+        2001
+      ]
+    }
+  ],
+  &quot;claims&quot;: [
+    {
+      &quot;id&quot;: &quot;grandfather_wanted_sister_as_successor&quot;,
+      &quot;verdict&quot;: &quot;speculated&quot;,
+      &quot;evidence&quot;: &quot;祖父は姉に跡を継がせたがっていたのだと思う。&quot;
+    },
+    {
+      &quot;id&quot;: &quot;grandmother_mediated_between_sister_and_grandfather&quot;,
+      &quot;verdict&quot;: &quot;speculated&quot;,
+      &quot;evidence&quot;: &quot;祖母が姉と祖父のあいだを上手に取り持っていたらしいが、幼かった私はその頃をよく知らない。&quot;
+    },
+    {
+      &quot;id&quot;: &quot;sister_moved_away_from_the_city&quot;,
+      &quot;verdict&quot;: &quot;absent&quot;,
+      &quot;evidence&quot;: null
+    },
+    {
+      &quot;id&quot;: &quot;narrator_did_not_become_glassblower&quot;,
+      &quot;verdict&quot;: &quot;stated&quot;,
+      &quot;evidence&quot;: &quot;私は硝子職人にはならなかったけれど、いまでも迷うたびにあの工房の戸を開け、冷えた窯の前にしばらく立つ。&quot;
+    }
+  ],
+  &quot;stated_facts&quot;: [
+    {
+      &quot;id&quot;: &quot;melting_temperature_c&quot;,
+      &quot;value&quot;: 1400,
+      &quot;stated&quot;: true
+    },
+    {
+      &quot;id&quot;: &quot;workshop_founded_year&quot;,
+      &quot;value&quot;: 1961,
+      &quot;stated&quot;: true
+    },
+    {
+      &quot;id&quot;: &quot;workshop_closed_year&quot;,
+      &quot;value&quot;: null,
+      &quot;stated&quot;: false
+    },
+    {
+      &quot;id&quot;: &quot;grandfather_years_at_the_kiln&quot;,
+      &quot;value&quot;: 40,
+      &quot;stated&quot;: true
+    },
+    {
+      &quot;id&quot;: &quot;sister_age_gap_to_narrator&quot;,
+      &quot;value&quot;: 3,
+      &quot;stated&quot;: true
+    }
+  ],
+  &quot;counts&quot;: {
+    &quot;sections&quot;: 4,
+    &quot;direct_quotes&quot;: 3,
+    &quot;letter_lines&quot;: 3,
+    &quot;years_in_text&quot;: 4
   }
 }
 ```</pre>

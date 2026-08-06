@@ -1,0 +1,138 @@
+```json
+{
+  "sections": [
+    {
+      "index": 1,
+      "number_kanji": "一",
+      "heading": "炎の温度",
+      "first_sentence": "祖父、佐伯宗一郎は硝子職人だった。",
+      "last_sentence": "その言葉の意味が本当に分かったのは、ずっと後になってからだ。",
+      "paragraph_count": 5,
+      "sentence_count": 14,
+      "paragraph_openings": [
+        "祖父、佐伯宗一郎は硝子職人だった。",
+        "夏の盛りに訪ねると、工房の中は外よりもずっと熱かった。",
+        "窯の火は生き物だと祖父は信じていた。",
+        "「ええか、千鶴。急ぐな。硝子より先に、心が割れる」",
+        "汗だくの祖父は、よくそう言った。"
+      ],
+      "has_direct_quote": true,
+      "years": [
+        1961
+      ]
+    },
+    {
+      "index": 2,
+      "number_kanji": "二",
+      "heading": "姉と火",
+      "first_sentence": "姉の綾乃は私より三つ上で、手先は私よりずっと器用だった。",
+      "last_sentence": "それが祖父の口癖だった。",
+      "paragraph_count": 6,
+      "sentence_count": 19,
+      "paragraph_openings": [
+        "姉の綾乃は私より三つ上で、手先は私よりずっと器用だった。",
+        "「祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い」",
+        "姉がそう打ち明けたのは、雪の降る夜だった。",
+        "祖父の仕事は、大きく五つの工程に分かれていた。",
+        "「硝子は正直や。手ぇ抜いた分だけ、濁る」",
+        "それが祖父の口癖だった。"
+      ],
+      "has_direct_quote": true,
+      "years": []
+    },
+    {
+      "index": 3,
+      "number_kanji": "三",
+      "heading": "マルコの置き土産",
+      "first_sentence": "1989年の秋、イタリアから留学生のマルコが工房にやって来た。",
+      "last_sentence": "紙は熱で飴色になり、いつのまにか文字ごと工房の一部になった。",
+      "paragraph_count": 2,
+      "sentence_count": 11,
+      "paragraph_openings": [
+        "1989年の秋、イタリアから留学生のマルコが工房にやって来た。",
+        "1978年に祖父が県の工芸展で賞を獲った時の盃を、マルコは棚から下ろしては何度も眺めていた。"
+      ],
+      "has_direct_quote": false,
+      "years": [
+        1989,
+        1978
+      ]
+    },
+    {
+      "index": 4,
+      "number_kanji": "四",
+      "heading": "窯じまい",
+      "first_sentence": "祖父が死んだのは2001年である。",
+      "last_sentence": "そうしていると耳の奥で、あの日の火の音がする。",
+      "paragraph_count": 5,
+      "sentence_count": 15,
+      "paragraph_openings": [
+        "祖父が死んだのは2001年である。",
+        "遺品を整理していた姉が、私宛ての封筒を見つけた。",
+        "> 千鶴へ",
+        "葬儀のあと、姉と二人で工房を掃除した。",
+        "工房はいま物置になっている。"
+      ],
+      "has_direct_quote": false,
+      "years": [
+        2001
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "id": "grandfather_wanted_sister_as_successor",
+      "verdict": "speculated",
+      "evidence": "祖父は姉に跡を継がせたがっていたのだと思う。"
+    },
+    {
+      "id": "grandmother_mediated_between_sister_and_grandfather",
+      "verdict": "speculated",
+      "evidence": "祖母の美津江が生きていた頃は、祖母が姉と祖父のあいだを上手に取り持っていたらしいが、幼かった私はその頃をよく知らない。"
+    },
+    {
+      "id": "sister_moved_away_from_the_city",
+      "verdict": "absent",
+      "evidence": null
+    },
+    {
+      "id": "narrator_did_not_become_glassblower",
+      "verdict": "stated",
+      "evidence": "私は硝子職人にはならなかったけれど、いまでも迷うたびにあの工房の戸を開け、冷えた窯の前にしばらく立つ。"
+    }
+  ],
+  "stated_facts": [
+    {
+      "id": "melting_temperature_c",
+      "value": 1400,
+      "stated": true
+    },
+    {
+      "id": "workshop_founded_year",
+      "value": 1961,
+      "stated": true
+    },
+    {
+      "id": "workshop_closed_year",
+      "value": null,
+      "stated": false
+    },
+    {
+      "id": "grandfather_years_at_the_kiln",
+      "value": 40,
+      "stated": true
+    },
+    {
+      "id": "sister_age_gap_to_narrator",
+      "value": 3,
+      "stated": true
+    }
+  ],
+  "counts": {
+    "sections": 4,
+    "direct_quotes": 3,
+    "letter_lines": 3,
+    "years_in_text": 4
+  }
+}
+```

@@ -1,7 +1,0 @@
-{
-  "quotes": [
-    { "speaker": "千鶴", "text": "ええか、千鶴。急ぐな。硝子より先に、心が割れる" }
-  ],
-  "english_phrase": "\"Glass remembers everything.\"",
-  "letter_excerpt": "千鶴へ\n窯の火は落とした。だが、おまえの中の火まで消えたわけではない。\n迷ったら、手を動かせ。"
-}

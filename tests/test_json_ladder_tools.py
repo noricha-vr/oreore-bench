@@ -178,8 +178,8 @@ def test_answer_key_japanese_excerpts_exist_verbatim_in_input() -> None:
 def test_validator_scores_perfect_output(tmp_path: Path) -> None:
     meta = validate_and_load_meta(tmp_path / "json-ladder", perfect_output())
 
-    assert meta["levels_total"] == 5
-    assert meta["parse_pass_count"] == 5
+    assert meta["levels_total"] == len(answer_key()["levels"])
+    assert meta["parse_pass_count"] == meta["levels_total"]
     assert meta["score_pct"] == 100
     for level in meta["levels"]:
         assert level["valid_json"] is True
@@ -191,7 +191,7 @@ def test_validator_scores_perfect_output(tmp_path: Path) -> None:
 def test_validator_accepts_unfenced_json(tmp_path: Path) -> None:
     meta = validate_and_load_meta(tmp_path / "json-ladder", perfect_output(fenced=False))
 
-    assert meta["parse_pass_count"] == 5
+    assert meta["parse_pass_count"] == len(answer_key()["levels"])
     assert meta["score_pct"] == 100
 
 
@@ -204,14 +204,16 @@ def test_garbage_raw_fails_only_its_own_level(tmp_path: Path) -> None:
 
     meta = validate_and_load_meta(tmp_path / "json-ladder", output)
 
-    assert meta["parse_pass_count"] == 4
+    total = len(answer_key()["levels"])
+    assert meta["parse_pass_count"] == total - 1
     level3 = meta_level(meta, 3)
     assert level3["valid_json"] is False
     assert level3["accuracy_pct"] == 0
     assert level3["verdicts"] == []
     assert "parse-failed" in level3["issues"]
-    assert all(meta_level(meta, n)["accuracy_pct"] == 100 for n in (1, 2, 4, 5))
-    assert meta["score_pct"] == 80
+    others = [entry["level"] for entry in answer_key()["levels"] if entry["level"] != 3]
+    assert all(meta_level(meta, n)["accuracy_pct"] == 100 for n in others)
+    assert meta["score_pct"] == round(100 * (total - 1) / total)
 
 
 def test_broken_fence_does_not_fall_back_to_raw(tmp_path: Path) -> None:
@@ -237,7 +239,7 @@ def test_missing_level_is_recorded_as_invalid(tmp_path: Path) -> None:
     level5 = meta_level(meta, 5)
     assert level5["valid_json"] is False
     assert level5["issues"] == ["level 5 missing in output.json"]
-    assert meta["parse_pass_count"] == 4
+    assert meta["parse_pass_count"] == len(answer_key()["levels"]) - 1
 
 
 # --- 4. 採点の詳細 ------------------------------------------------------------
@@ -537,7 +539,8 @@ def test_build_html_renders_levels_and_filters_model(tmp_path: Path) -> None:
     assert result == 0
     output = (selected / "output.html").read_text(encoding="utf-8")
     assert "Claude Opus 5" in output
-    assert "parse 5/5" in output
+    total = len(answer_key()["levels"])
+    assert f"parse {total}/{total}" in output
     assert "score 100%" in output
     assert "レベル 5" in output
     assert not (other / "output.html").exists()

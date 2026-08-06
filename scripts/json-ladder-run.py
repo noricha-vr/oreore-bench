@@ -24,7 +24,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent.parent
 PUBLIC = ROOT / "public"
 THEME = "json-ladder"
-LEVEL_NUMBERS = (1, 2, 3, 4, 5)
+LEVEL_NUMBERS = (1, 2, 3, 4, 5, 6)
 
 # harness ごとの runtime 既定値と usage.note の実測元表記。
 # validate-runs.mjs の HARNESS_ENUM のうち、この runner が扱うローカル 3 種のみを持つ。
@@ -40,6 +40,10 @@ LOCAL_HARNESSES: dict[str, dict[str, Any]] = {
     "omlx-api": {
         "runtime": {"engine": "omlx", "api": "openai-compat"},
         "source": "oMLX API",
+    },
+    "ollama-api": {
+        "runtime": {"engine": "ollama", "api": "openai-compat"},
+        "source": "Ollama API",
     },
 }
 # validate-runs.mjs の RUNTIME_ALLOWED と同じ集合。範囲外キーは公開前に弾く

@@ -7,8 +7,8 @@
       "raw": "```json\n{\n  \"title\": \"硝子の記憶\",\n  \"author\": \"佐伯千鶴\",\n  \"founded_year\": 1961,\n  \"city\": \"富山市\"\n}\n```",
       "finish_reason": "stop",
       "usage": {
-        "prompt_tokens": 1523,
-        "completion_tokens": 52
+        "prompt_tokens": 1526,
+        "completion_tokens": 441
       }
     },
     {
@@ -16,8 +16,8 @@
       "raw": "```json\n{\n  \"people\": [\n    \"宗一郎\",\n    \"千鶴\",\n    \"綾乃\",\n    \"美津江\",\n    \"マルコ\"\n  ],\n  \"years_mentioned\": [\n    1961,\n    1978,\n    1989,\n    2001\n  ],\n  \"grandfather_alive_at_writing\": false,\n  \"tools\": [\n    \"吹き竿\",\n    \"ポンテ竿\",\n    \"木箸\"\n  ]\n}\n```",
       "finish_reason": "stop",
       "usage": {
-        "prompt_tokens": 1641,
-        "completion_tokens": 128
+        "prompt_tokens": 1644,
+        "completion_tokens": 1581
       }
     },
     {
@@ -25,8 +25,8 @@
       "raw": "```json\n{\n  \"sections\": [\n    {\n      \"heading\": \"炎の温度\",\n      \"season\": \"summer\"\n    },\n    {\n      \"heading\": \"姉と火\",\n      \"season\": \"winter\"\n    },\n    {\n      \"heading\": \"マルコの置き土産\",\n      \"season\": \"autumn\"\n    },\n    {\n      \"heading\": \"窯じまい\",\n      \"season\": \"none\"\n    }\n  ],\n  \"workshop\": {\n    \"name\": \"佐伯硝子工房\",\n    \"founded_year\": 1961,\n    \"closed_year\": null\n  }\n}\n```",
       "finish_reason": "stop",
       "usage": {
-        "prompt_tokens": 1671,
-        "completion_tokens": 157
+        "prompt_tokens": 1674,
+        "completion_tokens": 1623
       }
     },
     {
@@ -34,8 +34,8 @@
       "raw": "```json\n{\n  \"quotes\": [\n    {\n      \"speaker\": \"宗一郎\",\n      \"text\": \"ええか、千鶴。急ぐな。硝子より先に、心が割れる\"\n    },\n    {\n      \"speaker\": \"綾乃\",\n      \"text\": \"祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い\"\n    },\n    {\n      \"speaker\": \"宗一郎\",\n      \"text\": \"硝子は正直や。手ぇ抜いた分だけ、濁る\"\n    }\n  ],\n  \"english_phrase\": \"\\\"Glass remembers everything.\\\"\",\n  \"letter_excerpt\": \"千鶴へ\\n窯の火は落とした。だが、おまえの中の火まで消えたわけではない。\\n迷ったら、手を動かせ。\"\n}\n```",
       "finish_reason": "stop",
       "usage": {
-        "prompt_tokens": 1668,
-        "completion_tokens": 189
+        "prompt_tokens": 1671,
+        "completion_tokens": 2430
       }
     },
     {
@@ -43,8 +43,17 @@
       "raw": "```json\n{\n  \"meta\": {\n    \"title\": \"硝子の記憶\",\n    \"author\": \"佐伯千鶴\",\n    \"section_count\": 4\n  },\n  \"characters\": [\n    {\n      \"name\": \"宗一郎\",\n      \"kinship_to_narrator\": \"grandfather\",\n      \"relations\": [\n        {\n          \"to\": \"マルコ\",\n          \"relation\": \"master\"\n        }\n      ]\n    },\n    {\n      \"name\": \"千鶴\",\n      \"kinship_to_narrator\": \"self\",\n      \"relations\": []\n    },\n    {\n      \"name\": \"綾乃\",\n      \"kinship_to_narrator\": \"elder_sister\",\n      \"relations\": []\n    },\n    {\n      \"name\": \"美津江\",\n      \"kinship_to_narrator\": \"grandmother\",\n      \"relations\": []\n    },\n    {\n      \"name\": \"マルコ\",\n      \"kinship_to_narrator\": \"none\",\n      \"relations\": [\n        {\n          \"to\": \"宗一郎\",\n          \"relation\": \"apprentice\"\n        }\n      ]\n    }\n  ],\n  \"timeline\": [\n    {\n      \"year\": 1961,\n      \"sentence\": \"1961年に富山市の外れに小さな工房を構え、亡くなるまでの四十年間、ほとんど毎日窯の前に立った。\"\n    },\n    {\n      \"year\": 1978,\n      \"sentence\": \"1978年に祖父が県の工芸展で賞を獲った時の盃を、マルコは棚から下ろしては何度も眺めていた。\"\n    },\n    {\n      \"year\": 1989,\n      \"sentence\": \"1989年の秋、イタリアから留学生のマルコが工房にやって来た。\"\n    },\n    {\n      \"year\": 2001,\n      \"sentence\": \"祖父が死んだのは2001年である。\"\n    }\n  ],\n  \"process\": {\n    \"melting_temperature_c\": 1400,\n    \"steps\": [\n      {\n        \"order\": 1,\n        \"name\": \"種巻き\",\n        \"temperature_c\": null\n      },\n      {\n        \"order\": 2,\n        \"name\": \"吹き\",\n        \"temperature_c\": null\n      },\n      {\n        \"order\": 3,\n        \"name\": \"成形\",\n        \"temperature_c\": null\n      },\n      {\n        \"order\": 4,\n        \"name\": \"ポンテ替え\",\n        \"temperature_c\": null\n      },\n      {\n        \"order\": 5,\n        \"name\": \"徐冷\",\n        \"temperature_c\": 520\n      }\n    ]\n  },\n  \"quotes_by_speaker\": {\n    \"宗一郎\": [\n      \"ええか、千鶴。急ぐな。硝子より先に、心が割れる\",\n      \"硝子は正直や。手ぇ抜いた分だけ、濁る\"\n    ],\n    \"綾乃\": [\n      \"祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い\"\n    ]\n  },\n  \"analysis\": {\n    \"grandfather_last_words\": null,\n    \"narrator_became_glassblower\": false\n  }\n}\n```",
       "finish_reason": "stop",
       "usage": {
-        "prompt_tokens": 2172,
-        "completion_tokens": 805
+        "prompt_tokens": 2175,
+        "completion_tokens": 4477
+      }
+    },
+    {
+      "level": 6,
+      "raw": "```json\n{\n  \"sections\": [\n    {\n      \"index\": 1,\n      \"number_kanji\": \"一\",\n      \"heading\": \"炎の温度\",\n      \"first_sentence\": \"祖父、佐伯宗一郎は硝子職人だった。\",\n      \"last_sentence\": \"その言葉の意味が本当に分かったのは、ずっと後になってからだ。\",\n      \"paragraph_count\": 5,\n      \"sentence_count\": 14,\n      \"paragraph_openings\": [\n        \"祖父、佐伯宗一郎は硝子職人だった。\",\n        \"夏の盛りに訪ねると、工房の中は外よりもずっと熱かった。\",\n        \"窯の火は生き物だと祖父は信じていた。\",\n        \"「ええか、千鶴。急ぐな。硝子より先に、心が割れる」\",\n        \"汗だくの祖父は、よくそう言った。\"\n      ],\n      \"has_direct_quote\": true,\n      \"years\": [\n        1961\n      ]\n    },\n    {\n      \"index\": 2,\n      \"number_kanji\": \"二\",\n      \"heading\": \"姉と火\",\n      \"first_sentence\": \"姉の綾乃は私より三つ上で、手先は私よりずっと器用だった。\",\n      \"last_sentence\": \"それが祖父の口癖だった。\",\n      \"paragraph_count\": 4,\n      \"sentence_count\": 19,\n      \"paragraph_openings\": [\n        \"姉の綾乃は私より三つ上で、手先は私よりずっと器用だった。\",\n        \"「祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い」\",\n        \"祖父の仕事は、大きく五つの工程に分かれていた。\",\n        \"「硝子は正直や。手ぇ抜いた分だけ、濁る」\"\n      ],\n      \"has_direct_quote\": true,\n      \"years\": []\n    },\n    {\n      \"index\": 3,\n      \"number_kanji\": \"三\",\n      \"heading\": \"マルコの置き土産\",\n      \"first_sentence\": \"1989年の秋、イタリアから留学生のマルコが工房にやって来た。\",\n      \"last_sentence\": \"紙は熱で飴色になり、いつのまにか文字ごと工房の一部になった。\",\n      \"paragraph_count\": 2,\n      \"sentence_count\": 11,\n      \"paragraph_openings\": [\n        \"1989年の秋、イタリアから留学生のマルコが工房にやって来た。\",\n        \"1978年に祖父が県の工芸展で賞を獲った時の盃を、マルコは棚から下ろしては何度も眺めていた。\"\n      ],\n      \"has_direct_quote\": false,\n      \"years\": [\n        1978,\n        1989\n      ]\n    },\n    {\n      \"index\": 4,\n      \"number_kanji\": \"四\",\n      \"heading\": \"窯じまい\",\n      \"first_sentence\": \"祖父が死んだのは2001年である。\",\n      \"last_sentence\": \"そうしていると耳の奥で、あの日の火の音がする。\",\n      \"paragraph_count\": 5,\n      \"sentence_count\": 15,\n      \"paragraph_openings\": [\n        \"祖父が死んだのは2001年である。\",\n        \"遺品を整理していた姉が、私宛ての封筒を見つけた。\",\n        \"> 千鶴へ\",\n        \"葬儀のあと、姉と二人で工房を掃除した。\",\n        \"工房はいま物置になっている。\"\n      ],\n      \"has_direct_quote\": false,\n      \"years\": [\n        2001\n      ]\n    }\n  ],\n  \"claims\": [\n    {\n      \"id\": \"grandfather_wanted_sister_as_successor\",\n      \"verdict\": \"speculated\",\n      \"evidence\": \"祖父は姉に跡を継がせたがっていたのだと思う。\"\n    },\n    {\n      \"id\": \"grandmother_mediated_between_sister_and_grandfather\",\n      \"verdict\": \"speculated\",\n      \"evidence\": \"祖母が姉と祖父のあいだを上手に取り持っていたらしいが、幼かった私はその頃をよく知らない。\"\n    },\n    {\n      \"id\": \"sister_moved_away_from_the_city\",\n      \"verdict\": \"absent\",\n      \"evidence\": null\n    },\n    {\n      \"id\": \"narrator_did_not_become_glassblower\",\n      \"verdict\": \"stated\",\n      \"evidence\": \"私は硝子職人にはならなかったけれど、いまでも迷うたびにあの工房の戸を開け、冷えた窯の前にしばらく立つ。\"\n    }\n  ],\n  \"stated_facts\": [\n    {\n      \"id\": \"melting_temperature_c\",\n      \"value\": 1400,\n      \"stated\": true\n    },\n    {\n      \"id\": \"workshop_founded_year\",\n      \"value\": 1961,\n      \"stated\": true\n    },\n    {\n      \"id\": \"workshop_closed_year\",\n      \"value\": null,\n      \"stated\": false\n    },\n    {\n      \"id\": \"grandfather_years_at_the_kiln\",\n      \"value\": 40,\n      \"stated\": true\n    },\n    {\n      \"id\": \"sister_age_gap_to_narrator\",\n      \"value\": 3,\n      \"stated\": true\n    }\n  ],\n  \"counts\": {\n    \"sections\": 4,\n    \"direct_quotes\": 3,\n    \"letter_lines\": 3,\n    \"years_in_text\": 4\n  }\n}\n```",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 2685,
+        "completion_tokens": 7364
       }
     }
   ]

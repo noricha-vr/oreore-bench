@@ -1,8 +1,0 @@
-```json
-{
-  "title": "硝子の記憶",
-  "author": "佐伯千鶴",
-  "founded_year": 1961,
-  "city": "富山市"
-}
-```

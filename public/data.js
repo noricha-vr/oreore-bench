@@ -723,12 +723,13 @@ window.ENTRIES.push(
     { theme: "pr-triage", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "✅ スキーマ準拠 PASS。正解キー一致 90%（9 primary）。唯一の不一致は PR106 を fix ではなく hold と保守的に判断。", kind: "json" }
 );
 
-// json-ladder（JSON フォーマット遵守 5 段階。レベル別 5 リクエスト独立実行）
+// json-ladder（JSON フォーマット遵守 6 段階。レベル別 6 リクエスト独立実行）
+// L6 は 31B の満点を崩すために後から追加した段（96 採点項目・全文の逐語インデックス）。
+// 3 モデルとも Ollama で同一条件・同一日に再測定した値。
 window.ENTRIES.push(
-    { theme: "json-ladder", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "✅ パース 5/5・score 79%。L1/L3 は 100% だが L4 忠実抽出が 33%（発話 3 件中 1 件のみ返し、L5 では「」込み抽出 + 『火に訊け』引用トラップに引っかかる）。人物初出順も語り手を先頭に置いて取り違え。", kind: "json" },
-    { theme: "json-ladder", model: "gemma-4-31b", runner: "LM Studio API", note: "✅ パース 5/5・score 100%。全レベルでスキーマ準拠、L5 の入れ子抽出も 98%。OpenRouter 経由の商用モデルを上回るローカル最良。completion 計 8,358 tokens。", kind: "json" },
-    { theme: "json-ladder", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API", note: "✅ パース 5/5・score 100%。31B と同結果を completion 計 1,331 tokens（31B の 1/6）で達成。json-ladder ではこの MoE が最も効率的。", kind: "json" },
-    { theme: "json-ladder", model: "gemma-4-12b-qat", runner: "LM Studio API", note: "FAIL。パース 2/5・score 40%。L1/L3 は 100% だが L2/L4/L5 は約31K tokens を reasoning に費やして本文を返さず空応答（finish_reason=length）。同じ Gemma 4 でも 12B では複雑さ 2 以上のスキーマで思考が発散する。", kind: "json" }
+    { theme: "json-ladder", model: "gemma-4-31b", runner: "Ollama API", note: "パース 6/6・score 99%。L1〜L4 は満点、L5 98%、L6 93%。L6 では発話だけの行を段落として数えず、手紙の引用記号「>」も落とせない。completion 計 16,810 tokens。", kind: "json" },
+    { theme: "json-ladder", model: "gemma-4-26b-a4b-qat", runner: "Ollama API", note: "パース 6/6・score 98%。31B とほぼ同等で L6 は 92%。発話行を句点で切って段落冒頭文を途中までしか返せず、根拠文の抜き出しも一文の範囲を取り違える。completion 計 17,916 tokens。", kind: "json" },
+    { theme: "json-ladder", model: "gemma-4-12b-qat", runner: "Ollama API", note: "パース 6/6・score 91%。L6 は 97% と 3 モデル最高だが、L2 が 69%・L4 が 83% と基本の配列順序と忠実抽出で落とす。逐語インデックスより単純な列挙の方が苦手という逆転。completion 計 27,017 tokens。", kind: "json" }
 );
 
 // claude-opus-5（リリース翌日に OpenRouter API 経由・reasoning high で全10テーマ追加。スモーク検証は既存と同一手順。

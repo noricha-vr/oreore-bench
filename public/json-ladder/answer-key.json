@@ -4,121 +4,1041 @@
     {
       "level": 1,
       "fields": [
-        { "path": "title", "type": "string", "expected": "硝子の記憶" },
-        { "path": "author", "type": "string", "expected": "佐伯千鶴", "also_acceptable": ["千鶴"] },
-        { "path": "founded_year", "type": "integer", "expected": 1961 },
-        { "path": "city", "type": "string", "expected": "富山市", "also_acceptable": ["富山"] }
+        {
+          "path": "title",
+          "type": "string",
+          "expected": "硝子の記憶"
+        },
+        {
+          "path": "author",
+          "type": "string",
+          "expected": "佐伯千鶴",
+          "also_acceptable": [
+            "千鶴"
+          ]
+        },
+        {
+          "path": "founded_year",
+          "type": "integer",
+          "expected": 1961
+        },
+        {
+          "path": "city",
+          "type": "string",
+          "expected": "富山市",
+          "also_acceptable": [
+            "富山"
+          ]
+        }
       ]
     },
     {
       "level": 2,
       "fields": [
-        { "path": "people", "type": "array_length", "expected": 5 },
-        { "path": "people[0]", "type": "string", "expected": "宗一郎" },
-        { "path": "people[1]", "type": "string", "expected": "千鶴" },
-        { "path": "people[2]", "type": "string", "expected": "綾乃" },
-        { "path": "people[3]", "type": "string", "expected": "美津江" },
-        { "path": "people[4]", "type": "string", "expected": "マルコ" },
-        { "path": "years_mentioned", "type": "array_length", "expected": 4 },
-        { "path": "years_mentioned[0]", "type": "integer", "expected": 1961 },
-        { "path": "years_mentioned[1]", "type": "integer", "expected": 1978 },
-        { "path": "years_mentioned[2]", "type": "integer", "expected": 1989 },
-        { "path": "years_mentioned[3]", "type": "integer", "expected": 2001 },
-        { "path": "grandfather_alive_at_writing", "type": "boolean", "expected": false },
-        { "path": "tools", "type": "array_length", "expected": 3 },
-        { "path": "tools[0]", "type": "string", "expected": "吹き竿" },
-        { "path": "tools[1]", "type": "string", "expected": "ポンテ竿" },
-        { "path": "tools[2]", "type": "string", "expected": "木箸" }
+        {
+          "path": "people",
+          "type": "array_length",
+          "expected": 5
+        },
+        {
+          "path": "people[0]",
+          "type": "string",
+          "expected": "宗一郎"
+        },
+        {
+          "path": "people[1]",
+          "type": "string",
+          "expected": "千鶴"
+        },
+        {
+          "path": "people[2]",
+          "type": "string",
+          "expected": "綾乃"
+        },
+        {
+          "path": "people[3]",
+          "type": "string",
+          "expected": "美津江"
+        },
+        {
+          "path": "people[4]",
+          "type": "string",
+          "expected": "マルコ"
+        },
+        {
+          "path": "years_mentioned",
+          "type": "array_length",
+          "expected": 4
+        },
+        {
+          "path": "years_mentioned[0]",
+          "type": "integer",
+          "expected": 1961
+        },
+        {
+          "path": "years_mentioned[1]",
+          "type": "integer",
+          "expected": 1978
+        },
+        {
+          "path": "years_mentioned[2]",
+          "type": "integer",
+          "expected": 1989
+        },
+        {
+          "path": "years_mentioned[3]",
+          "type": "integer",
+          "expected": 2001
+        },
+        {
+          "path": "grandfather_alive_at_writing",
+          "type": "boolean",
+          "expected": false
+        },
+        {
+          "path": "tools",
+          "type": "array_length",
+          "expected": 3
+        },
+        {
+          "path": "tools[0]",
+          "type": "string",
+          "expected": "吹き竿"
+        },
+        {
+          "path": "tools[1]",
+          "type": "string",
+          "expected": "ポンテ竿"
+        },
+        {
+          "path": "tools[2]",
+          "type": "string",
+          "expected": "木箸"
+        }
       ]
     },
     {
       "level": 3,
       "fields": [
-        { "path": "sections", "type": "array_length", "expected": 4 },
-        { "path": "sections[0].heading", "type": "string", "expected": "炎の温度" },
-        { "path": "sections[0].season", "type": "string", "expected": "summer" },
-        { "path": "sections[1].heading", "type": "string", "expected": "姉と火" },
-        { "path": "sections[1].season", "type": "string", "expected": "winter" },
-        { "path": "sections[2].heading", "type": "string", "expected": "マルコの置き土産" },
-        { "path": "sections[2].season", "type": "string", "expected": "autumn" },
-        { "path": "sections[3].heading", "type": "string", "expected": "窯じまい" },
-        { "path": "sections[3].season", "type": "string", "expected": "none" },
-        { "path": "workshop.name", "type": "string", "expected": "佐伯硝子工房" },
-        { "path": "workshop.founded_year", "type": "integer", "expected": 1961 },
-        { "path": "workshop.closed_year", "type": "null", "expected": null }
+        {
+          "path": "sections",
+          "type": "array_length",
+          "expected": 4
+        },
+        {
+          "path": "sections[0].heading",
+          "type": "string",
+          "expected": "炎の温度"
+        },
+        {
+          "path": "sections[0].season",
+          "type": "string",
+          "expected": "summer"
+        },
+        {
+          "path": "sections[1].heading",
+          "type": "string",
+          "expected": "姉と火"
+        },
+        {
+          "path": "sections[1].season",
+          "type": "string",
+          "expected": "winter"
+        },
+        {
+          "path": "sections[2].heading",
+          "type": "string",
+          "expected": "マルコの置き土産"
+        },
+        {
+          "path": "sections[2].season",
+          "type": "string",
+          "expected": "autumn"
+        },
+        {
+          "path": "sections[3].heading",
+          "type": "string",
+          "expected": "窯じまい"
+        },
+        {
+          "path": "sections[3].season",
+          "type": "string",
+          "expected": "none"
+        },
+        {
+          "path": "workshop.name",
+          "type": "string",
+          "expected": "佐伯硝子工房"
+        },
+        {
+          "path": "workshop.founded_year",
+          "type": "integer",
+          "expected": 1961
+        },
+        {
+          "path": "workshop.closed_year",
+          "type": "null",
+          "expected": null
+        }
       ]
     },
     {
       "level": 4,
       "fields": [
-        { "path": "quotes", "type": "array_length", "expected": 3 },
-        { "path": "quotes[0].speaker", "type": "string", "expected": "宗一郎", "also_acceptable": ["祖父"] },
-        { "path": "quotes[0].text", "type": "string", "normalize": "exact", "expected": "ええか、千鶴。急ぐな。硝子より先に、心が割れる" },
-        { "path": "quotes[1].speaker", "type": "string", "expected": "綾乃", "also_acceptable": ["姉"] },
-        { "path": "quotes[1].text", "type": "string", "normalize": "exact", "expected": "祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い" },
-        { "path": "quotes[2].speaker", "type": "string", "expected": "宗一郎", "also_acceptable": ["祖父"] },
-        { "path": "quotes[2].text", "type": "string", "normalize": "exact", "expected": "硝子は正直や。手ぇ抜いた分だけ、濁る" },
-        { "path": "english_phrase", "type": "string", "normalize": "exact", "expected": "\"Glass remembers everything.\"" },
-        { "path": "letter_excerpt", "type": "string", "normalize": "exact", "expected": "千鶴へ\n窯の火は落とした。だが、おまえの中の火まで消えたわけではない。\n迷ったら、手を動かせ。" }
+        {
+          "path": "quotes",
+          "type": "array_length",
+          "expected": 3
+        },
+        {
+          "path": "quotes[0].speaker",
+          "type": "string",
+          "expected": "宗一郎",
+          "also_acceptable": [
+            "祖父"
+          ]
+        },
+        {
+          "path": "quotes[0].text",
+          "type": "string",
+          "normalize": "exact",
+          "expected": "ええか、千鶴。急ぐな。硝子より先に、心が割れる"
+        },
+        {
+          "path": "quotes[1].speaker",
+          "type": "string",
+          "expected": "綾乃",
+          "also_acceptable": [
+            "姉"
+          ]
+        },
+        {
+          "path": "quotes[1].text",
+          "type": "string",
+          "normalize": "exact",
+          "expected": "祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い"
+        },
+        {
+          "path": "quotes[2].speaker",
+          "type": "string",
+          "expected": "宗一郎",
+          "also_acceptable": [
+            "祖父"
+          ]
+        },
+        {
+          "path": "quotes[2].text",
+          "type": "string",
+          "normalize": "exact",
+          "expected": "硝子は正直や。手ぇ抜いた分だけ、濁る"
+        },
+        {
+          "path": "english_phrase",
+          "type": "string",
+          "normalize": "exact",
+          "expected": "\"Glass remembers everything.\""
+        },
+        {
+          "path": "letter_excerpt",
+          "type": "string",
+          "normalize": "exact",
+          "expected": "千鶴へ\n窯の火は落とした。だが、おまえの中の火まで消えたわけではない。\n迷ったら、手を動かせ。"
+        }
       ]
     },
     {
       "level": 5,
       "fields": [
-        { "path": "meta.title", "type": "string", "expected": "硝子の記憶" },
-        { "path": "meta.author", "type": "string", "expected": "佐伯千鶴", "also_acceptable": ["千鶴"] },
-        { "path": "meta.section_count", "type": "integer", "expected": 4 },
-        { "path": "characters", "type": "array_length", "expected": 5 },
-        { "path": "characters[0].name", "type": "string", "expected": "宗一郎" },
-        { "path": "characters[0].kinship_to_narrator", "type": "string", "expected": "grandfather" },
-        { "path": "characters[0].relations", "type": "array_length", "expected": 0 },
-        { "path": "characters[1].name", "type": "string", "expected": "千鶴" },
-        { "path": "characters[1].kinship_to_narrator", "type": "string", "expected": "self" },
-        { "path": "characters[1].relations", "type": "array_length", "expected": 0 },
-        { "path": "characters[2].name", "type": "string", "expected": "綾乃" },
-        { "path": "characters[2].kinship_to_narrator", "type": "string", "expected": "elder_sister" },
-        { "path": "characters[2].relations", "type": "array_length", "expected": 0 },
-        { "path": "characters[3].name", "type": "string", "expected": "美津江" },
-        { "path": "characters[3].kinship_to_narrator", "type": "string", "expected": "grandmother" },
-        { "path": "characters[3].relations", "type": "array_length", "expected": 0 },
-        { "path": "characters[4].name", "type": "string", "expected": "マルコ" },
-        { "path": "characters[4].kinship_to_narrator", "type": "string", "expected": "none" },
-        { "path": "characters[4].relations", "type": "array_length", "expected": 1 },
-        { "path": "characters[4].relations[0].to", "type": "string", "expected": "宗一郎" },
-        { "path": "characters[4].relations[0].relation", "type": "string", "expected": "apprentice" },
-        { "path": "timeline", "type": "array_length", "expected": 4 },
-        { "path": "timeline[0].year", "type": "integer", "expected": 1961 },
-        { "path": "timeline[0].sentence", "type": "string", "expected": "1961年に富山市の外れに小さな工房を構え、亡くなるまでの四十年間、ほとんど毎日窯の前に立った。" },
-        { "path": "timeline[1].year", "type": "integer", "expected": 1978 },
-        { "path": "timeline[1].sentence", "type": "string", "expected": "1978年に祖父が県の工芸展で賞を獲った時の盃を、マルコは棚から下ろしては何度も眺めていた。" },
-        { "path": "timeline[2].year", "type": "integer", "expected": 1989 },
-        { "path": "timeline[2].sentence", "type": "string", "expected": "1989年の秋、イタリアから留学生のマルコが工房にやって来た。" },
-        { "path": "timeline[3].year", "type": "integer", "expected": 2001 },
-        { "path": "timeline[3].sentence", "type": "string", "expected": "祖父が死んだのは2001年である。" },
-        { "path": "process.melting_temperature_c", "type": "integer", "expected": 1400 },
-        { "path": "process.steps", "type": "array_length", "expected": 5 },
-        { "path": "process.steps[0].order", "type": "integer", "expected": 1 },
-        { "path": "process.steps[0].name", "type": "string", "expected": "種巻き" },
-        { "path": "process.steps[0].temperature_c", "type": "null", "expected": null },
-        { "path": "process.steps[1].order", "type": "integer", "expected": 2 },
-        { "path": "process.steps[1].name", "type": "string", "expected": "吹き" },
-        { "path": "process.steps[1].temperature_c", "type": "null", "expected": null },
-        { "path": "process.steps[2].order", "type": "integer", "expected": 3 },
-        { "path": "process.steps[2].name", "type": "string", "expected": "成形" },
-        { "path": "process.steps[2].temperature_c", "type": "null", "expected": null },
-        { "path": "process.steps[3].order", "type": "integer", "expected": 4 },
-        { "path": "process.steps[3].name", "type": "string", "expected": "ポンテ替え" },
-        { "path": "process.steps[3].temperature_c", "type": "null", "expected": null },
-        { "path": "process.steps[4].order", "type": "integer", "expected": 5 },
-        { "path": "process.steps[4].name", "type": "string", "expected": "徐冷" },
-        { "path": "process.steps[4].temperature_c", "type": "integer", "expected": 520 },
-        { "path": "quotes_by_speaker.宗一郎", "type": "array_length", "expected": 2 },
-        { "path": "quotes_by_speaker.宗一郎[0]", "type": "string", "normalize": "exact", "expected": "ええか、千鶴。急ぐな。硝子より先に、心が割れる" },
-        { "path": "quotes_by_speaker.宗一郎[1]", "type": "string", "normalize": "exact", "expected": "硝子は正直や。手ぇ抜いた分だけ、濁る" },
-        { "path": "quotes_by_speaker.綾乃", "type": "array_length", "expected": 1 },
-        { "path": "quotes_by_speaker.綾乃[0]", "type": "string", "normalize": "exact", "expected": "祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い" },
-        { "path": "analysis.grandfather_last_words", "type": "null", "expected": null },
-        { "path": "analysis.narrator_became_glassblower", "type": "boolean", "expected": false }
+        {
+          "path": "meta.title",
+          "type": "string",
+          "expected": "硝子の記憶"
+        },
+        {
+          "path": "meta.author",
+          "type": "string",
+          "expected": "佐伯千鶴",
+          "also_acceptable": [
+            "千鶴"
+          ]
+        },
+        {
+          "path": "meta.section_count",
+          "type": "integer",
+          "expected": 4
+        },
+        {
+          "path": "characters",
+          "type": "array_length",
+          "expected": 5
+        },
+        {
+          "path": "characters[0].name",
+          "type": "string",
+          "expected": "宗一郎"
+        },
+        {
+          "path": "characters[0].kinship_to_narrator",
+          "type": "string",
+          "expected": "grandfather"
+        },
+        {
+          "path": "characters[0].relations",
+          "type": "array_length",
+          "expected": 0
+        },
+        {
+          "path": "characters[1].name",
+          "type": "string",
+          "expected": "千鶴"
+        },
+        {
+          "path": "characters[1].kinship_to_narrator",
+          "type": "string",
+          "expected": "self"
+        },
+        {
+          "path": "characters[1].relations",
+          "type": "array_length",
+          "expected": 0
+        },
+        {
+          "path": "characters[2].name",
+          "type": "string",
+          "expected": "綾乃"
+        },
+        {
+          "path": "characters[2].kinship_to_narrator",
+          "type": "string",
+          "expected": "elder_sister"
+        },
+        {
+          "path": "characters[2].relations",
+          "type": "array_length",
+          "expected": 0
+        },
+        {
+          "path": "characters[3].name",
+          "type": "string",
+          "expected": "美津江"
+        },
+        {
+          "path": "characters[3].kinship_to_narrator",
+          "type": "string",
+          "expected": "grandmother"
+        },
+        {
+          "path": "characters[3].relations",
+          "type": "array_length",
+          "expected": 0
+        },
+        {
+          "path": "characters[4].name",
+          "type": "string",
+          "expected": "マルコ"
+        },
+        {
+          "path": "characters[4].kinship_to_narrator",
+          "type": "string",
+          "expected": "none"
+        },
+        {
+          "path": "characters[4].relations",
+          "type": "array_length",
+          "expected": 1
+        },
+        {
+          "path": "characters[4].relations[0].to",
+          "type": "string",
+          "expected": "宗一郎"
+        },
+        {
+          "path": "characters[4].relations[0].relation",
+          "type": "string",
+          "expected": "apprentice"
+        },
+        {
+          "path": "timeline",
+          "type": "array_length",
+          "expected": 4
+        },
+        {
+          "path": "timeline[0].year",
+          "type": "integer",
+          "expected": 1961
+        },
+        {
+          "path": "timeline[0].sentence",
+          "type": "string",
+          "expected": "1961年に富山市の外れに小さな工房を構え、亡くなるまでの四十年間、ほとんど毎日窯の前に立った。"
+        },
+        {
+          "path": "timeline[1].year",
+          "type": "integer",
+          "expected": 1978
+        },
+        {
+          "path": "timeline[1].sentence",
+          "type": "string",
+          "expected": "1978年に祖父が県の工芸展で賞を獲った時の盃を、マルコは棚から下ろしては何度も眺めていた。"
+        },
+        {
+          "path": "timeline[2].year",
+          "type": "integer",
+          "expected": 1989
+        },
+        {
+          "path": "timeline[2].sentence",
+          "type": "string",
+          "expected": "1989年の秋、イタリアから留学生のマルコが工房にやって来た。"
+        },
+        {
+          "path": "timeline[3].year",
+          "type": "integer",
+          "expected": 2001
+        },
+        {
+          "path": "timeline[3].sentence",
+          "type": "string",
+          "expected": "祖父が死んだのは2001年である。"
+        },
+        {
+          "path": "process.melting_temperature_c",
+          "type": "integer",
+          "expected": 1400
+        },
+        {
+          "path": "process.steps",
+          "type": "array_length",
+          "expected": 5
+        },
+        {
+          "path": "process.steps[0].order",
+          "type": "integer",
+          "expected": 1
+        },
+        {
+          "path": "process.steps[0].name",
+          "type": "string",
+          "expected": "種巻き"
+        },
+        {
+          "path": "process.steps[0].temperature_c",
+          "type": "null",
+          "expected": null
+        },
+        {
+          "path": "process.steps[1].order",
+          "type": "integer",
+          "expected": 2
+        },
+        {
+          "path": "process.steps[1].name",
+          "type": "string",
+          "expected": "吹き"
+        },
+        {
+          "path": "process.steps[1].temperature_c",
+          "type": "null",
+          "expected": null
+        },
+        {
+          "path": "process.steps[2].order",
+          "type": "integer",
+          "expected": 3
+        },
+        {
+          "path": "process.steps[2].name",
+          "type": "string",
+          "expected": "成形"
+        },
+        {
+          "path": "process.steps[2].temperature_c",
+          "type": "null",
+          "expected": null
+        },
+        {
+          "path": "process.steps[3].order",
+          "type": "integer",
+          "expected": 4
+        },
+        {
+          "path": "process.steps[3].name",
+          "type": "string",
+          "expected": "ポンテ替え"
+        },
+        {
+          "path": "process.steps[3].temperature_c",
+          "type": "null",
+          "expected": null
+        },
+        {
+          "path": "process.steps[4].order",
+          "type": "integer",
+          "expected": 5
+        },
+        {
+          "path": "process.steps[4].name",
+          "type": "string",
+          "expected": "徐冷"
+        },
+        {
+          "path": "process.steps[4].temperature_c",
+          "type": "integer",
+          "expected": 520
+        },
+        {
+          "path": "quotes_by_speaker.宗一郎",
+          "type": "array_length",
+          "expected": 2
+        },
+        {
+          "path": "quotes_by_speaker.宗一郎[0]",
+          "type": "string",
+          "normalize": "exact",
+          "expected": "ええか、千鶴。急ぐな。硝子より先に、心が割れる"
+        },
+        {
+          "path": "quotes_by_speaker.宗一郎[1]",
+          "type": "string",
+          "normalize": "exact",
+          "expected": "硝子は正直や。手ぇ抜いた分だけ、濁る"
+        },
+        {
+          "path": "quotes_by_speaker.綾乃",
+          "type": "array_length",
+          "expected": 1
+        },
+        {
+          "path": "quotes_by_speaker.綾乃[0]",
+          "type": "string",
+          "normalize": "exact",
+          "expected": "祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い"
+        },
+        {
+          "path": "analysis.grandfather_last_words",
+          "type": "null",
+          "expected": null
+        },
+        {
+          "path": "analysis.narrator_became_glassblower",
+          "type": "boolean",
+          "expected": false
+        }
+      ]
+    },
+    {
+      "level": 6,
+      "fields": [
+        {
+          "path": "sections",
+          "type": "array_length",
+          "expected": 4
+        },
+        {
+          "path": "sections[0].index",
+          "type": "integer",
+          "expected": 1
+        },
+        {
+          "path": "sections[0].number_kanji",
+          "type": "string",
+          "expected": "一"
+        },
+        {
+          "path": "sections[0].heading",
+          "type": "string",
+          "expected": "炎の温度"
+        },
+        {
+          "path": "sections[0].first_sentence",
+          "type": "string",
+          "expected": "祖父、佐伯宗一郎は硝子職人だった。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[0].last_sentence",
+          "type": "string",
+          "expected": "その言葉の意味が本当に分かったのは、ずっと後になってからだ。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[0].paragraph_count",
+          "type": "integer",
+          "expected": 5
+        },
+        {
+          "path": "sections[0].sentence_count",
+          "type": "integer",
+          "expected": 14
+        },
+        {
+          "path": "sections[0].paragraph_openings",
+          "type": "array_length",
+          "expected": 5
+        },
+        {
+          "path": "sections[0].paragraph_openings[0]",
+          "type": "string",
+          "expected": "祖父、佐伯宗一郎は硝子職人だった。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[0].paragraph_openings[1]",
+          "type": "string",
+          "expected": "夏の盛りに訪ねると、工房の中は外よりもずっと熱かった。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[0].paragraph_openings[2]",
+          "type": "string",
+          "expected": "窯の火は生き物だと祖父は信じていた。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[0].paragraph_openings[3]",
+          "type": "string",
+          "expected": "「ええか、千鶴。急ぐな。硝子より先に、心が割れる」",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[0].paragraph_openings[4]",
+          "type": "string",
+          "expected": "汗だくの祖父は、よくそう言った。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[0].has_direct_quote",
+          "type": "boolean",
+          "expected": true
+        },
+        {
+          "path": "sections[0].years",
+          "type": "array_length",
+          "expected": 1
+        },
+        {
+          "path": "sections[0].years[0]",
+          "type": "integer",
+          "expected": 1961
+        },
+        {
+          "path": "sections[1].index",
+          "type": "integer",
+          "expected": 2
+        },
+        {
+          "path": "sections[1].number_kanji",
+          "type": "string",
+          "expected": "二"
+        },
+        {
+          "path": "sections[1].heading",
+          "type": "string",
+          "expected": "姉と火"
+        },
+        {
+          "path": "sections[1].first_sentence",
+          "type": "string",
+          "expected": "姉の綾乃は私より三つ上で、手先は私よりずっと器用だった。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[1].last_sentence",
+          "type": "string",
+          "expected": "それが祖父の口癖だった。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[1].paragraph_count",
+          "type": "integer",
+          "expected": 6
+        },
+        {
+          "path": "sections[1].sentence_count",
+          "type": "integer",
+          "expected": 19
+        },
+        {
+          "path": "sections[1].paragraph_openings",
+          "type": "array_length",
+          "expected": 6
+        },
+        {
+          "path": "sections[1].paragraph_openings[0]",
+          "type": "string",
+          "expected": "姉の綾乃は私より三つ上で、手先は私よりずっと器用だった。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[1].paragraph_openings[1]",
+          "type": "string",
+          "expected": "「祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い」",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[1].paragraph_openings[2]",
+          "type": "string",
+          "expected": "姉がそう打ち明けたのは、雪の降る夜だった。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[1].paragraph_openings[3]",
+          "type": "string",
+          "expected": "祖父の仕事は、大きく五つの工程に分かれていた。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[1].paragraph_openings[4]",
+          "type": "string",
+          "expected": "「硝子は正直や。手ぇ抜いた分だけ、濁る」",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[1].paragraph_openings[5]",
+          "type": "string",
+          "expected": "それが祖父の口癖だった。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[1].has_direct_quote",
+          "type": "boolean",
+          "expected": true
+        },
+        {
+          "path": "sections[1].years",
+          "type": "array_length",
+          "expected": 0
+        },
+        {
+          "path": "sections[2].index",
+          "type": "integer",
+          "expected": 3
+        },
+        {
+          "path": "sections[2].number_kanji",
+          "type": "string",
+          "expected": "三"
+        },
+        {
+          "path": "sections[2].heading",
+          "type": "string",
+          "expected": "マルコの置き土産"
+        },
+        {
+          "path": "sections[2].first_sentence",
+          "type": "string",
+          "expected": "1989年の秋、イタリアから留学生のマルコが工房にやって来た。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[2].last_sentence",
+          "type": "string",
+          "expected": "紙は熱で飴色になり、いつのまにか文字ごと工房の一部になった。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[2].paragraph_count",
+          "type": "integer",
+          "expected": 2
+        },
+        {
+          "path": "sections[2].sentence_count",
+          "type": "integer",
+          "expected": 11
+        },
+        {
+          "path": "sections[2].paragraph_openings",
+          "type": "array_length",
+          "expected": 2
+        },
+        {
+          "path": "sections[2].paragraph_openings[0]",
+          "type": "string",
+          "expected": "1989年の秋、イタリアから留学生のマルコが工房にやって来た。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[2].paragraph_openings[1]",
+          "type": "string",
+          "expected": "1978年に祖父が県の工芸展で賞を獲った時の盃を、マルコは棚から下ろしては何度も眺めていた。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[2].has_direct_quote",
+          "type": "boolean",
+          "expected": false
+        },
+        {
+          "path": "sections[2].years",
+          "type": "array_length",
+          "expected": 2
+        },
+        {
+          "path": "sections[2].years[0]",
+          "type": "integer",
+          "expected": 1978
+        },
+        {
+          "path": "sections[2].years[1]",
+          "type": "integer",
+          "expected": 1989
+        },
+        {
+          "path": "sections[3].index",
+          "type": "integer",
+          "expected": 4
+        },
+        {
+          "path": "sections[3].number_kanji",
+          "type": "string",
+          "expected": "四"
+        },
+        {
+          "path": "sections[3].heading",
+          "type": "string",
+          "expected": "窯じまい"
+        },
+        {
+          "path": "sections[3].first_sentence",
+          "type": "string",
+          "expected": "祖父が死んだのは2001年である。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[3].last_sentence",
+          "type": "string",
+          "expected": "そうしていると耳の奥で、あの日の火の音がする。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[3].paragraph_count",
+          "type": "integer",
+          "expected": 5
+        },
+        {
+          "path": "sections[3].sentence_count",
+          "type": "integer",
+          "expected": 15
+        },
+        {
+          "path": "sections[3].paragraph_openings",
+          "type": "array_length",
+          "expected": 5
+        },
+        {
+          "path": "sections[3].paragraph_openings[0]",
+          "type": "string",
+          "expected": "祖父が死んだのは2001年である。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[3].paragraph_openings[1]",
+          "type": "string",
+          "expected": "遺品を整理していた姉が、私宛ての封筒を見つけた。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[3].paragraph_openings[2]",
+          "type": "string",
+          "expected": "千鶴へ",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[3].paragraph_openings[3]",
+          "type": "string",
+          "expected": "葬儀のあと、姉と二人で工房を掃除した。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[3].paragraph_openings[4]",
+          "type": "string",
+          "expected": "工房はいま物置になっている。",
+          "normalize": "exact"
+        },
+        {
+          "path": "sections[3].has_direct_quote",
+          "type": "boolean",
+          "expected": false
+        },
+        {
+          "path": "sections[3].years",
+          "type": "array_length",
+          "expected": 1
+        },
+        {
+          "path": "sections[3].years[0]",
+          "type": "integer",
+          "expected": 2001
+        },
+        {
+          "path": "claims",
+          "type": "array_length",
+          "expected": 4
+        },
+        {
+          "path": "claims[0].id",
+          "type": "string",
+          "expected": "grandfather_wanted_sister_as_successor"
+        },
+        {
+          "path": "claims[0].verdict",
+          "type": "string",
+          "expected": "speculated"
+        },
+        {
+          "path": "claims[0].evidence",
+          "type": "string",
+          "expected": "祖父は姉に跡を継がせたがっていたのだと思う。",
+          "normalize": "exact"
+        },
+        {
+          "path": "claims[1].id",
+          "type": "string",
+          "expected": "grandmother_mediated_between_sister_and_grandfather"
+        },
+        {
+          "path": "claims[1].verdict",
+          "type": "string",
+          "expected": "speculated"
+        },
+        {
+          "path": "claims[1].evidence",
+          "type": "string",
+          "expected": "祖母の美津江が生きていた頃は、祖母が姉と祖父のあいだを上手に取り持っていたらしいが、幼かった私はその頃をよく知らない。",
+          "normalize": "exact"
+        },
+        {
+          "path": "claims[2].id",
+          "type": "string",
+          "expected": "sister_moved_away_from_the_city"
+        },
+        {
+          "path": "claims[2].verdict",
+          "type": "string",
+          "expected": "absent"
+        },
+        {
+          "path": "claims[2].evidence",
+          "type": "null",
+          "expected": null
+        },
+        {
+          "path": "claims[3].id",
+          "type": "string",
+          "expected": "narrator_did_not_become_glassblower"
+        },
+        {
+          "path": "claims[3].verdict",
+          "type": "string",
+          "expected": "stated"
+        },
+        {
+          "path": "claims[3].evidence",
+          "type": "string",
+          "expected": "私は硝子職人にはならなかったけれど、いまでも迷うたびにあの工房の戸を開け、冷えた窯の前にしばらく立つ。",
+          "normalize": "exact"
+        },
+        {
+          "path": "stated_facts",
+          "type": "array_length",
+          "expected": 5
+        },
+        {
+          "path": "stated_facts[0].id",
+          "type": "string",
+          "expected": "melting_temperature_c"
+        },
+        {
+          "path": "stated_facts[0].stated",
+          "type": "boolean",
+          "expected": true
+        },
+        {
+          "path": "stated_facts[0].value",
+          "type": "integer",
+          "expected": 1400
+        },
+        {
+          "path": "stated_facts[1].id",
+          "type": "string",
+          "expected": "workshop_founded_year"
+        },
+        {
+          "path": "stated_facts[1].stated",
+          "type": "boolean",
+          "expected": true
+        },
+        {
+          "path": "stated_facts[1].value",
+          "type": "integer",
+          "expected": 1961
+        },
+        {
+          "path": "stated_facts[2].id",
+          "type": "string",
+          "expected": "workshop_closed_year"
+        },
+        {
+          "path": "stated_facts[2].stated",
+          "type": "boolean",
+          "expected": false
+        },
+        {
+          "path": "stated_facts[2].value",
+          "type": "null",
+          "expected": null
+        },
+        {
+          "path": "stated_facts[3].id",
+          "type": "string",
+          "expected": "grandfather_years_at_the_kiln"
+        },
+        {
+          "path": "stated_facts[3].stated",
+          "type": "boolean",
+          "expected": true
+        },
+        {
+          "path": "stated_facts[3].value",
+          "type": "integer",
+          "expected": 40
+        },
+        {
+          "path": "stated_facts[4].id",
+          "type": "string",
+          "expected": "sister_age_gap_to_narrator"
+        },
+        {
+          "path": "stated_facts[4].stated",
+          "type": "boolean",
+          "expected": true
+        },
+        {
+          "path": "stated_facts[4].value",
+          "type": "integer",
+          "expected": 3
+        },
+        {
+          "path": "counts.sections",
+          "type": "integer",
+          "expected": 4
+        },
+        {
+          "path": "counts.direct_quotes",
+          "type": "integer",
+          "expected": 3
+        },
+        {
+          "path": "counts.letter_lines",
+          "type": "integer",
+          "expected": 3
+        },
+        {
+          "path": "counts.years_in_text",
+          "type": "integer",
+          "expected": 4
+        }
       ]
     }
   ]

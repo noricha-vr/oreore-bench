@@ -20,7 +20,7 @@ function argValue(name, fallback) {
 const THEME_DIR = path.resolve(argValue('--theme-dir', path.join(ROOT, 'public', 'json-ladder')));
 const ANSWER_KEY_PATH = path.resolve(argValue('--answer-key', path.join(THEME_DIR, 'answer-key.json')));
 const MODEL_FILTER = argValue('--model', null);
-const EXPECTED_LEVELS = [1, 2, 3, 4, 5];
+const EXPECTED_LEVELS = [1, 2, 3, 4, 5, 6];
 // 設問・本文の置き場であってモデル出力ではないため、走査対象から外す
 const NON_MODEL_DIRS = new Set(['levels']);
 

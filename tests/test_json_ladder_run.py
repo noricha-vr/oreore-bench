@@ -167,22 +167,22 @@ def test_main_makes_five_sequential_requests_and_publishes_all_artifacts(
         monkeypatch.setenv("OPENROUTER_API_URL", server.url)
         assert invoke(monkeypatch, tmp_path, "--model", "claude-opus-5", "--backend", "openrouter") == 0
 
-        assert len(server.requests) == 5
+        assert len(server.requests) == len(ladder.LEVEL_NUMBERS)
         for level, request in enumerate(server.requests, start=1):
             content = request["messages"][0]["content"]
             assert f"level instruction {level}" in content
 
     out_dir = tmp_path / "json-ladder" / "claude-opus-5"
     assert {path.name for path in out_dir.iterdir()} == {
-        "raw-l1.txt", "raw-l2.txt", "raw-l3.txt", "raw-l4.txt", "raw-l5.txt", "output.json", "run.json"
+        *(f"raw-l{level}.txt" for level in ladder.LEVEL_NUMBERS), "output.json", "run.json"
     }
     output = json.loads((out_dir / "output.json").read_text(encoding="utf-8"))
     run = json.loads((out_dir / "run.json").read_text(encoding="utf-8"))
-    assert [entry["level"] for entry in output["levels"]] == [1, 2, 3, 4, 5]
+    assert [entry["level"] for entry in output["levels"]] == list(ladder.LEVEL_NUMBERS)
     assert run["attempts"] == 1
-    assert run["usage"]["prompt_tokens"] == 150
-    assert run["usage"]["completion_tokens"] == 300
-    assert "5段階を独立リクエストで合算" in run["usage"]["note"]
+    assert run["usage"]["prompt_tokens"] == sum(10 * level for level in ladder.LEVEL_NUMBERS)
+    assert run["usage"]["completion_tokens"] == sum(20 * level for level in ladder.LEVEL_NUMBERS)
+    assert "段階を独立リクエストで合算" in run["usage"]["note"]
 
 
 def test_local_length_response_is_saved(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -203,7 +203,7 @@ def test_local_length_response_is_saved(monkeypatch: pytest.MonkeyPatch, tmp_pat
 
     run = json.loads((tmp_path / "json-ladder" / "local-model" / "run.json").read_text(encoding="utf-8"))
     assert run["harness"] == "mlx-lm-api"
-    assert run["usage"]["completion_tokens"] == 300
+    assert run["usage"]["completion_tokens"] == sum(20 * level for level in ladder.LEVEL_NUMBERS)
 
 
 def test_local_empty_content_is_saved_as_a_failed_level(
@@ -212,12 +212,13 @@ def test_local_empty_content_is_saved_as_a_failed_level(
     """空 content は実行を止めず、そのレベルのフォーマット遵守失敗として残す。
 
     reasoning を出し切って本文を返さないローカルモデルがあり（Gemma 4 12B QAT の L5）、
-    これを例外にすると 5 レベル全部が失われてベンチ結果として記録できない。
+    これを例外にすると全レベルが失われてベンチ結果として記録できない。
     """
     make_theme(tmp_path)
     bodies = [response(level) for level in ladder.LEVEL_NUMBERS]
-    bodies[4]["choices"][0]["message"]["content"] = None
-    bodies[4]["choices"][0]["finish_reason"] = "length"
+    last = len(ladder.LEVEL_NUMBERS) - 1
+    bodies[last]["choices"][0]["message"]["content"] = None
+    bodies[last]["choices"][0]["finish_reason"] = "length"
     with StubServer(bodies) as server:
         base_url = server.url.removesuffix("/chat/completions") + "/v1"
         assert invoke(
@@ -230,9 +231,9 @@ def test_local_empty_content_is_saved_as_a_failed_level(
 
     model_dir = tmp_path / "json-ladder" / "local-model"
     output = json.loads((model_dir / "output.json").read_text(encoding="utf-8"))
-    assert output["levels"][4]["raw"] == ""
-    assert output["levels"][4]["finish_reason"] == "length"
-    assert (model_dir / "raw-l5.txt").read_text(encoding="utf-8") == ""
+    assert output["levels"][last]["raw"] == ""
+    assert output["levels"][last]["finish_reason"] == "length"
+    assert (model_dir / f"raw-l{ladder.LEVEL_NUMBERS[last]}.txt").read_text(encoding="utf-8") == ""
     assert [level["level"] for level in output["levels"]] == list(ladder.LEVEL_NUMBERS)
 
 
@@ -323,7 +324,9 @@ def test_lmstudio_run_records_harness_model_id_and_runtime(
             "--reasoning-label", "none",
         ) == 0
 
-        assert [request["model"] for request in server.requests] == ["google/gemma-4-12b-qat"] * 5
+        assert [request["model"] for request in server.requests] == [
+            "google/gemma-4-12b-qat"
+        ] * len(ladder.LEVEL_NUMBERS)
 
     run = json.loads(
         (tmp_path / "json-ladder" / "gemma-4-12b-qat" / "run.json").read_text(encoding="utf-8")
@@ -339,6 +342,36 @@ def test_lmstudio_run_records_harness_model_id_and_runtime(
         "hardware": "Mac Studio M3 Ultra 512GB",
     }
     assert "LM Studio API 実測" in run["usage"]["note"]
+
+
+def test_ollama_run_records_its_own_engine_and_source(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Ollama 実測を LM Studio と取り違えて記録しない（engine と実測元表記が別物）。
+
+    同じ OpenAI 互換 API でも context 上限などの挙動が違い、スコアが変わる。
+    どのサーバーで測ったかを run.json だけで判別できる必要がある。
+    """
+    make_theme(tmp_path)
+    with StubServer([response(level) for level in ladder.LEVEL_NUMBERS]) as server:
+        base_url = server.url.removesuffix("/chat/completions") + "/v1"
+        assert invoke(
+            monkeypatch,
+            tmp_path,
+            "--model", "gemma-4-31b",
+            "--backend", "local",
+            "--base-url", base_url,
+            "--harness", "ollama-api",
+            "--model-id", "gemma4:31b",
+            "--public-model-id", "google/gemma-4-31b-it",
+        ) == 0
+
+    run = json.loads(
+        (tmp_path / "json-ladder" / "gemma-4-31b" / "run.json").read_text(encoding="utf-8")
+    )
+    assert run["harness"] == "ollama-api"
+    assert run["runtime"]["engine"] == "ollama"
+    assert "Ollama API 実測" in run["usage"]["note"]
 
 
 def test_runtime_extra_rejects_keys_outside_validator_allowlist(
