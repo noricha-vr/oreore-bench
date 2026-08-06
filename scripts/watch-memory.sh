@@ -35,7 +35,8 @@ while getopts "i:w:s:x:o:n:h" opt; do
     x) STOP_SWAP_DELTA=$OPTARG ;;
     o) OUT=$OPTARG ;;
     n) MAX_SAMPLES=$OPTARG ;;
-    h) sed -n '2,14p' "$0"; exit 0 ;;
+    # Usage 行から終了コード行までを抜き出す（冒頭コメントを増減しても追従するよう行番号は固定しない）
+    h) sed -n '/^# Usage:/,/^# 終了コード:/p' "$0"; exit 0 ;;
     *) exit 2 ;;
   esac
 done
