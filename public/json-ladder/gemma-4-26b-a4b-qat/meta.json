@@ -1,0 +1,643 @@
+{
+  "generated_at": "2026-08-06T12:54:12.460Z",
+  "levels_total": 5,
+  "parse_pass_count": 5,
+  "score_pct": 100,
+  "levels": [
+    {
+      "level": 1,
+      "valid_json": true,
+      "schema_pass": true,
+      "fields_total": 4,
+      "primary_match": 4,
+      "acceptable_match": 0,
+      "accuracy_pct": 100,
+      "raw_length": 95,
+      "issues": [],
+      "verdicts": [
+        {
+          "path": "title",
+          "got": "硝子の記憶",
+          "expected": "硝子の記憶",
+          "match": "primary"
+        },
+        {
+          "path": "author",
+          "got": "佐伯千鶴",
+          "expected": "佐伯千鶴",
+          "match": "primary"
+        },
+        {
+          "path": "founded_year",
+          "got": 1961,
+          "expected": 1961,
+          "match": "primary"
+        },
+        {
+          "path": "city",
+          "got": "富山市",
+          "expected": "富山市",
+          "match": "primary"
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "valid_json": true,
+      "schema_pass": true,
+      "fields_total": 16,
+      "primary_match": 16,
+      "acceptable_match": 0,
+      "accuracy_pct": 100,
+      "raw_length": 243,
+      "issues": [],
+      "verdicts": [
+        {
+          "path": "people",
+          "got": 5,
+          "expected": 5,
+          "match": "primary"
+        },
+        {
+          "path": "people[0]",
+          "got": "宗一郎",
+          "expected": "宗一郎",
+          "match": "primary"
+        },
+        {
+          "path": "people[1]",
+          "got": "千鶴",
+          "expected": "千鶴",
+          "match": "primary"
+        },
+        {
+          "path": "people[2]",
+          "got": "綾乃",
+          "expected": "綾乃",
+          "match": "primary"
+        },
+        {
+          "path": "people[3]",
+          "got": "美津江",
+          "expected": "美津江",
+          "match": "primary"
+        },
+        {
+          "path": "people[4]",
+          "got": "マルコ",
+          "expected": "マルコ",
+          "match": "primary"
+        },
+        {
+          "path": "years_mentioned",
+          "got": 4,
+          "expected": 4,
+          "match": "primary"
+        },
+        {
+          "path": "years_mentioned[0]",
+          "got": 1961,
+          "expected": 1961,
+          "match": "primary"
+        },
+        {
+          "path": "years_mentioned[1]",
+          "got": 1978,
+          "expected": 1978,
+          "match": "primary"
+        },
+        {
+          "path": "years_mentioned[2]",
+          "got": 1989,
+          "expected": 1989,
+          "match": "primary"
+        },
+        {
+          "path": "years_mentioned[3]",
+          "got": 2001,
+          "expected": 2001,
+          "match": "primary"
+        },
+        {
+          "path": "grandfather_alive_at_writing",
+          "got": false,
+          "expected": false,
+          "match": "primary"
+        },
+        {
+          "path": "tools",
+          "got": 3,
+          "expected": 3,
+          "match": "primary"
+        },
+        {
+          "path": "tools[0]",
+          "got": "吹き竿",
+          "expected": "吹き竿",
+          "match": "primary"
+        },
+        {
+          "path": "tools[1]",
+          "got": "ポンテ竿",
+          "expected": "ポンテ竿",
+          "match": "primary"
+        },
+        {
+          "path": "tools[2]",
+          "got": "木箸",
+          "expected": "木箸",
+          "match": "primary"
+        }
+      ]
+    },
+    {
+      "level": 3,
+      "valid_json": true,
+      "schema_pass": true,
+      "fields_total": 12,
+      "primary_match": 12,
+      "acceptable_match": 0,
+      "accuracy_pct": 100,
+      "raw_length": 380,
+      "issues": [],
+      "verdicts": [
+        {
+          "path": "sections",
+          "got": 4,
+          "expected": 4,
+          "match": "primary"
+        },
+        {
+          "path": "sections[0].heading",
+          "got": "炎の温度",
+          "expected": "炎の温度",
+          "match": "primary"
+        },
+        {
+          "path": "sections[0].season",
+          "got": "summer",
+          "expected": "summer",
+          "match": "primary"
+        },
+        {
+          "path": "sections[1].heading",
+          "got": "姉と火",
+          "expected": "姉と火",
+          "match": "primary"
+        },
+        {
+          "path": "sections[1].season",
+          "got": "winter",
+          "expected": "winter",
+          "match": "primary"
+        },
+        {
+          "path": "sections[2].heading",
+          "got": "マルコの置き土産",
+          "expected": "マルコの置き土産",
+          "match": "primary"
+        },
+        {
+          "path": "sections[2].season",
+          "got": "autumn",
+          "expected": "autumn",
+          "match": "primary"
+        },
+        {
+          "path": "sections[3].heading",
+          "got": "窯じまい",
+          "expected": "窯じまい",
+          "match": "primary"
+        },
+        {
+          "path": "sections[3].season",
+          "got": "none",
+          "expected": "none",
+          "match": "primary"
+        },
+        {
+          "path": "workshop.name",
+          "got": "佐伯硝子工房",
+          "expected": "佐伯硝子工房",
+          "match": "primary"
+        },
+        {
+          "path": "workshop.founded_year",
+          "got": 1961,
+          "expected": 1961,
+          "match": "primary"
+        },
+        {
+          "path": "workshop.closed_year",
+          "got": null,
+          "expected": null,
+          "match": "primary"
+        }
+      ]
+    },
+    {
+      "level": 4,
+      "valid_json": true,
+      "schema_pass": true,
+      "fields_total": 9,
+      "primary_match": 9,
+      "acceptable_match": 0,
+      "accuracy_pct": 100,
+      "raw_length": 390,
+      "issues": [],
+      "verdicts": [
+        {
+          "path": "quotes",
+          "got": 3,
+          "expected": 3,
+          "match": "primary"
+        },
+        {
+          "path": "quotes[0].speaker",
+          "got": "宗一郎",
+          "expected": "宗一郎",
+          "match": "primary"
+        },
+        {
+          "path": "quotes[0].text",
+          "got": "ええか、千鶴。急ぐな。硝子より先に、心が割れる",
+          "expected": "ええか、千鶴。急ぐな。硝子より先に、心が割れる",
+          "match": "primary"
+        },
+        {
+          "path": "quotes[1].speaker",
+          "got": "綾乃",
+          "expected": "綾乃",
+          "match": "primary"
+        },
+        {
+          "path": "quotes[1].text",
+          "got": "祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い",
+          "expected": "祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い",
+          "match": "primary"
+        },
+        {
+          "path": "quotes[2].speaker",
+          "got": "宗一郎",
+          "expected": "宗一郎",
+          "match": "primary"
+        },
+        {
+          "path": "quotes[2].text",
+          "got": "硝子は正直や。手ぇ抜いた分だけ、濁る",
+          "expected": "硝子は正直や。手ぇ抜いた分だけ、濁る",
+          "match": "primary"
+        },
+        {
+          "path": "english_phrase",
+          "got": "\"Glass remembers everything.\"",
+          "expected": "\"Glass remembers everything.\"",
+          "match": "primary"
+        },
+        {
+          "path": "letter_excerpt",
+          "got": "千鶴へ\n窯の火は落とした。だが、おまえの中の火まで消えたわけではない。\n迷ったら、手を動かせ。",
+          "expected": "千鶴へ\n窯の火は落とした。だが、おまえの中の火まで消えたわけではない。\n迷ったら、手を動かせ。",
+          "match": "primary"
+        }
+      ]
+    },
+    {
+      "level": 5,
+      "valid_json": true,
+      "schema_pass": true,
+      "fields_total": 54,
+      "primary_match": 53,
+      "acceptable_match": 0,
+      "accuracy_pct": 98,
+      "raw_length": 1935,
+      "issues": [],
+      "verdicts": [
+        {
+          "path": "meta.title",
+          "got": "硝子の記憶",
+          "expected": "硝子の記憶",
+          "match": "primary"
+        },
+        {
+          "path": "meta.author",
+          "got": "佐伯千鶴",
+          "expected": "佐伯千鶴",
+          "match": "primary"
+        },
+        {
+          "path": "meta.section_count",
+          "got": 4,
+          "expected": 4,
+          "match": "primary"
+        },
+        {
+          "path": "characters",
+          "got": 5,
+          "expected": 5,
+          "match": "primary"
+        },
+        {
+          "path": "characters[0].name",
+          "got": "宗一郎",
+          "expected": "宗一郎",
+          "match": "primary"
+        },
+        {
+          "path": "characters[0].kinship_to_narrator",
+          "got": "grandfather",
+          "expected": "grandfather",
+          "match": "primary"
+        },
+        {
+          "path": "characters[0].relations",
+          "got": 1,
+          "expected": 0,
+          "match": "miss"
+        },
+        {
+          "path": "characters[1].name",
+          "got": "千鶴",
+          "expected": "千鶴",
+          "match": "primary"
+        },
+        {
+          "path": "characters[1].kinship_to_narrator",
+          "got": "self",
+          "expected": "self",
+          "match": "primary"
+        },
+        {
+          "path": "characters[1].relations",
+          "got": 0,
+          "expected": 0,
+          "match": "primary"
+        },
+        {
+          "path": "characters[2].name",
+          "got": "綾乃",
+          "expected": "綾乃",
+          "match": "primary"
+        },
+        {
+          "path": "characters[2].kinship_to_narrator",
+          "got": "elder_sister",
+          "expected": "elder_sister",
+          "match": "primary"
+        },
+        {
+          "path": "characters[2].relations",
+          "got": 0,
+          "expected": 0,
+          "match": "primary"
+        },
+        {
+          "path": "characters[3].name",
+          "got": "美津江",
+          "expected": "美津江",
+          "match": "primary"
+        },
+        {
+          "path": "characters[3].kinship_to_narrator",
+          "got": "grandmother",
+          "expected": "grandmother",
+          "match": "primary"
+        },
+        {
+          "path": "characters[3].relations",
+          "got": 0,
+          "expected": 0,
+          "match": "primary"
+        },
+        {
+          "path": "characters[4].name",
+          "got": "マルコ",
+          "expected": "マルコ",
+          "match": "primary"
+        },
+        {
+          "path": "characters[4].kinship_to_narrator",
+          "got": "none",
+          "expected": "none",
+          "match": "primary"
+        },
+        {
+          "path": "characters[4].relations",
+          "got": 1,
+          "expected": 1,
+          "match": "primary"
+        },
+        {
+          "path": "characters[4].relations[0].to",
+          "got": "宗一郎",
+          "expected": "宗一郎",
+          "match": "primary"
+        },
+        {
+          "path": "characters[4].relations[0].relation",
+          "got": "apprentice",
+          "expected": "apprentice",
+          "match": "primary"
+        },
+        {
+          "path": "timeline",
+          "got": 4,
+          "expected": 4,
+          "match": "primary"
+        },
+        {
+          "path": "timeline[0].year",
+          "got": 1961,
+          "expected": 1961,
+          "match": "primary"
+        },
+        {
+          "path": "timeline[0].sentence",
+          "got": "1961年に富山市の外れに小さな工房を構え、亡くなるまでの四十年間、ほとんど毎日窯の前に立った。",
+          "expected": "1961年に富山市の外れに小さな工房を構え、亡くなるまでの四十年間、ほとんど毎日窯の前に立った。",
+          "match": "primary"
+        },
+        {
+          "path": "timeline[1].year",
+          "got": 1978,
+          "expected": 1978,
+          "match": "primary"
+        },
+        {
+          "path": "timeline[1].sentence",
+          "got": "1978年に祖父が県の工芸展で賞を獲った時の盃を、マルコは棚から下ろしては何度も眺めていた。",
+          "expected": "1978年に祖父が県の工芸展で賞を獲った時の盃を、マルコは棚から下ろしては何度も眺めていた。",
+          "match": "primary"
+        },
+        {
+          "path": "timeline[2].year",
+          "got": 1989,
+          "expected": 1989,
+          "match": "primary"
+        },
+        {
+          "path": "timeline[2].sentence",
+          "got": "1989年の秋、イタリアから留学生のマルコが工房にやって来た。",
+          "expected": "1989年の秋、イタリアから留学生のマルコが工房にやって来た。",
+          "match": "primary"
+        },
+        {
+          "path": "timeline[3].year",
+          "got": 2001,
+          "expected": 2001,
+          "match": "primary"
+        },
+        {
+          "path": "timeline[3].sentence",
+          "got": "祖父が死んだのは2001年である。",
+          "expected": "祖父が死んだのは2001年である。",
+          "match": "primary"
+        },
+        {
+          "path": "process.melting_temperature_c",
+          "got": 1400,
+          "expected": 1400,
+          "match": "primary"
+        },
+        {
+          "path": "process.steps",
+          "got": 5,
+          "expected": 5,
+          "match": "primary"
+        },
+        {
+          "path": "process.steps[0].order",
+          "got": 1,
+          "expected": 1,
+          "match": "primary"
+        },
+        {
+          "path": "process.steps[0].name",
+          "got": "種巻き",
+          "expected": "種巻き",
+          "match": "primary"
+        },
+        {
+          "path": "process.steps[0].temperature_c",
+          "got": null,
+          "expected": null,
+          "match": "primary"
+        },
+        {
+          "path": "process.steps[1].order",
+          "got": 2,
+          "expected": 2,
+          "match": "primary"
+        },
+        {
+          "path": "process.steps[1].name",
+          "got": "吹き",
+          "expected": "吹き",
+          "match": "primary"
+        },
+        {
+          "path": "process.steps[1].temperature_c",
+          "got": null,
+          "expected": null,
+          "match": "primary"
+        },
+        {
+          "path": "process.steps[2].order",
+          "got": 3,
+          "expected": 3,
+          "match": "primary"
+        },
+        {
+          "path": "process.steps[2].name",
+          "got": "成形",
+          "expected": "成形",
+          "match": "primary"
+        },
+        {
+          "path": "process.steps[2].temperature_c",
+          "got": null,
+          "expected": null,
+          "match": "primary"
+        },
+        {
+          "path": "process.steps[3].order",
+          "got": 4,
+          "expected": 4,
+          "match": "primary"
+        },
+        {
+          "path": "process.steps[3].name",
+          "got": "ポンテ替え",
+          "expected": "ポンテ替え",
+          "match": "primary"
+        },
+        {
+          "path": "process.steps[3].temperature_c",
+          "got": null,
+          "expected": null,
+          "match": "primary"
+        },
+        {
+          "path": "process.steps[4].order",
+          "got": 5,
+          "expected": 5,
+          "match": "primary"
+        },
+        {
+          "path": "process.steps[4].name",
+          "got": "徐冷",
+          "expected": "徐冷",
+          "match": "primary"
+        },
+        {
+          "path": "process.steps[4].temperature_c",
+          "got": 520,
+          "expected": 520,
+          "match": "primary"
+        },
+        {
+          "path": "quotes_by_speaker.宗一郎",
+          "got": 2,
+          "expected": 2,
+          "match": "primary"
+        },
+        {
+          "path": "quotes_by_speaker.宗一郎[0]",
+          "got": "ええか、千鶴。急ぐな。硝子より先に、心が割れる",
+          "expected": "ええか、千鶴。急ぐな。硝子より先に、心が割れる",
+          "match": "primary"
+        },
+        {
+          "path": "quotes_by_speaker.宗一郎[1]",
+          "got": "硝子は正直や。手ぇ抜いた分だけ、濁る",
+          "expected": "硝子は正直や。手ぇ抜いた分だけ、濁る",
+          "match": "primary"
+        },
+        {
+          "path": "quotes_by_speaker.綾乃",
+          "got": 1,
+          "expected": 1,
+          "match": "primary"
+        },
+        {
+          "path": "quotes_by_speaker.綾乃[0]",
+          "got": "祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い",
+          "expected": "祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い",
+          "match": "primary"
+        },
+        {
+          "path": "analysis.grandfather_last_words",
+          "got": null,
+          "expected": null,
+          "match": "primary"
+        },
+        {
+          "path": "analysis.narrator_became_glassblower",
+          "got": false,
+          "expected": false,
+          "match": "primary"
+        }
+      ]
+    }
+  ]
+}

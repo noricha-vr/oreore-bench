@@ -1,0 +1,23 @@
+```json
+{
+  "people": [
+    "宗一郎",
+    "千鶴",
+    "綾乃",
+    "美津江",
+    "マルコ"
+  ],
+  "years_mentioned": [
+    1961,
+    1978,
+    1989,
+    2001
+  ],
+  "grandfather_alive_at_writing": false,
+  "tools": [
+    "吹き竿",
+    "ポンテ竿",
+    "木箸"
+  ]
+}
+```
