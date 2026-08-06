@@ -462,6 +462,43 @@ def test_build_html_renders_levels_and_filters_model(tmp_path: Path) -> None:
     assert not (other / "output.html").exists()
 
 
+def test_build_html_renders_model_absent_from_legacy_table(tmp_path: Path) -> None:
+    """data.js にいるモデルは、ビルダー側の登録なしで表示情報を解決できる。"""
+    theme_dir = tmp_path / "json-ladder"
+    model_dir = write_model(theme_dir, "agents-a1-4b", perfect_output())
+    run_validator(theme_dir)
+    module = load_python_script(BUILD_SCRIPT, "build_json_ladder_html_data_js")
+
+    assert module.main(["--theme-dir", str(theme_dir), "--model", "agents-a1-4b"]) == 0
+
+    html_text = (model_dir / "output.html").read_text(encoding="utf-8")
+    assert "Agents A1 4B" in html_text
+    assert "InternScience" in html_text
+    assert "ローカル LLM" in html_text
+
+
+def test_build_html_fails_loudly_for_model_missing_from_data_js(tmp_path: Path) -> None:
+    """表示情報の登録漏れは skip せず非ゼロ終了させる（黙って抜け落ちるのを防ぐ）。"""
+    theme_dir = tmp_path / "json-ladder"
+    model_dir = write_model(theme_dir, "unknown-model-x", perfect_output())
+    run_validator(theme_dir)
+    module = load_python_script(BUILD_SCRIPT, "build_json_ladder_html_unknown")
+
+    assert module.main(["--theme-dir", str(theme_dir), "--model", "unknown-model-x"]) == 1
+    assert not (model_dir / "output.html").exists()
+
+
+def test_build_html_bulk_run_fails_when_any_model_is_unknown(tmp_path: Path) -> None:
+    """--model なしの一括ビルドでも登録漏れは非ゼロ終了になる。"""
+    theme_dir = tmp_path / "json-ladder"
+    write_model(theme_dir, MODEL, perfect_output())
+    write_model(theme_dir, "unknown-model-x", perfect_output())
+    run_validator(theme_dir)
+    module = load_python_script(BUILD_SCRIPT, "build_json_ladder_html_bulk_unknown")
+
+    assert module.main(["--theme-dir", str(theme_dir)]) == 1
+
+
 def test_build_html_escapes_model_output(tmp_path: Path) -> None:
     theme_dir = tmp_path / "json-ladder"
     output = perfect_output()

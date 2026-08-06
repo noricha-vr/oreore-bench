@@ -5,61 +5,75 @@
 from __future__ import annotations
 
 import argparse
+import functools
 import html
 import json
+import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 THEME_DIR = ROOT / "public" / "json-ladder"
+DATA_JS = ROOT / "public" / "data.js"
 
 ACCENT = "#0e7490"
 ACCENT_DARK = "#67e8f9"
 
-MODEL_INFO = {
-    "claude-opus-4-8": {
-        "label": "Claude Opus 4.8", "provider": "Anthropic", "type": "API LLM",
-        "color": "#CC785C", "color_dark": "#A8553D",
-    },
-    "claude-opus-5": {
-        "label": "Claude Opus 5", "provider": "Anthropic", "type": "API LLM",
-        "color": "#CC785C", "color_dark": "#A8553D",
-    },
-    "gemma-4-31b": {
-        "label": "Gemma 4 31B", "provider": "Google", "type": "ローカル LLM",
-        "color": "#4285F4", "color_dark": "#1A56DB",
-    },
-    "gemma-4-26b-a4b-qat": {
-        "label": "Gemma 4 26B-A4B (QAT)", "provider": "Google", "type": "ローカル LLM",
-        "color": "#4285F4", "color_dark": "#1A56DB",
-    },
-    "gemma-4-12b-qat": {
-        "label": "Gemma 4 12B (QAT)", "provider": "Google", "type": "ローカル LLM",
-        "color": "#4285F4", "color_dark": "#1A56DB",
-    },
-    "grok-4-5": {
-        "label": "Grok 4.5", "provider": "xAI", "type": "API LLM",
-        "color": "#3A3A3C", "color_dark": "#111111",
-    },
-    "laguna-s-2.1": {
-        "label": "Laguna S 2.1", "provider": "poolside", "type": "API LLM",
-        "color": "#0891B2", "color_dark": "#0E7490",
-    },
-    "deepseek-v4-flash-0731-mlx": {
-        "label": "DeepSeek V4 Flash 0731 MLX",
-        "provider": "InferencerLabs / DeepSeek",
-        "type": "ローカル LLM",
-        "color": "#4D6BFE",
-        "color_dark": "#354FC7",
-    },
-    "hy3-t512": {
-        "label": "Hy3 T512 MLX",
-        "provider": "avlp12 / Tencent",
-        "type": "ローカル LLM",
-        "color": "#7C3AED",
-        "color_dark": "#5B21B6",
-    },
-}
+# 表示情報の単一情報源は public/data.js の window.MODELS。
+# ビルダー側にラベル・色を複製すると data.js への追加だけでは HTML に反映されず、
+# 新モデルが黙って skip される（旧 MODEL_INFO 定数の実害）。
+# JS を正規表現でパースすると構文変更に追従できないため、node に評価させて JSON で受け取る。
+LOAD_MODELS_JS = """
+global.window = {};
+require(process.argv[1]);
+console.log(JSON.stringify(window.MODELS || {}));
+"""
+
+class ModelDataError(RuntimeError):
+    """Raised when public/data.js cannot supply a model's display metadata."""
+
+
+@functools.lru_cache(maxsize=1)
+def load_models(data_js: Path = DATA_JS) -> dict[str, dict[str, object]]:
+    """Return window.MODELS from data.js by evaluating it with node."""
+    if not data_js.is_file():
+        raise ModelDataError(f"data.js not found: {data_js}")
+    try:
+        completed = subprocess.run(
+            ["node", "-e", LOAD_MODELS_JS, str(data_js)],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except FileNotFoundError as exc:
+        raise ModelDataError("node is required to read public/data.js") from exc
+    except subprocess.CalledProcessError as exc:
+        raise ModelDataError(f"cannot evaluate {data_js}: {exc.stderr.strip()}") from exc
+    models = json.loads(completed.stdout)
+    if not isinstance(models, dict) or not models:
+        raise ModelDataError(f"window.MODELS is empty in {data_js}")
+    return models
+
+
+def model_info(name: str) -> dict[str, str]:
+    """Map one window.MODELS entry to the fields this template renders."""
+    entry = load_models().get(name)
+    if not isinstance(entry, dict):
+        raise ModelDataError(
+            f"json-ladder/{name}: window.MODELS に定義がありません。public/data.js に追加してください"
+        )
+    missing = [key for key in ("label", "provider", "type", "color", "colorDark") if key not in entry]
+    if missing:
+        raise ModelDataError(
+            f"json-ladder/{name}: window.MODELS のキー不足: {', '.join(missing)}"
+        )
+    return {
+        "label": str(entry["label"]),
+        "provider": str(entry["provider"]),
+        "type": "ローカル LLM" if entry["type"] == "local" else "API LLM",
+        "color": str(entry["color"]),
+        "color_dark": str(entry["colorDark"]),
+    }
 
 TEMPLATE = """<!DOCTYPE html>
 <html lang="ja">
@@ -294,10 +308,8 @@ def render_body(meta: dict[str, object], raws: dict[object, str]) -> str:
 
 def render(model_dir: Path) -> bool:
     name = model_dir.name
-    info = MODEL_INFO.get(name)
-    if not info:
-        print(f"skip json-ladder/{name}: unknown model", file=sys.stderr)
-        return False
+    # 未知モデルは skip せず ModelDataError で落とす（表示情報の登録漏れを黙って通さない）
+    info = model_info(name)
 
     output_path = model_dir / "output.json"
     meta_path = model_dir / "meta.json"
@@ -344,16 +356,20 @@ def main(argv: list[str] | None = None) -> int:
         print(f"theme not found: {theme_dir}", file=sys.stderr)
         return 1
 
-    if args.model:
-        model_dir = theme_dir / args.model
-        if not model_dir.is_dir():
-            print(f"model not found: {args.model}", file=sys.stderr)
-            return 1
-        return 0 if render(model_dir) else 1
+    try:
+        if args.model:
+            model_dir = theme_dir / args.model
+            if not model_dir.is_dir():
+                print(f"model not found: {args.model}", file=sys.stderr)
+                return 1
+            return 0 if render(model_dir) else 1
 
-    for model_dir in sorted(theme_dir.iterdir()):
-        if model_dir.is_dir() and model_dir.name != "levels":
-            render(model_dir)
+        for model_dir in sorted(theme_dir.iterdir()):
+            if model_dir.is_dir() and model_dir.name != "levels":
+                render(model_dir)
+    except ModelDataError as exc:
+        print(f"[ERROR] {exc}", file=sys.stderr)
+        return 1
     return 0
 
 
