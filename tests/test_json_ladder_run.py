@@ -49,14 +49,44 @@ class StubServer:
         class Handler(BaseHTTPRequestHandler):
             def do_POST(self) -> None:  # noqa: N802
                 size = int(self.headers["Content-Length"])
-                parent.requests.append(json.loads(self.rfile.read(size)))
+                request = json.loads(self.rfile.read(size))
+                parent.requests.append(request)
                 response = parent.responses.pop(0)
+                if request.get("stream"):
+                    self.write_stream(response)
+                    return
                 payload = json.dumps(response).encode("utf-8")
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Content-Length", str(len(payload)))
                 self.end_headers()
                 self.wfile.write(payload)
+
+            def write_stream(self, response: dict[str, Any]) -> None:
+                """Re-serve a whole-body response as the SSE stream the local runner reads."""
+                choice = response["choices"][0]
+                events: list[dict[str, Any]] = [
+                    {
+                        "choices": [
+                            {
+                                "delta": {"content": choice["message"]["content"]},
+                                "finish_reason": None,
+                            }
+                        ]
+                    },
+                    {"choices": [{"delta": {}, "finish_reason": choice["finish_reason"]}]},
+                ]
+                if "usage" in response:
+                    events.append({"choices": [], "usage": response["usage"]})
+                body = b"".join(
+                    b"data: " + json.dumps(event).encode("utf-8") + b"\n\n" for event in events
+                )
+                body += b"data: [DONE]\n\n"
+                self.send_response(200)
+                self.send_header("Content-Type", "text/event-stream")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
 
             def do_GET(self) -> None:  # noqa: N802
                 payload = b'{"data": []}'
@@ -204,6 +234,31 @@ def test_local_empty_content_is_saved_as_a_failed_level(
     assert output["levels"][4]["finish_reason"] == "length"
     assert (model_dir / "raw-l5.txt").read_text(encoding="utf-8") == ""
     assert [level["level"] for level in output["levels"]] == list(ladder.LEVEL_NUMBERS)
+
+
+def test_local_runaway_aborts_without_creating_output(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """繰り返し暴走はローカル json-ladder 経路でも打ち切り、成果物を書かない。
+
+    空 content を許容する allow_empty と、暴走を検知して止める検知器は両立する必要がある。
+    片方だけになると「暴走出力をそのまま公開」または「空応答で全レベルを失う」のどちらかに倒れる。
+    終了コードは API 起因の失敗と同じ 2（RunawayDetected は MlxApiError の派生）。
+    """
+    make_theme(tmp_path)
+    bodies = [response(level) for level in ladder.LEVEL_NUMBERS]
+    bodies[0]["choices"][0]["message"]["content"] = '  {"id": 1, "name": "same"},\n' * 2000
+    with StubServer(bodies) as server:
+        base_url = server.url.removesuffix("/chat/completions") + "/v1"
+        assert invoke(
+            monkeypatch,
+            tmp_path,
+            "--model", "local-model",
+            "--backend", "local",
+            "--base-url", base_url,
+        ) == 2
+
+    assert not (tmp_path / "json-ladder" / "local-model").exists()
 
 
 def test_local_path_model_id_requires_a_public_model_id(

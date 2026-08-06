@@ -86,9 +86,9 @@ _REQUIRED_OPENROUTER = (
     "resolve_api_url", "resolve_model_id",
 )
 _REQUIRED_LOCAL = (
-    "DEFAULT_BASE_URL", "DEFAULT_TIMEOUT_SECONDS", "MlxApiError", "UsageMissingError",
-    "PUBLIC_MODEL_ID_RE", "build_local_cost", "endpoint", "preflight", "request_json",
-    "resolve_base_url",
+    "DEFAULT_BASE_URL", "DEFAULT_RUNAWAY_THRESHOLD", "DEFAULT_TIMEOUT_SECONDS",
+    "MlxApiError", "UsageMissingError", "PUBLIC_MODEL_ID_RE", "build_local_cost",
+    "call_model", "endpoint", "preflight", "request_json", "resolve_base_url",
 )
 for _module, _names in ((OPENROUTER, _REQUIRED_OPENROUTER), (LOCAL, _REQUIRED_LOCAL)):
     _missing = [n for n in _names if not hasattr(_module, n)]
@@ -181,66 +181,27 @@ def run_levels(
     return levels, prompt_total, completion_total, reasoning_total, actual_cost_total
 
 
-def read_local_response(body: dict[str, Any]) -> tuple[str, str, int, int]:
-    """Read one loopback response, keeping empty content as a recordable failure.
-
-    ローカル勢は reasoning を出し切って本文を返さないことがある（Gemma 4 12B QAT の L5 は
-    reasoning 85K tokens で打ち切られ content が空になった）。これはモデルのフォーマット遵守
-    失敗そのものなので、実行を止めず空 raw のまま保存してパース失敗として採点する。
-    mlx-lm-run.py の read_response は 1 テーマ 1 リクエスト前提で空応答を異常扱いにするため、
-    レベル単位で結果を残す json-ladder ではこちらを使う。
-    """
-    choices = body.get("choices")
-    if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict):
-        raise LOCAL.MlxApiError("chat completion response has no choices")
-    message = choices[0].get("message")
-    if not isinstance(message, dict):
-        raise LOCAL.MlxApiError("chat completion choice has no message")
-    content = message.get("content")
-    content = content if isinstance(content, str) else ""
-    finish_reason = choices[0].get("finish_reason")
-    if not isinstance(finish_reason, str) or not finish_reason:
-        raise LOCAL.MlxApiError("chat completion response has no finish_reason")
-    usage = body.get("usage")
-    if not isinstance(usage, dict):
-        raise LOCAL.UsageMissingError("chat completion response has no usage object")
-    prompt_tokens = usage.get("prompt_tokens")
-    completion_tokens = usage.get("completion_tokens")
-    if type(prompt_tokens) is not int or type(completion_tokens) is not int:
-        raise LOCAL.UsageMissingError("usage token counts must be integers")
-    if prompt_tokens <= 0 or completion_tokens <= 0:
-        raise LOCAL.UsageMissingError("usage token counts must both be greater than zero")
-    return content, finish_reason, prompt_tokens, completion_tokens
-
-
-def call_local_model(model_id: str, prompt: str, base_url: str, max_tokens: int) -> tuple[str, str, int, int]:
-    """Send one loopback chat request and read it with the level-tolerant reader."""
-    body = LOCAL.request_json(
-        LOCAL.endpoint(base_url, "chat/completions"),
-        LOCAL.DEFAULT_TIMEOUT_SECONDS,
-        {
-            "model": model_id,
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.3,
-            "max_tokens": max_tokens,
-            "stream": False,
-        },
-    )
-    return read_local_response(body)
-
-
 def run_local_levels(
     model_id: str, theme_dir: Path, base_url: str, max_tokens: int
 ) -> tuple[list[dict[str, Any]], int, int]:
-    """Make five sequential loopback requests without rejecting length responses."""
+    """Make five sequential loopback requests without rejecting empty responses.
+
+    ローカル勢は reasoning を出し切って本文を返さないことがある（Gemma 4 12B QAT の L5 は
+    reasoning 85K tokens で打ち切られ content が空になった）。これはモデルのフォーマット遵守
+    失敗そのものなので、allow_empty で実行を止めず空 raw のまま保存し、パース失敗として採点する。
+    繰り返し暴走の打ち切りは 1 テーマ経路と同じ既定閾値で効かせる。
+    """
     levels: list[dict[str, Any]] = []
     prompt_total = completion_total = 0
     for level in LEVEL_NUMBERS:
-        content, finish_reason, prompt_tokens, completion_tokens = call_local_model(
+        content, finish_reason, prompt_tokens, completion_tokens, _elapsed = LOCAL.call_model(
             model_id,
             build_level_prompt(theme_dir, level),
             base_url,
             max_tokens,
+            LOCAL.DEFAULT_TIMEOUT_SECONDS,
+            LOCAL.DEFAULT_RUNAWAY_THRESHOLD,
+            True,
         )
         levels.append(
             {
