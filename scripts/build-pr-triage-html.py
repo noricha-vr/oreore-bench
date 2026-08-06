@@ -168,7 +168,7 @@ TEMPLATE = """<!DOCTYPE html>
 </div>
 
 <main class="wrap">
-  {body}
+{body}
 </main>
 
 </body>
