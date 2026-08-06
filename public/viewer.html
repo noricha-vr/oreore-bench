@@ -401,6 +401,11 @@
                 button.addEventListener('keydown', event => handleListKeydown(event, index));
                 modelList.appendChild(button);
             });
+
+            // テーマ切替でリストが作り直されると scrollTop が 0 に戻り、選択が維持されていても
+            // 画面外になって「リセットされた」ように見えるため、選択項目まで送る
+            const selected = modelList.querySelector('.model-button.is-selected');
+            if (selected) selected.scrollIntoView({ block: 'nearest' });
         }
 
         function selectEntry(entry) {
@@ -411,9 +416,12 @@
         }
 
         function selectTheme(themeKey) {
+            // テーマを跨いでも同じモデルを見続けられるよう選択を引き継ぐ。
+            // 切替先に run が無ければ先頭へ落とす（初期化時の activeEntry 決定と同じ規則）
+            const previousModel = activeEntry.model;
             activeTheme = themeKey;
             themeEntries = ENTRIES.filter(entry => entry.theme === activeTheme);
-            activeEntry = themeEntries[0];
+            activeEntry = themeEntries.find(entry => entry.model === previousModel) || themeEntries[0];
             themeSelect.value = activeTheme;
             renderModelList();
             updateDetails();
