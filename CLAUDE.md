@@ -3,6 +3,66 @@
 OreOre-Bench（俺基準の LLM ベンチマーク）でのエージェント作業ルール。
 ベンチの実行手順・run.json の記録仕様は `README.md` が正本。ここには README に無い運用制約だけを書く。
 
+## Git 運用ポリシー: auto commit / auto merge / auto deploy
+
+このリポジトリは **main 直コミット + 自動マージ + 自動デプロイ** を許可する（ユーザー指示 2026-08-06）。
+ベンチ結果の追記が作業の大半で、レビューを挟む価値より反映の速さが勝るため。
+
+`.agents/git-policy` に `main-direct` を置いている。
+
+### グローバルルールとの関係（重要）
+
+`~/.claude/rules/git-workflow.md` は「`.github/workflows/deploy*` があるリポは PR 必須（拒否権）」と定め、
+`main-direct` マーカーは拒否権を覆せない。このリポには `deploy.yml` があるため、通常はその拒否権に該当する。
+**本節はユーザーの明示指示による上書き**であり、以下の理由で安全側の条件を満たすと判断している:
+
+- デプロイ先が静的サイト（Cloudflare Pages / `public/` の配信のみ）で、DB・課金・認証を持たない
+- `deploy.yml` がデプロイ後にトップページの HTTP 200 を検証し、失敗すれば job が落ちる
+- 壊れても `git revert` + 再 push で復旧でき、本番データは失われない
+
+この前提が変わったら（動的処理・認証・課金・DB を持たせる、外部への副作用が入る）、
+本節を撤回して PR 必須に戻す。
+
+### 各自動化の運用
+
+| 対象 | 運用 |
+|---|---|
+| auto commit | 責務単位（1機能 / 1修正 / 1データ追加）が検証通過したら、指示を待たず main へコミットする。自セッションで Edit/Write したファイルのみが対象 |
+| auto merge | PR を作った場合は CI 全パス後に `--squash --delete-branch` で自動マージしてよい。ただし下記「PR を通す変更」は人間レビューを挟む |
+| auto deploy | main への push で `deploy.yml` が Cloudflare Pages に反映する。マージ・push 後は `gh run list --workflow=deploy.yml --limit 1` で success を確認してから完了報告する |
+
+### 直コミットしてよい変更
+
+- ベンチ結果の追加・差し替え（`public/data/**` の run.json・生成物）
+- ドキュメント・README・コメント
+- スクリプトの軽微な修正でテストが通るもの
+
+### PR を通す変更（直コミット禁止）
+
+自動化の対象外。これらは main 直コミットも auto-merge もしない:
+
+- `.github/workflows/**` / `wrangler.toml` / `_headers` / `_redirects`（デプロイ経路そのもの）
+- `.agents/git-policy` / `CLAUDE.md`（本ポリシーの自己書き換え）
+- `.gitignore` / `.env*`（機密除外の解除に使えるため）
+
+### 必須の検証（自動化の担保）
+
+コミット・push の前に、変更種別に応じて実行する。**失敗したら push しない**。
+
+```bash
+# run.json を触った時
+node scripts/validate-runs.mjs
+
+# スクリプト・テストを触った時
+uv run --with pytest==8.3.4 pytest tests/ -q
+```
+
+push 後は deploy の結果を確認する:
+
+```bash
+gh run list --workflow=deploy.yml --limit 1
+```
+
 ## ベンチマーク実行時のメモリ監視（必須）
 
 <critical_rule>
