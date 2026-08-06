@@ -37,6 +37,8 @@ PUBLIC = ROOT / "public"
 DEFAULT_BASE_URL = "http://127.0.0.1:18081/v1"
 DEFAULT_MAX_TOKENS = 65000
 DEFAULT_TIMEOUT_SECONDS = 3600
+MAX_SSE_LINE_BYTES = 1 << 20
+MAX_CHARS_PER_TOKEN = 8
 NAME_RE = re.compile(r"^[A-Za-z0-9._-]+$")
 PUBLIC_MODEL_ID_RE = re.compile(
     r"^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*$"
@@ -146,6 +148,23 @@ def request_json(url: str, timeout: int, payload: dict[str, Any] | None = None) 
     return body
 
 
+def iter_sse_lines(response: Any) -> Any:
+    """Yield SSE lines, refusing one that never terminates.
+
+    http.client caps line length for headers only; iterating the body calls an
+    unbounded readline, so a server that emits no newline is read entirely into
+    memory before any parsing happens.  Reading with an explicit size keeps that
+    failure bounded well above the few hundred bytes a real chunk occupies.
+    """
+    while True:
+        line = response.readline(MAX_SSE_LINE_BYTES + 1)
+        if not line:
+            return
+        if len(line) > MAX_SSE_LINE_BYTES:
+            raise MlxApiError("mlx_lm.server sent an oversized SSE line")
+        yield line
+
+
 def parse_sse_chunk(line: bytes) -> dict[str, Any] | None:
     """Return one decoded SSE data payload, or None for keepalives and the terminator."""
     text = line.decode("utf-8", errors="replace").strip()
@@ -187,6 +206,7 @@ def stream_completion(
     timeout: int,
     payload: dict[str, Any],
     detector: RunawayDetector | None,
+    max_chars: int,
 ) -> tuple[str, str, int, int]:
     """Stream one completion, aborting the connection as soon as it starts repeating.
 
@@ -200,9 +220,10 @@ def stream_completion(
     finish_reason: str | None = None
     usage: dict[str, Any] | None = None
     parts: list[str] = []
+    produced = 0
     try:
         with HTTP_OPENER.open(request, timeout=timeout) as response:
-            for line in response:
+            for line in iter_sse_lines(response):
                 chunk = parse_sse_chunk(line)
                 if chunk is None:
                     continue
@@ -214,10 +235,19 @@ def stream_completion(
                 if not content:
                     continue
                 parts.append(content)
+                produced += len(content)
+                if produced > max_chars:
+                    # Repetition detection only stops repeating output; a server
+                    # streaming novel text forever would otherwise never end,
+                    # because the timeout only bounds silence, not total work.
+                    response.close()
+                    raise MlxApiError("chat completion stream exceeded its character budget")
                 if detector is None:
                     continue
                 verdict = detector.feed(content)
                 if verdict is not None:
+                    # Close before raising so the server stops generating now,
+                    # rather than filling max_tokens into a dead connection.
                     response.close()
                     raise RunawayDetected(verdict)
     except urllib.error.HTTPError as exc:
@@ -245,32 +275,6 @@ def preflight(base_url: str, timeout: int) -> None:
     body = request_json(endpoint(base_url, "models"), timeout)
     if not isinstance(body.get("data"), list):
         raise MlxApiError("/v1/models response has no data list")
-
-
-def read_response(body: dict[str, Any]) -> tuple[str, str, int, int]:
-    """Return raw content and measured tokens from a valid chat completion body."""
-    choices = body.get("choices")
-    if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict):
-        raise MlxApiError("chat completion response has no choices")
-    message = choices[0].get("message")
-    if not isinstance(message, dict):
-        raise MlxApiError("chat completion choice has no message")
-    content = message.get("content")
-    if not isinstance(content, str) or not content:
-        raise MlxApiError("chat completion response has null or empty content")
-    finish_reason = choices[0].get("finish_reason")
-    if not isinstance(finish_reason, str) or not finish_reason:
-        raise MlxApiError("chat completion response has no finish_reason")
-    usage = body.get("usage")
-    if not isinstance(usage, dict):
-        raise UsageMissingError("chat completion response has no usage object")
-    prompt_tokens = usage.get("prompt_tokens")
-    completion_tokens = usage.get("completion_tokens")
-    if type(prompt_tokens) is not int or type(completion_tokens) is not int:
-        raise UsageMissingError("usage token counts must be integers")
-    if prompt_tokens <= 0 or completion_tokens <= 0:
-        raise UsageMissingError("usage token counts must both be greater than zero")
-    return content, finish_reason, prompt_tokens, completion_tokens
 
 
 def build_usage(
@@ -538,6 +542,7 @@ def call_model(
             "stream_options": {"include_usage": True},
         },
         detector,
+        max_tokens * MAX_CHARS_PER_TOKEN,
     )
     elapsed_seconds = time.monotonic() - started
     return content, finish_reason, prompt_tokens, completion_tokens, elapsed_seconds

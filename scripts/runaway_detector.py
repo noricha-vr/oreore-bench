@@ -18,8 +18,17 @@ from dataclasses import dataclass
 
 WINDOW_CHARS = 3000
 STEP_CHARS = 1500
+# Bounds how far back a rewrite loop can be recognised.  zlib's own dictionary
+# is 32 KiB, so the effective reach is the smaller of this and that window: for
+# CJK text at 3 bytes per character it is roughly 10,900 characters, for ASCII
+# the full 40,000.  Comparing against a bounded context rather than the whole
+# generation therefore changes the score, and does so toward earlier detection.
 CONTEXT_CHARS = 40000
 MIN_START_CHARS = 6000
+# Separates every artifact in the benchmark corpus, but not by much: the worst
+# healthy output scores 0.591 and the milder runaway scores 0.535.  A new model
+# could land between them, so treat a single detection as a signal to inspect
+# the output and retune with --runaway-threshold, not as settled ground truth.
 THRESHOLD = 0.55
 MIN_LINES = 15
 
@@ -106,12 +115,6 @@ class RunawayDetector:
         if self._fired or self._length < self._next_check:
             return None
         self._next_check = self._length + STEP_CHARS
-        return self._evaluate()
-
-    def final_check(self) -> RunawayVerdict | None:
-        """Score the tail once after a non-streaming generation has completed."""
-        if self._fired or self._length < max(MIN_START_CHARS, WINDOW_CHARS):
-            return None
         return self._evaluate()
 
     def _evaluate(self) -> RunawayVerdict | None:

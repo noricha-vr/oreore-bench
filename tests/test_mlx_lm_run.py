@@ -50,17 +50,22 @@ class FakeResponse:
         else:
             self._raw = body if isinstance(body, bytes) else json.dumps(body).encode("utf-8")
         self.closed = False
+        self._next = 0
 
     def read(self) -> bytes:
         return self._raw
 
-    def __iter__(self) -> Any:
+    def readline(self, limit: int = -1) -> bytes:
+        """Return the next SSE line, honouring the caller's length limit."""
         if self._lines is None:
             raise AssertionError("response was not opened as a stream")
-        for line in self._lines.lines:
-            if self.closed:
-                return
-            yield line
+        if self.closed or self._next >= len(self._lines.lines):
+            return b""
+        line = self._lines.lines[self._next]
+        if limit >= 0 and len(line) > limit:
+            return line[:limit]
+        self._next += 1
+        return line
 
     def close(self) -> None:
         self.closed = True
@@ -411,6 +416,36 @@ def test_runaway_generation_is_cut_off_and_publishes_nothing(
 
     assert not (public / "demo" / "hy3-t512").exists()
     assert progress.tokens_sent < 65000
+
+
+def test_unterminated_stream_line_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A body that never sends a newline is rejected instead of being buffered whole."""
+    public = make_public(tmp_path)
+    monkeypatch.setattr(runner, "PUBLIC", public)
+    monkeypatch.setattr(runner, "parse_args", lambda: make_args())
+    install_fake_http(
+        monkeypatch,
+        [{"data": []}, StreamBody([b"data: " + b"A" * (runner.MAX_SSE_LINE_BYTES + 8)])],
+    )
+
+    assert runner.main() == 1
+    assert not (public / "demo" / "hy3-t512").exists()
+
+
+def test_novel_but_endless_stream_is_cut_off(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Non-repeating output still stops at a budget, since detection cannot end it."""
+    public = make_public(tmp_path)
+    monkeypatch.setattr(runner, "PUBLIC", public)
+    monkeypatch.setattr(runner, "parse_args", lambda: make_args(max_tokens=100))
+    novel = "".join(f"<p id='{i}'>まったく新しい段落 {i}</p>\n" for i in range(4000))
+    install_fake_http(monkeypatch, [{"data": []}, completion(novel)])
+
+    assert runner.main() == 1
+    assert not (public / "demo" / "hy3-t512").exists()
 
 
 def test_runaway_check_can_be_disabled(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
