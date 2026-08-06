@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-08-06T10:59:33.819Z",
+  "generated_at": "2026-08-06T13:02:35.725Z",
   "levels_total": 5,
   "parse_pass_count": 5,
-  "score_pct": 79,
+  "score_pct": 100,
   "levels": [
     {
       "level": 1,
@@ -46,9 +46,9 @@
       "valid_json": true,
       "schema_pass": true,
       "fields_total": 16,
-      "primary_match": 14,
+      "primary_match": 16,
       "acceptable_match": 0,
-      "accuracy_pct": 88,
+      "accuracy_pct": 100,
       "raw_length": 183,
       "issues": [],
       "verdicts": [
@@ -60,15 +60,15 @@
         },
         {
           "path": "people[0]",
-          "got": "千鶴",
+          "got": "宗一郎",
           "expected": "宗一郎",
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "people[1]",
-          "got": "宗一郎",
+          "got": "千鶴",
           "expected": "千鶴",
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "people[2]",
@@ -158,7 +158,7 @@
       "primary_match": 12,
       "acceptable_match": 0,
       "accuracy_pct": 100,
-      "raw_length": 316,
+      "raw_length": 380,
       "issues": [],
       "verdicts": [
         {
@@ -238,30 +238,25 @@
     {
       "level": 4,
       "valid_json": true,
-      "schema_pass": false,
+      "schema_pass": true,
       "fields_total": 9,
-      "primary_match": 3,
+      "primary_match": 9,
       "acceptable_match": 0,
-      "accuracy_pct": 33,
-      "raw_length": 208,
-      "issues": [
-        "missing: quotes[1].speaker",
-        "missing: quotes[1].text",
-        "missing: quotes[2].speaker",
-        "missing: quotes[2].text"
-      ],
+      "accuracy_pct": 100,
+      "raw_length": 390,
+      "issues": [],
       "verdicts": [
         {
           "path": "quotes",
-          "got": 1,
+          "got": 3,
           "expected": 3,
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "quotes[0].speaker",
-          "got": "千鶴",
+          "got": "宗一郎",
           "expected": "宗一郎",
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "quotes[0].text",
@@ -271,27 +266,27 @@
         },
         {
           "path": "quotes[1].speaker",
-          "got": null,
+          "got": "綾乃",
           "expected": "綾乃",
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "quotes[1].text",
-          "got": null,
+          "got": "祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い",
           "expected": "祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い",
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "quotes[2].speaker",
-          "got": null,
+          "got": "宗一郎",
           "expected": "宗一郎",
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "quotes[2].text",
-          "got": null,
+          "got": "硝子は正直や。手ぇ抜いた分だけ、濁る",
           "expected": "硝子は正直や。手ぇ抜いた分だけ、濁る",
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "english_phrase",
@@ -310,19 +305,13 @@
     {
       "level": 5,
       "valid_json": true,
-      "schema_pass": false,
+      "schema_pass": true,
       "fields_total": 54,
-      "primary_match": 40,
+      "primary_match": 53,
       "acceptable_match": 0,
-      "accuracy_pct": 74,
-      "raw_length": 1857,
-      "issues": [
-        "missing: characters[4].name",
-        "missing: characters[4].kinship_to_narrator",
-        "missing: characters[4].relations",
-        "missing: characters[4].relations[0].to",
-        "missing: characters[4].relations[0].relation"
-      ],
+      "accuracy_pct": 98,
+      "raw_length": 1935,
+      "issues": [],
       "verdicts": [
         {
           "path": "meta.title",
@@ -344,9 +333,9 @@
         },
         {
           "path": "characters",
-          "got": 4,
+          "got": 5,
           "expected": 5,
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "characters[0].name",
@@ -404,51 +393,51 @@
         },
         {
           "path": "characters[3].name",
-          "got": "マルコ",
+          "got": "美津江",
           "expected": "美津江",
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "characters[3].kinship_to_narrator",
-          "got": "none",
+          "got": "grandmother",
           "expected": "grandmother",
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "characters[3].relations",
-          "got": 1,
+          "got": 0,
           "expected": 0,
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "characters[4].name",
-          "got": null,
+          "got": "マルコ",
           "expected": "マルコ",
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "characters[4].kinship_to_narrator",
-          "got": null,
+          "got": "none",
           "expected": "none",
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "characters[4].relations",
-          "got": null,
+          "got": 1,
           "expected": 1,
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "characters[4].relations[0].to",
-          "got": null,
+          "got": "宗一郎",
           "expected": "宗一郎",
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "characters[4].relations[0].relation",
-          "got": null,
+          "got": "apprentice",
           "expected": "apprentice",
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "timeline",
@@ -608,21 +597,21 @@
         },
         {
           "path": "quotes_by_speaker.宗一郎",
-          "got": 3,
+          "got": 2,
           "expected": 2,
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "quotes_by_speaker.宗一郎[0]",
-          "got": "「ええか、千鶴。急ぐな。硝子より先に、心が割れる」",
+          "got": "ええか、千鶴。急ぐな。硝子より先に、心が割れる",
           "expected": "ええか、千鶴。急ぐな。硝子より先に、心が割れる",
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "quotes_by_speaker.宗一郎[1]",
-          "got": "「火に訊け」",
+          "got": "硝子は正直や。手ぇ抜いた分だけ、濁る",
           "expected": "硝子は正直や。手ぇ抜いた分だけ、濁る",
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "quotes_by_speaker.綾乃",
@@ -632,9 +621,9 @@
         },
         {
           "path": "quotes_by_speaker.綾乃[0]",
-          "got": "「祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い」",
+          "got": "祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い",
           "expected": "祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い",
-          "match": "miss"
+          "match": "primary"
         },
         {
           "path": "analysis.grandfather_last_words",

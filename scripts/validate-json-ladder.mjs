@@ -80,6 +80,60 @@ function parsePath(pathStr) {
   return tokens;
 }
 
+// answer-key の path 集合から「許可キーツリー」を作る。
+// node = { keys: Map<string, node>, item: node|null }
+//   keys: オブジェクトとして許可されるキー
+//   item: 配列要素の許可ツリー（全インデックスの和集合。要素ごとの差は array_length 採点の領分）
+function newAllowNode() {
+  return { keys: new Map(), item: null };
+}
+
+function buildAllowTree(fields) {
+  const root = newAllowNode();
+  for (const field of fields) {
+    let cur = root;
+    for (const token of parsePath(field.path)) {
+      if (token.type === 'index') {
+        if (!cur.item) cur.item = newAllowNode();
+        cur = cur.item;
+      } else {
+        if (!cur.keys.has(token.value)) cur.keys.set(token.value, newAllowNode());
+        cur = cur.keys.get(token.value);
+      }
+    }
+  }
+  return root;
+}
+
+function joinPath(prefix, key) {
+  return prefix ? `${prefix}.${key}` : key;
+}
+
+// 許可ツリーに無いオブジェクトキーを extra-key として列挙する。
+// 配列の余剰要素は array_length 採点でカバー済みなので、ここでは扱わない。
+function collectExtraKeys(value, node, prefix, issues) {
+  if (value === null || typeof value !== 'object') return;
+
+  if (Array.isArray(value)) {
+    if (!node.item) return;
+    value.forEach((item, i) => collectExtraKeys(item, node.item, `${prefix}[${i}]`, issues));
+    return;
+  }
+
+  // 子が未定義のノード（採点対象がスカラーの葉）は構造を規定しないので踏み込まない。
+  // 型違いは evaluateField の type-error 側で報告される。
+  if (node.keys.size === 0) return;
+
+  for (const key of Object.keys(value)) {
+    const child = node.keys.get(key);
+    if (!child) {
+      issues.push(`extra-key: ${joinPath(prefix, key)}`);
+      continue;
+    }
+    collectExtraKeys(value[key], child, joinPath(prefix, key), issues);
+  }
+}
+
 const MISSING = Symbol('missing');
 
 function resolvePath(root, pathStr) {
@@ -177,13 +231,17 @@ function scoreLevel(fields, root) {
     verdicts.push(verdict);
   }
 
+  // PROMPT.md が「キーの追加・省略・改名は不可」を課しているので、未定義キーもスキーマ違反として扱う。
+  // ただし accuracy_pct（一致率）には影響させない: 採点対象フィールドの一致度という意味を変えないため。
+  collectExtraKeys(root, buildAllowTree(fields), '', issues);
+
   const total = fields.length;
   return {
     fields_total: total,
     primary_match: primary,
     acceptable_match: acceptable,
     accuracy_pct: total === 0 ? 0 : Math.round(((primary + 0.5 * acceptable) / total) * 100),
-    // 値の不一致は許容し、構造の破綻（欠損・型違い）だけを schema_pass の判定に使う
+    // 値の不一致は許容し、構造の破綻（欠損・型違い・未定義キー）だけを schema_pass の判定に使う
     schema_pass: issues.length === 0,
     issues,
     verdicts,

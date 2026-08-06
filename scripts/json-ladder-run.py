@@ -25,6 +25,29 @@ ROOT = Path(__file__).resolve().parent.parent
 PUBLIC = ROOT / "public"
 THEME = "json-ladder"
 LEVEL_NUMBERS = (1, 2, 3, 4, 5)
+
+# harness ごとの runtime 既定値と usage.note の実測元表記。
+# validate-runs.mjs の HARNESS_ENUM のうち、この runner が扱うローカル 3 種のみを持つ。
+LOCAL_HARNESSES: dict[str, dict[str, Any]] = {
+    "mlx-lm-api": {
+        "runtime": {"engine": "mlx-lm", "api": "openai-compat-chat"},
+        "source": "ローカル MLX API",
+    },
+    "lmstudio-api": {
+        "runtime": {"engine": "lmstudio", "api": "openai-compat"},
+        "source": "LM Studio API",
+    },
+    "omlx-api": {
+        "runtime": {"engine": "omlx", "api": "openai-compat"},
+        "source": "oMLX API",
+    },
+}
+# validate-runs.mjs の RUNTIME_ALLOWED と同じ集合。範囲外キーは公開前に弾く
+RUNTIME_ALLOWED = (
+    "engine", "version", "framework", "model_revision", "quantization", "hardware", "api",
+)
+# validate-runs.mjs の EFFORT_ENUM と同じ集合
+REASONING_LABELS = ("none", "low", "medium", "high", "unknown")
 LEVEL_PLACEHOLDER = "[levels/l<N>.md の設問をここに展開する]"
 INPUT_PLACEHOLDER = "[input.md の本文をここに展開してプロンプトに含める]"
 
@@ -63,8 +86,9 @@ _REQUIRED_OPENROUTER = (
     "resolve_api_url", "resolve_model_id",
 )
 _REQUIRED_LOCAL = (
-    "DEFAULT_BASE_URL", "DEFAULT_TIMEOUT_SECONDS", "MlxApiError", "UsageMissingError",
-    "build_local_cost", "call_model", "preflight", "resolve_base_url",
+    "DEFAULT_BASE_URL", "DEFAULT_RUNAWAY_THRESHOLD", "DEFAULT_TIMEOUT_SECONDS",
+    "MlxApiError", "UsageMissingError", "PUBLIC_MODEL_ID_RE", "build_local_cost",
+    "call_model", "endpoint", "preflight", "request_json", "resolve_base_url",
 )
 for _module, _names in ((OPENROUTER, _REQUIRED_OPENROUTER), (LOCAL, _REQUIRED_LOCAL)):
     _missing = [n for n in _names if not hasattr(_module, n)]
@@ -158,19 +182,26 @@ def run_levels(
 
 
 def run_local_levels(
-    model: str, theme_dir: Path, base_url: str, max_tokens: int
+    model_id: str, theme_dir: Path, base_url: str, max_tokens: int
 ) -> tuple[list[dict[str, Any]], int, int]:
-    """Make five sequential loopback requests without rejecting length responses."""
+    """Make five sequential loopback requests without rejecting empty responses.
+
+    ローカル勢は reasoning を出し切って本文を返さないことがある（Gemma 4 12B QAT の L5 は
+    reasoning 85K tokens で打ち切られ content が空になった）。これはモデルのフォーマット遵守
+    失敗そのものなので、allow_empty で実行を止めず空 raw のまま保存し、パース失敗として採点する。
+    繰り返し暴走の打ち切りは 1 テーマ経路と同じ既定閾値で効かせる。
+    """
     levels: list[dict[str, Any]] = []
     prompt_total = completion_total = 0
     for level in LEVEL_NUMBERS:
         content, finish_reason, prompt_tokens, completion_tokens, _elapsed = LOCAL.call_model(
-            model,
+            model_id,
             build_level_prompt(theme_dir, level),
             base_url,
             max_tokens,
             LOCAL.DEFAULT_TIMEOUT_SECONDS,
             LOCAL.DEFAULT_RUNAWAY_THRESHOLD,
+            True,
         )
         levels.append(
             {
@@ -224,30 +255,62 @@ def build_run(
     return run
 
 
+def parse_runtime_extra(raw: str | None) -> dict[str, str]:
+    """Parse --runtime-extra into validator-allowed runtime string fields."""
+    if raw is None:
+        return {}
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"--runtime-extra must be a JSON object: {exc}") from exc
+    if not isinstance(parsed, dict):
+        raise ValueError("--runtime-extra must be a JSON object")
+    unknown = sorted(key for key in parsed if key not in RUNTIME_ALLOWED)
+    if unknown:
+        raise ValueError(
+            f"--runtime-extra has keys outside the runtime allowlist: {', '.join(unknown)} "
+            f"(allowed: {', '.join(RUNTIME_ALLOWED)})"
+        )
+    non_string = sorted(key for key, value in parsed.items() if not isinstance(value, str))
+    if non_string:
+        raise ValueError(f"--runtime-extra values must be strings: {', '.join(non_string)}")
+    return parsed
+
+
 def build_local_run(
-    model: str, max_tokens: int, attempts: int, prompt_tokens: int, completion_tokens: int
+    model: str,
+    model_id: str,
+    harness: str,
+    reasoning_effort: str,
+    runtime_extra: dict[str, str],
+    max_tokens: int,
+    attempts: int,
+    prompt_tokens: int,
+    completion_tokens: int,
 ) -> dict[str, Any]:
     """Build validator-compatible aggregate metadata for local inference."""
+    profile = LOCAL_HARNESSES[harness]
+    runtime = {**profile["runtime"], **runtime_extra}
     return {
         "schema_version": 1,
         "theme": THEME,
         "model": model,
-        "model_id": model,
-        "harness": "mlx-lm-api",
-        "reasoning_effort": "unknown",
+        "model_id": model_id,
+        "harness": harness,
+        "reasoning_effort": reasoning_effort,
         "attempts": attempts,
         "generated_at": None,
         "generated_at_source": "unknown",
         "sampling": {"temperature": 0.3, "max_tokens": max_tokens, "top_p": "default"},
         "system_prompt": "none",
         "post_processing": "json-ladder-5-levels",
-        "runtime": {"engine": "mlx-lm", "api": "openai-compat-chat"},
+        "runtime": runtime,
         "usage": {
             "estimated": False,
             "method": "api-usage",
             "prompt_tokens": prompt_tokens,
             "completion_tokens": completion_tokens,
-            "note": "ローカル MLX API 実測。5段階を独立リクエストで合算。",
+            "note": f"{profile['source']} 実測。5段階を独立リクエストで合算。",
         },
         "cost": LOCAL.build_local_cost(),
     }
@@ -296,10 +359,81 @@ def parse_args() -> argparse.Namespace:
         help="local backend の loopback OpenAI-compatible API base URL",
     )
     parser.add_argument(
+        "--harness",
+        default="mlx-lm-api",
+        choices=sorted(LOCAL_HARNESSES),
+        help="local backend の harness ラベル。runtime の既定値も切り替える",
+    )
+    parser.add_argument(
+        "--model-id",
+        default=None,
+        help="local backend の API model と run.json model_id（既定: --model の値）",
+    )
+    parser.add_argument(
+        "--public-model-id",
+        default=None,
+        help=(
+            "run.json に記録する公開識別子 owner/name。"
+            "--model-id にローカル絶対パスを渡す mlx_lm.server 経路で必須"
+        ),
+    )
+    parser.add_argument(
+        "--runtime-extra",
+        default=None,
+        help="local backend の runtime に足す JSON オブジェクト（キーは validator の allowlist のみ）",
+    )
+    parser.add_argument(
+        "--reasoning-label",
+        default="unknown",
+        choices=list(REASONING_LABELS),
+        help="local backend の run.json reasoning_effort に記録するラベル",
+    )
+    parser.add_argument(
         "--overwrite", action="store_true", help="complete existing result を原子的に置換する"
     )
     parser.add_argument("--dry-run", action="store_true", help="API 呼び出し・書き込みなしで前提を検証する")
     return parser.parse_args()
+
+
+def check_local_only_flags(args: argparse.Namespace) -> None:
+    """Reject local-only flags on the OpenRouter path so misuse fails loudly."""
+    if args.backend == "local":
+        return
+    local_only = [
+        name
+        for name, given in (
+            ("--harness", args.harness != "mlx-lm-api"),
+            ("--model-id", args.model_id is not None),
+            ("--public-model-id", args.public_model_id is not None),
+            ("--runtime-extra", args.runtime_extra is not None),
+            ("--reasoning-label", args.reasoning_label != "unknown"),
+        )
+        if given
+    ]
+    if local_only:
+        raise ValueError(
+            f"{', '.join(local_only)} は --backend local 専用です "
+            "(openrouter の推論強度は --reasoning-effort を使う)"
+        )
+
+
+def validate_published_model_id(args: argparse.Namespace) -> None:
+    """Keep local filesystem paths out of the published run.json.
+
+    mlx_lm.server はモデルディレクトリの絶対パスを API の model ID にするため、
+    そのまま公開すると run.json にローカルパスが載る。--public-model-id で
+    owner/name 形式の公開識別子を必ず与えさせる。
+    """
+    if args.public_model_id is not None:
+        if not LOCAL.PUBLIC_MODEL_ID_RE.fullmatch(args.public_model_id):
+            raise ValueError("--public-model-id must use the public registry form owner/name")
+        return
+    candidate = args.model_id or args.model
+    if candidate.startswith("/") or candidate.startswith("~"):
+        raise ValueError(
+            f"--model-id looks like a local path ({candidate}); "
+            "pass --public-model-id owner/name so run.json stays publishable"
+        )
 
 
 def prepare_run(args: argparse.Namespace) -> tuple[Path, Path, int, str | None]:
@@ -310,6 +444,9 @@ def prepare_run(args: argparse.Namespace) -> tuple[Path, Path, int, str | None]:
         )
     if args.max_tokens <= 0:
         raise ValueError("--max-tokens must be greater than zero")
+    check_local_only_flags(args)
+    parse_runtime_extra(args.runtime_extra)
+    validate_published_model_id(args)
     theme_dir = validate_theme_dir()
     out_dir = theme_dir / args.model
     attempts = previous_attempts(out_dir, args.overwrite)
@@ -317,14 +454,41 @@ def prepare_run(args: argparse.Namespace) -> tuple[Path, Path, int, str | None]:
     return theme_dir, out_dir, attempts, base_url
 
 
+def check_openrouter_preconditions(model: str) -> tuple[str, dict[str, Any], str]:
+    """Resolve everything OpenRouter requests need before any request is sent."""
+    model_id = OPENROUTER.resolve_model_id(model)
+    pricing = OPENROUTER.load_pricing(model)
+    api_key = OPENROUTER.load_api_key()
+    OPENROUTER.resolve_api_url()
+    return model_id, pricing, api_key
+
+
+def check_local_preconditions(base_url: str) -> None:
+    """Confirm the loopback endpoint answers before any request is sent."""
+    LOCAL.preflight(base_url, LOCAL.DEFAULT_TIMEOUT_SECONDS)
+
+
+def describe_dry_run(args: argparse.Namespace, base_url: str | None) -> str:
+    """Report what was verified without sending requests or writing files."""
+    if args.backend == "openrouter":
+        model_id, _pricing, _api_key = check_openrouter_preconditions(args.model)
+        # api_key は解決できたことだけを伝える。値は決してログに出さない
+        checked = f"model_id={model_id}, pricing ok, api key ok, api url ok"
+    else:
+        assert base_url is not None
+        check_local_preconditions(base_url)
+        checked = f"server ok at {base_url}"
+    return (
+        f"[dry-run] json-ladder/{args.model} backend={args.backend}: {checked}; "
+        f"{len(LEVEL_NUMBERS)} requests would be sent; no files written"
+    )
+
+
 def run_openrouter_backend(
     args: argparse.Namespace, theme_dir: Path, attempts: int
 ) -> tuple[list[dict[str, Any]], dict[str, Any], float]:
     """Generate all levels through OpenRouter and aggregate their metadata."""
-    model_id = OPENROUTER.resolve_model_id(args.model)
-    pricing = OPENROUTER.load_pricing(args.model)
-    api_key = OPENROUTER.load_api_key()
-    OPENROUTER.resolve_api_url()
+    model_id, pricing, api_key = check_openrouter_preconditions(args.model)
     levels, prompt_tokens, completion_tokens, reasoning_tokens, actual_cost = run_levels(
         api_key, model_id, theme_dir, args.reasoning_effort, args.max_tokens
     )
@@ -338,12 +502,25 @@ def run_openrouter_backend(
 def run_local_backend(
     args: argparse.Namespace, theme_dir: Path, attempts: int, base_url: str
 ) -> tuple[list[dict[str, Any]], dict[str, Any], float]:
-    """Generate all levels through the loopback MLX endpoint."""
-    LOCAL.preflight(base_url, LOCAL.DEFAULT_TIMEOUT_SECONDS)
+    """Generate all levels through the loopback local endpoint."""
+    api_model_id = args.model_id or args.model
+    # 公開 run.json にローカル絶対パスを書かない（mlx_lm.server はモデルディレクトリを ID にする）
+    published_model_id = args.public_model_id or api_model_id
+    check_local_preconditions(base_url)
     levels, prompt_tokens, completion_tokens = run_local_levels(
-        args.model, theme_dir, base_url, args.max_tokens
+        api_model_id, theme_dir, base_url, args.max_tokens
     )
-    run = build_local_run(args.model, args.max_tokens, attempts, prompt_tokens, completion_tokens)
+    run = build_local_run(
+        args.model,
+        published_model_id,
+        args.harness,
+        args.reasoning_label,
+        parse_runtime_extra(args.runtime_extra),
+        args.max_tokens,
+        attempts,
+        prompt_tokens,
+        completion_tokens,
+    )
     return levels, run, 0.0
 
 
@@ -353,11 +530,9 @@ def main() -> int:
     try:
         theme_dir, out_dir, attempts, base_url = prepare_run(args)
         if args.dry_run:
-            print(
-                f"[dry-run] json-ladder/{args.model} backend={args.backend}: "
-                "five requests would be sent; no files written",
-                file=sys.stderr,
-            )
+            # 送信と書き込みだけを省く。バックエンド固有の前提は本番と同じ経路で検証し、
+            # model-map 未登録・キー不在・サーバー未起動を本番実行前に落とす
+            print(describe_dry_run(args, base_url), file=sys.stderr)
             return 0
         if args.backend == "openrouter":
             levels, run, actual_cost = run_openrouter_backend(args, theme_dir, attempts)

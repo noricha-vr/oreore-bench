@@ -1,0 +1,107 @@
+```json
+{
+  "meta": {
+    "title": "硝子の記憶",
+    "author": "佐伯千鶴",
+    "section_count": 4
+  },
+  "characters": [
+    {
+      "name": "宗一郎",
+      "kinship_to_narrator": "grandfather",
+      "relations": [
+        {
+          "to": "マルコ",
+          "relation": "master"
+        }
+      ]
+    },
+    {
+      "name": "千鶴",
+      "kinship_to_narrator": "self",
+      "relations": []
+    },
+    {
+      "name": "綾乃",
+      "kinship_to_narrator": "elder_sister",
+      "relations": []
+    },
+    {
+      "name": "美津江",
+      "kinship_to_narrator": "grandmother",
+      "relations": []
+    },
+    {
+      "name": "マルコ",
+      "kinship_to_narrator": "none",
+      "relations": [
+        {
+          "to": "宗一郎",
+          "relation": "apprentice"
+        }
+      ]
+    }
+  ],
+  "timeline": [
+    {
+      "year": 1961,
+      "sentence": "1961年に富山市の外れに小さな工房を構え、亡くなるまでの四十年間、ほとんど毎日窯の前に立った。"
+    },
+    {
+      "year": 1978,
+      "sentence": "1978年に祖父が県の工芸展で賞を獲った時の盃を、マルコは棚から下ろしては何度も眺めていた。"
+    },
+    {
+      "year": 1989,
+      "sentence": "1989年の秋、イタリアから留学生のマルコが工房にやって来た。"
+    },
+    {
+      "year": 2001,
+      "sentence": "祖父が死んだのは2001年である。"
+    }
+  ],
+  "process": {
+    "melting_temperature_c": 1400,
+    "steps": [
+      {
+        "order": 1,
+        "name": "種巻き",
+        "temperature_c": null
+      },
+      {
+        "order": 2,
+        "name": "吹き",
+        "temperature_c": null
+      },
+      {
+        "order": 3,
+        "name": "成形",
+        "temperature_c": null
+      },
+      {
+        "order": 4,
+        "name": "ポンテ替え",
+        "temperature_c": null
+      },
+      {
+        "order": 5,
+        "name": "徐冷",
+        "temperature_c": 520
+      }
+    ]
+  },
+  "quotes_by_speaker": {
+    "宗一郎": [
+      "ええか、千鶴。急ぐな。硝子より先に、心が割れる",
+      "硝子は正直や。手ぇ抜いた分だけ、濁る"
+    ],
+    "綾乃": [
+      "祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い"
+    ]
+  },
+  "analysis": {
+    "grandfather_last_words": null,
+    "narrator_became_glassblower": false
+  }
+}
+```

@@ -341,6 +341,87 @@ def test_japanese_key_path_is_resolved(tmp_path: Path) -> None:
     assert verdict_of(meta, 5, "quotes_by_speaker.宗一郎[1]")["match"] == "miss"
 
 
+def test_extra_top_level_key_fails_only_its_own_level(tmp_path: Path) -> None:
+    """PROMPT.md が禁じるキー追加をスキーマ違反として検出する（accuracy は据え置き）。"""
+    output = perfect_output()
+    payload = level_payload(output, 1)
+    payload["explanation"] = "タイトルは本文冒頭から取りました"
+    set_level_payload(output, 1, payload)
+
+    meta = validate_and_load_meta(tmp_path / "json-ladder", output)
+    level1 = meta_level(meta, 1)
+
+    assert level1["schema_pass"] is False
+    assert "extra-key: explanation" in level1["issues"]
+    # 採点対象フィールドは全一致のままなので accuracy は下がらない
+    assert level1["accuracy_pct"] == 100
+    assert all(meta_level(meta, n)["schema_pass"] is True for n in (2, 3, 4, 5))
+
+
+def test_extra_key_in_nested_object_is_detected(tmp_path: Path) -> None:
+    output = perfect_output()
+    payload = level_payload(output, 3)
+    payload["workshop"]["owner"] = "佐伯宗一郎"
+    set_level_payload(output, 3, payload)
+
+    meta = validate_and_load_meta(tmp_path / "json-ladder", output)
+
+    assert "extra-key: workshop.owner" in meta_level(meta, 3)["issues"]
+    assert meta_level(meta, 3)["schema_pass"] is False
+
+
+def test_extra_key_in_array_element_is_detected(tmp_path: Path) -> None:
+    output = perfect_output()
+    payload = level_payload(output, 5)
+    payload["characters"][0]["age"] = 80
+    set_level_payload(output, 5, payload)
+
+    meta = validate_and_load_meta(tmp_path / "json-ladder", output)
+
+    assert "extra-key: characters[0].age" in meta_level(meta, 5)["issues"]
+    assert meta_level(meta, 5)["schema_pass"] is False
+
+
+def test_array_element_keys_are_allowed_across_all_indexes(tmp_path: Path) -> None:
+    """要素ごとの許可キーは全インデックスの和集合で判定する（relations を持つのは末尾要素だけ）。"""
+    output = perfect_output()
+    payload = level_payload(output, 5)
+    payload["characters"][0]["relations"] = []
+    set_level_payload(output, 5, payload)
+
+    meta = validate_and_load_meta(tmp_path / "json-ladder", output)
+
+    assert meta_level(meta, 5)["schema_pass"] is True
+
+
+def test_extra_array_element_is_length_miss_not_extra_key(tmp_path: Path) -> None:
+    """配列の余剰要素は array_length 採点の領分で、extra-key として二重報告しない。"""
+    output = perfect_output()
+    payload = level_payload(output, 2)
+    payload["tools"].append("金鋏")
+    set_level_payload(output, 2, payload)
+
+    meta = validate_and_load_meta(tmp_path / "json-ladder", output)
+    level2 = meta_level(meta, 2)
+
+    assert verdict_of(meta, 2, "tools")["match"] == "miss"
+    assert verdict_of(meta, 2, "tools")["got"] == 4
+    assert not any("extra-key" in issue for issue in level2["issues"])
+
+
+def test_null_valued_allowed_key_is_not_extra_key(tmp_path: Path) -> None:
+    """値が null でも許可キーなら違反にしない（存在するキーとして扱う）。"""
+    output = perfect_output()
+    payload = level_payload(output, 3)
+    payload["workshop"]["closed_year"] = None
+    set_level_payload(output, 3, payload)
+
+    meta = validate_and_load_meta(tmp_path / "json-ladder", output)
+
+    assert meta_level(meta, 3)["issues"] == []
+    assert meta_level(meta, 3)["schema_pass"] is True
+
+
 # --- 5. 正規化 ----------------------------------------------------------------
 
 
@@ -460,6 +541,43 @@ def test_build_html_renders_levels_and_filters_model(tmp_path: Path) -> None:
     assert "score 100%" in output
     assert "レベル 5" in output
     assert not (other / "output.html").exists()
+
+
+def test_build_html_renders_model_absent_from_legacy_table(tmp_path: Path) -> None:
+    """data.js にいるモデルは、ビルダー側の登録なしで表示情報を解決できる。"""
+    theme_dir = tmp_path / "json-ladder"
+    model_dir = write_model(theme_dir, "agents-a1-4b", perfect_output())
+    run_validator(theme_dir)
+    module = load_python_script(BUILD_SCRIPT, "build_json_ladder_html_data_js")
+
+    assert module.main(["--theme-dir", str(theme_dir), "--model", "agents-a1-4b"]) == 0
+
+    html_text = (model_dir / "output.html").read_text(encoding="utf-8")
+    assert "Agents A1 4B" in html_text
+    assert "InternScience" in html_text
+    assert "ローカル LLM" in html_text
+
+
+def test_build_html_fails_loudly_for_model_missing_from_data_js(tmp_path: Path) -> None:
+    """表示情報の登録漏れは skip せず非ゼロ終了させる（黙って抜け落ちるのを防ぐ）。"""
+    theme_dir = tmp_path / "json-ladder"
+    model_dir = write_model(theme_dir, "unknown-model-x", perfect_output())
+    run_validator(theme_dir)
+    module = load_python_script(BUILD_SCRIPT, "build_json_ladder_html_unknown")
+
+    assert module.main(["--theme-dir", str(theme_dir), "--model", "unknown-model-x"]) == 1
+    assert not (model_dir / "output.html").exists()
+
+
+def test_build_html_bulk_run_fails_when_any_model_is_unknown(tmp_path: Path) -> None:
+    """--model なしの一括ビルドでも登録漏れは非ゼロ終了になる。"""
+    theme_dir = tmp_path / "json-ladder"
+    write_model(theme_dir, MODEL, perfect_output())
+    write_model(theme_dir, "unknown-model-x", perfect_output())
+    run_validator(theme_dir)
+    module = load_python_script(BUILD_SCRIPT, "build_json_ladder_html_bulk_unknown")
+
+    assert module.main(["--theme-dir", str(theme_dir)]) == 1
 
 
 def test_build_html_escapes_model_output(tmp_path: Path) -> None:

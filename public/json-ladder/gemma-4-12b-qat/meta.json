@@ -1,0 +1,172 @@
+{
+  "generated_at": "2026-08-06T12:53:02.408Z",
+  "levels_total": 5,
+  "parse_pass_count": 2,
+  "score_pct": 40,
+  "levels": [
+    {
+      "level": 1,
+      "valid_json": true,
+      "schema_pass": true,
+      "fields_total": 4,
+      "primary_match": 4,
+      "acceptable_match": 0,
+      "accuracy_pct": 100,
+      "raw_length": 95,
+      "issues": [],
+      "verdicts": [
+        {
+          "path": "title",
+          "got": "硝子の記憶",
+          "expected": "硝子の記憶",
+          "match": "primary"
+        },
+        {
+          "path": "author",
+          "got": "佐伯千鶴",
+          "expected": "佐伯千鶴",
+          "match": "primary"
+        },
+        {
+          "path": "founded_year",
+          "got": 1961,
+          "expected": 1961,
+          "match": "primary"
+        },
+        {
+          "path": "city",
+          "got": "富山市",
+          "expected": "富山市",
+          "match": "primary"
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "valid_json": false,
+      "schema_pass": false,
+      "fields_total": 16,
+      "primary_match": 0,
+      "acceptable_match": 0,
+      "accuracy_pct": 0,
+      "raw_length": 0,
+      "issues": [
+        "parse-failed"
+      ],
+      "verdicts": []
+    },
+    {
+      "level": 3,
+      "valid_json": true,
+      "schema_pass": true,
+      "fields_total": 12,
+      "primary_match": 12,
+      "acceptable_match": 0,
+      "accuracy_pct": 100,
+      "raw_length": 380,
+      "issues": [],
+      "verdicts": [
+        {
+          "path": "sections",
+          "got": 4,
+          "expected": 4,
+          "match": "primary"
+        },
+        {
+          "path": "sections[0].heading",
+          "got": "炎の温度",
+          "expected": "炎の温度",
+          "match": "primary"
+        },
+        {
+          "path": "sections[0].season",
+          "got": "summer",
+          "expected": "summer",
+          "match": "primary"
+        },
+        {
+          "path": "sections[1].heading",
+          "got": "姉と火",
+          "expected": "姉と火",
+          "match": "primary"
+        },
+        {
+          "path": "sections[1].season",
+          "got": "winter",
+          "expected": "winter",
+          "match": "primary"
+        },
+        {
+          "path": "sections[2].heading",
+          "got": "マルコの置き土産",
+          "expected": "マルコの置き土産",
+          "match": "primary"
+        },
+        {
+          "path": "sections[2].season",
+          "got": "autumn",
+          "expected": "autumn",
+          "match": "primary"
+        },
+        {
+          "path": "sections[3].heading",
+          "got": "窯じまい",
+          "expected": "窯じまい",
+          "match": "primary"
+        },
+        {
+          "path": "sections[3].season",
+          "got": "none",
+          "expected": "none",
+          "match": "primary"
+        },
+        {
+          "path": "workshop.name",
+          "got": "佐伯硝子工房",
+          "expected": "佐伯硝子工房",
+          "match": "primary"
+        },
+        {
+          "path": "workshop.founded_year",
+          "got": 1961,
+          "expected": 1961,
+          "match": "primary"
+        },
+        {
+          "path": "workshop.closed_year",
+          "got": null,
+          "expected": null,
+          "match": "primary"
+        }
+      ]
+    },
+    {
+      "level": 4,
+      "valid_json": false,
+      "schema_pass": false,
+      "fields_total": 9,
+      "primary_match": 0,
+      "acceptable_match": 0,
+      "accuracy_pct": 0,
+      "raw_length": 0,
+      "issues": [
+        "parse-failed"
+      ],
+      "verdicts": []
+    },
+    {
+      "level": 5,
+      "valid_json": false,
+      "schema_pass": false,
+      "fields_total": 54,
+      "primary_match": 0,
+      "acceptable_match": 0,
+      "accuracy_pct": 0,
+      "raw_length": 0,
+      "issues": [
+        "parse-failed"
+      ],
+      "verdicts": []
+    }
+  ]
+}

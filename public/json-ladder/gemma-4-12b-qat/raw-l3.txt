@@ -1,0 +1,27 @@
+```json
+{
+  "sections": [
+    {
+      "heading": "炎の温度",
+      "season": "summer"
+    },
+    {
+      "heading": "姉と火",
+      "season": "winter"
+    },
+    {
+      "heading": "マルコの置き土産",
+      "season": "autumn"
+    },
+    {
+      "heading": "窯じまい",
+      "season": "none"
+    }
+  ],
+  "workshop": {
+    "name": "佐伯硝子工房",
+    "founded_year": 1961,
+    "closed_year": null
+  }
+}
+```

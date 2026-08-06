@@ -206,6 +206,177 @@ def test_local_length_response_is_saved(monkeypatch: pytest.MonkeyPatch, tmp_pat
     assert run["usage"]["completion_tokens"] == 300
 
 
+def test_local_empty_content_is_saved_as_a_failed_level(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """空 content は実行を止めず、そのレベルのフォーマット遵守失敗として残す。
+
+    reasoning を出し切って本文を返さないローカルモデルがあり（Gemma 4 12B QAT の L5）、
+    これを例外にすると 5 レベル全部が失われてベンチ結果として記録できない。
+    """
+    make_theme(tmp_path)
+    bodies = [response(level) for level in ladder.LEVEL_NUMBERS]
+    bodies[4]["choices"][0]["message"]["content"] = None
+    bodies[4]["choices"][0]["finish_reason"] = "length"
+    with StubServer(bodies) as server:
+        base_url = server.url.removesuffix("/chat/completions") + "/v1"
+        assert invoke(
+            monkeypatch,
+            tmp_path,
+            "--model", "local-model",
+            "--backend", "local",
+            "--base-url", base_url,
+        ) == 0
+
+    model_dir = tmp_path / "json-ladder" / "local-model"
+    output = json.loads((model_dir / "output.json").read_text(encoding="utf-8"))
+    assert output["levels"][4]["raw"] == ""
+    assert output["levels"][4]["finish_reason"] == "length"
+    assert (model_dir / "raw-l5.txt").read_text(encoding="utf-8") == ""
+    assert [level["level"] for level in output["levels"]] == list(ladder.LEVEL_NUMBERS)
+
+
+def test_local_runaway_aborts_without_creating_output(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """繰り返し暴走はローカル json-ladder 経路でも打ち切り、成果物を書かない。
+
+    空 content を許容する allow_empty と、暴走を検知して止める検知器は両立する必要がある。
+    片方だけになると「暴走出力をそのまま公開」または「空応答で全レベルを失う」のどちらかに倒れる。
+    終了コードは API 起因の失敗と同じ 2（RunawayDetected は MlxApiError の派生）。
+    """
+    make_theme(tmp_path)
+    bodies = [response(level) for level in ladder.LEVEL_NUMBERS]
+    bodies[0]["choices"][0]["message"]["content"] = '  {"id": 1, "name": "same"},\n' * 2000
+    with StubServer(bodies) as server:
+        base_url = server.url.removesuffix("/chat/completions") + "/v1"
+        assert invoke(
+            monkeypatch,
+            tmp_path,
+            "--model", "local-model",
+            "--backend", "local",
+            "--base-url", base_url,
+        ) == 2
+
+    assert not (tmp_path / "json-ladder" / "local-model").exists()
+
+
+def test_local_path_model_id_requires_a_public_model_id(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """ローカル絶対パスがそのまま公開 run.json に載るのを防ぐ。"""
+    make_theme(tmp_path)
+    with StubServer([response(level) for level in ladder.LEVEL_NUMBERS]) as server:
+        base_url = server.url.removesuffix("/chat/completions") + "/v1"
+        assert invoke(
+            monkeypatch,
+            tmp_path,
+            "--model", "hy3-t512",
+            "--backend", "local",
+            "--base-url", base_url,
+            "--model-id", "/Users/someone/models/hy3-t512",
+        ) != 0
+    assert not (tmp_path / "json-ladder" / "hy3-t512").exists()
+
+
+def test_public_model_id_is_published_instead_of_the_api_path(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """API にはローカルパス、run.json には公開識別子を書き分ける。"""
+    make_theme(tmp_path)
+    with StubServer([response(level) for level in ladder.LEVEL_NUMBERS]) as server:
+        base_url = server.url.removesuffix("/chat/completions") + "/v1"
+        assert invoke(
+            monkeypatch,
+            tmp_path,
+            "--model", "hy3-t512",
+            "--backend", "local",
+            "--base-url", base_url,
+            "--model-id", "/Users/someone/models/hy3-t512",
+            "--public-model-id", "avlp12/Hy3-Alis-MLX-Dynamic",
+        ) == 0
+        assert server.requests[0]["model"] == "/Users/someone/models/hy3-t512"
+
+    run = json.loads(
+        (tmp_path / "json-ladder" / "hy3-t512" / "run.json").read_text(encoding="utf-8")
+    )
+    assert run["model_id"] == "avlp12/Hy3-Alis-MLX-Dynamic"
+    assert "/Users/" not in json.dumps(run)
+
+
+def test_lmstudio_run_records_harness_model_id_and_runtime(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """LM Studio runs follow the existing pr-triage recording conventions."""
+    make_theme(tmp_path)
+    with StubServer([response(level) for level in ladder.LEVEL_NUMBERS]) as server:
+        base_url = server.url.removesuffix("/chat/completions") + "/v1"
+        assert invoke(
+            monkeypatch,
+            tmp_path,
+            "--model", "gemma-4-12b-qat",
+            "--backend", "local",
+            "--base-url", base_url,
+            "--harness", "lmstudio-api",
+            "--model-id", "google/gemma-4-12b-qat",
+            "--runtime-extra", '{"quantization": "mlx-4bit", "hardware": "Mac Studio M3 Ultra 512GB"}',
+            "--reasoning-label", "none",
+        ) == 0
+
+        assert [request["model"] for request in server.requests] == ["google/gemma-4-12b-qat"] * 5
+
+    run = json.loads(
+        (tmp_path / "json-ladder" / "gemma-4-12b-qat" / "run.json").read_text(encoding="utf-8")
+    )
+    assert run["model"] == "gemma-4-12b-qat"
+    assert run["model_id"] == "google/gemma-4-12b-qat"
+    assert run["harness"] == "lmstudio-api"
+    assert run["reasoning_effort"] == "none"
+    assert run["runtime"] == {
+        "engine": "lmstudio",
+        "api": "openai-compat",
+        "quantization": "mlx-4bit",
+        "hardware": "Mac Studio M3 Ultra 512GB",
+    }
+    assert "LM Studio API 実測" in run["usage"]["note"]
+
+
+def test_runtime_extra_rejects_keys_outside_validator_allowlist(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    make_theme(tmp_path)
+
+    assert invoke(
+        monkeypatch,
+        tmp_path,
+        "--model", "local-model",
+        "--backend", "local",
+        "--base-url", "http://127.0.0.1:9/v1",
+        "--runtime-extra", '{"engine_notes": "leaked"}',
+    ) == 1
+
+    assert "engine_notes" in capsys.readouterr().err
+    assert not (tmp_path / "json-ladder" / "local-model").exists()
+
+
+def test_reasoning_label_is_rejected_on_openrouter_backend(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    make_theme(tmp_path)
+    monkeypatch.setenv("OPENROUTER_API_URL", "http://127.0.0.1:9/unused")
+
+    assert invoke(
+        monkeypatch,
+        tmp_path,
+        "--model", "claude-opus-5",
+        "--backend", "openrouter",
+        "--reasoning-label", "high",
+    ) == 1
+
+    assert "--reasoning-label" in capsys.readouterr().err
+    assert not (tmp_path / "json-ladder" / "claude-opus-5").exists()
+
+
 def test_length_response_aborts_without_creating_output(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -241,12 +412,70 @@ def test_dry_run_makes_no_request_and_creates_no_output(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     make_theme(tmp_path)
+    with StubServer([]) as server:
+        monkeypatch.setenv("OPENROUTER_API_URL", server.url)
+
+        assert invoke(
+            monkeypatch, tmp_path, "--model", "claude-opus-5", "--backend", "openrouter", "--dry-run"
+        ) == 0
+
+        assert server.requests == []
+    assert not (tmp_path / "json-ladder" / "claude-opus-5").exists()
+
+
+def test_dry_run_reports_resolved_model_without_leaking_the_api_key(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    make_theme(tmp_path)
     monkeypatch.setenv("OPENROUTER_API_URL", "http://127.0.0.1:9/unused")
 
     assert invoke(
-        monkeypatch, tmp_path, "--model", "test-model", "--backend", "openrouter", "--dry-run"
+        monkeypatch, tmp_path, "--model", "claude-opus-5", "--backend", "openrouter", "--dry-run"
     ) == 0
-    assert not (tmp_path / "json-ladder" / "test-model").exists()
+
+    stderr = capsys.readouterr().err
+    assert "anthropic/claude-opus-5" in stderr
+    assert "test-key" not in stderr
+
+
+def test_dry_run_rejects_a_model_missing_from_the_model_map(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    make_theme(tmp_path)
+    monkeypatch.setenv("OPENROUTER_API_URL", "http://127.0.0.1:9/unused")
+
+    assert invoke(
+        monkeypatch, tmp_path, "--model", "no-such-model-x", "--backend", "openrouter", "--dry-run"
+    ) == 1
+    assert not (tmp_path / "json-ladder" / "no-such-model-x").exists()
+
+
+def test_local_dry_run_succeeds_against_a_running_server(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    make_theme(tmp_path)
+    with StubServer([]) as server:
+        base_url = server.url.removesuffix("/chat/completions") + "/v1"
+
+        assert invoke(
+            monkeypatch, tmp_path, "--model", "local-model", "--backend", "local",
+            "--base-url", base_url, "--dry-run",
+        ) == 0
+
+        assert server.requests == []
+    assert not (tmp_path / "json-ladder" / "local-model").exists()
+
+
+def test_local_dry_run_fails_when_the_server_is_not_running(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    make_theme(tmp_path)
+
+    assert invoke(
+        monkeypatch, tmp_path, "--model", "local-model", "--backend", "local",
+        "--base-url", "http://127.0.0.1:9/v1", "--dry-run",
+    ) == 2
+    assert not (tmp_path / "json-ladder" / "local-model").exists()
 
 
 def test_backend_is_required(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:

@@ -207,12 +207,17 @@ def stream_completion(
     payload: dict[str, Any],
     detector: RunawayDetector | None,
     max_chars: int,
+    allow_empty: bool = False,
 ) -> tuple[str, str, int, int]:
     """Stream one completion, aborting the connection as soon as it starts repeating.
 
     Streaming exists for the abort: a non-streamed request hides the generation
     until it finishes, so a runaway can only be observed after it has already
     burned the whole token budget.
+
+    allow_empty は 1 リクエスト = 1 レベルの json-ladder 用。reasoning を出し切って
+    本文が空のまま終わるのはモデルのフォーマット遵守失敗そのものなので、実行を止めず
+    パース失敗として採点させる。1 テーマ 1 リクエストの経路では空応答は異常なので既定は False。
     """
     data = json.dumps(payload).encode("utf-8")
     headers = {"Content-Type": "application/json", "Accept": "text/event-stream"}
@@ -255,7 +260,7 @@ def stream_completion(
     except (urllib.error.URLError, TimeoutError) as exc:
         raise MlxApiError(f"network error calling mlx_lm.server: {exc}") from exc
     content = "".join(parts)
-    if not content:
+    if not content and not allow_empty:
         raise MlxApiError("chat completion stream produced no content")
     if finish_reason is None:
         raise MlxApiError("chat completion stream has no finish_reason")
@@ -526,6 +531,7 @@ def call_model(
     max_tokens: int,
     timeout: int,
     runaway_threshold: float | None,
+    allow_empty: bool = False,
 ) -> tuple[str, str, int, int, float]:
     """Call the chat endpoint once and return validated content, usage, and elapsed time."""
     started = time.monotonic()
@@ -543,6 +549,7 @@ def call_model(
         },
         detector,
         max_tokens * MAX_CHARS_PER_TOKEN,
+        allow_empty,
     )
     elapsed_seconds = time.monotonic() - started
     return content, finish_reason, prompt_tokens, completion_tokens, elapsed_seconds

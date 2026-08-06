@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "theme": "json-ladder",
+  "levels": [
+    {
+      "level": 1,
+      "raw": "```json\n{\n  \"title\": \"硝子の記憶\",\n  \"author\": \"佐伯千鶴\",\n  \"founded_year\": 1961,\n  \"city\": \"富山市\"\n}\n```",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1526,
+        "completion_tokens": 453
+      }
+    },
+    {
+      "level": 2,
+      "raw": "",
+      "finish_reason": "length",
+      "usage": {
+        "prompt_tokens": 1644,
+        "completion_tokens": 31124
+      }
+    },
+    {
+      "level": 3,
+      "raw": "```json\n{\n  \"sections\": [\n    {\n      \"heading\": \"炎の温度\",\n      \"season\": \"summer\"\n    },\n    {\n      \"heading\": \"姉と火\",\n      \"season\": \"winter\"\n    },\n    {\n      \"heading\": \"マルコの置き土産\",\n      \"season\": \"autumn\"\n    },\n    {\n      \"heading\": \"窯じまい\",\n      \"season\": \"none\"\n    }\n  ],\n  \"workshop\": {\n    \"name\": \"佐伯硝子工房\",\n    \"founded_year\": 1961,\n    \"closed_year\": null\n  }\n}\n```",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1674,
+        "completion_tokens": 1627
+      }
+    },
+    {
+      "level": 4,
+      "raw": "",
+      "finish_reason": "length",
+      "usage": {
+        "prompt_tokens": 1671,
+        "completion_tokens": 31097
+      }
+    },
+    {
+      "level": 5,
+      "raw": "",
+      "finish_reason": "length",
+      "usage": {
+        "prompt_tokens": 2175,
+        "completion_tokens": 30593
+      }
+    }
+  ]
+}
