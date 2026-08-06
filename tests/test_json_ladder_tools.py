@@ -341,6 +341,87 @@ def test_japanese_key_path_is_resolved(tmp_path: Path) -> None:
     assert verdict_of(meta, 5, "quotes_by_speaker.宗一郎[1]")["match"] == "miss"
 
 
+def test_extra_top_level_key_fails_only_its_own_level(tmp_path: Path) -> None:
+    """PROMPT.md が禁じるキー追加をスキーマ違反として検出する（accuracy は据え置き）。"""
+    output = perfect_output()
+    payload = level_payload(output, 1)
+    payload["explanation"] = "タイトルは本文冒頭から取りました"
+    set_level_payload(output, 1, payload)
+
+    meta = validate_and_load_meta(tmp_path / "json-ladder", output)
+    level1 = meta_level(meta, 1)
+
+    assert level1["schema_pass"] is False
+    assert "extra-key: explanation" in level1["issues"]
+    # 採点対象フィールドは全一致のままなので accuracy は下がらない
+    assert level1["accuracy_pct"] == 100
+    assert all(meta_level(meta, n)["schema_pass"] is True for n in (2, 3, 4, 5))
+
+
+def test_extra_key_in_nested_object_is_detected(tmp_path: Path) -> None:
+    output = perfect_output()
+    payload = level_payload(output, 3)
+    payload["workshop"]["owner"] = "佐伯宗一郎"
+    set_level_payload(output, 3, payload)
+
+    meta = validate_and_load_meta(tmp_path / "json-ladder", output)
+
+    assert "extra-key: workshop.owner" in meta_level(meta, 3)["issues"]
+    assert meta_level(meta, 3)["schema_pass"] is False
+
+
+def test_extra_key_in_array_element_is_detected(tmp_path: Path) -> None:
+    output = perfect_output()
+    payload = level_payload(output, 5)
+    payload["characters"][0]["age"] = 80
+    set_level_payload(output, 5, payload)
+
+    meta = validate_and_load_meta(tmp_path / "json-ladder", output)
+
+    assert "extra-key: characters[0].age" in meta_level(meta, 5)["issues"]
+    assert meta_level(meta, 5)["schema_pass"] is False
+
+
+def test_array_element_keys_are_allowed_across_all_indexes(tmp_path: Path) -> None:
+    """要素ごとの許可キーは全インデックスの和集合で判定する（relations を持つのは末尾要素だけ）。"""
+    output = perfect_output()
+    payload = level_payload(output, 5)
+    payload["characters"][0]["relations"] = []
+    set_level_payload(output, 5, payload)
+
+    meta = validate_and_load_meta(tmp_path / "json-ladder", output)
+
+    assert meta_level(meta, 5)["schema_pass"] is True
+
+
+def test_extra_array_element_is_length_miss_not_extra_key(tmp_path: Path) -> None:
+    """配列の余剰要素は array_length 採点の領分で、extra-key として二重報告しない。"""
+    output = perfect_output()
+    payload = level_payload(output, 2)
+    payload["tools"].append("金鋏")
+    set_level_payload(output, 2, payload)
+
+    meta = validate_and_load_meta(tmp_path / "json-ladder", output)
+    level2 = meta_level(meta, 2)
+
+    assert verdict_of(meta, 2, "tools")["match"] == "miss"
+    assert verdict_of(meta, 2, "tools")["got"] == 4
+    assert not any("extra-key" in issue for issue in level2["issues"])
+
+
+def test_null_valued_allowed_key_is_not_extra_key(tmp_path: Path) -> None:
+    """値が null でも許可キーなら違反にしない（存在するキーとして扱う）。"""
+    output = perfect_output()
+    payload = level_payload(output, 3)
+    payload["workshop"]["closed_year"] = None
+    set_level_payload(output, 3, payload)
+
+    meta = validate_and_load_meta(tmp_path / "json-ladder", output)
+
+    assert meta_level(meta, 3)["issues"] == []
+    assert meta_level(meta, 3)["schema_pass"] is True
+
+
 # --- 5. 正規化 ----------------------------------------------------------------
 
 
