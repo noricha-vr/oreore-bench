@@ -345,7 +345,10 @@
                 model: activeEntry.model
             });
 
-            backLink.href = `./index.html?theme=${encodeURIComponent(activeTheme)}`;
+            // 一覧側は models（複数形・カンマ区切りのフィルター）で受けるため単数 model から変換する。
+            // 見ていたモデルで絞り込まれた状態に戻し、同じモデルの他テーマを見比べられるようにする
+            const backParams = new URLSearchParams({ theme: activeTheme, models: activeEntry.model });
+            backLink.href = `./index.html?${backParams}`;
             detailTitle.textContent = model.label;
             entryNote.textContent = activeEntry.note;
             openLink.href = `${location.pathname}?${viewerParams}`;
