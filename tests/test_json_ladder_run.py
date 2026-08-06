@@ -49,14 +49,44 @@ class StubServer:
         class Handler(BaseHTTPRequestHandler):
             def do_POST(self) -> None:  # noqa: N802
                 size = int(self.headers["Content-Length"])
-                parent.requests.append(json.loads(self.rfile.read(size)))
+                request = json.loads(self.rfile.read(size))
+                parent.requests.append(request)
                 response = parent.responses.pop(0)
+                if request.get("stream"):
+                    self.write_stream(response)
+                    return
                 payload = json.dumps(response).encode("utf-8")
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Content-Length", str(len(payload)))
                 self.end_headers()
                 self.wfile.write(payload)
+
+            def write_stream(self, response: dict[str, Any]) -> None:
+                """Re-serve a whole-body response as the SSE stream the local runner reads."""
+                choice = response["choices"][0]
+                events: list[dict[str, Any]] = [
+                    {
+                        "choices": [
+                            {
+                                "delta": {"content": choice["message"]["content"]},
+                                "finish_reason": None,
+                            }
+                        ]
+                    },
+                    {"choices": [{"delta": {}, "finish_reason": choice["finish_reason"]}]},
+                ]
+                if "usage" in response:
+                    events.append({"choices": [], "usage": response["usage"]})
+                body = b"".join(
+                    b"data: " + json.dumps(event).encode("utf-8") + b"\n\n" for event in events
+                )
+                body += b"data: [DONE]\n\n"
+                self.send_response(200)
+                self.send_header("Content-Type", "text/event-stream")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
 
             def do_GET(self) -> None:  # noqa: N802
                 payload = b'{"data": []}'

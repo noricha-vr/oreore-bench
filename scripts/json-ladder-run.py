@@ -170,6 +170,7 @@ def run_local_levels(
             base_url,
             max_tokens,
             LOCAL.DEFAULT_TIMEOUT_SECONDS,
+            LOCAL.DEFAULT_RUNAWAY_THRESHOLD,
         )
         levels.append(
             {
