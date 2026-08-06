@@ -176,6 +176,36 @@ def test_local_length_response_is_saved(monkeypatch: pytest.MonkeyPatch, tmp_pat
     assert run["usage"]["completion_tokens"] == 300
 
 
+def test_local_empty_content_is_saved_as_a_failed_level(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """空 content は実行を止めず、そのレベルのフォーマット遵守失敗として残す。
+
+    reasoning を出し切って本文を返さないローカルモデルがあり（Gemma 4 12B QAT の L5）、
+    これを例外にすると 5 レベル全部が失われてベンチ結果として記録できない。
+    """
+    make_theme(tmp_path)
+    bodies = [response(level) for level in ladder.LEVEL_NUMBERS]
+    bodies[4]["choices"][0]["message"]["content"] = None
+    bodies[4]["choices"][0]["finish_reason"] = "length"
+    with StubServer(bodies) as server:
+        base_url = server.url.removesuffix("/chat/completions") + "/v1"
+        assert invoke(
+            monkeypatch,
+            tmp_path,
+            "--model", "local-model",
+            "--backend", "local",
+            "--base-url", base_url,
+        ) == 0
+
+    model_dir = tmp_path / "json-ladder" / "local-model"
+    output = json.loads((model_dir / "output.json").read_text(encoding="utf-8"))
+    assert output["levels"][4]["raw"] == ""
+    assert output["levels"][4]["finish_reason"] == "length"
+    assert (model_dir / "raw-l5.txt").read_text(encoding="utf-8") == ""
+    assert [level["level"] for level in output["levels"]] == list(ladder.LEVEL_NUMBERS)
+
+
 def test_lmstudio_run_records_harness_model_id_and_runtime(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
