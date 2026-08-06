@@ -27,7 +27,7 @@ OreOre-Bench（俺基準の LLM ベンチマーク）でのエージェント作
 
 | 対象 | 運用 |
 |---|---|
-| auto commit | 責務単位（1機能 / 1修正 / 1データ追加）が検証通過したら、指示を待たず main へコミットする。自セッションで Edit/Write したファイルのみが対象 |
+| auto commit | 責務単位が検証通過したら、指示を待たず main へコミットする。自セッションで Edit/Write したファイルのみが対象。**ベンチ結果は 1 テーマ 1 コミット**（モデル × テーマ単位。どのテーマで失敗したかを履歴で追えるようにする） |
 | auto merge | PR を作った場合は CI 全パス後に `--squash --delete-branch` で自動マージしてよい。ただし下記「PR を通す変更」は人間レビューを挟む |
 | auto deploy | main への push で `deploy.yml` が Cloudflare Pages に反映する。マージ・push 後は `gh run list --workflow=deploy.yml --limit 1` で success を確認してから完了報告する |
 
@@ -71,17 +71,22 @@ gh run list --workflow=deploy.yml --limit 1
 メモリ枯渇状態で走らせた測定値は swap 由来で遅くなるため、ベンチの数値として採用しない。
 </critical_rule>
 
-### 確認コマンド
+### 監視スクリプト
+
+`scripts/watch-memory.sh` をベンチと並走させる。停止閾値を超えると**非ゼロ終了**するので、
+エージェントは終了コードで枯渇を検知し、推論サーバの停止判断に移る（プロセスの kill は
+スクリプトではなく人間 / エージェントが行う）。
 
 ```bash
-# 1行サマリ（total / free / wired / compressor / used%）
-memory_pressure | awk '/^The system has/{tot=$4} /Pages free/{f=$3} /Pages wired down/{w=$4} \
-  /used by compressor/{c=$5} END{p=16384; printf "total %.0fGB / free %.1fGB / wired %.1fGB / compressor %.1fGB / used %.1f%%\n", \
-  tot/1073741824, f*p/1073741824, w*p/1073741824, c*p/1073741824, 100-(f*p*100/tot)}'
+# ベンチ開始と同時に別ターミナル・別プロセスで走らせる（1 分間隔・無制限）
+./scripts/watch-memory.sh
 
-# swapout 累積（増え続けたら赤信号）
-memory_pressure | awk '/Swapouts/{print "swapouts:", $2}'
+# 短時間の確認（5 秒間隔で 12 回 = 1 分）
+./scripts/watch-memory.sh -i 5 -n 12
 ```
+
+終了コード: `0` 正常終了（`-n` 到達 / Ctrl+C）、`1` 停止閾値超過、`2` 引数エラー。
+オプションは `-h` を参照。CSV は `logs/memory-YYYYmmdd-HHMMSS.csv` に追記される（Git 管理外）。
 
 `sysctl`（`hw.memsize` / `vm.swapusage`）と `ps -r` はサンドボックスで拒否されるため使わない。
 `memory_pressure` はサンドボックス内で実行できる。
@@ -90,17 +95,21 @@ memory_pressure | awk '/Swapouts/{print "swapouts:", $2}'
 
 | タイミング | やること |
 |---|---|
-| 開始前 | 上記サマリを取り、baseline として記録。swapouts の値も控える。**used が 80% 超なら開始しない**（先に不要プロセスを落とす） |
-| 実行中 | 1〜3 分間隔でサマリを取り、used% と swapouts の推移を見る。20 秒超の待機は Sonnet サブエージェントへ同期委譲する（`rules/claude-async-heartbeat.md`） |
-| 終了時 | サマリを取り、baseline と比較。推論プロセス終了後も free が戻らなければリークを疑い報告する |
+| 開始前 | `./scripts/watch-memory.sh -i 5 -n 1` で baseline を取り、used% と swapouts を控える |
+| 実行中 | `./scripts/watch-memory.sh` を並走させる。20 秒超の待機は Sonnet サブエージェントへ同期委譲する（`rules/claude-async-heartbeat.md`） |
+| 終了時 | 再度 baseline を取り比較。推論プロセス終了後も free が戻らなければリークを疑い報告する |
 
 ### 閾値と対応
 
-| used% | swapouts | 対応 |
-|---|---|---|
-| 〜85% | 開始時から横ばい | 続行 |
-| 85〜90% | 増加傾向 | 警告を出し、監視間隔を 1 分に縮める。次のモデルへは進まない |
-| 90% 超 | または swapouts が継続増加 | **即停止**。推論プロセスを終了し、実行中だったモデルの run.json は書かない |
+**既定値は暫定**（`-w 97` / `-s 99` / `-x 100000`）。used% はページキャッシュを含むため
+平常時でも高く出る（実測環境でアイドル時 95.9% / free 21GB）。そのため used 側は誤発火しない
+位置に置き、実質の枯渇判定は swapout の増加量で行う。**確定値は初回ベンチの CSV を見て決める**。
+
+| レベル | 条件（既定） | スクリプトの挙動 | 人間 / エージェントの対応 |
+|---|---|---|---|
+| ok | used < 97% かつ swapout 増加 < 100000 | CSV に記録して継続 | 続行 |
+| warn | used 97% 以上 | stderr に警告・継続（exit しない） | 監視間隔を縮める。次のモデルへ進まない |
+| stop | used 99% 以上 または swapout 増加 100000 以上 | **exit 1** | 推論サーバを停止。該当モデルの run.json は書かない |
 
 停止は推論サーバ側のプロセスを落とす（oMLX / LM Studio / Ollama のサーバ）。
 `kill -9` の前に通常終了（`kill -TERM`）を試し、モデルのアンロードで回収されるか確認する。
@@ -117,5 +126,5 @@ memory_pressure | awk '/Swapouts/{print "swapouts:", $2}'
 
 ## 測定値の扱い
 
-- メモリ枯渇（used 90% 超 / swap 継続増加）中に計測した latency・tok/s は run.json に記録しない
+- `watch-memory.sh` が stop 判定を出した（exit 1）区間で計測した latency・tok/s は run.json に記録しない
 - 再測定する時は、開始前サマリが baseline 相当まで戻ってから回す
