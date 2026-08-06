@@ -1,0 +1,86 @@
+{
+  "triage": [
+    {
+      "pr": 105,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": ["Issue #92 のセキュリティ問題（トークン漏えい）を解消する最優先対応", "テスト付きでレビューも approve 済み、互換ウィンドウ設計も適切"],
+      "actions": ["即座にマージして本番へ反映", "旧リンク互換期限の監視を設定"],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 101,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": ["Issue #90 の通知洪水をレートリミットで解決", "テスト充実（92行）で CI pass、approve 済み"],
+      "actions": ["マージする", "本番で通知数を監視"],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 102,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": ["他人のタスクをアーカイブできる可能性がありセキュリティ上問題", "テストがなく、owner 絞り込みの指摘に作者が未返信"],
+      "actions": ["owner 絞り込みを追加するよう要求", "テストを追加するよう要求", "9日経過しているのでリマインド"],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 103,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": ["broad except で例外を握りつぶす方針に反する", "Issue #91 の根本解決にならずログ抑制のみ"],
+      "actions": ["クローズする", "Sentry クォータ圧迫には別途タイムアウト制御やログレベル見直しで対応"],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 104,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": ["依存パッケージ固定方針（サプライチェーン攻撃防止）に明確に反する", "lock ファイル削除は本番 SaaS として危険"],
+      "actions": ["クローズする", "固定方針を README 等に明記"],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 106,
+      "verdict": "hold",
+      "confidence": "high",
+      "reasons": ["42ファイル・3機能混在で意図が読みにくく、レビュー不可と指摘されている", "作者が分割を拒否しており方針合意が取れていない"],
+      "actions": ["作者に分割または優先機能の絞り込みを質問", "ダークモード等の優先度を確認"],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 107,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": ["CI が失敗しておりマージ不可", "作者が flaky と主張するが DST 境界テスト失敗は実バグの可能性"],
+      "actions": ["CI 失敗原因を特定・修正するよう要求", "タイムゾーン処理を見直し"],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 108,
+      "verdict": "hold",
+      "confidence": "medium",
+      "reasons": ["Issue #94 で分離の結論が出ていない", "パフォーマンス懸念への回答がなく大きな変更"],
+      "actions": ["Issue #94 の結論を待つよう作者に質問", "JOIN 増加への反論を求める"],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 109,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": ["docs/setup.md 改訂で Issue #93 は解決済み", "README には既にリンクがあり、本 PR はコンフリクトも発生"],
+      "actions": ["クローズする", "古い PR の定期清理を徹底"],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 110,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": ["CSV エクスポート機能にテストあり、レビューは approve（nit のみ）", "nit はブロック理由にならない方針"],
+      "actions": ["マージする", "将来の件数増加時に StreamingHttpResponse 化を検討"],
+      "risk_if_merged": "low"
+    }
+  ],
+  "priority_order": [105, 101, 102, 107, 103, 104, 106, 108, 109, 110],
+  "summary": "セキュリティ修正（#105）と通知洪水解消（#101）を最優先でマージし、権限不備（#102）と CI 失敗（#107）は修正要求、方針反するもの（#103,#104,#109）はクローズする。大きな未決着 PR（#106,#108）は作者へ質問して保留とする。"
+}

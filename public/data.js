@@ -567,6 +567,32 @@ window.MODELS = {
                     { label: "DeepSeek 公式モデル", href: "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731" },
                     { label: "InferencerLabs MLX版", href: "https://huggingface.co/inferencerlabs/DeepSeek-V4-Flash-0731-MLX" }
                 ]
+            },
+            "hy3-t512": {
+                label: "Hy3 T512 MLX",
+                provider: "avlp12 / Tencent",
+                type: "local",
+                color: "#7C3AED",
+                colorDark: "#5B21B6",
+                release: "2026-07-07",
+                size: "295B 総パラメータ / 21B active（MoE）/ MLX 配布約242GB",
+                context: "262,144 tokens",
+                output: "65K tokens（今回の実測上限）",
+                quantization: "avlp12/Hy3-Alis-MLX-Dynamic（T512 branch）/ 6.561 bpw（routed expert 6-bit g64、attention/shared/embed系 8-bit）",
+                runtime: "mlx-lm 0.31.3 / MLX 0.31.2（Mac Studio M3 Ultra 512GB）",
+                stats: [
+                    { value: "295B", label: "パラメータ", note: "MoE / 活性 21B" },
+                    { value: "約242GB", label: "MLX 配布サイズ", note: "6.561 bpw mixed" },
+                    { value: "262K", label: "コンテキスト", note: "モデル仕様" },
+                    { value: "17.60 tok/s", label: "今回の実測", note: "8テーマ加重平均" }
+                ],
+                strengths: "8テーマすべて finish_reason=stop、HTTP エラー0・リトライ0で完走（completion合計26,164 tokens・1,486.457秒、加重平均17.60 tok/s）。PRトリアージはスキーマ準拠で正解キー一致90%（9 primary）。Othello・はさみ将棋・Phoenix LP は主要な機能動作を確認できた。",
+                weaknesses: "加重平均17.60 tok/sは短文ベンチの約24 tok/sより低い。HTML 7テーマ中6テーマで前置き・コードフェンス・末尾説明が露出し、Roguelike と墨流しは主要機能が FAIL。完走・stop だけを品質の成功と見なせない。",
+                links: [
+                    { label: "Tencent 公式モデル", href: "https://huggingface.co/tencent/Hy3" },
+                    { label: "avlp12 MLX版", href: "https://huggingface.co/avlp12/Hy3-Alis-MLX-Dynamic/tree/T512" },
+                    { label: "ベンチマーク記事", href: "https://zenn.dev/noricha/articles/hy3-t512-m3-ultra-benchmark" }
+                ]
             }
         };
 
@@ -697,4 +723,17 @@ window.ENTRIES.push(
     { theme: "suminagashi", model: "deepseek-v4-flash-0731-mlx", runner: "oMLX API", note: "FAIL。2799.8秒・23.216 tok/s。8,398行/216.7KB。実装を書き直し続ける生成ループ（コードフェンスを269回開く）で65,000上限に到達。ただし上限24,000では2回とも自然終了しPASS（19,294 / 23,220 tokens）しており、失敗は上限設定に起因する（前回24K版では成功していたが、今回は思考が長大化して未完）。", kind: "html" },
     { theme: "phoenix-lp", model: "deepseek-v4-flash-0731-mlx", runner: "oMLX API", note: "成功。306.3秒・24.865 tok/s。769行/27.2KB。JSエラー0。スクロール6点すべてで canvas の描画が変化し、夜明けから炎のフィナーレまで6シーンが色彩ごと入れ替わる。", kind: "html" },
     { theme: "pr-triage", model: "deepseek-v4-flash-0731-mlx", runner: "oMLX API", note: "成功。60.4秒・23.112 tok/s。86行/5.1KB。スキーマ準拠PASS、正解キー一致95%（9 primary・1 acceptable）。前回85%から改善。", kind: "json" }
+);
+
+// Hy3 T512 MLX（Mac Studio M3 Ultra 512GB / mlx-lm 0.31.3、temperature 0.3、max_tokens 65K）。
+// 生成物は成功・失敗を問わず1ショット出力を無加工で掲載。
+window.ENTRIES.push(
+    { theme: "hasami-shogi", model: "hy3-t512", runner: "MLX-LM API", note: "機能PASS・視覚FAIL。172.047秒・17.362 tok/s。324行/9,027B。歩9/と9、選択・移動・CPU応答、JSエラー0。Markdown fence が上下に露出。", kind: "html" },
+    { theme: "lp-fable5", model: "hy3-t512", runner: "MLX-LM API", note: "視覚FAIL。309.275秒・17.353 tok/s。361行/14,824B。7セクション/6 reveal、横溢れ・JS errorなし。前置き・末尾説明・fence が露出。", kind: "html" },
+    { theme: "lp-nishibi", model: "hy3-t512", runner: "MLX-LM API", note: "視覚FAIL。156.588秒・18.130 tok/s。279行/8,455B。5セクション全域、両幅で横溢れ・JS errorなし。fence が露出。", kind: "html" },
+    { theme: "othello", model: "hy3-t512", runner: "MLX-LM API", note: "機能PASS・視覚FAIL。116.124秒・18.644 tok/s。257行/6,910B。初期4石、合法手、反転+CPU、reset、両幅でJS error・overflowなし。fence が露出。", kind: "html" },
+    { theme: "phoenix-lp", model: "hy3-t512", runner: "MLX-LM API", note: "機能PASS・視覚はfence露出。225.502秒・17.370 tok/s。232行/10,589B。desktop s1→s3→s6、mobile s1→s4→s6、canvas/scroll、overflow・JS errorなし。", kind: "html" },
+    { theme: "pr-triage", model: "hy3-t512", runner: "MLX-LM API", note: "PASS。86.012秒・15.614 tok/s。85行/4,294B。スキーマ準拠PASS、正解キー一致90%（9 primary）。PR106だけ期待fixをhold。", kind: "json" },
+    { theme: "roguelike", model: "hy3-t512", runner: "MLX-LM API", note: "FAIL High。221.580秒・17.926 tok/s。421行/11,604B。純粋HTMLだが newGame で rooms[0] 初期化前参照、矢印map参照TypeErrorで開始不能。mobile scrollWidth 743/client 375。", kind: "html" },
+    { theme: "suminagashi", model: "hy3-t512", runner: "MLX-LM API", note: "FAIL High。199.329秒・17.930 tok/s。220行/10,149B。Three.js取得成功だが GLSL sampler/varying 同名 v でcompile fail、FORCE.uniforms.d undefined、canvas無地。前後説明が露出。", kind: "html" }
 );

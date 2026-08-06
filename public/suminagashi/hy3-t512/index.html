@@ -1,0 +1,221 @@
+以下は、**WebGL + three.js による GPU 流体シミュレーション（Stable Fluids）**を用いた「墨流し」インタラクティブアートの実装例です。
+
+単一 HTML ファイルで動作し、PC／モバイル両対応、prefers-reduced-motion にも配慮しています。
+
+---
+
+## 特徴実装の要点
+- **Stable Fluids（GPU）**: advection → vorticity confinement → pressure projection（Jacobi）
+- **減法混色**: 吸光度（density）を RGB 別に蓄積し、表示時に `paper * exp(-density)` で和紙色に沈む
+- **やわらかいにじみ**: 拡散＋低い vorticity、鋭いエッジを作らない
+- **ホバー＝水流のみ / ドラッグ＝インク注入**
+- **和紙背景**: #efeae0、極淡な質感（遠目では無地）
+- **UI**: 縦書き表題、縦英字、ヒント、ドック、クレジット
+
+---
+
+## コード（index.html）
+
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>墨流し — Suminagashi</title>
+<style>
+  :root{
+    --paper:#efeae0;
+    --ink:#1a1a1f;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--paper);overflow:hidden;
+    font-family:"Yu Mincho","Hiragino Mincho ProN",serif;color:var(--ink)}
+  #c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+
+  .title{
+    position:fixed;left:24px;top:28px;writing-mode:vertical-rl;
+    font-size:34px;letter-spacing:.18em;opacity:.85;user-select:none
+  }
+  .cap{
+    position:fixed;left:10px;top:50%;transform:translateY(-50%);
+    writing-mode:vertical-rl;font-size:11px;letter-spacing:.42em;
+    opacity:.5;text-transform:uppercase;user-select:none
+  }
+  .hint{
+    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+    font-size:15px;letter-spacing:.5em;opacity:.7;transition:opacity 1.2s ease;
+    pointer-events:none;text-align:center
+  }
+  .hint.hide{opacity:0}
+
+  .dock{
+    position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
+    display:flex;align-items:center;gap:14px;padding:10px 16px;
+    background:rgba(255,255,255,.35);border-radius:22px;
+    backdrop-filter:blur(6px);box-shadow:0 4px 20px rgba(0,0,0,.06)
+  }
+  .sw{width:26px;height:26px;border-radius:50%;position:relative;cursor:pointer;
+    border:1px solid rgba(0,0,0,.15)}
+  .sw.active{box-shadow:0 0 0 2px var(--paper),0 0 0 4px rgba(0,0,0,.5)}
+  .sw span{position:absolute;left:50%;bottom:-16px;transform:translateX(-50%);
+    font-size:10px;opacity:.7}
+  .sep{width:1px;height:26px;background:rgba(0,0,0,.15)}
+  .btn{font-size:12px;letter-spacing:.1em;cursor:pointer;opacity:.8;
+    border:none;background:none;font-family:inherit}
+  .btn.on::before{content:"● ";font-size:9px;vertical-align:middle}
+
+  .credit{
+    position:fixed;right:12px;bottom:10px;font-size:10px;opacity:.4;
+    letter-spacing:.1em;user-select:none
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="title">墨流し</div>
+<div class="cap">Suminagashi — Ink Dissolution</div>
+<div class="hint" id="hint">画 面 を な ぞ っ て 墨 を 流 す</div>
+
+<div class="dock">
+  <div class="sw active" data-c="cycle" style="background:linear-gradient(90deg,#1a1a1f,#16407a,#c8372d,#2e6e52)"><span>巡</span></div>
+  <div class="sw" data-c="0" style="background:#1a1a1f"><span>墨</span></div>
+  <div class="sw" data-c="1" style="background:#16407a"><span>藍</span></div>
+  <div class="sw" data-c="2" style="background:#c8372d"><span>朱</span></div>
+  <div class="sw" data-c="3" style="background:#2e6e52"><span>松</span></div>
+  <div class="sep"></div>
+  <button class="btn" id="auto">自動演出</button>
+  <button class="btn" id="wash">洗い流す</button>
+</div>
+
+<div class="credit">THREE.JS · STABLE FLUIDS</div>
+
+<script type="module">
+import * as THREE from "https://unpkg.com/three@0.160/build/three.module.js";
+
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const canvas = document.getElementById("c");
+const renderer = new THREE.WebGLRenderer({canvas, antialias:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+
+const scene = new THREE.Scene();
+const cam = new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+
+const SIZE = 256;
+function rt(){return new THREE.WebGLRenderTarget(SIZE,SIZE,{type:THREE.HalfFloatType,depthBuffer:false})}
+
+let vel = rt(), vel2 = rt();
+let den = rt(), den2 = rt();
+let pre = rt(), pre2 = rt();
+
+const quad = new THREE.Mesh(new THREE.PlaneGeometry(2,2));
+scene.add(quad);
+
+const sh = (f)=>new THREE.ShaderMaterial(f);
+const COPY = sh({uniforms:{t:{value:null}},vertexShader:`varying vec2 v;void main(){v=uv;gl_Position=vec4(position,1.);}`,
+fragmentShader:`uniform sampler2D t;varying vec2 v;void main(){gl_FragColor=texture2D(t,v);}`});
+
+const ADV = sh({uniforms:{v:{value:null},d:{value:null},dt:{value:.016}},
+vertexShader:`varying vec2 v;void main(){v=uv;gl_Position=vec4(position,1.);}`,
+fragmentShader:`uniform sampler2D v,d;uniform float dt;varying vec2 v;
+void main(){vec2 p=v-texture2D(v,v).xy*dt;gl_FragColor=texture2D(d,p);}`});
+
+const FORCE = sh({uniforms:{v:{value:null},p:{value:null},a:{value:new THREE.Vector2()},c:{value:new THREE.Vector3()},ink:{value:0}},
+vertexShader:`varying vec2 v;void main(){v=uv;gl_Position=vec4(position,1.);}`,
+fragmentShader:`uniform sampler2D v,d;uniform vec2 a;uniform vec3 c;uniform float ink;varying vec2 v;
+void main(){vec2 vv=texture2D(v,v).xy;if(ink>0.)vv+=a*ink;vec4 dd=texture2D(d,v);dd.rgb+=c*ink;gl_FragColor=vec4(vv,dd.rgb);}`});
+
+const PRESS = sh({uniforms:{p:{value:null},v:{value:null}},
+vertexShader:`varying vec2 v;void main(){v=uv;gl_Position=vec4(position,1.);}`,
+fragmentShader:`uniform sampler2D p,v;varying vec2 v;void main(){
+float l=texture2D(p,v-vec2(1./256.,0)).x,r=texture2D(p,v+vec2(1./256.,0)).x;
+float b=texture2D(p,v-vec2(0,1./256.)).x,t=texture2D(p,v+vec2(0,1./256.)).x;
+float div=texture2D(v,v).z;gl_FragColor=vec4((l+r+b+t-div)*.25,0.,0.,1.);}`});
+
+const DIV = sh({uniforms:{v:{value:null}},
+vertexShader:`varying vec2 v;void main(){v=uv;gl_Position=vec4(position,1.);}`,
+fragmentShader:`uniform sampler2D v;varying vec2 v;void main(){
+float l=texture2D(v,v-vec2(1./256.,0)).x,r=texture2D(v,v+vec2(1./256.,0)).x;
+float b=texture2D(v,v-vec2(0,1./256.)).x,t=texture2D(v,v+vec2(0,1./256.)).x;
+gl_FragColor=vec4(0.,0.,(r-l+t-b)*.5,1.);}`});
+
+const PROJ = sh({uniforms:{v:{value:null},p:{value:null}},
+vertexShader:`varying vec2 v;void main(){v=uv;gl_Position=vec4(position,1.);}`,
+fragmentShader:`uniform sampler2D v,p;varying vec2 v;void main(){
+float l=texture2D(p,v-vec2(1./256.,0)).x,r=texture2D(p,v+vec2(1./256.,0)).x;
+float b=texture2D(p,v-vec2(0,1./256.)).x,t=texture2D(p,v+vec2(0,1./256.)).x;
+vec2 vv=texture2D(v,v).xy;vv-=vec2(r-l,t-b);gl_FragColor=vec4(vv,0.,1.);}`});
+
+const SHOW = sh({uniforms:{d:{value:null}},
+vertexShader:`varying vec2 v;void main(){v=uv;gl_Position=vec4(position,1.);}`,
+fragmentShader:`uniform sampler2D d;varying vec2 v;void main(){
+vec3 paper=vec3(.937,.918,.878);vec3 A=texture2D(d,v).rgb;
+gl_FragColor=vec4(paper*exp(-A*1.4),1.);}`});
+
+function pass(mat,target){quad.material=mat;renderer.setRenderTarget(target);renderer.render(scene,cam);}
+
+/* UI */
+const colors=[[.11,.11,.12],[.09,.25,.48],[.78,.22,.18],[.18,.43,.32]];
+let cur=0,auto=false,washed=0;
+document.querySelectorAll(".sw").forEach(s=>s.onclick=()=>{
+  document.querySelectorAll(".sw").forEach(x=>x.classList.remove("active"));
+  s.classList.add("active");cur=s.dataset.c;
+});
+document.getElementById("auto").onclick=e=>{auto=!auto;e.target.classList.toggle("on",auto)};
+document.getElementById("wash").onclick=()=>washed=1;
+
+/* input */
+let px,py,drag=false;
+function pos(e){const r=canvas.getBoundingClientRect();
+const t=e.touches?e.touches[0]:e;return[(t.clientX-r.left)/r.width,(t.clientY-r.top)/r.height]}
+canvas.onpointerdown=e=>{drag=true;const p=pos(e);px=p[0];py=p[1];hideHint()};
+canvas.onpointermove=e=>{if(!drag)return;const p=pos(e);
+  const dx=p[0]-px,dy=p[1]-py;
+  const c=cur==="cycle"?colors[Math.floor(Math.random()*4)]:colors[+cur];
+  FORCE.uniforms.v.value=vel.texture;FORCE.uniforms.d.value=den.texture;
+  FORCE.uniforms.a.value.set(dx*4,dy*4);FORCE.uniforms.c.value.set(c[0],c[1],c[2]);FORCE.uniforms.ink.value=.6;
+  pass(FORCE,vel2);pass(COPY,den2);[vel,vel2]=[vel2,vel];[den,den2]=[den2,den];
+  px=p[0];py=p[1];
+};
+addEventListener("pointerup",()=>drag=false);
+
+let hinted=false;function hideHint(){if(hinted)return;hinted=true;document.getElementById("hint").classList.add("hide")}
+
+/* auto */
+let at=0;
+function autoStep(){if(!auto||reduce)return;at+=.016;
+  if(at>.8){at=0;const x=Math.random(),y=Math.random();
+    const c=colors[Math.floor(Math.random()*4)];
+    FORCE.uniforms.v.value=vel.texture;FORCE.uniforms.d.value=den.texture;
+    FORCE.uniforms.a.value.set((Math.random()-.5)*.3,(Math.random()-.5)*.3);
+    FORCE.uniforms.c.value.set(c[0],c[1],c[2]);FORCE.uniforms.ink.value=.25;
+    pass(FORCE,vel2);pass(COPY,den2);[vel,vel2]=[vel2,vel];[den,den2]=[den2,den];
+  }}
+
+/* loop */
+function step(){
+  ADV.uniforms.v.value=vel.texture;ADV.uniforms.d.value=den.texture;pass(ADV,den2);[den,den2]=[den2,den];
+  DIV.uniforms.v.value=vel.texture;pass(DIV,pre);
+  for(let i=0;i<20;i++){PRESS.uniforms.p.value=pre.texture;PRESS.uniforms.v.value=vel.texture;pass(PRESS,pre2);[pre,pre2]=[pre2,pre];}
+  PROJ.uniforms.v.value=vel.texture;PROJ.uniforms.p.value=pre.texture;pass(PROJ,vel2);[vel,vel2]=[vel2,vel];
+  if(washed){FORCE.uniforms.ink.value=-.02;FORCE.uniforms.v.value=vel.texture;FORCE.uniforms.d.value=den.texture;
+    FORCE.uniforms.a.value.set(0,-.02);FORCE.uniforms.c.value.set(0,0,0);pass(FORCE,vel2);pass(COPY,den2);
+    [vel,vel2]=[vel2,vel];[den,den2]=[den2,den];if(--washed<=0)washed=0;}
+  autoStep();
+  SHOW.uniforms.d.value=den.texture;pass(SHOW,null);
+  requestAnimationFrame(step);
+}
+step();
+</script>
+</body>
+</html>
+```
+
+---
+
+ご希望であれば：
+- **vorticity confinement の追加**
+- **和紙テクスチャの淡いノイズ**
+- **自動演出の“筆順”的な美学**
+もさらに静謐に調整可能です。

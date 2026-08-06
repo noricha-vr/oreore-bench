@@ -1,0 +1,362 @@
+以下に、ご指定のトーン＆マナー・構成・演出を再現した**日本語ランディングページ（HTML + CSS + JS）**を実装します。  
+単一ファイルで動作するようまとめていますので、そのまま `.html` として保存してブラウザで開けば確認できます。
+
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fable 5 — Claude</title>
+<style>
+  :root{
+    --paper:#faf6ee;
+    --paper-2:#f3ecdf;
+    --ink:#2b2622;
+    --terra:#c65d3b;
+    --terra-2:#d97757;
+    --sepia:#8a7a66;
+    --sand:#e7dcc6;
+    --ochre:#cdb189;
+    --gold:#b8924a;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+    line-height:1.8;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-weight:600;letter-spacing:.02em;}
+  a{color:inherit;text-decoration:none;}
+
+  /* Header */
+  header{
+    position:fixed;top:0;left:0;right:0;z-index:50;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 28px;
+    background:rgba(250,246,238,.86);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid rgba(138,122,102,.18);
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-size:18px;}
+  .brand svg{width:26px;height:26px;}
+  nav{display:flex;align-items:center;gap:22px;font-size:14px;}
+  nav .links{display:flex;gap:18px;color:var(--sepia);}
+  nav .links a:hover{color:var(--terra);}
+  .btn{
+    display:inline-block;background:var(--terra);color:#fff;
+    padding:9px 18px;border-radius:999px;font-size:14px;
+    box-shadow:0 4px 14px rgba(198,93,59,.25);
+    transition:transform .2s ease, background .2s ease;
+  }
+  .btn:hover{background:var(--terra-2);transform:translateY(-1px);}
+
+  /* Layout */
+  section{
+    padding:120px 28px 90px;
+    max-width:1120px;margin:0 auto;
+    position:relative;
+  }
+  .kicker{
+    font-size:12px;letter-spacing:.18em;color:var(--terra);
+    text-transform:uppercase;margin-bottom:6px;
+  }
+  .num{
+    display:inline-block;font-size:12px;color:var(--sepia);
+    border:1px solid var(--sepia);border-radius:999px;
+    padding:2px 9px;margin-right:10px;vertical-align:middle;
+  }
+  .sec-title{font-size:30px;margin:6px 0 28px;}
+
+  /* Hero */
+  .hero{
+    max-width:none;padding-top:140px;padding-bottom:0;
+    overflow:hidden;
+  }
+  .hero .inner{max-width:1120px;margin:0 auto;padding:0 28px;}
+  .hero h1{
+    font-size:clamp(64px,13vw,180px);line-height:.95;margin:8px 0 22px;
+  }
+  .hero h1 .dot{color:var(--terra);}
+  .hero p.lead{font-size:20px;max-width:560px;}
+  .hero p.sub{font-size:15px;color:var(--sepia);max-width:520px;margin-top:10px;}
+  .hero-art{
+    margin-top:40px;width:100%;height:46vh;min-height:300px;
+    display:block;
+  }
+
+  /* Family */
+  .bars{display:flex;align-items:flex-end;gap:18px;height:280px;margin-top:20px;}
+  .bar{
+    flex:1;background:linear-gradient(var(--sand),var(--ochre));
+    border-radius:8px 8px 0 0;position:relative;
+    box-shadow:inset 0 0 0 1px rgba(138,122,102,.15);
+  }
+  .bar.mythos{background:linear-gradient(var(--terra-2),var(--terra));}
+  .bar span{
+    position:absolute;bottom:-26px;left:0;right:0;text-align:center;
+    font-size:13px;color:var(--sepia);
+  }
+
+  /* Cards */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:26px;}
+  .card{
+    display:flex;gap:18px;align-items:center;
+    background:var(--paper-2);border-radius:16px;padding:20px;
+    box-shadow:0 6px 20px rgba(138,122,102,.12);
+  }
+  .card svg{width:84px;height:84px;flex:none;}
+  .card h3{font-size:17px;margin:0 0 6px;}
+  .card p{font-size:13.5px;color:var(--sepia);margin:0;}
+
+  /* Graph */
+  .graph-wrap{margin-top:20px;}
+  .graph{width:100%;height:320px;}
+  .axis-label{font-size:13px;color:var(--sepia);margin-top:8px;}
+
+  /* Safety */
+  .safety-art{width:100%;max-width:760px;margin:10px auto 0;display:block;}
+
+  /* Steps */
+  .steps{display:flex;flex-wrap:wrap;gap:22px;margin-top:20px;align-items:center;}
+  .steps .note{width:120px;flex:none;}
+  .steps ol{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:16px;}
+  .steps li{
+    background:var(--paper-2);border-radius:12px;padding:14px 18px;
+    font-size:14px;min-width:200px;box-shadow:0 4px 14px rgba(138,122,102,.1);
+  }
+
+  /* Final CTA */
+  .final{
+    text-align:center;padding-bottom:120px;
+    background:
+      linear-gradient(rgba(250,246,238,0),rgba(250,246,238,.4)),
+      var(--paper);
+  }
+  .final h2{font-size:34px;margin-bottom:24px;}
+  footer{
+    text-align:center;font-size:12px;color:var(--sepia);
+    padding:30px 20px 50px;
+  }
+
+  /* Reveal */
+  .reveal{opacity:.25;transform:translateY(24px);transition:opacity .9s ease, transform .9s ease;}
+  .reveal.in{opacity:1;transform:none;}
+
+  @media(max-width:760px){
+    nav .links{display:none;}
+    .grid{grid-template-columns:1fr;}
+    .bars{height:220px;}
+    section{padding:90px 20px 70px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="9" fill="#c65d3b"/><circle cx="16" cy="16" r="4" fill="#faf6ee"/></svg>
+    Claude
+  </div>
+  <nav>
+    <div class="links">
+      <a href="#family">モデル</a>
+      <a href="#ability">できること</a>
+      <a href="#safety">安全性</a>
+    </div>
+    <a class="btn" href="#start">使ってみる</a>
+  </nav>
+</header>
+
+<!-- 1. HERO -->
+<section class="hero">
+  <div class="inner">
+    <div class="kicker">MYTHOS-CLASS / 一般提供モデル</div>
+    <h1>Fable 5<span class="dot">.</span></h1>
+    <p class="lead">今、いちばん賢いClaudeが、誰でも使える形に。</p>
+    <p class="sub">絵本のように静かで、だけど確かな力を。長い旅のように、あなたといっしょに。</p>
+  </div>
+
+  <svg class="hero-art" viewBox="0 0 1440 420" preserveAspectRatio="xMidYMax slice">
+    <defs>
+      <linearGradient id="hill1" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#e7dcc6"/><stop offset="1" stop-color="#cdb189"/>
+      </linearGradient>
+      <linearGradient id="hill2" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#d9c9a8"/><stop offset="1" stop-color="#b8924a" stop-opacity=".5"/>
+      </linearGradient>
+      <radialGradient id="sun" cx="50%" cy="50%" r="50%">
+        <stop offset="0" stop-color="#d97757"/><stop offset="1" stop-color="#d97757" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+
+    <circle cx="1120" cy="120" r="90" fill="url(#sun)"/>
+    <circle cx="1120" cy="120" r="46" fill="#c65d3b" opacity=".85"/>
+
+    <path d="M0 300 Q360 220 720 280 T1440 260 V420 H0 Z" fill="url(#hill1)"/>
+    <path d="M0 340 Q420 270 860 320 T1440 310 V420 H0 Z" fill="url(#hill2)"/>
+
+    <path d="M700 420 C740 360 760 320 820 300 C900 275 980 290 1060 250"
+          fill="none" stroke="#faf6ee" stroke-width="6" opacity=".9"/>
+
+    <!-- 人物 -->
+    <g transform="translate(792,286)">
+      <circle cx="0" cy="-22" r="7" fill="#2b2622"/>
+      <path d="M-7 -15 Q0 -34 7 -15 L5 4 H-5 Z" fill="#c65d3b"/>
+      <line x1="-3" y1="4" x2="-4" y2="22" stroke="#2b2622" stroke-width="3"/>
+      <line x1="3" y1="4" x2="4" y2="22" stroke="#2b2622" stroke-width="3"/>
+    </g>
+
+    <!-- 相棒 -->
+    <g transform="translate(828,278)">
+      <ellipse cx="0" cy="0" rx="26" ry="20" fill="#f3ecdf" stroke="#cdb189" stroke-width="2"/>
+      <circle cx="-8" cy="-4" r="3" fill="#2b2622"/>
+      <circle cx="8" cy="-4" r="3" fill="#2b2622"/>
+      <path d="M-6 6 Q0 10 6 6" stroke="#c65d3b" stroke-width="2" fill="none"/>
+    </g>
+
+    <!-- 草花 -->
+    <g stroke="#b8924a" stroke-width="2" opacity=".7">
+      <path d="M200 360 l0 -22 M206 360 l4 -18"/>
+      <path d="M1240 350 l0 -20 M1246 350 l4 -16"/>
+    </g>
+  </svg>
+</section>
+
+<!-- 2. FAMILY -->
+<section id="family" class="reveal">
+  <div><span class="num">2</span><span class="kicker">Claude Family</span></div>
+  <h2 class="sec-title">Claudeのいちばん上へ。</h2>
+  <div class="bars">
+    <div class="bar" style="height:32%"><span>Haiku</span></div>
+    <div class="bar" style="height:54%"><span>Sonnet</span></div>
+    <div class="bar" style="height:76%"><span>Opus</span></div>
+    <div class="bar mythos" style="height:100%"><span>Mythos / Fable 5</span></div>
+  </div>
+</section>
+
+<!-- 3. ABILITY -->
+<section id="ability" class="reveal">
+  <div><span class="num">3</span><span class="kicker">Capabilities</span></div>
+  <h2 class="sec-title">頼れる仕事のその先まで。</h2>
+  <div class="grid">
+    <div class="card">
+      <svg viewBox="0 0 80 80"><rect x="10" y="14" width="60" height="44" rx="4" fill="#e7dcc6"/><rect x="18" y="22" width="44" height="6" fill="#c65d3b"/><rect x="18" y="32" width="30" height="4" fill="#b8924a"/><circle cx="58" cy="50" r="4" fill="#c65d3b"/></svg>
+      <div><h3>画面を見るだけでゲームをクリア</h3><p>視覚と判断を往復し、最後まで伴走します。</p></div>
+    </div>
+    <div class="card">
+      <svg viewBox="0 0 80 80"><rect x="22" y="20" width="36" height="44" fill="#d9c9a8"/><rect x="28" y="14" width="24" height="10" fill="#cdb189"/><line x1="22" y1="40" x2="58" y2="40" stroke="#8a7a66"/></svg>
+      <div><h3>5,000万行のコードを1日で移行</h3><p>巨大な履歴も静かに、確実に書き換えます。</p></div>
+    </div>
+    <div class="card">
+      <svg viewBox="0 0 80 80"><circle cx="40" cy="34" r="14" fill="#c65d3b" opacity=".8"/><rect x="34" y="44" width="12" height="22" fill="#b8924a"/><path d="M30 60 h20" stroke="#8a7a66" stroke-width="3"/></svg>
+      <div><h3>新薬の設計を約10倍のスピードで</h3><p>分子の世界を絵のように読み解きます。</p></div>
+    </div>
+    <div class="card">
+      <svg viewBox="0 0 80 80"><path d="M14 60 C30 40 50 40 66 24" stroke="#c65d3b" stroke-width="4" fill="none"/><circle cx="58" cy="30" r="10" fill="none" stroke="#b8924a" stroke-width="3"/><line x1="58" y1="30" x2="58" y2="24" stroke="#b8924a"/></svg>
+      <div><h3>長い作業も休まず走りきる</h3><p>道のりが長くても、ペースを崩しません。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. STRENGTH -->
+<section id="strength" class="reveal">
+  <div><span class="num">4</span><span class="kicker">Long-task Strength</span></div>
+  <h2 class="sec-title">長く複雑な仕事ほど差は開いていく。</h2>
+  <div class="graph-wrap">
+    <svg class="graph" viewBox="0 0 600 320">
+      <line x1="40" y1="280" x2="580" y2="280" stroke="#8a7a66"/>
+      <line x1="40" y1="20" x2="40" y2="280" stroke="#8a7a66"/>
+      <path id="others" d="M40 250 C200 240 360 235 580 230" fill="none" stroke="#c9bfa d" stroke-width="3" opacity=".6"/>
+      <path id="fable" d="M40 260 C220 220 360 120 580 40" fill="none" stroke="#c65d3b" stroke-width="4"/>
+    </svg>
+    <div class="axis-label">仕事の長さ・複雑さ →</div>
+  </div>
+</section>
+
+<!-- 5. SAFETY -->
+<section id="safety" class="reveal">
+  <div><span class="num">5</span><span class="kicker">Safety</span></div>
+  <h2 class="sec-title">強い力にはやさしいブレーキを。</h2>
+  <svg class="safety-art" viewBox="0 0 760 300">
+    <circle cx="600" cy="90" r="60" fill="#d97757" opacity=".85"/>
+    <path d="M0 220 Q200 160 420 200 T760 190 V300 H0 Z" fill="#e7dcc6"/>
+    <path d="M0 250 Q260 200 520 240 T760 230 V300 H0 Z" fill="#cdb189"/>
+    <g transform="translate(300,196)">
+      <circle cx="0" cy="-20" r="6" fill="#2b2622"/>
+      <path d="M-6 -14 Q0 -30 6 -14 L4 4 H-4 Z" fill="#c65d3b"/>
+    </g>
+    <g transform="translate(336,190)">
+      <ellipse cx="0" cy="0" rx="22" ry="17" fill="#f3ecdf" stroke="#cdb189"/>
+      <circle cx="-7" cy="-3" r="2.5" fill="#2b2622"/><circle cx="7" cy="-3" r="2.5" fill="#2b2622"/>
+    </g>
+  </svg>
+  <p style="text-align:center;color:var(--sepia);max-width:520px;margin:14px auto 0;">
+    ふたりで座って夕日を見るように。必要なときは、そっと止まる知恵を持っています。
+  </p>
+</section>
+
+<!-- 6. START -->
+<section id="start" class="reveal">
+  <div><span class="num">6</span><span class="kicker">Get Started</span></div>
+  <h2 class="sec-title">はじめかたはかんたん。</h2>
+  <div class="steps">
+    <svg class="note" viewBox="0 0 100 80"><rect x="20" y="10" width="60" height="40" rx="4" fill="#d9c9a8"/><rect x="28" y="18" width="44" height="4" fill="#8a7a66"/><rect x="28" y="28" width="30" height="4" fill="#b8924a"/></svg>
+    <ol>
+      <li>① アカウントを作る</li>
+      <li>② 「Fable 5」を選ぶ</li>
+      <li>③ ことばで頼むだけ</li>
+    </ol>
+  </div>
+</section>
+
+<!-- 7. FINAL CTA -->
+<section class="final reveal">
+  <h2>いちばん遠くまでいっしょに。</h2>
+  <a class="btn" href="#">Claudeを使ってみる</a>
+  <svg class="hero-art" viewBox="0 0 1440 300" preserveAspectRatio="xMidYMax slice" style="height:30vh;margin-top:30px;">
+    <path d="M0 220 Q360 160 720 200 T1440 190 V300 H0 Z" fill="#e7dcc6"/>
+    <path d="M0 250 Q420 200 860 240 T1440 230 V300 H0 Z" fill="#cdb189"/>
+    <path d="M700 300 C740 250 760 220 820 200 C900 180 980 190 1060 160" fill="none" stroke="#faf6ee" stroke-width="5"/>
+  </svg>
+  <footer>
+    <div class="brand" style="justify-content:center;margin-bottom:8px;">
+      <svg viewBox="0 0 32 32" style="width:20px;height:20px;"><circle cx="16" cy="16" r="9" fill="#c65d3b"/></svg>
+      Claude
+    </div>
+    ※本ページはデモ用の架空モデル「Fable 5」を想定した表現です。
+  </footer>
+</section>
+
+<script>
+  // Reveal
+  const io = new IntersectionObserver((es)=>{
+    es.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in'); });
+  },{threshold:.15});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  // Graph draw
+  window.addEventListener('load',()=>{
+    const f=document.getElementById('fable');
+    const len=f.getTotalLength();
+    f.style.strokeDasharray=len; f.style.strokeDashoffset=len;
+    f.style.transition='stroke-dashoffset 2.4s ease';
+    setTimeout(()=>f.style.strokeDashoffset=0,400);
+  });
+
+  // Parallax (hero sun/clouds)
+  window.addEventListener('scroll',()=>{
+    const y=window.scrollY;
+    document.querySelector('.hero-art circle').setAttribute('cy',120 - y*0.08);
+  });
+</script>
+</body>
+</html>
+```
+
+ご希望の「生成りの紙・朱色アクセント・明朝体・水彩丘陵・人物と相棒・固定ヘッダー・番号付きセクション・フェードイン・グラフ描画・レスポンシブ」をすべて含んだ、静かで上質なランディングページになっています。必要に応じてコピーやイラストの粒度をさらに調整できます。

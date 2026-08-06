@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "theme": "othello",
+  "model": "hy3-t512",
+  "model_id": "avlp12/Hy3-Alis-MLX-Dynamic",
+  "harness": "mlx-lm-api",
+  "reasoning_effort": "unknown",
+  "attempts": 1,
+  "generated_at": "2026-08-06T14:45:50+09:00",
+  "generated_at_source": "measured",
+  "sampling": {
+    "temperature": 0.3,
+    "max_tokens": 65000,
+    "top_p": "default"
+  },
+  "system_prompt": "none",
+  "post_processing": "none",
+  "runtime": {
+    "engine": "mlx-lm",
+    "version": "0.31.3",
+    "framework": "MLX 0.31.2",
+    "model_revision": "f1dc8e8f4b847071ecb3dc0a09f56bf76f117677",
+    "quantization": "t512-6.561bpw",
+    "hardware": "Mac Studio M3 Ultra 512GB",
+    "api": "openai-compat-chat"
+  },
+  "usage": {
+    "estimated": false,
+    "method": "api-usage",
+    "prompt_tokens": 287,
+    "completion_tokens": 2165,
+    "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=116.124."
+  },
+  "cost": {
+    "estimated": true,
+    "usd": null,
+    "actual_usd": 0,
+    "prompt_usd_per_mtok": null,
+    "completion_usd_per_mtok": null,
+    "pricing_source": "local-no-reference",
+    "pricing_model": null,
+    "pricing_fetched_at": null
+  }
+}

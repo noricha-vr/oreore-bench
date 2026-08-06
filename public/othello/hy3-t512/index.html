@@ -1,0 +1,258 @@
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Othello</title>
+<style>
+  :root {
+    --board: #1f7a3d;
+    --line: #0d3b1e;
+    --black: #111;
+    --white: #f5f5f5;
+    --hint: rgba(255,255,255,0.25);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background: #222;
+    color: #eee;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+  }
+  h1 { font-size: 1.4rem; margin: 8px 0; }
+  #status { margin: 8px 0; font-size: 1rem; text-align: center; }
+  #board {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    width: min(90vw, 420px);
+    aspect-ratio: 1 / 1;
+    background: var(--line);
+    gap: 2px;
+    padding: 2px;
+    border-radius: 6px;
+  }
+  .cell {
+    background: var(--board);
+    position: relative;
+    cursor: default;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cell.playable { cursor: pointer; }
+  .cell.playable::after {
+    content: "";
+    width: 30%;
+    height: 30%;
+    border-radius: 50%;
+    background: var(--hint);
+  }
+  .disc {
+    width: 76%;
+    height: 76%;
+    border-radius: 50%;
+    position: absolute;
+  }
+  .disc.black { background: var(--black); }
+  .disc.white { background: var(--white); }
+  #controls { margin-top: 14px; }
+  button {
+    background: #444;
+    color: #eee;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  button:hover { background: #555; }
+  #score { margin-top: 10px; font-size: 0.95rem; }
+</style>
+</head>
+<body>
+<h1>Othello</h1>
+<div id="status">あなた（黒）の番です</div>
+<div id="board"></div>
+<div id="score">黒 2 - 白 2</div>
+<div id="controls">
+  <button id="reset">リセット</button>
+</div>
+
+<script>
+(function () {
+  const SIZE = 8;
+  const EMPTY = 0, BLACK = 1, WHITE = 2;
+  const boardEl = document.getElementById('board');
+  const statusEl = document.getElementById('status');
+  const scoreEl = document.getElementById('score');
+  const resetBtn = document.getElementById('reset');
+
+  let board, turn, gameOver;
+
+  function init() {
+    board = Array.from({ length: SIZE }, () => Array(SIZE).fill(EMPTY));
+    board[3][3] = WHITE; board[3][4] = BLACK;
+    board[4][3] = BLACK; board[4][4] = WHITE;
+    turn = BLACK;
+    gameOver = false;
+    render();
+    updateStatus();
+  }
+
+  const DIRS = [
+    [-1,-1],[-1,0],[-1,1],
+    [0,-1],         [0,1],
+    [1,-1], [1,0], [1,1]
+  ];
+
+  function inBounds(r, c) { return r >= 0 && r < SIZE && c >= 0 && c < SIZE; }
+
+  function getFlips(b, r, c, color) {
+    if (b[r][c] !== EMPTY) return [];
+    const opp = color === BLACK ? WHITE : BLACK;
+    let flips = [];
+    for (const [dr, dc] of DIRS) {
+      let rr = r + dr, cc = c + dc;
+      let line = [];
+      while (inBounds(rr, cc) && b[rr][cc] === opp) {
+        line.push([rr, cc]);
+        rr += dr; cc += dc;
+      }
+      if (line.length && inBounds(rr, cc) && b[rr][cc] === color) {
+        flips = flips.concat(line);
+      }
+    }
+    return flips;
+  }
+
+  function legalMoves(b, color) {
+    const moves = [];
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        const f = getFlips(b, r, c, color);
+        if (f.length) moves.push({ r, c, flips: f });
+      }
+    }
+    return moves;
+  }
+
+  function applyMove(b, r, c, color) {
+    const flips = getFlips(b, r, c, color);
+    if (!flips.length) return false;
+    b[r][c] = color;
+    for (const [fr, fc] of flips) b[fr][fc] = color;
+    return true;
+  }
+
+  function countDiscs(b) {
+    let black = 0, white = 0;
+    for (let r = 0; r < SIZE; r++)
+      for (let c = 0; c < SIZE; c++) {
+        if (b[r][c] === BLACK) black++;
+        else if (b[r][c] === WHITE) white++;
+      }
+    return { black, white };
+  }
+
+  function render() {
+    boardEl.innerHTML = '';
+    const moves = turn === BLACK && !gameOver ? legalMoves(board, BLACK) : [];
+    const playable = new Set(moves.map(m => m.r * SIZE + m.c));
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        if (playable.has(r * SIZE + c)) {
+          cell.classList.add('playable');
+          cell.addEventListener('click', () => playerMove(r, c));
+        }
+        if (board[r][c] !== EMPTY) {
+          const disc = document.createElement('div');
+          disc.className = 'disc ' + (board[r][c] === BLACK ? 'black' : 'white');
+          cell.appendChild(disc);
+        }
+        boardEl.appendChild(cell);
+      }
+    }
+    const { black, white } = countDiscs(board);
+    scoreEl.textContent = `黒 ${black} - 白 ${white}`;
+  }
+
+  function updateStatus(msg) {
+    if (msg) { statusEl.textContent = msg; return; }
+    if (gameOver) return;
+    statusEl.textContent = turn === BLACK ? 'あなた（黒）の番です' : 'CPU（白）考え中…';
+  }
+
+  function playerMove(r, c) {
+    if (gameOver || turn !== BLACK) return;
+    if (!applyMove(board, r, c, BLACK)) return;
+    turn = WHITE;
+    render();
+    updateStatus();
+    setTimeout(cpuTurn, 350);
+  }
+
+  function cpuTurn() {
+    if (gameOver) return;
+    const moves = legalMoves(board, WHITE);
+    if (!moves.length) {
+      const human = legalMoves(board, BLACK);
+      if (!human.length) return endGame();
+      turn = BLACK;
+      updateStatus('あなた（黒）の番です（CPUパス）');
+      render();
+      return;
+    }
+    const best = chooseCpuMove(board, moves);
+    applyMove(board, best.r, best.c, WHITE);
+    const human = legalMoves(board, BLACK);
+    if (!human.length) {
+      const again = legalMoves(board, WHITE);
+      if (!again.length) return endGame();
+      updateStatus('あなた（黒）パス（CPU連続）');
+      render();
+      setTimeout(cpuTurn, 350);
+      return;
+    }
+    turn = BLACK;
+    render();
+    updateStatus();
+  }
+
+  function chooseCpuMove(b, moves) {
+    let bestScore = -Infinity, best = moves[0];
+    for (const m of moves) {
+      let score = 0;
+      const r = m.r, c = m.c;
+      if ((r === 0 || r === 7) && (c === 0 || c === 7)) score += 100;
+      else if (r === 0 || r === 7 || c === 0 || c === 7) score += 20;
+      score += m.flips.length * 5;
+      if (score > bestScore) { bestScore = score; best = m; }
+    }
+    return best;
+  }
+
+  function endGame() {
+    gameOver = true;
+    const { black, white } = countDiscs(board);
+    let msg;
+    if (black > white) msg = `終局：あなたの勝ち（黒 ${black} - 白 ${white}）`;
+    else if (white > black) msg = `終局：CPUの勝ち（黒 ${black} - 白 ${white}）`;
+    else msg = `終局：引き分け（黒 ${black} - 白 ${white}）`;
+    updateStatus(msg);
+    render();
+  }
+
+  resetBtn.addEventListener('click', init);
+  init();
+})();
+</script>
+</body>
+</html>
+```

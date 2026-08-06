@@ -16,7 +16,7 @@ const RUNS_JSON = path.join(PUBLIC, 'runs.json');
 
 const HARNESS_ENUM = new Set([
   'lmstudio-api', 'gptme-lmstudio', 'claude-agent-sdk', 'claude-cli-headless',
-  'grok-cli', 'openai-api', 'openrouter-api', 'omlx-api', 'antigravity-cli', 'codex-exec', 'unknown',
+  'grok-cli', 'openai-api', 'openrouter-api', 'omlx-api', 'mlx-lm-api', 'antigravity-cli', 'codex-exec', 'unknown',
 ]);
 const SYSTEM_PROMPT_ENUM = new Set(['none', 'harness-default', 'custom', 'unknown']);
 const EFFORT_ENUM = new Set(['none', 'low', 'medium', 'high', 'unknown']);
@@ -30,7 +30,7 @@ const RUN_ALLOWED = new Set([
 ]);
 const SAMPLING_ALLOWED = new Set(['temperature', 'max_tokens', 'top_p']);
 const RUNTIME_ALLOWED = new Set([
-  'engine', 'version', 'framework', 'model_revision', 'quantization', 'api',
+  'engine', 'version', 'framework', 'model_revision', 'quantization', 'hardware', 'api',
 ]);
 const USAGE_ALLOWED = new Set(['estimated', 'method', 'prompt_tokens', 'completion_tokens', 'note']);
 const COST_ALLOWED = new Set([
