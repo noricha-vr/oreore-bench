@@ -316,14 +316,41 @@ def prepare_run(args: argparse.Namespace) -> tuple[Path, Path, int, str | None]:
     return theme_dir, out_dir, attempts, base_url
 
 
+def check_openrouter_preconditions(model: str) -> tuple[str, dict[str, Any], str]:
+    """Resolve everything OpenRouter requests need before any request is sent."""
+    model_id = OPENROUTER.resolve_model_id(model)
+    pricing = OPENROUTER.load_pricing(model)
+    api_key = OPENROUTER.load_api_key()
+    OPENROUTER.resolve_api_url()
+    return model_id, pricing, api_key
+
+
+def check_local_preconditions(base_url: str) -> None:
+    """Confirm the loopback endpoint answers before any request is sent."""
+    LOCAL.preflight(base_url, LOCAL.DEFAULT_TIMEOUT_SECONDS)
+
+
+def describe_dry_run(args: argparse.Namespace, base_url: str | None) -> str:
+    """Report what was verified without sending requests or writing files."""
+    if args.backend == "openrouter":
+        model_id, _pricing, _api_key = check_openrouter_preconditions(args.model)
+        # api_key は解決できたことだけを伝える。値は決してログに出さない
+        checked = f"model_id={model_id}, pricing ok, api key ok, api url ok"
+    else:
+        assert base_url is not None
+        check_local_preconditions(base_url)
+        checked = f"server ok at {base_url}"
+    return (
+        f"[dry-run] json-ladder/{args.model} backend={args.backend}: {checked}; "
+        f"{len(LEVEL_NUMBERS)} requests would be sent; no files written"
+    )
+
+
 def run_openrouter_backend(
     args: argparse.Namespace, theme_dir: Path, attempts: int
 ) -> tuple[list[dict[str, Any]], dict[str, Any], float]:
     """Generate all levels through OpenRouter and aggregate their metadata."""
-    model_id = OPENROUTER.resolve_model_id(args.model)
-    pricing = OPENROUTER.load_pricing(args.model)
-    api_key = OPENROUTER.load_api_key()
-    OPENROUTER.resolve_api_url()
+    model_id, pricing, api_key = check_openrouter_preconditions(args.model)
     levels, prompt_tokens, completion_tokens, reasoning_tokens, actual_cost = run_levels(
         api_key, model_id, theme_dir, args.reasoning_effort, args.max_tokens
     )
@@ -338,7 +365,7 @@ def run_local_backend(
     args: argparse.Namespace, theme_dir: Path, attempts: int, base_url: str
 ) -> tuple[list[dict[str, Any]], dict[str, Any], float]:
     """Generate all levels through the loopback MLX endpoint."""
-    LOCAL.preflight(base_url, LOCAL.DEFAULT_TIMEOUT_SECONDS)
+    check_local_preconditions(base_url)
     levels, prompt_tokens, completion_tokens = run_local_levels(
         args.model, theme_dir, base_url, args.max_tokens
     )
@@ -352,11 +379,9 @@ def main() -> int:
     try:
         theme_dir, out_dir, attempts, base_url = prepare_run(args)
         if args.dry_run:
-            print(
-                f"[dry-run] json-ladder/{args.model} backend={args.backend}: "
-                "five requests would be sent; no files written",
-                file=sys.stderr,
-            )
+            # 送信と書き込みだけを省く。バックエンド固有の前提は本番と同じ経路で検証し、
+            # model-map 未登録・キー不在・サーバー未起動を本番実行前に落とす
+            print(describe_dry_run(args, base_url), file=sys.stderr)
             return 0
         if args.backend == "openrouter":
             levels, run, actual_cost = run_openrouter_backend(args, theme_dir, attempts)
