@@ -14,3 +14,11 @@
 /pr-triage/:model/output.html
   Content-Security-Policy: sandbox allow-scripts
   Referrer-Policy: no-referrer
+
+/json-ladder/:model/output
+  Content-Security-Policy: sandbox allow-scripts
+  Referrer-Policy: no-referrer
+
+/json-ladder/:model/output.html
+  Content-Security-Policy: sandbox allow-scripts
+  Referrer-Policy: no-referrer

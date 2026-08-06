@@ -199,6 +199,30 @@ window.THEMES = {
                     "approve 済み nit のみの PR を過剰にブロックしないか",
                     "answer-key の primary / also_acceptable との agreement"
                 ]
+            },
+            "json-ladder": {
+                title: "JSON ラダー",
+                short: "JSON / 形式遵守",
+                desc: "随筆約1,700字から、複雑さ5段階の JSON スキーマで情報抽出。どの複雑さまで有効な JSON と正確な抜き出しを保てるかを見る",
+                color: "#0e7490",
+                colorDark: "#164e63",
+                icon: "fa-solid fa-layer-group",
+                difficulty: "中〜高（L1 フラット 4 キー → L5 ネスト深さ4・約20キーの文書構造化。レベル別に独立5リクエスト）",
+                deliverable: "output.json（5レベルの生応答。判定表 HTML で parse N/5 と score % を表示）",
+                criteria: [
+                    "各レベルの出力が有効な JSON である（フェンス優先抽出、壊れたフェンスは失敗確定）",
+                    "スキーマのキー構成に過不足がない（キー追加・省略・改名なし）",
+                    "抜き出しフィールドが本文と一字一句一致する（answer-key 突合）",
+                    "数値・真偽値を正しい JSON 型で返す（文字列化しない）",
+                    "本文に明記されていない値を JSON null で返せる（\"null\" 文字列・キー省略は不可）",
+                    "配列の順序・件数指定に追従する"
+                ],
+                highlights: [
+                    "L4: 『』入れ子・ダブルクォート・改行を含む文字列の JSON エスケープ",
+                    "L5: 人物関係・時系列・工程・話者別引用マップの入れ子構造化",
+                    "他人の発話内で『』引用された言葉を独立発話に数えない読解",
+                    "score は (valid_json ? accuracy : 0) の5レベル単純平均"
+                ]
             }
         };
 
