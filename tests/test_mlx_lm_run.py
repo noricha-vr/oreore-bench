@@ -29,14 +29,41 @@ def load_runner() -> Any:
 runner = load_runner()
 
 
+class StreamBody:
+    """Carry the raw SSE lines one fake chat completion should emit."""
+
+    def __init__(self, lines: list[bytes]) -> None:
+        self.lines = lines
+
+
 class FakeResponse:
-    """Represent one JSON response from the external HTTP boundary."""
+    """Represent one response from the external HTTP boundary.
+
+    Serves both shapes the runner consumes: a whole JSON body for /v1/models,
+    and an iterable of SSE lines for a streamed chat completion.
+    """
 
     def __init__(self, body: object) -> None:
-        self._raw = body if isinstance(body, bytes) else json.dumps(body).encode("utf-8")
+        self._lines = body if isinstance(body, StreamBody) else None
+        if self._lines is not None:
+            self._raw = b""
+        else:
+            self._raw = body if isinstance(body, bytes) else json.dumps(body).encode("utf-8")
+        self.closed = False
 
     def read(self) -> bytes:
         return self._raw
+
+    def __iter__(self) -> Any:
+        if self._lines is None:
+            raise AssertionError("response was not opened as a stream")
+        for line in self._lines.lines:
+            if self.closed:
+                return
+            yield line
+
+    def close(self) -> None:
+        self.closed = True
 
     def __enter__(self) -> "FakeResponse":
         return self
@@ -71,6 +98,8 @@ def make_args(**overrides: object) -> argparse.Namespace:
         "max_tokens": 65000,
         "timeout": 3600,
         "resume": False,
+        "runaway_threshold": runner.DEFAULT_RUNAWAY_THRESHOLD,
+        "no_runaway_check": False,
         "version": "0.31.3",
         "framework": "MLX 0.32.0",
         "model_revision": "abc123",
@@ -90,21 +119,32 @@ def make_public(tmp_path: Path, theme: str = "demo") -> Path:
     return public
 
 
-def completion(content: str = "<html>ok</html>", finish_reason: str = "stop") -> dict[str, object]:
-    """Build a valid OpenAI-compatible completion body."""
-    return {
-        "choices": [
-            {
-                "finish_reason": finish_reason,
-                "message": {
-                    "content": content,
-                    "reasoning_content": "not an artifact",
-                    "tool_calls": [{"id": "not-an-artifact"}],
-                },
-            }
-        ],
-        "usage": {"prompt_tokens": 12, "completion_tokens": 34},
-    }
+def sse(*chunks: object) -> StreamBody:
+    """Build an SSE stream body from chunk objects, terminated like the real API."""
+    lines = [b"data: " + json.dumps(chunk).encode("utf-8") + b"\n" for chunk in chunks]
+    lines.append(b"data: [DONE]\n")
+    return StreamBody(lines)
+
+
+def completion(
+    content: str = "<html>ok</html>",
+    finish_reason: str = "stop",
+    usage: object | None = None,
+    chunk_size: int = 64,
+) -> StreamBody:
+    """Build a valid streamed completion that delivers content in several chunks."""
+    pieces = [content[i : i + chunk_size] for i in range(0, len(content), chunk_size)] or [""]
+    chunks: list[object] = [
+        {"choices": [{"delta": {"content": piece}, "finish_reason": None}]} for piece in pieces
+    ]
+    chunks.append({"choices": [{"delta": {}, "finish_reason": finish_reason}]})
+    chunks.append(
+        {
+            "choices": [],
+            "usage": {"prompt_tokens": 12, "completion_tokens": 34} if usage is None else usage,
+        }
+    )
+    return sse(*chunks)
 
 
 def test_main_writes_raw_content_and_measured_metadata(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -130,7 +170,8 @@ def test_main_writes_raw_content_and_measured_metadata(tmp_path: Path, monkeypat
     assert "chat template" in run["usage"]["note"]
     payload = json.loads(sent[1][0].data.decode("utf-8"))
     assert payload["messages"] == [{"role": "user", "content": "make it\n"}]
-    assert payload["stream"] is False
+    assert payload["stream"] is True
+    assert payload["stream_options"] == {"include_usage": True}
     assert "system" not in json.dumps(payload)
 
 
@@ -149,13 +190,13 @@ def test_finish_reason_length_is_saved_as_a_model_result(tmp_path: Path, monkeyp
 @pytest.mark.parametrize(
     "body",
     [
-        {"choices": [{"finish_reason": "stop", "message": {"content": None}}], "usage": {"prompt_tokens": 1, "completion_tokens": 1}},
-        {"choices": [{"finish_reason": "stop", "message": {"content": ""}}], "usage": {"prompt_tokens": 1, "completion_tokens": 1}},
-        {"choices": [{"finish_reason": "stop", "message": {"content": "x"}}]},
-        {"choices": [{"finish_reason": "stop", "message": {"content": "x"}}], "usage": {"prompt_tokens": True, "completion_tokens": 1}},
-        {"error": {"message": "failed"}},
-        {"choices": []},
-        b"not-json",
+        completion(""),
+        sse({"choices": [{"delta": {"content": "x"}, "finish_reason": "stop"}]}),
+        completion("<html>x</html>", usage={"prompt_tokens": True, "completion_tokens": 1}),
+        completion("<html>x</html>", usage={"prompt_tokens": 0, "completion_tokens": 1}),
+        sse({"error": {"message": "failed"}}),
+        sse({"choices": [{"delta": {"content": "x"}, "finish_reason": None}]}),
+        StreamBody([b"data: not-json\n"]),
         runner.urllib.error.HTTPError("http://127.0.0.1/v1/chat/completions", 500, "failed", {}, None),
     ],
 )
@@ -274,6 +315,114 @@ def test_redirect_is_rejected_without_followup_request(status: int) -> None:
         server.server_close()
 
     assert requests == ["/v1/models"]
+
+
+class RunawayServer(ThreadingHTTPServer):
+    """Serve a never-ending repeating completion over real HTTP."""
+
+    daemon_threads = True
+
+
+class StreamProgress:
+    """Record how far a fake runaway generation got before the client left.
+
+    The generation only stops when the client disconnects, so these counters
+    prove the abort actually reaches the socket rather than merely raising
+    inside the runner.
+    """
+
+    def __init__(self) -> None:
+        self.tokens_sent = 0
+        self.disconnected = threading.Event()
+
+
+def make_runaway_handler(
+    loop_text: str, max_tokens: int, progress: StreamProgress
+) -> type[BaseHTTPRequestHandler]:
+    """Build a handler that streams a repeating phrase until the client leaves."""
+
+    class Handler(BaseHTTPRequestHandler):
+        protocol_version = "HTTP/1.1"
+
+        def do_GET(self) -> None:
+            body = json.dumps({"data": [{"id": "local"}]}).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_POST(self) -> None:
+            self.rfile.read(int(self.headers.get("Content-Length", "0")))
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream")
+            self.send_header("Transfer-Encoding", "chunked")
+            self.end_headers()
+            pieces = [loop_text[i : i + 48] for i in range(0, len(loop_text), 48)]
+            try:
+                for index in range(max_tokens):
+                    chunk = {
+                        "choices": [
+                            {
+                                "delta": {"content": pieces[index % len(pieces)]},
+                                "finish_reason": None,
+                            }
+                        ]
+                    }
+                    self.write_event(chunk)
+                    progress.tokens_sent = index + 1
+            except (BrokenPipeError, ConnectionResetError):
+                progress.disconnected.set()
+
+        def write_event(self, chunk: dict[str, Any]) -> None:
+            payload = b"data: " + json.dumps(chunk).encode("utf-8") + b"\n\n"
+            self.wfile.write(b"%x\r\n" % len(payload) + payload + b"\r\n")
+            self.wfile.flush()
+
+        def log_message(self, _format: str, *_args: object) -> None:
+            return None
+
+    return Handler
+
+
+def test_runaway_generation_is_cut_off_and_publishes_nothing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A server that repeats forever is disconnected instead of filling max_tokens."""
+    public = make_public(tmp_path)
+    monkeypatch.setattr(runner, "PUBLIC", public)
+    loop_text = "**好的，让我写完整代码。**\n让我把代码写完。\n让我也考虑一下、在移动后的处理。\n"
+    progress = StreamProgress()
+    server = RunawayServer(("127.0.0.1", 0), make_runaway_handler(loop_text, 200_000, progress))
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    monkeypatch.setattr(
+        runner,
+        "parse_args",
+        lambda: make_args(base_url=f"http://127.0.0.1:{server.server_port}/v1", max_tokens=65000),
+    )
+    try:
+        assert runner.main() == 1
+        assert progress.disconnected.wait(timeout=10)
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+    assert not (public / "demo" / "hy3-t512").exists()
+    assert progress.tokens_sent < 65000
+
+
+def test_runaway_check_can_be_disabled(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """With the check off, a repeating completion is published like any other."""
+    public = make_public(tmp_path)
+    monkeypatch.setattr(runner, "PUBLIC", public)
+    monkeypatch.setattr(runner, "parse_args", lambda: make_args(no_runaway_check=True))
+    repeated = "同じ行を延々と繰り返す\n" * 2000
+    install_fake_http(monkeypatch, [{"data": []}, completion(repeated)])
+
+    assert runner.main() == 0
+    assert (public / "demo" / "hy3-t512" / "index.html").read_text(encoding="utf-8") == repeated
 
 
 def test_http_opener_ignores_environment_proxies(monkeypatch: pytest.MonkeyPatch) -> None:

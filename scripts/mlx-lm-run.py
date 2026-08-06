@@ -28,6 +28,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from runaway_detector import THRESHOLD as DEFAULT_RUNAWAY_THRESHOLD  # noqa: E402
+from runaway_detector import RunawayDetector, RunawayVerdict  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 PUBLIC = ROOT / "public"
 DEFAULT_BASE_URL = "http://127.0.0.1:18081/v1"
@@ -46,6 +50,14 @@ class MlxApiError(RuntimeError):
 
 class UsageMissingError(MlxApiError):
     """Represent a response that cannot support measured benchmark metadata."""
+
+
+class RunawayDetected(MlxApiError):
+    """Represent a generation aborted because it began repeating itself."""
+
+    def __init__(self, verdict: RunawayVerdict) -> None:
+        super().__init__(verdict.describe())
+        self.verdict = verdict
 
 
 class RejectRedirectHandler(urllib.request.HTTPRedirectHandler):
@@ -132,6 +144,100 @@ def request_json(url: str, timeout: int, payload: dict[str, Any] | None = None) 
     if body.get("error"):
         raise MlxApiError("mlx_lm.server returned an error response")
     return body
+
+
+def parse_sse_chunk(line: bytes) -> dict[str, Any] | None:
+    """Return one decoded SSE data payload, or None for keepalives and the terminator."""
+    text = line.decode("utf-8", errors="replace").strip()
+    if not text.startswith("data:"):
+        return None
+    payload = text[len("data:") :].strip()
+    if not payload or payload == "[DONE]":
+        return None
+    try:
+        chunk = json.loads(payload)
+    except json.JSONDecodeError as exc:
+        raise MlxApiError("mlx_lm.server sent an invalid SSE chunk") from exc
+    if not isinstance(chunk, dict):
+        raise MlxApiError("mlx_lm.server SSE chunk must be a JSON object")
+    if chunk.get("error"):
+        raise MlxApiError("mlx_lm.server returned an error response")
+    return chunk
+
+
+def read_stream_delta(chunk: dict[str, Any]) -> tuple[str, str | None]:
+    """Return the text delta and any finish_reason carried by one SSE chunk."""
+    choices = chunk.get("choices")
+    if not isinstance(choices, list) or not choices:
+        return "", None
+    choice = choices[0]
+    if not isinstance(choice, dict):
+        return "", None
+    delta = choice.get("delta")
+    content = delta.get("content") if isinstance(delta, dict) else None
+    finish_reason = choice.get("finish_reason")
+    return (
+        content if isinstance(content, str) else "",
+        finish_reason if isinstance(finish_reason, str) and finish_reason else None,
+    )
+
+
+def stream_completion(
+    url: str,
+    timeout: int,
+    payload: dict[str, Any],
+    detector: RunawayDetector | None,
+) -> tuple[str, str, int, int]:
+    """Stream one completion, aborting the connection as soon as it starts repeating.
+
+    Streaming exists for the abort: a non-streamed request hides the generation
+    until it finishes, so a runaway can only be observed after it has already
+    burned the whole token budget.
+    """
+    data = json.dumps(payload).encode("utf-8")
+    headers = {"Content-Type": "application/json", "Accept": "text/event-stream"}
+    request = urllib.request.Request(url, data=data, headers=headers)
+    finish_reason: str | None = None
+    usage: dict[str, Any] | None = None
+    parts: list[str] = []
+    try:
+        with HTTP_OPENER.open(request, timeout=timeout) as response:
+            for line in response:
+                chunk = parse_sse_chunk(line)
+                if chunk is None:
+                    continue
+                if isinstance(chunk.get("usage"), dict):
+                    usage = chunk["usage"]
+                content, reason = read_stream_delta(chunk)
+                if reason is not None:
+                    finish_reason = reason
+                if not content:
+                    continue
+                parts.append(content)
+                if detector is None:
+                    continue
+                verdict = detector.feed(content)
+                if verdict is not None:
+                    response.close()
+                    raise RunawayDetected(verdict)
+    except urllib.error.HTTPError as exc:
+        raise MlxApiError(f"HTTP {exc.code} from mlx_lm.server") from exc
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise MlxApiError(f"network error calling mlx_lm.server: {exc}") from exc
+    content = "".join(parts)
+    if not content:
+        raise MlxApiError("chat completion stream produced no content")
+    if finish_reason is None:
+        raise MlxApiError("chat completion stream has no finish_reason")
+    if not isinstance(usage, dict):
+        raise UsageMissingError("chat completion stream has no usage object")
+    prompt_tokens = usage.get("prompt_tokens")
+    completion_tokens = usage.get("completion_tokens")
+    if type(prompt_tokens) is not int or type(completion_tokens) is not int:
+        raise UsageMissingError("usage token counts must be integers")
+    if prompt_tokens <= 0 or completion_tokens <= 0:
+        raise UsageMissingError("usage token counts must both be greater than zero")
+    return content, finish_reason, prompt_tokens, completion_tokens
 
 
 def preflight(base_url: str, timeout: int) -> None:
@@ -415,10 +521,12 @@ def call_model(
     base_url: str,
     max_tokens: int,
     timeout: int,
+    runaway_threshold: float | None,
 ) -> tuple[str, str, int, int, float]:
     """Call the chat endpoint once and return validated content, usage, and elapsed time."""
     started = time.monotonic()
-    body = request_json(
+    detector = RunawayDetector(runaway_threshold) if runaway_threshold is not None else None
+    content, finish_reason, prompt_tokens, completion_tokens = stream_completion(
         endpoint(base_url, "chat/completions"),
         timeout,
         {
@@ -426,11 +534,12 @@ def call_model(
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.3,
             "max_tokens": max_tokens,
-            "stream": False,
+            "stream": True,
+            "stream_options": {"include_usage": True},
         },
+        detector,
     )
     elapsed_seconds = time.monotonic() - started
-    content, finish_reason, prompt_tokens, completion_tokens = read_response(body)
     return content, finish_reason, prompt_tokens, completion_tokens, elapsed_seconds
 
 
@@ -445,6 +554,7 @@ def run_theme(
     timeout: int,
     runtime: dict[str, str],
     resume: bool,
+    runaway_threshold: float | None,
 ) -> str:
     """Generate and publish one theme, or skip an already complete resumed run."""
     theme_dir = resolve_theme_dir(theme)
@@ -465,7 +575,7 @@ def run_theme(
 
     prompt = build_theme_prompt(theme_dir, kind)
     content, finish_reason, prompt_tokens, completion_tokens, elapsed_seconds = call_model(
-        api_model_id, prompt, base_url, max_tokens, timeout
+        api_model_id, prompt, base_url, max_tokens, timeout, runaway_threshold
     )
     run = build_run_json(
         theme=theme,
@@ -493,6 +603,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-tokens", type=int, default=DEFAULT_MAX_TOKENS)
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT_SECONDS)
     parser.add_argument("--resume", action="store_true", help="skip complete existing theme outputs")
+    parser.add_argument(
+        "--runaway-threshold",
+        type=float,
+        default=DEFAULT_RUNAWAY_THRESHOLD,
+        help="abort a generation once its repetition score drops below this value",
+    )
+    parser.add_argument(
+        "--no-runaway-check",
+        action="store_true",
+        help="let a repeating generation run to max_tokens instead of aborting it",
+    )
     parser.add_argument("--version", default="unknown", help="safe mlx-lm version metadata")
     parser.add_argument("--framework", default="unknown", help="safe MLX version metadata")
     parser.add_argument("--model-revision", default="unknown", help="safe model revision metadata")
@@ -509,6 +630,9 @@ def main() -> int:
         validate_public_model_id(args.public_model_id)
         if args.max_tokens <= 0 or args.timeout <= 0:
             raise ValueError("--max-tokens and --timeout must be greater than zero")
+        runaway_threshold = None if args.no_runaway_check else args.runaway_threshold
+        if runaway_threshold is not None and not 0.0 < runaway_threshold < 1.0:
+            raise ValueError("--runaway-threshold must be between 0 and 1")
         base_url = resolve_base_url(args.base_url)
         runtime = {
             "engine": "mlx-lm",
@@ -537,6 +661,7 @@ def main() -> int:
                 timeout=args.timeout,
                 runtime=runtime,
                 resume=args.resume,
+                runaway_threshold=runaway_threshold,
             )
             print(f"[ok] {theme}/{args.model}: {result}", file=sys.stderr)
     except (MlxApiError, UsageMissingError, ValueError, FileExistsError, OSError) as exc:
