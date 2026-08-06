@@ -206,6 +206,49 @@ def test_local_empty_content_is_saved_as_a_failed_level(
     assert [level["level"] for level in output["levels"]] == list(ladder.LEVEL_NUMBERS)
 
 
+def test_local_path_model_id_requires_a_public_model_id(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """ローカル絶対パスがそのまま公開 run.json に載るのを防ぐ。"""
+    make_theme(tmp_path)
+    with StubServer([response(level) for level in ladder.LEVEL_NUMBERS]) as server:
+        base_url = server.url.removesuffix("/chat/completions") + "/v1"
+        assert invoke(
+            monkeypatch,
+            tmp_path,
+            "--model", "hy3-t512",
+            "--backend", "local",
+            "--base-url", base_url,
+            "--model-id", "/Users/someone/models/hy3-t512",
+        ) != 0
+    assert not (tmp_path / "json-ladder" / "hy3-t512").exists()
+
+
+def test_public_model_id_is_published_instead_of_the_api_path(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """API にはローカルパス、run.json には公開識別子を書き分ける。"""
+    make_theme(tmp_path)
+    with StubServer([response(level) for level in ladder.LEVEL_NUMBERS]) as server:
+        base_url = server.url.removesuffix("/chat/completions") + "/v1"
+        assert invoke(
+            monkeypatch,
+            tmp_path,
+            "--model", "hy3-t512",
+            "--backend", "local",
+            "--base-url", base_url,
+            "--model-id", "/Users/someone/models/hy3-t512",
+            "--public-model-id", "avlp12/Hy3-Alis-MLX-Dynamic",
+        ) == 0
+        assert server.requests[0]["model"] == "/Users/someone/models/hy3-t512"
+
+    run = json.loads(
+        (tmp_path / "json-ladder" / "hy3-t512" / "run.json").read_text(encoding="utf-8")
+    )
+    assert run["model_id"] == "avlp12/Hy3-Alis-MLX-Dynamic"
+    assert "/Users/" not in json.dumps(run)
+
+
 def test_lmstudio_run_records_harness_model_id_and_runtime(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:

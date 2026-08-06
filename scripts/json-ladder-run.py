@@ -87,7 +87,8 @@ _REQUIRED_OPENROUTER = (
 )
 _REQUIRED_LOCAL = (
     "DEFAULT_BASE_URL", "DEFAULT_TIMEOUT_SECONDS", "MlxApiError", "UsageMissingError",
-    "build_local_cost", "endpoint", "preflight", "request_json", "resolve_base_url",
+    "PUBLIC_MODEL_ID_RE", "build_local_cost", "endpoint", "preflight", "request_json",
+    "resolve_base_url",
 )
 for _module, _names in ((OPENROUTER, _REQUIRED_OPENROUTER), (LOCAL, _REQUIRED_LOCAL)):
     _missing = [n for n in _names if not hasattr(_module, n)]
@@ -408,6 +409,14 @@ def parse_args() -> argparse.Namespace:
         help="local backend の API model と run.json model_id（既定: --model の値）",
     )
     parser.add_argument(
+        "--public-model-id",
+        default=None,
+        help=(
+            "run.json に記録する公開識別子 owner/name。"
+            "--model-id にローカル絶対パスを渡す mlx_lm.server 経路で必須"
+        ),
+    )
+    parser.add_argument(
         "--runtime-extra",
         default=None,
         help="local backend の runtime に足す JSON オブジェクト（キーは validator の allowlist のみ）",
@@ -434,6 +443,7 @@ def check_local_only_flags(args: argparse.Namespace) -> None:
         for name, given in (
             ("--harness", args.harness != "mlx-lm-api"),
             ("--model-id", args.model_id is not None),
+            ("--public-model-id", args.public_model_id is not None),
             ("--runtime-extra", args.runtime_extra is not None),
             ("--reasoning-label", args.reasoning_label != "unknown"),
         )
@@ -443,6 +453,25 @@ def check_local_only_flags(args: argparse.Namespace) -> None:
         raise ValueError(
             f"{', '.join(local_only)} は --backend local 専用です "
             "(openrouter の推論強度は --reasoning-effort を使う)"
+        )
+
+
+def validate_published_model_id(args: argparse.Namespace) -> None:
+    """Keep local filesystem paths out of the published run.json.
+
+    mlx_lm.server はモデルディレクトリの絶対パスを API の model ID にするため、
+    そのまま公開すると run.json にローカルパスが載る。--public-model-id で
+    owner/name 形式の公開識別子を必ず与えさせる。
+    """
+    if args.public_model_id is not None:
+        if not LOCAL.PUBLIC_MODEL_ID_RE.fullmatch(args.public_model_id):
+            raise ValueError("--public-model-id must use the public registry form owner/name")
+        return
+    candidate = args.model_id or args.model
+    if candidate.startswith("/") or candidate.startswith("~"):
+        raise ValueError(
+            f"--model-id looks like a local path ({candidate}); "
+            "pass --public-model-id owner/name so run.json stays publishable"
         )
 
 
@@ -456,6 +485,7 @@ def prepare_run(args: argparse.Namespace) -> tuple[Path, Path, int, str | None]:
         raise ValueError("--max-tokens must be greater than zero")
     check_local_only_flags(args)
     parse_runtime_extra(args.runtime_extra)
+    validate_published_model_id(args)
     theme_dir = validate_theme_dir()
     out_dir = theme_dir / args.model
     attempts = previous_attempts(out_dir, args.overwrite)
@@ -512,14 +542,16 @@ def run_local_backend(
     args: argparse.Namespace, theme_dir: Path, attempts: int, base_url: str
 ) -> tuple[list[dict[str, Any]], dict[str, Any], float]:
     """Generate all levels through the loopback local endpoint."""
-    model_id = args.model_id or args.model
+    api_model_id = args.model_id or args.model
+    # 公開 run.json にローカル絶対パスを書かない（mlx_lm.server はモデルディレクトリを ID にする）
+    published_model_id = args.public_model_id or api_model_id
     check_local_preconditions(base_url)
     levels, prompt_tokens, completion_tokens = run_local_levels(
-        model_id, theme_dir, base_url, args.max_tokens
+        api_model_id, theme_dir, base_url, args.max_tokens
     )
     run = build_local_run(
         args.model,
-        model_id,
+        published_model_id,
         args.harness,
         args.reasoning_label,
         parse_runtime_extra(args.runtime_extra),
