@@ -284,12 +284,70 @@ def test_dry_run_makes_no_request_and_creates_no_output(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     make_theme(tmp_path)
+    with StubServer([]) as server:
+        monkeypatch.setenv("OPENROUTER_API_URL", server.url)
+
+        assert invoke(
+            monkeypatch, tmp_path, "--model", "claude-opus-5", "--backend", "openrouter", "--dry-run"
+        ) == 0
+
+        assert server.requests == []
+    assert not (tmp_path / "json-ladder" / "claude-opus-5").exists()
+
+
+def test_dry_run_reports_resolved_model_without_leaking_the_api_key(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    make_theme(tmp_path)
     monkeypatch.setenv("OPENROUTER_API_URL", "http://127.0.0.1:9/unused")
 
     assert invoke(
-        monkeypatch, tmp_path, "--model", "test-model", "--backend", "openrouter", "--dry-run"
+        monkeypatch, tmp_path, "--model", "claude-opus-5", "--backend", "openrouter", "--dry-run"
     ) == 0
-    assert not (tmp_path / "json-ladder" / "test-model").exists()
+
+    stderr = capsys.readouterr().err
+    assert "anthropic/claude-opus-5" in stderr
+    assert "test-key" not in stderr
+
+
+def test_dry_run_rejects_a_model_missing_from_the_model_map(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    make_theme(tmp_path)
+    monkeypatch.setenv("OPENROUTER_API_URL", "http://127.0.0.1:9/unused")
+
+    assert invoke(
+        monkeypatch, tmp_path, "--model", "no-such-model-x", "--backend", "openrouter", "--dry-run"
+    ) == 1
+    assert not (tmp_path / "json-ladder" / "no-such-model-x").exists()
+
+
+def test_local_dry_run_succeeds_against_a_running_server(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    make_theme(tmp_path)
+    with StubServer([]) as server:
+        base_url = server.url.removesuffix("/chat/completions") + "/v1"
+
+        assert invoke(
+            monkeypatch, tmp_path, "--model", "local-model", "--backend", "local",
+            "--base-url", base_url, "--dry-run",
+        ) == 0
+
+        assert server.requests == []
+    assert not (tmp_path / "json-ladder" / "local-model").exists()
+
+
+def test_local_dry_run_fails_when_the_server_is_not_running(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    make_theme(tmp_path)
+
+    assert invoke(
+        monkeypatch, tmp_path, "--model", "local-model", "--backend", "local",
+        "--base-url", "http://127.0.0.1:9/v1", "--dry-run",
+    ) == 2
+    assert not (tmp_path / "json-ladder" / "local-model").exists()
 
 
 def test_backend_is_required(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
