@@ -69,3 +69,45 @@ def test_theme_switch_keeps_entry_object_identity() -> None:
     result = run_select_theme(initial_model="hy3-t512", next_theme="othello")
 
     assert result["isRealEntry"] is True
+
+
+def test_back_link_carries_selected_model_as_index_filter() -> None:
+    """一覧側は models（複数形のフィルター）で受けるため、単数 model から変換して渡す。"""
+    viewer = (ROOT / "public" / "viewer.html").read_text(encoding="utf-8")
+    function_match = re.search(
+        r"function updateDetails\(\) \{.*?\n        \}", viewer, re.DOTALL
+    )
+    assert function_match is not None
+
+    script = f"""
+const activeTheme = 'othello';
+const activeEntry = {{ model: 'hy3-t512', note: 'PASS' }};
+const THEMES = {{ othello: {{ title: 'Othello' }} }};
+const MODELS = {{ 'hy3-t512': {{ label: 'Hy3 T512 MLX' }} }};
+const location = {{ pathname: '/viewer.html' }};
+const backLink = {{}};
+const detailTitle = {{}};
+const entryNote = {{}};
+const openLink = {{}};
+const promptLink = {{}};
+const sourceLink = {{}};
+const artifactFrame = {{ focus() {{}} }};
+const document = {{ title: '' }};
+const requestAnimationFrame = callback => callback();
+function artifactUrl(entry) {{
+  return `./${{entry.theme || activeTheme}}/${{entry.model}}/index.html`;
+}}
+{function_match.group(0)}
+updateDetails();
+console.log(JSON.stringify({{ backHref: backLink.href }}));
+"""
+    result = subprocess.run(
+        ["node", "-e", script],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert json.loads(result.stdout)["backHref"] == (
+        "./index.html?theme=othello&models=hy3-t512"
+    )
