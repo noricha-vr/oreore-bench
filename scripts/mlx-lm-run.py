@@ -256,11 +256,18 @@ def select_themes(theme: str) -> list[str]:
     """Expand ``all`` into every benchmark theme that has a PROMPT.md file."""
     if theme != "all":
         return [theme]
-    return sorted(
-        path.name
-        for path in PUBLIC.iterdir()
-        if not path.is_symlink() and path.is_dir() and (path / "PROMPT.md").is_file()
-    )
+    themes: list[str] = []
+    for path in sorted(PUBLIC.iterdir()):
+        if path.is_symlink() or not path.is_dir() or not (path / "PROMPT.md").is_file():
+            continue
+        if (path / "levels").is_dir():
+            print(
+                f"[skip] {path.name}: json-levels uses scripts/json-ladder-run.py",
+                file=sys.stderr,
+            )
+            continue
+        themes.append(path.name)
+    return themes
 
 
 def resolve_theme_dir(theme: str) -> Path:
@@ -443,6 +450,8 @@ def run_theme(
     theme_dir = resolve_theme_dir(theme)
     if not (theme_dir / "PROMPT.md").is_file():
         raise ValueError(f"theme not found: {theme_dir / 'PROMPT.md'}")
+    if (theme_dir / "levels").is_dir():
+        raise ValueError(f"{theme}: json-levels uses scripts/json-ladder-run.py")
     out_dir = theme_dir / model
     kind = PROMPTS.detect_theme_kind(theme_dir)
     output_name = "output.json" if kind == "json" else "index.html"
@@ -514,6 +523,8 @@ def main() -> int:
         themes = select_themes(args.theme)
         if not themes:
             raise ValueError("no themes with PROMPT.md found")
+        if args.theme != "all" and (PUBLIC / args.theme / "levels").is_dir():
+            raise ValueError(f"{args.theme}: json-levels uses scripts/json-ladder-run.py")
         preflight(base_url, args.timeout)
         for theme in themes:
             result = run_theme(

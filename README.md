@@ -29,6 +29,7 @@ LLM を「業務タスクの一発再現性」で評価する場。現実の制�
 | `suminagashi` | HTML | 実装方式名指しのプロンプト → WebGL 流体マーブリングアート | GPU シェーダーの一発実装・減法混色・和のミニマル UI |
 | `phoenix-lp` | HTML | 不死鳥の6シーン仕様 → Canvas 2D の没入型スクロール LP | シーン遷移・描画変化・長尺構成の一発実装 |
 | `pr-triage` | JSON | リポジトリのスナップショット → Open PR 10 件のトリアージ判断 JSON | 判断の妥当性（正解キー一致率）・グレーケースの慎重さ・理由の具体性 |
+| `json-ladder` | JSON | 随筆約1,700字 → 複雑さ5段階（L1〜L5）の抽出 JSON ×5 | フォーマット遵守の限界複雑度（パース可否 + 正解キー一致率）・型忠実性・null 規律 |
 
 ## 比較対象モデル（2026-08 時点）
 
@@ -65,9 +66,11 @@ oreore-bench/
 │   │   ├── PROMPT.md                    ← 凍結プロンプト（再現用、人間用）
 │   │   ├── prompt.html                  ← 凍結プロンプト整形ビュー
 │   │   ├── input.md / input.html        ← JSON 系テーマの共通入力
+│   │   ├── levels/l1..l5.md             ← json-ladder のみ: レベル別設問（1 レベル = 1 リクエスト）
 │   │   └── <model>/
 │   │       ├── index.html               ← HTML 系テーマの 1 ショット出力
 │   │       ├── output.json              ← JSON 系テーマの 1 ショット出力
+│   │       ├── raw-l1..l5.txt           ← json-ladder のみ: 各レベルの生応答
 │   │       ├── output.html              ← 上記を左右 2 カラムで描画
 │   │       ├── meta.json                ← スキーマ検証結果（事前計算）
 │   │       └── run.json                 ← 生成条件の正本（後述）
@@ -252,6 +255,31 @@ bash scripts/add-model.sh pr-triage  claude-opus-5 --runner openrouter --reasoni
 
 OpenRouter に無いモデルは、Claude Code 上で `Agent` ツール（`subagent_type=implementer`, `model=opus`）に
 プロンプトを渡して `Write` で保存させ、`--runner copy` で取り込む。
+
+### 2a. json-ladder テーマの場合
+
+`json-ladder` は 1 テーマ = 5 リクエスト（L1〜L5 をレベル別の独立リクエストで投げる）なので、
+`add-model.sh` ではなく専用の `json-ladder-run.py` を使う。
+
+```bash
+# OpenRouter モデル
+uv run scripts/json-ladder-run.py --model <slug> --backend openrouter --dry-run
+uv run scripts/json-ladder-run.py --model <slug> --backend openrouter
+
+# ローカル（mlx_lm.server 互換 API）
+uv run scripts/json-ladder-run.py --model <slug> --backend local --base-url http://127.0.0.1:8080/v1
+
+# 検証 + HTML ビルド
+node scripts/validate-json-ladder.mjs --model <slug>
+python3 scripts/build-json-ladder-html.py --model <slug>
+
+# runs.json への集約 + スキーマ検証（これを忘れると validate-runs.mjs が missing key で落ちる）
+uv run scripts/build-runs-json.py
+node scripts/validate-runs.mjs
+```
+
+openrouter 経路は打ち切り（truncation）を検出した時点で中止し、公開ファイルを一切書かない。
+5 レベル全部が実測 usage 付きで完走した場合だけ `output.json` / `raw-l1..l5.txt` / `run.json` を書く。
 
 ### 3. 新規モデル定数の追加
 

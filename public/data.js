@@ -199,6 +199,30 @@ window.THEMES = {
                     "approve 済み nit のみの PR を過剰にブロックしないか",
                     "answer-key の primary / also_acceptable との agreement"
                 ]
+            },
+            "json-ladder": {
+                title: "JSON ラダー",
+                short: "JSON / 形式遵守",
+                desc: "随筆約1,700字から、複雑さ5段階の JSON スキーマで情報抽出。どの複雑さまで有効な JSON と正確な抜き出しを保てるかを見る",
+                color: "#0e7490",
+                colorDark: "#164e63",
+                icon: "fa-solid fa-layer-group",
+                difficulty: "中〜高（L1 フラット 4 キー → L5 ネスト深さ4・約20キーの文書構造化。レベル別に独立5リクエスト）",
+                deliverable: "output.json（5レベルの生応答。判定表 HTML で parse N/5 と score % を表示）",
+                criteria: [
+                    "各レベルの出力が有効な JSON である（フェンス優先抽出、壊れたフェンスは失敗確定）",
+                    "スキーマのキー構成に過不足がない（キー追加・省略・改名なし）",
+                    "抜き出しフィールドが本文と一字一句一致する（answer-key 突合）",
+                    "数値・真偽値を正しい JSON 型で返す（文字列化しない）",
+                    "本文に明記されていない値を JSON null で返せる（\"null\" 文字列・キー省略は不可）",
+                    "配列の順序・件数指定に追従する"
+                ],
+                highlights: [
+                    "L4: 『』入れ子・ダブルクォート・改行を含む文字列の JSON エスケープ",
+                    "L5: 人物関係・時系列・工程・話者別引用マップの入れ子構造化",
+                    "他人の発話内で『』引用された言葉を独立発話に数えない読解",
+                    "score は (valid_json ? accuracy : 0) の5レベル単純平均"
+                ]
             }
         };
 
@@ -697,6 +721,11 @@ window.ENTRIES.push(
     { theme: "suminagashi", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "FAIL。和の UI は美麗だが Three.js 初期化が canvas コンテキスト競合で失敗し、墨が一切描画されない。366行/13KB。", kind: "html" },
     { theme: "phoenix-lp", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "FAIL（スクロール変化なし）。1画面の詩的タイポのみでナビ先のセクションが未実装。417行/13KB。", kind: "html" },
     { theme: "pr-triage", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "✅ スキーマ準拠 PASS。正解キー一致 90%（9 primary）。唯一の不一致は PR106 を fix ではなく hold と保守的に判断。", kind: "json" }
+);
+
+// json-ladder（JSON フォーマット遵守 5 段階。レベル別 5 リクエスト独立実行）
+window.ENTRIES.push(
+    { theme: "json-ladder", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "✅ パース 5/5・score 79%。L1/L3 は 100% だが L4 忠実抽出が 33%（発話 3 件中 1 件のみ返し、L5 では「」込み抽出 + 『火に訊け』引用トラップに引っかかる）。人物初出順も語り手を先頭に置いて取り違え。", kind: "json" }
 );
 
 // claude-opus-5（リリース翌日に OpenRouter API 経由・reasoning high で全10テーマ追加。スモーク検証は既存と同一手順。

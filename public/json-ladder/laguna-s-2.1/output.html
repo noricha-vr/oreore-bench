@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laguna S 2.1 — json-ladder / OreOre-Bench</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff; --bg-soft: #f7f8fa;
+    --fg: #1a1a1a; --fg-soft: #4a4a4a; --muted-fg: #6b7280;
+    --border: #e5e7eb; --primary: #2563eb;
+    --accent: #0891B2; --accent-dark: #0E7490;
+    --theme-accent: #0e7490; --theme-accent-dark: #67e8f9;
+    --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+          background: var(--bg-soft); color: var(--fg);
+          line-height: 1.7; font-size: 0.9375rem; -webkit-font-smoothing: antialiased; }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .hero { padding: 28px 24px 32px; color: #fff;
+           background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); }
+  .hero-inner { max-width: 1200px; margin: 0 auto; }
+  .hero a.back { color: #fff; opacity: 0.85; font-size: 0.875rem;
+                  font-weight: 600; display: inline-block; margin-bottom: 12px; }
+  .hero h1 { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.01em;
+              color: #fff; margin-bottom: 4px; }
+  .hero .tag { display: inline-block; font-size: 0.75rem; font-weight: 800;
+                letter-spacing: 0.06em; text-transform: uppercase;
+                background: rgba(255,255,255,0.22); padding: 5px 12px;
+                border-radius: 999px; margin-bottom: 12px; }
+  .hero .sub { font-size: 0.9rem; opacity: 0.9; }
+  .headline { background: var(--bg); border-bottom: 1px solid var(--border);
+               padding: 20px 24px; }
+  .headline-inner { max-width: 1200px; margin: 0 auto;
+                     display: flex; flex-wrap: wrap; gap: 16px 36px; align-items: baseline; }
+  .metric { display: flex; flex-direction: column; gap: 2px; }
+  .metric .value { font-size: 2rem; font-weight: 800; line-height: 1.1;
+                    color: var(--theme-accent); font-family: 'JetBrains Mono', monospace; }
+  .metric .label { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em;
+                    text-transform: uppercase; color: var(--muted-fg); }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 24px; }
+  .panel { background: var(--bg); border: 1px solid var(--border);
+            border-radius: 14px; overflow: hidden; margin-bottom: 20px; }
+  .panel-head { padding: 16px 20px; border-bottom: 1px solid var(--border);
+                 display: flex; align-items: center; justify-content: space-between;
+                 gap: 12px; flex-wrap: wrap; background: var(--bg-soft); }
+  .panel-head h2 { font-size: 0.9375rem; font-weight: 800; color: var(--fg); }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge { display: inline-flex; align-items: center; gap: 6px;
+            font-weight: 800; padding: 4px 12px; border-radius: 999px;
+            font-size: 0.8125rem; }
+  .badge.pass { background: rgba(16,185,129,0.12); color: #047857; }
+  .badge.fail { background: rgba(239,68,68,0.12); color: #b91c1c; }
+  .badge.score { background: rgba(14,116,144,0.12); color: #0e7490; }
+  .panel-body { padding: 20px; }
+  .table-scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 720px; }
+  th, td { padding: 9px 12px; border-bottom: 1px solid var(--border);
+            text-align: left; vertical-align: top; }
+  th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+        color: var(--muted-fg); background: var(--bg-soft); white-space: nowrap; }
+  td { font-size: 0.875rem; }
+  tr.row-miss td { background: rgba(239,68,68,0.05); }
+  .mono { font-family: 'JetBrains Mono', monospace; word-break: break-word; }
+  .match-primary { color: #047857; font-weight: 800; }
+  .match-acceptable { color: #b45309; font-weight: 800; }
+  .match-miss { color: #b91c1c; font-weight: 800; }
+  ul { margin: 0; padding-left: 1.15rem; }
+  li { margin-bottom: 3px; }
+  .issues { color: #b91c1c; }
+  details { margin-top: 14px; }
+  summary { cursor: pointer; font-weight: 700; font-size: 0.8125rem;
+             color: var(--muted-fg); }
+  .raw { margin-top: 10px; background: #1a1a1a; color: #e5e7eb;
+          padding: 12px; border-radius: 6px; font-family: 'JetBrains Mono', monospace;
+          font-size: 0.75rem; line-height: 1.6; overflow-x: auto;
+          max-height: 420px; overflow-y: auto; white-space: pre-wrap; }
+  @media (max-width: 700px) {
+    .hero h1 { font-size: 1.45rem; }
+    .wrap { padding: 16px; }
+    .panel-body { padding: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a href="../../" class="back">← OreOre-Bench に戻る</a>
+    <span class="tag">json-ladder ・ poolside ・ API LLM</span>
+    <h1>Laguna S 2.1</h1>
+    <p class="sub">長文随筆から、レベル1〜5 のスキーマで JSON を抽出させる書式遵守テスト。</p>
+  </div>
+</header>
+
+<div class="headline">
+  <div class="headline-inner">
+    <div class="metric">
+      <span class="value">parse 5/5</span>
+      <span class="label">JSON パース成功</span>
+    </div>
+    <div class="metric">
+      <span class="value">score 79%</span>
+      <span class="label">answer-key 一致率</span>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>レベル 1</h2>
+      <div class="badges">
+        <span class="badge pass">JSON パース OK</span>
+        <span class="badge pass">スキーマ準拠 PASS</span>
+        <span class="badge score">accuracy 100%</span>
+      </div>
+    </div>
+    <div class="panel-body">
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>path</th><th>got</th><th>expected</th><th>match</th></tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="mono">title</td>
+            <td class="mono">硝子の記憶</td>
+            <td class="mono">硝子の記憶</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">author</td>
+            <td class="mono">佐伯千鶴</td>
+            <td class="mono">佐伯千鶴</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">founded_year</td>
+            <td class="mono">1961</td>
+            <td class="mono">1961</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">city</td>
+            <td class="mono">富山市</td>
+            <td class="mono">富山市</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+
+      <details>
+        <summary>生応答を表示（95 chars）</summary>
+        <pre class="raw">```json
+{
+  &quot;title&quot;: &quot;硝子の記憶&quot;,
+  &quot;author&quot;: &quot;佐伯千鶴&quot;,
+  &quot;founded_year&quot;: 1961,
+  &quot;city&quot;: &quot;富山市&quot;
+}
+```</pre>
+      </details>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>レベル 2</h2>
+      <div class="badges">
+        <span class="badge pass">JSON パース OK</span>
+        <span class="badge pass">スキーマ準拠 PASS</span>
+        <span class="badge score">accuracy 88%</span>
+      </div>
+    </div>
+    <div class="panel-body">
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>path</th><th>got</th><th>expected</th><th>match</th></tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="mono">people</td>
+            <td class="mono">5</td>
+            <td class="mono">5</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">people[0]</td>
+            <td class="mono">千鶴</td>
+            <td class="mono">宗一郎</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">people[1]</td>
+            <td class="mono">宗一郎</td>
+            <td class="mono">千鶴</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr>
+            <td class="mono">people[2]</td>
+            <td class="mono">綾乃</td>
+            <td class="mono">綾乃</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">people[3]</td>
+            <td class="mono">美津江</td>
+            <td class="mono">美津江</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">people[4]</td>
+            <td class="mono">マルコ</td>
+            <td class="mono">マルコ</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">years_mentioned</td>
+            <td class="mono">4</td>
+            <td class="mono">4</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">years_mentioned[0]</td>
+            <td class="mono">1961</td>
+            <td class="mono">1961</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">years_mentioned[1]</td>
+            <td class="mono">1978</td>
+            <td class="mono">1978</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">years_mentioned[2]</td>
+            <td class="mono">1989</td>
+            <td class="mono">1989</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">years_mentioned[3]</td>
+            <td class="mono">2001</td>
+            <td class="mono">2001</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">grandfather_alive_at_writing</td>
+            <td class="mono">false</td>
+            <td class="mono">false</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">tools</td>
+            <td class="mono">3</td>
+            <td class="mono">3</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">tools[0]</td>
+            <td class="mono">吹き竿</td>
+            <td class="mono">吹き竿</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">tools[1]</td>
+            <td class="mono">ポンテ竿</td>
+            <td class="mono">ポンテ竿</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">tools[2]</td>
+            <td class="mono">木箸</td>
+            <td class="mono">木箸</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+
+      <details>
+        <summary>生応答を表示（183 chars）</summary>
+        <pre class="raw">```json
+{
+  &quot;people&quot;: [&quot;千鶴&quot;, &quot;宗一郎&quot;, &quot;綾乃&quot;, &quot;美津江&quot;, &quot;マルコ&quot;],
+  &quot;years_mentioned&quot;: [1961, 1978, 1989, 2001],
+  &quot;grandfather_alive_at_writing&quot;: false,
+  &quot;tools&quot;: [&quot;吹き竿&quot;, &quot;ポンテ竿&quot;, &quot;木箸&quot;]
+}
+```</pre>
+      </details>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>レベル 3</h2>
+      <div class="badges">
+        <span class="badge pass">JSON パース OK</span>
+        <span class="badge pass">スキーマ準拠 PASS</span>
+        <span class="badge score">accuracy 100%</span>
+      </div>
+    </div>
+    <div class="panel-body">
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>path</th><th>got</th><th>expected</th><th>match</th></tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="mono">sections</td>
+            <td class="mono">4</td>
+            <td class="mono">4</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[0].heading</td>
+            <td class="mono">炎の温度</td>
+            <td class="mono">炎の温度</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[0].season</td>
+            <td class="mono">summer</td>
+            <td class="mono">summer</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[1].heading</td>
+            <td class="mono">姉と火</td>
+            <td class="mono">姉と火</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[1].season</td>
+            <td class="mono">winter</td>
+            <td class="mono">winter</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[2].heading</td>
+            <td class="mono">マルコの置き土産</td>
+            <td class="mono">マルコの置き土産</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[2].season</td>
+            <td class="mono">autumn</td>
+            <td class="mono">autumn</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[3].heading</td>
+            <td class="mono">窯じまい</td>
+            <td class="mono">窯じまい</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">sections[3].season</td>
+            <td class="mono">none</td>
+            <td class="mono">none</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">workshop.name</td>
+            <td class="mono">佐伯硝子工房</td>
+            <td class="mono">佐伯硝子工房</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">workshop.founded_year</td>
+            <td class="mono">1961</td>
+            <td class="mono">1961</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">workshop.closed_year</td>
+            <td class="mono">null</td>
+            <td class="mono">null</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+
+      <details>
+        <summary>生応答を表示（316 chars）</summary>
+        <pre class="raw">```json
+{
+  &quot;sections&quot;: [
+    { &quot;heading&quot;: &quot;炎の温度&quot;, &quot;season&quot;: &quot;summer&quot; },
+    { &quot;heading&quot;: &quot;姉と火&quot;, &quot;season&quot;: &quot;winter&quot; },
+    { &quot;heading&quot;: &quot;マルコの置き土産&quot;, &quot;season&quot;: &quot;autumn&quot; },
+    { &quot;heading&quot;: &quot;窯じまい&quot;, &quot;season&quot;: &quot;none&quot; }
+  ],
+  &quot;workshop&quot;: {
+    &quot;name&quot;: &quot;佐伯硝子工房&quot;,
+    &quot;founded_year&quot;: 1961,
+    &quot;closed_year&quot;: null
+  }
+}
+```</pre>
+      </details>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>レベル 4</h2>
+      <div class="badges">
+        <span class="badge pass">JSON パース OK</span>
+        <span class="badge fail">スキーマ準拠 FAIL</span>
+        <span class="badge score">accuracy 33%</span>
+      </div>
+    </div>
+    <div class="panel-body">
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>path</th><th>got</th><th>expected</th><th>match</th></tr>
+          </thead>
+          <tbody>
+          <tr class="row-miss">
+            <td class="mono">quotes</td>
+            <td class="mono">1</td>
+            <td class="mono">3</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">quotes[0].speaker</td>
+            <td class="mono">千鶴</td>
+            <td class="mono">宗一郎</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr>
+            <td class="mono">quotes[0].text</td>
+            <td class="mono">ええか、千鶴。急ぐな。硝子より先に、心が割れる</td>
+            <td class="mono">ええか、千鶴。急ぐな。硝子より先に、心が割れる</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">quotes[1].speaker</td>
+            <td class="mono">null</td>
+            <td class="mono">綾乃</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">quotes[1].text</td>
+            <td class="mono">null</td>
+            <td class="mono">祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">quotes[2].speaker</td>
+            <td class="mono">null</td>
+            <td class="mono">宗一郎</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">quotes[2].text</td>
+            <td class="mono">null</td>
+            <td class="mono">硝子は正直や。手ぇ抜いた分だけ、濁る</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr>
+            <td class="mono">english_phrase</td>
+            <td class="mono">&quot;Glass remembers everything.&quot;</td>
+            <td class="mono">&quot;Glass remembers everything.&quot;</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">letter_excerpt</td>
+            <td class="mono">千鶴へ
+窯の火は落とした。だが、おまえの中の火まで消えたわけではない。
+迷ったら、手を動かせ。</td>
+            <td class="mono">千鶴へ
+窯の火は落とした。だが、おまえの中の火まで消えたわけではない。
+迷ったら、手を動かせ。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+<ul class="issues"><li>missing: quotes[1].speaker</li><li>missing: quotes[1].text</li><li>missing: quotes[2].speaker</li><li>missing: quotes[2].text</li></ul>
+
+      <details>
+        <summary>生応答を表示（208 chars）</summary>
+        <pre class="raw">{
+  &quot;quotes&quot;: [
+    { &quot;speaker&quot;: &quot;千鶴&quot;, &quot;text&quot;: &quot;ええか、千鶴。急ぐな。硝子より先に、心が割れる&quot; }
+  ],
+  &quot;english_phrase&quot;: &quot;\&quot;Glass remembers everything.\&quot;&quot;,
+  &quot;letter_excerpt&quot;: &quot;千鶴へ\n窯の火は落とした。だが、おまえの中の火まで消えたわけではない。\n迷ったら、手を動かせ。&quot;
+}</pre>
+      </details>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>レベル 5</h2>
+      <div class="badges">
+        <span class="badge pass">JSON パース OK</span>
+        <span class="badge fail">スキーマ準拠 FAIL</span>
+        <span class="badge score">accuracy 74%</span>
+      </div>
+    </div>
+    <div class="panel-body">
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>path</th><th>got</th><th>expected</th><th>match</th></tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="mono">meta.title</td>
+            <td class="mono">硝子の記憶</td>
+            <td class="mono">硝子の記憶</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">meta.author</td>
+            <td class="mono">佐伯千鶴</td>
+            <td class="mono">佐伯千鶴</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">meta.section_count</td>
+            <td class="mono">4</td>
+            <td class="mono">4</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">characters</td>
+            <td class="mono">4</td>
+            <td class="mono">5</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr>
+            <td class="mono">characters[0].name</td>
+            <td class="mono">宗一郎</td>
+            <td class="mono">宗一郎</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">characters[0].kinship_to_narrator</td>
+            <td class="mono">grandfather</td>
+            <td class="mono">grandfather</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">characters[0].relations</td>
+            <td class="mono">1</td>
+            <td class="mono">0</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr>
+            <td class="mono">characters[1].name</td>
+            <td class="mono">千鶴</td>
+            <td class="mono">千鶴</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">characters[1].kinship_to_narrator</td>
+            <td class="mono">self</td>
+            <td class="mono">self</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">characters[1].relations</td>
+            <td class="mono">0</td>
+            <td class="mono">0</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">characters[2].name</td>
+            <td class="mono">綾乃</td>
+            <td class="mono">綾乃</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">characters[2].kinship_to_narrator</td>
+            <td class="mono">elder_sister</td>
+            <td class="mono">elder_sister</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">characters[2].relations</td>
+            <td class="mono">0</td>
+            <td class="mono">0</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">characters[3].name</td>
+            <td class="mono">マルコ</td>
+            <td class="mono">美津江</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">characters[3].kinship_to_narrator</td>
+            <td class="mono">none</td>
+            <td class="mono">grandmother</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">characters[3].relations</td>
+            <td class="mono">1</td>
+            <td class="mono">0</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">characters[4].name</td>
+            <td class="mono">null</td>
+            <td class="mono">マルコ</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">characters[4].kinship_to_narrator</td>
+            <td class="mono">null</td>
+            <td class="mono">none</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">characters[4].relations</td>
+            <td class="mono">null</td>
+            <td class="mono">1</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">characters[4].relations[0].to</td>
+            <td class="mono">null</td>
+            <td class="mono">宗一郎</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">characters[4].relations[0].relation</td>
+            <td class="mono">null</td>
+            <td class="mono">apprentice</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr>
+            <td class="mono">timeline</td>
+            <td class="mono">4</td>
+            <td class="mono">4</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">timeline[0].year</td>
+            <td class="mono">1961</td>
+            <td class="mono">1961</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">timeline[0].sentence</td>
+            <td class="mono">1961年に富山市の外れに小さな工房を構え、亡くなるまでの四十年間、ほとんど毎日窯の前に立った。</td>
+            <td class="mono">1961年に富山市の外れに小さな工房を構え、亡くなるまでの四十年間、ほとんど毎日窯の前に立った。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">timeline[1].year</td>
+            <td class="mono">1978</td>
+            <td class="mono">1978</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">timeline[1].sentence</td>
+            <td class="mono">1978年に祖父が県の工芸展で賞を獲った時の盃を、マルコは棚から下ろしては何度も眺めていた。</td>
+            <td class="mono">1978年に祖父が県の工芸展で賞を獲った時の盃を、マルコは棚から下ろしては何度も眺めていた。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">timeline[2].year</td>
+            <td class="mono">1989</td>
+            <td class="mono">1989</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">timeline[2].sentence</td>
+            <td class="mono">1989年の秋、イタリアから留学生のマルコが工房にやって来た。</td>
+            <td class="mono">1989年の秋、イタリアから留学生のマルコが工房にやって来た。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">timeline[3].year</td>
+            <td class="mono">2001</td>
+            <td class="mono">2001</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">timeline[3].sentence</td>
+            <td class="mono">祖父が死んだのは2001年である。</td>
+            <td class="mono">祖父が死んだのは2001年である。</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">process.melting_temperature_c</td>
+            <td class="mono">1400</td>
+            <td class="mono">1400</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">process.steps</td>
+            <td class="mono">5</td>
+            <td class="mono">5</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">process.steps[0].order</td>
+            <td class="mono">1</td>
+            <td class="mono">1</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">process.steps[0].name</td>
+            <td class="mono">種巻き</td>
+            <td class="mono">種巻き</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">process.steps[0].temperature_c</td>
+            <td class="mono">null</td>
+            <td class="mono">null</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">process.steps[1].order</td>
+            <td class="mono">2</td>
+            <td class="mono">2</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">process.steps[1].name</td>
+            <td class="mono">吹き</td>
+            <td class="mono">吹き</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">process.steps[1].temperature_c</td>
+            <td class="mono">null</td>
+            <td class="mono">null</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">process.steps[2].order</td>
+            <td class="mono">3</td>
+            <td class="mono">3</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">process.steps[2].name</td>
+            <td class="mono">成形</td>
+            <td class="mono">成形</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">process.steps[2].temperature_c</td>
+            <td class="mono">null</td>
+            <td class="mono">null</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">process.steps[3].order</td>
+            <td class="mono">4</td>
+            <td class="mono">4</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">process.steps[3].name</td>
+            <td class="mono">ポンテ替え</td>
+            <td class="mono">ポンテ替え</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">process.steps[3].temperature_c</td>
+            <td class="mono">null</td>
+            <td class="mono">null</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">process.steps[4].order</td>
+            <td class="mono">5</td>
+            <td class="mono">5</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">process.steps[4].name</td>
+            <td class="mono">徐冷</td>
+            <td class="mono">徐冷</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">process.steps[4].temperature_c</td>
+            <td class="mono">520</td>
+            <td class="mono">520</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">quotes_by_speaker.宗一郎</td>
+            <td class="mono">3</td>
+            <td class="mono">2</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">quotes_by_speaker.宗一郎[0]</td>
+            <td class="mono">「ええか、千鶴。急ぐな。硝子より先に、心が割れる」</td>
+            <td class="mono">ええか、千鶴。急ぐな。硝子より先に、心が割れる</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">quotes_by_speaker.宗一郎[1]</td>
+            <td class="mono">「火に訊け」</td>
+            <td class="mono">硝子は正直や。手ぇ抜いた分だけ、濁る</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr>
+            <td class="mono">quotes_by_speaker.綾乃</td>
+            <td class="mono">1</td>
+            <td class="mono">1</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr class="row-miss">
+            <td class="mono">quotes_by_speaker.綾乃[0]</td>
+            <td class="mono">「祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い」</td>
+            <td class="mono">祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い</td>
+            <td><span class="match-miss">✗ miss</span></td>
+          </tr>
+          <tr>
+            <td class="mono">analysis.grandfather_last_words</td>
+            <td class="mono">null</td>
+            <td class="mono">null</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          <tr>
+            <td class="mono">analysis.narrator_became_glassblower</td>
+            <td class="mono">false</td>
+            <td class="mono">false</td>
+            <td><span class="match-primary">✓ primary</span></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+<ul class="issues"><li>missing: characters[4].name</li><li>missing: characters[4].kinship_to_narrator</li><li>missing: characters[4].relations</li><li>missing: characters[4].relations[0].to</li><li>missing: characters[4].relations[0].relation</li></ul>
+
+      <details>
+        <summary>生応答を表示（1,857 chars）</summary>
+        <pre class="raw">```json
+{
+  &quot;meta&quot;: {
+    &quot;title&quot;: &quot;硝子の記憶&quot;,
+    &quot;author&quot;: &quot;佐伯千鶴&quot;,
+    &quot;section_count&quot;: 4
+  },
+  &quot;characters&quot;: [
+    {
+      &quot;name&quot;: &quot;宗一郎&quot;,
+      &quot;kinship_to_narrator&quot;: &quot;grandfather&quot;,
+      &quot;relations&quot;: [
+        {
+          &quot;to&quot;: &quot;マルコ&quot;,
+          &quot;relation&quot;: &quot;apprentice&quot;
+        }
+      ]
+    },
+    {
+      &quot;name&quot;: &quot;千鶴&quot;,
+      &quot;kinship_to_narrator&quot;: &quot;self&quot;,
+      &quot;relations&quot;: []
+    },
+    {
+      &quot;name&quot;: &quot;綾乃&quot;,
+      &quot;kinship_to_narrator&quot;: &quot;elder_sister&quot;,
+      &quot;relations&quot;: []
+    },
+    {
+      &quot;name&quot;: &quot;マルコ&quot;,
+      &quot;kinship_to_narrator&quot;: &quot;none&quot;,
+      &quot;relations&quot;: [
+        {
+          &quot;to&quot;: &quot;宗一郎&quot;,
+          &quot;relation&quot;: &quot;master&quot;
+        }
+      ]
+    }
+  ],
+  &quot;timeline&quot;: [
+    {
+      &quot;year&quot;: 1961,
+      &quot;sentence&quot;: &quot;1961年に富山市の外れに小さな工房を構え、亡くなるまでの四十年間、ほとんど毎日窯の前に立った。&quot;
+    },
+    {
+      &quot;year&quot;: 1978,
+      &quot;sentence&quot;: &quot;1978年に祖父が県の工芸展で賞を獲った時の盃を、マルコは棚から下ろしては何度も眺めていた。&quot;
+    },
+    {
+      &quot;year&quot;: 1989,
+      &quot;sentence&quot;: &quot;1989年の秋、イタリアから留学生のマルコが工房にやって来た。&quot;
+    },
+    {
+      &quot;year&quot;: 2001,
+      &quot;sentence&quot;: &quot;祖父が死んだのは2001年である。&quot;
+    }
+  ],
+  &quot;process&quot;: {
+    &quot;melting_temperature_c&quot;: 1400,
+    &quot;steps&quot;: [
+      {
+        &quot;order&quot;: 1,
+        &quot;name&quot;: &quot;種巻き&quot;,
+        &quot;temperature_c&quot;: null
+      },
+      {
+        &quot;order&quot;: 2,
+        &quot;name&quot;: &quot;吹き&quot;,
+        &quot;temperature_c&quot;: null
+      },
+      {
+        &quot;order&quot;: 3,
+        &quot;name&quot;: &quot;成形&quot;,
+        &quot;temperature_c&quot;: null
+      },
+      {
+        &quot;order&quot;: 4,
+        &quot;name&quot;: &quot;ポンテ替え&quot;,
+        &quot;temperature_c&quot;: null
+      },
+      {
+        &quot;order&quot;: 5,
+        &quot;name&quot;: &quot;徐冷&quot;,
+        &quot;temperature_c&quot;: 520
+      }
+    ]
+  },
+  &quot;quotes_by_speaker&quot;: {
+    &quot;宗一郎&quot;: [
+      &quot;「ええか、千鶴。急ぐな。硝子より先に、心が割れる」&quot;,
+      &quot;「火に訊け」&quot;,
+      &quot;「硝子は正直や。手ぇ抜いた分だけ、濁る」&quot;
+    ],
+    &quot;綾乃&quot;: [
+      &quot;「祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い」&quot;
+    ]
+  },
+  &quot;analysis&quot;: {
+    &quot;grandfather_last_words&quot;: null,
+    &quot;narrator_became_glassblower&quot;: false
+  }
+}
+```</pre>
+      </details>
+    </div>
+  </section>
+
+</main>
+
+</body>
+</html>
