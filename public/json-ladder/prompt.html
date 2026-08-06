@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>json-ladder プロンプト — OreOre-Bench</title>
+<link rel="stylesheet" href="/assets/apple-modern.css">
+<style>
+  body { --theme-accent: #0e7490; }
+</style>
+</head>
+<body class="document-page">
+
+<header class="hero">
+  <div class="hero-inner">
+    <a href="../" class="back">← OreOre-Bench に戻る</a>
+    <h1>json-ladder プロンプト</h1>
+    <p class="sub">長文随筆から、レベル1〜5 の段階的なスキーマで JSON を抽出させる書式遵守テスト。</p>
+  </div>
+</header>
+
+<main class="container">
+  <article class="card">
+    <h2>役割</h2>
+    <p>あなたは日本語の文章読解と構造化データ抽出を行うアシスタントです。下記の随筆を読み、設問が指定する JSON スキーマに厳密に従って回答してください。</p>
+
+    <h2>共通ルール</h2>
+    <ul>
+      <li>指定された JSON を<strong>単体で</strong>出力する（前後に説明文不要）</li>
+      <li>スキーマに示されたキー構成に厳密に従う。キーの追加・省略・改名は不可</li>
+      <li>「一字一句そのまま」の指示があるフィールドは、本文の表記を句読点まで含めて正確に写す</li>
+      <li>数値は JSON の数値型で、真偽値は true / false で出力する（文字列にしない）</li>
+      <li>本文に明記されていない値は JSON の null とする（文字列 <code>"null"</code> やキーの省略は不可）</li>
+      <li>配列の順序・件数は各設問の指示に従う</li>
+    </ul>
+
+    <h2>レベル1: フラットな基本情報</h2>
+    <p>本文について次の4項目を答え、下のスキーマの JSON で出力してください。</p>
+    <pre><code>{
+  "title": "",
+  "author": "",
+  "founded_year": 0,
+  "city": ""
+}</code></pre>
+    <ul>
+      <li><code>title</code>: この随筆の題名</li>
+      <li><code>author</code>: 著者名</li>
+      <li><code>founded_year</code>: 祖父が工房を構えた西暦年（数値）</li>
+      <li><code>city</code>: 工房があった市の名前</li>
+    </ul>
+
+    <h2>レベル2: 配列・順序・真偽値</h2>
+    <p>本文について次の4項目を答え、下のスキーマの JSON で出力してください。</p>
+    <pre><code>{
+  "people": [""],
+  "years_mentioned": [0],
+  "grandfather_alive_at_writing": false,
+  "tools": [""]
+}</code></pre>
+    <ul>
+      <li><code>people</code>: 本文（冒頭の題名・著者名の行を除く）に人名で登場する人物を<strong>初出順に全員</strong>。名字は除き、下の名前で書く（カタカナ名はそのまま）。同一人物は初出の1回のみ数える</li>
+      <li><code>years_mentioned</code>: 本文に西暦で登場する年を<strong>すべて、昇順・重複なし</strong>で（数値）。温度・年数・年齢は含めない</li>
+      <li><code>grandfather_alive_at_writing</code>: この文章の執筆時点で祖父が存命なら true、故人なら false</li>
+      <li><code>tools</code>: 工房の壁に掛かっていた三つの道具を、本文の記載順に</li>
+    </ul>
+
+    <h2>レベル3: ネスト・enum・null</h2>
+    <p>本文について次の2項目を答え、下のスキーマの JSON で出力してください。</p>
+    <pre><code>{
+  "sections": [
+    { "heading": "", "season": "" }
+  ],
+  "workshop": {
+    "name": "",
+    "founded_year": 0,
+    "closed_year": 0
+  }
+}</code></pre>
+    <ul>
+      <li><code>sections</code>: 4つの節すべてを本文の順に並べる
+        <ul>
+          <li><code>heading</code>: 見出しから先頭の漢数字と空白を除いた表題（例: 見出しが「五 春の窯」なら「春の窯」）</li>
+          <li><code>season</code>: その節に明示されている季節。<code>"spring"</code> | <code>"summer"</code> | <code>"autumn"</code> | <code>"winter"</code> のいずれか。季節の記述がない節は <code>"none"</code></li>
+        </ul>
+      </li>
+      <li><code>workshop.name</code>: 工房の名前</li>
+      <li><code>workshop.founded_year</code>: 工房を構えた西暦年（数値）</li>
+      <li><code>workshop.closed_year</code>: 工房を畳んだ西暦年が本文に<strong>明記されていれば</strong>その数値、明記されていなければ null（推測しない）</li>
+    </ul>
+
+    <h2>レベル4: 文字列の忠実な抽出</h2>
+    <p>本文について次の3項目を答え、下のスキーマの JSON で出力してください。</p>
+    <pre><code>{
+  "quotes": [
+    { "speaker": "", "text": "" }
+  ],
+  "english_phrase": "",
+  "letter_excerpt": ""
+}</code></pre>
+    <ul>
+      <li><code>quotes</code>: 鉤括弧「」で直接括られた発話を、本文の<strong>出現順にすべて</strong>並べる
+        <ul>
+          <li><code>speaker</code>: 発話者の下の名前</li>
+          <li><code>text</code>: 「」の内側を<strong>一字一句そのまま</strong>（句読点・『』も保つ。外側の「」自体は含めない）</li>
+          <li>他の人物の発話の中で『』により引用された言葉は、独立した発話として数えない</li>
+        </ul>
+      </li>
+      <li><code>english_phrase</code>: マルコが書き残した英文を、<strong>前後の引用符 " を含めて</strong>一字一句そのまま</li>
+      <li><code>letter_excerpt</code>: 祖父の手紙の本文3行を、行頭の引用記号（&gt;）を除き、<strong>改行をそのまま保って</strong>1つの文字列にする（JSON 文字列内の改行は \n）</li>
+    </ul>
+
+    <h2>レベル5: 文書全体の構造化</h2>
+    <p>本文全体を、下のスキーマの JSON に構造化してください。</p>
+    <pre><code>{
+  "meta": {
+    "title": "",
+    "author": "",
+    "section_count": 0
+  },
+  "characters": [
+    {
+      "name": "",
+      "kinship_to_narrator": "",
+      "relations": [
+        { "to": "", "relation": "" }
+      ]
+    }
+  ],
+  "timeline": [
+    { "year": 0, "sentence": "" }
+  ],
+  "process": {
+    "melting_temperature_c": 0,
+    "steps": [
+      { "order": 0, "name": "", "temperature_c": 0 }
+    ]
+  },
+  "quotes_by_speaker": {
+    "宗一郎": [""],
+    "綾乃": [""]
+  },
+  "analysis": {
+    "grandfather_last_words": "",
+    "narrator_became_glassblower": false
+  }
+}</code></pre>
+    <ul>
+      <li><code>meta.title</code> / <code>meta.author</code>: 題名と著者名。<code>meta.section_count</code>: 節の数（数値）</li>
+      <li><code>characters</code>: 本文（冒頭の題名・著者名の行を除く）に人名で登場する人物を<strong>初出順に全員</strong>（名字は除き下の名前、カタカナ名はそのまま）
+        <ul>
+          <li><code>kinship_to_narrator</code>: 語り手から見た続柄。<code>"self"</code> | <code>"grandfather"</code> | <code>"grandmother"</code> | <code>"elder_sister"</code> | <code>"none"</code> のいずれか</li>
+          <li><code>relations</code>: 家族関係<strong>以外</strong>で本文に明記された関係のみを <code>{ "to": 相手の下の名前, "relation": ... }</code> で列挙する。<code>relation</code> は <code>"apprentice"</code> | <code>"master"</code> | <code>"spouse"</code> | <code>"sibling"</code> のいずれかで、「この人物が to の人物に対して何であるか」を表す（例: A が B の弟子なら A 側に <code>{ "to": "B", "relation": "apprentice" }</code>）。該当がない人物は空配列 <code>[]</code></li>
+        </ul>
+      </li>
+      <li><code>timeline</code>: 本文に西暦で登場する年を<strong>昇順にすべて</strong>並べる
+        <ul>
+          <li><code>year</code>: 西暦年（数値）</li>
+          <li><code>sentence</code>: その年号を含む一文を<strong>一字一句そのまま</strong></li>
+        </ul>
+      </li>
+      <li><code>process.melting_temperature_c</code>: 硝子種が溶ける温度（数値）</li>
+      <li><code>process.steps</code>: 五つの工程を本文の順に
+        <ul>
+          <li><code>order</code>: 1〜5 の数値</li>
+          <li><code>name</code>: 工程名</li>
+          <li><code>temperature_c</code>: その工程に温度が本文で明記されていれば数値、なければ null</li>
+        </ul>
+      </li>
+      <li><code>quotes_by_speaker</code>: 鉤括弧「」で直接括られた発話を、話者別に出現順で並べる（「」の内側を一字一句そのまま）。キーは <code>"宗一郎"</code> と <code>"綾乃"</code> の2つ。他の発話の中で『』により引用された言葉は含めない</li>
+      <li><code>analysis.grandfather_last_words</code>: 祖父の最期の言葉が本文に書かれていればその抜き出し、書かれていなければ null</li>
+      <li><code>analysis.narrator_became_glassblower</code>: 語り手が硝子職人になったなら true、ならなかったなら false</li>
+    </ul>
+
+    <h2>入力（本文）</h2>
+    <p>本文は <a href="./input.html">入力本文ビュー</a> または <a href="./input.md">input.md</a> を参照。各レベルの設問と本文を組み合わせて 1 リクエストずつ、計 5 回投げる。</p>
+
+    <div class="meta">
+      <a href="./PROMPT.md" target="_blank">Markdown 元ファイル</a>
+      <a href="https://github.com/noricha-vr/oreore-bench/blob/main/public/json-ladder/PROMPT.md" target="_blank">GitHub で見る</a>
+    </div>
+  </article>
+</main>
+
+</body>
+</html>
