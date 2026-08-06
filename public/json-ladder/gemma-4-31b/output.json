@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "theme": "json-ladder",
+  "levels": [
+    {
+      "level": 1,
+      "raw": "```json\n{\n  \"title\": \"硝子の記憶\",\n  \"author\": \"佐伯千鶴\",\n  \"founded_year\": 1961,\n  \"city\": \"富山市\"\n}\n```",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1526,
+        "completion_tokens": 464
+      }
+    },
+    {
+      "level": 2,
+      "raw": "```json\n{\n  \"people\": [\"宗一郎\", \"千鶴\", \"綾乃\", \"美津江\", \"マルコ\"],\n  \"years_mentioned\": [1961, 1978, 1989, 2001],\n  \"grandfather_alive_at_writing\": false,\n  \"tools\": [\"吹き竿\", \"ポンテ竿\", \"木箸\"]\n}\n```",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1644,
+        "completion_tokens": 1304
+      }
+    },
+    {
+      "level": 3,
+      "raw": "```json\n{\n  \"sections\": [\n    {\n      \"heading\": \"炎の温度\",\n      \"season\": \"summer\"\n    },\n    {\n      \"heading\": \"姉と火\",\n      \"season\": \"winter\"\n    },\n    {\n      \"heading\": \"マルコの置き土産\",\n      \"season\": \"autumn\"\n    },\n    {\n      \"heading\": \"窯じまい\",\n      \"season\": \"none\"\n    }\n  ],\n  \"workshop\": {\n    \"name\": \"佐伯硝子工房\",\n    \"founded_year\": 1961,\n    \"closed_year\": null\n  }\n}\n```",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1674,
+        "completion_tokens": 1731
+      }
+    },
+    {
+      "level": 4,
+      "raw": "```json\n{\n  \"quotes\": [\n    {\n      \"speaker\": \"宗一郎\",\n      \"text\": \"ええか、千鶴。急ぐな。硝子より先に、心が割れる\"\n    },\n    {\n      \"speaker\": \"綾乃\",\n      \"text\": \"祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い\"\n    },\n    {\n      \"speaker\": \"宗一郎\",\n      \"text\": \"硝子は正直や。手ぇ抜いた分だけ、濁る\"\n    }\n  ],\n  \"english_phrase\": \"\\\"Glass remembers everything.\\\"\",\n  \"letter_excerpt\": \"千鶴へ\\n窯の火は落とした。だが、おまえの中の火まで消えたわけではない。\\n迷ったら、手を動かせ。\"\n}\n```",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1671,
+        "completion_tokens": 1705
+      }
+    },
+    {
+      "level": 5,
+      "raw": "```json\n{\n  \"meta\": {\n    \"title\": \"硝子の記憶\",\n    \"author\": \"佐伯千鶴\",\n    \"section_count\": 4\n  },\n  \"characters\": [\n    {\n      \"name\": \"宗一郎\",\n      \"kinship_to_narrator\": \"grandfather\",\n      \"relations\": [\n        {\n          \"to\": \"マルコ\",\n          \"relation\": \"master\"\n        }\n      ]\n    },\n    {\n      \"name\": \"千鶴\",\n      \"kinship_to_narrator\": \"self\",\n      \"relations\": []\n    },\n    {\n      \"name\": \"綾乃\",\n      \"kinship_to_narrator\": \"elder_sister\",\n      \"relations\": []\n    },\n    {\n      \"name\": \"美津江\",\n      \"kinship_to_narrator\": \"grandmother\",\n      \"relations\": []\n    },\n    {\n      \"name\": \"マルコ\",\n      \"kinship_to_narrator\": \"none\",\n      \"relations\": [\n        {\n          \"to\": \"宗一郎\",\n          \"relation\": \"apprentice\"\n        }\n      ]\n    }\n  ],\n  \"timeline\": [\n    {\n      \"year\": 1961,\n      \"sentence\": \"1961年に富山市の外れに小さな工房を構え、亡くなるまでの四十年間、ほとんど毎日窯の前に立った。\"\n    },\n    {\n      \"year\": 1978,\n      \"sentence\": \"1978年に祖父が県の工芸展で賞を獲った時の盃を、マルコは棚から下ろしては何度も眺めていた。\"\n    },\n    {\n      \"year\": 1989,\n      \"sentence\": \"1989年の秋、イタリアから留学生のマルコが工房にやって来た。\"\n    },\n    {\n      \"year\": 2001,\n      \"sentence\": \"祖父が死んだのは2001年である。\"\n    }\n  ],\n  \"process\": {\n    \"melting_temperature_c\": 1400,\n    \"steps\": [\n      {\n        \"order\": 1,\n        \"name\": \"種巻き\",\n        \"temperature_c\": null\n      },\n      {\n        \"order\": 2,\n        \"name\": \"吹き\",\n        \"temperature_c\": null\n      },\n      {\n        \"order\": 3,\n        \"name\": \"成形\",\n        \"temperature_c\": null\n      },\n      {\n        \"order\": 4,\n        \"name\": \"ポンテ替え\",\n        \"temperature_c\": null\n      },\n      {\n        \"order\": 5,\n        \"name\": \"徐冷\",\n        \"temperature_c\": 520\n      }\n    ]\n  },\n  \"quotes_by_speaker\": {\n    \"宗一郎\": [\n      \"ええか、千鶴。急ぐな。硝子より先に、心が割れる\",\n      \"硝子は正直や。手ぇ抜いた分だけ、濁る\"\n    ],\n    \"綾乃\": [\n      \"祖父ちゃんはいつも『火に訊け』と言うけれど、私は火が怖い\"\n    ]\n  },\n  \"analysis\": {\n    \"grandfather_last_words\": null,\n    \"narrator_became_glassblower\": false\n  }\n}\n```",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 2175,
+        "completion_tokens": 3154
+      }
+    }
+  ]
+}

@@ -471,6 +471,47 @@
       "pricing_fetched_at": null
     }
   },
+  "json-ladder/gemma-4-31b": {
+    "schema_version": 1,
+    "theme": "json-ladder",
+    "model": "gemma-4-31b",
+    "model_id": "gemma-4-31b",
+    "harness": "lmstudio-api",
+    "reasoning_effort": "unknown",
+    "attempts": 1,
+    "generated_at": null,
+    "generated_at_source": "unknown",
+    "sampling": {
+      "temperature": 0.3,
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "json-ladder-5-levels",
+    "runtime": {
+      "engine": "lmstudio",
+      "api": "openai-compat",
+      "quantization": "q4_k_m",
+      "hardware": "Mac Studio M3 Ultra 512GB"
+    },
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 8690,
+      "completion_tokens": 8358,
+      "note": "LM Studio API 実測。5段階を独立リクエストで合算。"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
   "json-ladder/laguna-s-2.1": {
     "schema_version": 1,
     "theme": "json-ladder",
