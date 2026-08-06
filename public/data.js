@@ -723,6 +723,11 @@ window.ENTRIES.push(
     { theme: "pr-triage", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "✅ スキーマ準拠 PASS。正解キー一致 90%（9 primary）。唯一の不一致は PR106 を fix ではなく hold と保守的に判断。", kind: "json" }
 );
 
+// json-ladder（JSON フォーマット遵守 5 段階。レベル別 5 リクエスト独立実行）
+window.ENTRIES.push(
+    { theme: "json-ladder", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "✅ パース 5/5・score 79%。L1/L3 は 100% だが L4 忠実抽出が 33%（発話 3 件中 1 件のみ返し、L5 では「」込み抽出 + 『火に訊け』引用トラップに引っかかる）。人物初出順も語り手を先頭に置いて取り違え。", kind: "json" }
+);
+
 // claude-opus-5（リリース翌日に OpenRouter API 経由・reasoning high で全10テーマ追加。スモーク検証は既存と同一手順。
 // HTML 7テーマ中 6テーマで前置き+コードフェンス+末尾解説が混入したため、フェンス内 HTML を抽出して保存（run.json の post_processing に記録））
 window.ENTRIES.push(
