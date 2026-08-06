@@ -725,7 +725,10 @@ window.ENTRIES.push(
 
 // json-ladder（JSON フォーマット遵守 5 段階。レベル別 5 リクエスト独立実行）
 window.ENTRIES.push(
-    { theme: "json-ladder", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "✅ パース 5/5・score 79%。L1/L3 は 100% だが L4 忠実抽出が 33%（発話 3 件中 1 件のみ返し、L5 では「」込み抽出 + 『火に訊け』引用トラップに引っかかる）。人物初出順も語り手を先頭に置いて取り違え。", kind: "json" }
+    { theme: "json-ladder", model: "laguna-s-2.1", runner: "OpenRouter API (reasoning high)", note: "✅ パース 5/5・score 79%。L1/L3 は 100% だが L4 忠実抽出が 33%（発話 3 件中 1 件のみ返し、L5 では「」込み抽出 + 『火に訊け』引用トラップに引っかかる）。人物初出順も語り手を先頭に置いて取り違え。", kind: "json" },
+    { theme: "json-ladder", model: "gemma-4-31b", runner: "LM Studio API", note: "✅ パース 5/5・score 100%。全レベルでスキーマ準拠、L5 の入れ子抽出も 98%。OpenRouter 経由の商用モデルを上回るローカル最良。completion 計 8,358 tokens。", kind: "json" },
+    { theme: "json-ladder", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API", note: "✅ パース 5/5・score 100%。31B と同結果を completion 計 1,331 tokens（31B の 1/6）で達成。json-ladder ではこの MoE が最も効率的。", kind: "json" },
+    { theme: "json-ladder", model: "gemma-4-12b-qat", runner: "LM Studio API", note: "FAIL。パース 2/5・score 40%。L1/L3 は 100% だが L2/L4/L5 は約31K tokens を reasoning に費やして本文を返さず空応答（finish_reason=length）。同じ Gemma 4 でも 12B では複雑さ 2 以上のスキーマで思考が発散する。", kind: "json" }
 );
 
 // claude-opus-5（リリース翌日に OpenRouter API 経由・reasoning high で全10テーマ追加。スモーク検証は既存と同一手順。

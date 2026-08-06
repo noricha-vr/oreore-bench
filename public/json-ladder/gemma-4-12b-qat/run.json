@@ -26,7 +26,7 @@
     "method": "api-usage",
     "prompt_tokens": 8690,
     "completion_tokens": 94894,
-    "note": "LM Studio API 実測。5段階を独立リクエストで合算。"
+    "note": "LM Studio API 実測。5段階を独立リクエストで合算。L2/L4/L5 は約31K tokens を reasoning に費やして finish_reason=length で終了し本文が空（LM Studio 側の context 上限 32768 が先に効いたため、送信した max_tokens 65000 には到達していない）。空応答はパース失敗として採点。"
   },
   "cost": {
     "estimated": true,
