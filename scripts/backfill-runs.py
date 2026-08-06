@@ -40,6 +40,7 @@ RUNNER_MAP: dict[str, tuple[str, str]] = {
     "OpenRouter API": ("openrouter-api", "none"),
     "OpenRouter API (reasoning high)": ("openrouter-api", "high"),
     "oMLX API": ("omlx-api", "unknown"),
+    "MLX-LM API": ("mlx-lm-api", "unknown"),
     "codex exec (reasoning high)": ("codex-exec", "high"),
     "AntiGravity CLI (High)": ("antigravity-cli", "high"),
 }

@@ -1,0 +1,280 @@
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NISHIBI — 西日による日焼けスタジオ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Noto+Serif+JP:wght@300;400&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --orange:#c9743b;
+    --terracotta:#a8502f;
+    --beige:#e9ddc9;
+    --darkbrown:#2b1d14;
+    --bg:#f4ece1;
+    --text:#3a2a1e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Noto Serif JP",serif;
+    line-height:1.9;
+    font-weight:300;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{
+    font-family:"Cormorant Garamond",serif;
+    font-weight:300;
+    letter-spacing:0.04em;
+  }
+  section{
+    padding:14vh 8vw;
+    max-width:1100px;
+    margin:0 auto;
+  }
+  .fade{
+    opacity:0;
+    transform:translateY(28px);
+    transition:opacity 1.4s ease,transform 1.4s ease;
+  }
+  .fade.show{opacity:1;transform:none;}
+
+  /* Hero */
+  .hero{
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:flex-start;
+    background:linear-gradient(160deg,#f0d9bf 0%,#d99a63 55%,#a8502f 100%);
+    color:var(--darkbrown);
+    padding:0 8vw;
+  }
+  .hero h1{
+    font-size:clamp(3rem,9vw,7rem);
+    line-height:1.05;
+    margin-bottom:1.4rem;
+  }
+  .hero p{
+    font-size:clamp(1rem,2.2vw,1.4rem);
+    max-width:540px;
+    margin-bottom:3rem;
+    color:#3a2a1e;
+  }
+  .cta{
+    display:inline-block;
+    border:1px solid var(--darkbrown);
+    padding:1rem 3rem;
+    color:var(--darkbrown);
+    text-decoration:none;
+    font-family:"Cormorant Garamond",serif;
+    letter-spacing:0.18em;
+    font-size:1.1rem;
+    transition:background .6s ease,color .6s ease;
+  }
+  .cta:hover{background:var(--darkbrown);color:var(--beige);}
+
+  /* Philosophy */
+  .philosophy p{
+    font-size:clamp(1.1rem,2.4vw,1.6rem);
+    max-width:760px;
+    margin-bottom:1.6rem;
+  }
+
+  /* Plans */
+  .plans{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:2rem;
+    margin-top:4rem;
+  }
+  .plan{
+    border-top:1px solid var(--terracotta);
+    padding-top:1.6rem;
+  }
+  .plan h3{font-size:2rem;margin-bottom:.6rem;}
+  .plan .price{font-family:"Cormorant Garamond",serif;font-size:1.6rem;color:var(--terracotta);margin-bottom:1rem;}
+  .plan ul{list-style:none;font-size:.95rem;}
+  .plan li{margin-bottom:.5rem;}
+
+  /* Science */
+  .science-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:3rem 4rem;
+    margin-top:3rem;
+  }
+  .science-item h3{font-size:1.4rem;margin-bottom:.4rem;color:var(--terracotta);}
+  .science-item p{font-size:.95rem;}
+
+  /* Studio */
+  .studio-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:2rem;
+    margin-top:3rem;
+  }
+  .studio-grid div{border-left:1px solid var(--orange);padding-left:1.2rem;}
+  .studio-grid h3{font-size:1.3rem;margin-bottom:.4rem;}
+
+  /* Testimonial */
+  .testi{margin-top:3rem;}
+  .testi blockquote{
+    border-left:2px solid var(--terracotta);
+    padding-left:1.4rem;
+    margin-bottom:2.4rem;
+    font-style:italic;
+    max-width:680px;
+  }
+  .testi cite{display:block;margin-top:.6rem;font-size:.85rem;font-style:normal;color:var(--terracotta);}
+
+  /* Footer */
+  footer{
+    background:var(--darkbrown);
+    color:var(--beige);
+    padding:8vh 8vw;
+    font-size:.85rem;
+  }
+  footer a{color:var(--beige);text-decoration:none;border-bottom:1px solid var(--terracotta);}
+  footer .links{margin-top:1rem;}
+
+  @media(max-width:780px){
+    .plans,.studio-grid{grid-template-columns:1fr;}
+    .science-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <h1>NISHIBI</h1>
+  <p>窓辺に差し込む夕刻の西日のみを用いて、皮膚を焼く。人工光は、ここには存在しない。</p>
+  <a href="#plan" class="cta">RESERVE</a>
+</header>
+
+<section class="philosophy fade">
+  <h2>Philosophy</h2>
+  <p>朝の光は急峻であり、正午の光は暴力的である。われわれは、一日の終わりにだけ現れる西日の静寂を選んだ。</p>
+  <p>それは太陽が地平へ沈む直前に放つ、もっとも穏やかで深い熱である。東洋の時間美学において、黄昏は「なし終えた身体」へ向けられた光とされる。</p>
+  <p>機械が模倣する紫外線ではなく、窓という枠が切り取った自然光だけが、皮膚の生体リズムを整えることができる。</p>
+</section>
+
+<section id="plan" class="fade">
+  <h2>Service / Plan</h2>
+  <div class="plans">
+    <div class="plan">
+      <h3>黄金時間</h3>
+      <div class="price">¥9,800</div>
+      <ul>
+        <li>16:00 – 17:30 利用</li>
+        <li>南西向き全面窓席</li>
+        <li>無垢材ラウンジ付</li>
+      </ul>
+    </div>
+    <div class="plan">
+      <h3>茜時間</h3>
+      <div class="price">¥12,400</div>
+      <ul>
+        <li>17:30 – 19:00 利用</li>
+        <li>個室西日ブース</li>
+        <li>オーガニック保湿液付</li>
+      </ul>
+    </div>
+    <div class="plan">
+      <h3>残光時間</h3>
+      <div class="price">¥15,900</div>
+      <ul>
+        <li>19:00 – 20:15 利用</li>
+        <li>最終光独占枠</li>
+        <li>生体リズム診断含む</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="fade">
+  <h2>Science</h2>
+  <div class="science-grid">
+    <div class="science-item">
+      <h3>UV-B 減衰率 63%</h3>
+      <p>午後五時以降の西日は、正午と比較して紫外線B波を平均63%減じながら、赤外熱を維持する。</p>
+    </div>
+    <div class="science-item">
+      <h3>メラトニン前駆体 1.8倍</h3>
+      <p>夕刻光被曝により、入眠関連ホルモンの前駆物質が通常環境比1.8倍生成されるという室内実測がある。</p>
+    </div>
+    <div class="science-item">
+      <h3>色温度 2,800K</h3>
+      <p>西日の色温度は平均2,800ケルビン。皮膚温感を穏やかに保ちつつ、コントラストを深く焼き込む。</p>
+    </div>
+    <div class="science-item">
+      <h3>東洋時間論的妥当性</h3>
+      <p>「酉の刻」の光は、古来より身体の収斂を促すとされ、当スタジオの設計根拠の一端を成している。</p>
+    </div>
+  </div>
+</section>
+
+<section class="fade">
+  <h2>Studio</h2>
+  <div class="studio-grid">
+    <div>
+      <h3>南西向き全面窓</h3>
+      <p>建物西側を全開口とし、遮るもののない夕日の経路を確保した。</p>
+    </div>
+    <div>
+      <h3>無垢材の床</h3>
+      <p>熱を蓄え、放つ。部屋全体がゆるやかな蓄熱体として機能する。</p>
+    </div>
+    <div>
+      <h3>無音空間</h3>
+      <p>機械音を排除。聞こえるのは、日が沈む音だけである。</p>
+    </div>
+  </div>
+</section>
+
+<section class="fade">
+  <h2>Testimonial</h2>
+  <div class="testi">
+    <blockquote>
+      「毎日の終わりに、窓の光だけで焼かれる静けさを知った。肌だけでなく、時間の感じ方が変わった。」
+      <cite>— 建築設計者 / 34歳</cite>
+    </blockquote>
+    <blockquote>
+      「UVライトの嫌な臭いがない。西日は、本当に皮膚を労わるように温める。」
+      <cite>— 編集者 / 41歳</cite>
+    </blockquote>
+    <blockquote>
+      「サステナブルという言葉が、ここでは説明不要だった。ただ光が来て、去っていくだけだから。」
+      <cite>— 植物学者 / 38歳</cite>
+    </blockquote>
+  </div>
+</section>
+
+<footer>
+  <div>NISHIBI — 西日日焼けスタジオ</div>
+  <div>東京都黄昏区西窓 3-1-4 夕映ビル 5F</div>
+  <div class="links">
+    <a href="#">Instagram</a> &nbsp; <a href="#">Journal</a> &nbsp; <a href="#">Contact</a>
+  </div>
+</footer>
+
+<script>
+  const obs = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add('show');
+        obs.unobserve(e.target);
+      }
+    });
+  },{threshold:0.15});
+  document.querySelectorAll('.fade').forEach(el=>obs.observe(el));
+</script>
+
+</body>
+</html>
+```

@@ -1,0 +1,233 @@
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HIBANA — Phoenix Scroll LP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Shippori+Mincho:wght@400;500&family=Zen+Kaku+Gothic+New:wght@300&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --dawn-bg:#f2ecf5;
+    --dawn-wing:#b9a6e0;
+    --orb:#e8f0a8;
+    --flame:#ff7a2f;
+    --ember:#ffb36b;
+    --night:#0a1030;
+    --feather:#7fb8ff;
+    --sunset:#c23a1f;
+    --ink:#2a2438;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{background:#000;color:var(--ink);font-family:'Zen Kaku Gothic New',sans-serif;overflow-x:hidden;}
+  body{height:900vh;} /* 6 scenes * 150vh */
+
+  /* fixed canvas */
+  #fx{position:fixed;inset:0;width:100vw;height:100vh;z-index:1;pointer-events:none;}
+
+  /* scene layers */
+  .scene{position:fixed;inset:0;width:100vw;height:100vh;z-index:2;opacity:0;pointer-events:none;
+    display:flex;align-items:center;justify-content:flex-start;padding:0 6vw;will-change:opacity,transform;}
+  .scene.active{pointer-events:auto;}
+
+  /* typography */
+  .poem{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:400;
+    font-size:clamp(1.4rem,3.2vw,2.6rem);line-height:1.5;letter-spacing:0.04em;color:var(--ink);}
+  .jp{font-family:'Shippori Mincho',serif;font-weight:400;}
+  .stag span{display:inline-block;opacity:0;transform:translateY(18px);
+    transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1);}
+  .scene.active .stag span{opacity:1;transform:translateY(0);}
+
+  /* UI */
+  .ui{position:fixed;z-index:10;color:var(--ink);font-family:'Zen Kaku Gothic New',sans-serif;font-weight:300;}
+  #logo{top:3vh;left:4vw;display:flex;align-items:center;gap:.6rem;font-size:.95rem;letter-spacing:.08em;}
+  #logo small{font-size:.65rem;opacity:.6;margin-left:.3rem;}
+  #nav{top:3vh;right:4vw;display:flex;gap:1.4rem;font-size:.75rem;opacity:.8;}
+  #nav a{color:inherit;text-decoration:none;opacity:.7;}
+  #prog{bottom:4vh;left:50%;transform:translateX(-50%);width:30vw;height:1px;background:rgba(42,36,56,.2);}
+  #prog i{display:block;height:100%;width:0;background:var(--ink);transition:width .1s linear;}
+  #sound{bottom:4vh;left:4vw;width:34px;height:34px;border:1px solid rgba(42,36,56,.4);border-radius:50%;
+    opacity:0;transition:opacity .6s;display:flex;align-items:center;justify-content:center;}
+  #sound.show{opacity:.7;}
+  #sound::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--ink);}
+
+  /* scene specific */
+  #s1{background:var(--dawn-bg);}
+  #s1 .poem{margin-left:auto;margin-right:4vw;max-width:40vw;text-align:right;}
+  #s2{background:linear-gradient(180deg,#ffd9b0,#ff9e6b);justify-content:center;}
+  #s2 .jp{font-size:clamp(2rem,6vw,4rem);color:#fff;filter:blur(.4px);text-shadow:0 2px 20px rgba(255,122,47,.4);}
+  #s3{background:radial-gradient(circle at 50% 45%,#fff,#fce8ff 30%,#e6d4ff 60%,#cbb6f0);justify-content:center;}
+  #s3 .big{font-family:'Shippori Mincho',serif;font-size:clamp(4rem,16vw,12rem);color:#3a2f55;
+    animation:flick 3s infinite;}
+  @keyframes flick{0%,100%{opacity:1;}45%{opacity:.3;}55%{opacity:.8;}}
+  #s4{background:var(--night);color:#cfe2ff;}
+  #s4 .poem{color:#cfe2ff;}
+  #s4 .side{position:absolute;top:18vh;font-size:.8rem;line-height:2;opacity:.6;max-width:18vw;}
+  #s4 .side.l{left:6vw;} #s4 .side.r{right:6vw;text-align:right;}
+  #s4 .bot{position:absolute;bottom:14vh;left:0;width:100%;text-align:center;}
+  #s5{background:var(--night);perspective:1000px;justify-content:center;align-items:center;}
+  .cry{width:120px;height:120px;position:absolute;transform-style:preserve-3d;
+    border:1px solid rgba(127,184,255,.5);background:linear-gradient(135deg,rgba(127,184,255,.15),rgba(255,179,107,.1));
+    box-shadow:0 0 30px rgba(127,184,255,.3);transition:transform .3s;}
+  .cry.a{left:30vw;top:30vh;} .cry.b{right:28vw;top:40vh;} .cry.c{left:46vw;bottom:22vh;}
+  #s6{background:linear-gradient(180deg,#c23a1f,#7a1d10);justify-content:center;align-items:flex-end;}
+  #s6 .poem{color:#ffe;margin-bottom:12vh;text-align:center;width:100%;}
+  #s6 .mirror{position:absolute;bottom:0;left:0;width:100%;height:30vh;
+    background:linear-gradient(180deg,rgba(255,122,47,.25),transparent);filter:blur(8px);transform:scaleY(-1);}
+
+  @media (prefers-reduced-motion: reduce){
+    .stag span{transition:none;}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="fx"></canvas>
+
+<!-- UI -->
+<div id="logo" class="ui">HIBANA
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3a6ea5" stroke-width="1.5">
+    <path d="M12 3c2 3 4 4 4 7a4 4 0 0 1-8 0c0-3 2-4 4-7z"/>
+  </svg>
+  <small>Sept. 29</small>
+</div>
+<div id="nav" class="ui"><a href="#">作品</a><a href="#">思想</a><a href="#">接続</a></div>
+<div id="prog" class="ui"><i></i></div>
+<div id="sound" class="ui"></div>
+
+<!-- Scenes -->
+<section class="scene" id="s1">
+  <div class="poem stag">
+    <span>what</span> <span>guides</span> <span>us</span> <span>through</span>
+    <span><em>change</em>,</span> <span><em>reinvention</em>,</span>
+    <span>and</span> <span>the</span> <span><em>unknown</em>—</span>
+  </div>
+</section>
+
+<section class="scene" id="s2">
+  <div class="jp stag"><span>再</span><span>生</span><span>で</span><span>あ</span><span>る</span><span>。</span></div>
+</section>
+
+<section class="scene" id="s3">
+  <div class="big">音</div>
+</section>
+
+<section class="scene" id="s4">
+  <div class="side l jp">羽根は夜を裂き、光の筋となる。<br>静寂のなかで響く、再生の合図。</div>
+  <div class="side r jp">私たちは語るだけでなく、<br>刺激として在る。</div>
+  <div class="bot poem stag">
+    <span>don't</span> <span>just</span> <span><em>speak</em></span> <span>to</span> <span>us.</span>
+    <span>they</span> <span><em>stimulate</em></span> <span>us.</span><br>
+    <span>light</span> <span><em>becomes</em></span> <span>私、</span><span>flare。</span>
+  </div>
+</section>
+
+<section class="scene" id="s5">
+  <div class="cry a"></div><div class="cry b"></div><div class="cry c"></div>
+</section>
+
+<section class="scene" id="s6">
+  <div class="mirror"></div>
+  <div class="poem stag">
+    <span><em>feel</em></span> <span>their</span> <span>heat.</span>
+    <span>焔と</span> <span><em>interact</em></span> <span>with。</span>
+  </div>
+</section>
+
+<script>
+(()=>{
+  const cv=document.getElementById('fx'),ctx=cv.getContext('2d');
+  let W,H,DPR=Math.min(devicePixelRatio||1,2);
+  function resize(){W=cv.width=innerWidth*DPR;H=cv.height=innerHeight*DPR;cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';}
+  resize();addEventListener('resize',resize);
+
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const density=reduce?0.25:1;
+
+  // scroll lerp
+  let targetScroll=0,curScroll=0;
+  addEventListener('scroll',()=>{targetScroll=scrollY;},{passive:true});
+
+  const scenes=[...document.querySelectorAll('.scene')];
+  const prog=document.querySelector('#prog i');
+  const sound=document.querySelector('#sound');
+
+  // particles
+  const P=[];
+  function spawn(o){if(Math.random()<density)P.push(o);}
+  function loop(){
+    curScroll+=(targetScroll-curScroll)*0.08;
+    const max=document.body.scrollHeight-innerHeight;
+    const p=curScroll/max; // 0..1
+    prog.style.width=(p*100)+'%';
+
+    // scene index
+    const idx=Math.min(5,Math.floor(p*6));
+    scenes.forEach((s,i)=>{
+      const d=Math.abs(i-idx);
+      s.style.opacity=Math.max(0,1-d*0.9);
+      s.classList.toggle('active',i===idx);
+    });
+    sound.classList.toggle('show',idx>=3);
+
+    // clear
+    ctx.clearRect(0,0,W,H);
+
+    // emitters per scene
+    if(idx===0){ // dawn wing bleed
+      for(let i=0;i<2*density;i++)spawn({x:W*0.2+Math.random()*W*0.1,y:Math.random()*H,vx:Math.random()*0.3,vy:(Math.random()-0.5)*0.2,life:1,r:Math.random()*20+10,c:'rgba(185,166,224,0.05)',type:'bleed'});
+      if(Math.random()<0.3*density)spawn({x:W*0.5,y:H*0.2,r:40+Math.random()*20,c:'rgba(232,240,168,0.08)',life:1,type:'orb'});
+    }
+    if(idx===1){ // rise phoenix tail
+      for(let i=0;i<4*density;i++)spawn({x:W*0.5+(Math.random()-0.5)*60*DPR,y:H*0.9,vx:(Math.random()-0.5)*1,vy:-Math.random()*3-1,life:1,r:Math.random()*6+2,c:`rgba(255,${122+Math.random()*80|0},47,0.6)`,type:'fire'});
+    }
+    if(idx===2){ // halo rings
+      if(Math.random()<0.2*density)spawn({x:W*0.5,y:H*0.45,r:10,life:1,c:'rgba(255,255,255,0.04)',type:'ring',grow:2});
+    }
+    if(idx===3){ // feather beam
+      if(Math.random()<0.5*density)spawn({x:W*0.5,y:-10,vx:0,vy:2+Math.random()*2,life:1,r:Math.random()*3+1,c:'rgba(127,184,255,0.8)',type:'beam'});
+    }
+    if(idx===4){ // crystal sparkle
+      if(Math.random()<0.3*density)spawn({x:Math.random()*W,y:Math.random()*H,vx:0,vy:0,life:1,r:1,c:'rgba(255,255,255,0.6)',type:'star'});
+    }
+    if(idx===5){ // finale flame wings
+      for(let i=0;i<6*density;i++){
+        const a=Math.random()*Math.PI*2,sp=Math.random()*3+1;
+        spawn({x:W*0.5+Math.cos(a)*40*DPR,y:H*0.6+Math.sin(a)*20*DPR,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:1,r:Math.random()*8+3,c:`rgba(255,${100+Math.random()*100|0},30,0.7)`,type:'fire'});
+      }
+    }
+
+    // update
+    for(let i=P.length-1;i>=0;i--){
+      const o=P[i];
+      o.life-=0.01;
+      if(o.life<=0){P.splice(i,1);continue;}
+      if(o.type==='bleed'){o.x+=o.vx*DPR;o.y+=o.vy*DPR;o.r+=0.2;}
+      else if(o.type==='orb'){o.r+=0.3;}
+      else if(o.type==='fire'){o.x+=o.vx*DPR;o.y+=o.vy*DPR;o.vy+=0.02*DPR;o.r*=0.98;}
+      else if(o.type==='ring'){o.r+=o.grow*DPR;}
+      else if(o.type==='beam'){o.y+=o.vy*DPR;}
+      else if(o.type==='star'){o.life-=0.02;}
+      ctx.globalAlpha=o.life;
+      ctx.fillStyle=o.c;
+      ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,7);ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  // crystal rotate
+  const crys=document.querySelectorAll('.cry');
+  crys.forEach((c,i)=>{c.style.transform=`rotateX(${i*20}deg) rotateY(${i*30}deg)`;
+    c.addEventListener('mouseenter',()=>c.style.transform+=` rotateZ(10deg)`);
+    c.addEventListener('mouseleave',()=>c.style.transform=`rotateX(${i*20}deg) rotateY(${i*30}deg)`);
+  });
+  setInterval(()=>{if(!reduce)crys.forEach((c,i)=>c.style.transform=`rotateX(${i*20+Math.random()*10}deg) rotateY(${i*30+Math.random()*10}deg)`);},2000);
+})();
+</script>
+</body>
+</html>
+```

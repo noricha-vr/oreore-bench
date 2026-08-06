@@ -309,6 +309,50 @@
       "pricing_fetched_at": "2026-07-16"
     }
   },
+  "hasami-shogi/hy3-t512": {
+    "schema_version": 1,
+    "theme": "hasami-shogi",
+    "model": "hy3-t512",
+    "model_id": "avlp12/Hy3-Alis-MLX-Dynamic",
+    "harness": "mlx-lm-api",
+    "reasoning_effort": "unknown",
+    "attempts": 1,
+    "generated_at": "2026-08-06T14:36:08+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": 0.3,
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "mlx-lm",
+      "version": "0.31.3",
+      "framework": "MLX 0.31.2",
+      "model_revision": "f1dc8e8f4b847071ecb3dc0a09f56bf76f117677",
+      "quantization": "t512-6.561bpw",
+      "hardware": "Mac Studio M3 Ultra 512GB",
+      "api": "openai-compat-chat"
+    },
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 884,
+      "completion_tokens": 2987,
+      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=172.047."
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
   "hasami-shogi/laguna-s-2.1": {
     "schema_version": 1,
     "theme": "hasami-shogi",
@@ -835,6 +879,50 @@
       "pricing_fetched_at": "2026-07-16"
     }
   },
+  "lp-fable5/hy3-t512": {
+    "schema_version": 1,
+    "theme": "lp-fable5",
+    "model": "hy3-t512",
+    "model_id": "avlp12/Hy3-Alis-MLX-Dynamic",
+    "harness": "mlx-lm-api",
+    "reasoning_effort": "unknown",
+    "attempts": 1,
+    "generated_at": "2026-08-06T14:41:17+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": 0.3,
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "mlx-lm",
+      "version": "0.31.3",
+      "framework": "MLX 0.31.2",
+      "model_revision": "f1dc8e8f4b847071ecb3dc0a09f56bf76f117677",
+      "quantization": "t512-6.561bpw",
+      "hardware": "Mac Studio M3 Ultra 512GB",
+      "api": "openai-compat-chat"
+    },
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 1202,
+      "completion_tokens": 5367,
+      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=309.275."
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
   "lp-fable5/kimi-k3": {
     "schema_version": 1,
     "theme": "lp-fable5",
@@ -1177,6 +1265,50 @@
       "pricing_fetched_at": "2026-07-16"
     }
   },
+  "lp-nishibi/hy3-t512": {
+    "schema_version": 1,
+    "theme": "lp-nishibi",
+    "model": "hy3-t512",
+    "model_id": "avlp12/Hy3-Alis-MLX-Dynamic",
+    "harness": "mlx-lm-api",
+    "reasoning_effort": "unknown",
+    "attempts": 1,
+    "generated_at": "2026-08-06T14:43:53+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": 0.3,
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "mlx-lm",
+      "version": "0.31.3",
+      "framework": "MLX 0.31.2",
+      "model_revision": "f1dc8e8f4b847071ecb3dc0a09f56bf76f117677",
+      "quantization": "t512-6.561bpw",
+      "hardware": "Mac Studio M3 Ultra 512GB",
+      "api": "openai-compat-chat"
+    },
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 850,
+      "completion_tokens": 2839,
+      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=156.588."
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
   "lp-nishibi/laguna-s-2.1": {
     "schema_version": 1,
     "theme": "lp-nishibi",
@@ -1485,6 +1617,50 @@
       "pricing_source": "openrouter",
       "pricing_model": "x-ai/grok-4.5",
       "pricing_fetched_at": "2026-07-16"
+    }
+  },
+  "othello/hy3-t512": {
+    "schema_version": 1,
+    "theme": "othello",
+    "model": "hy3-t512",
+    "model_id": "avlp12/Hy3-Alis-MLX-Dynamic",
+    "harness": "mlx-lm-api",
+    "reasoning_effort": "unknown",
+    "attempts": 1,
+    "generated_at": "2026-08-06T14:45:50+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": 0.3,
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "mlx-lm",
+      "version": "0.31.3",
+      "framework": "MLX 0.31.2",
+      "model_revision": "f1dc8e8f4b847071ecb3dc0a09f56bf76f117677",
+      "quantization": "t512-6.561bpw",
+      "hardware": "Mac Studio M3 Ultra 512GB",
+      "api": "openai-compat-chat"
+    },
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 287,
+      "completion_tokens": 2165,
+      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=116.124."
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
     }
   },
   "othello/laguna-s-2.1": {
@@ -2013,6 +2189,50 @@
       "pricing_fetched_at": "2026-07-17"
     }
   },
+  "phoenix-lp/hy3-t512": {
+    "schema_version": 1,
+    "theme": "phoenix-lp",
+    "model": "hy3-t512",
+    "model_id": "avlp12/Hy3-Alis-MLX-Dynamic",
+    "harness": "mlx-lm-api",
+    "reasoning_effort": "unknown",
+    "attempts": 1,
+    "generated_at": "2026-08-06T14:49:35+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": 0.3,
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "mlx-lm",
+      "version": "0.31.3",
+      "framework": "MLX 0.31.2",
+      "model_revision": "f1dc8e8f4b847071ecb3dc0a09f56bf76f117677",
+      "quantization": "t512-6.561bpw",
+      "hardware": "Mac Studio M3 Ultra 512GB",
+      "api": "openai-compat-chat"
+    },
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 1719,
+      "completion_tokens": 3917,
+      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=225.502."
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
   "phoenix-lp/kimi-k3": {
     "schema_version": 1,
     "theme": "phoenix-lp",
@@ -2393,6 +2613,50 @@
       "pricing_source": "openrouter",
       "pricing_model": "x-ai/grok-4.5",
       "pricing_fetched_at": "2026-07-16"
+    }
+  },
+  "pr-triage/hy3-t512": {
+    "schema_version": 1,
+    "theme": "pr-triage",
+    "model": "hy3-t512",
+    "model_id": "avlp12/Hy3-Alis-MLX-Dynamic",
+    "harness": "mlx-lm-api",
+    "reasoning_effort": "unknown",
+    "attempts": 1,
+    "generated_at": "2026-08-06T14:32:55+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": 0.3,
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "mlx-lm",
+      "version": "0.31.3",
+      "framework": "MLX 0.31.2",
+      "model_revision": "f1dc8e8f4b847071ecb3dc0a09f56bf76f117677",
+      "quantization": "t512-6.561bpw",
+      "hardware": "Mac Studio M3 Ultra 512GB",
+      "api": "openai-compat-chat"
+    },
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 2872,
+      "completion_tokens": 1343,
+      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=86.012."
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
     }
   },
   "pr-triage/laguna-s-2.1": {
@@ -2847,6 +3111,50 @@
       "pricing_source": "openrouter",
       "pricing_model": "x-ai/grok-4.5",
       "pricing_fetched_at": "2026-07-16"
+    }
+  },
+  "roguelike/hy3-t512": {
+    "schema_version": 1,
+    "theme": "roguelike",
+    "model": "hy3-t512",
+    "model_id": "avlp12/Hy3-Alis-MLX-Dynamic",
+    "harness": "mlx-lm-api",
+    "reasoning_effort": "unknown",
+    "attempts": 1,
+    "generated_at": "2026-08-06T14:53:17+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": 0.3,
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "mlx-lm",
+      "version": "0.31.3",
+      "framework": "MLX 0.31.2",
+      "model_revision": "f1dc8e8f4b847071ecb3dc0a09f56bf76f117677",
+      "quantization": "t512-6.561bpw",
+      "hardware": "Mac Studio M3 Ultra 512GB",
+      "api": "openai-compat-chat"
+    },
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 1151,
+      "completion_tokens": 3972,
+      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=221.580."
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
     }
   },
   "roguelike/kimi-k3": {
@@ -3409,6 +3717,50 @@
       "pricing_source": "openrouter",
       "pricing_model": "x-ai/grok-4.5",
       "pricing_fetched_at": "2026-07-16"
+    }
+  },
+  "suminagashi/hy3-t512": {
+    "schema_version": 1,
+    "theme": "suminagashi",
+    "model": "hy3-t512",
+    "model_id": "avlp12/Hy3-Alis-MLX-Dynamic",
+    "harness": "mlx-lm-api",
+    "reasoning_effort": "unknown",
+    "attempts": 1,
+    "generated_at": "2026-08-06T14:56:36+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": 0.3,
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "mlx-lm",
+      "version": "0.31.3",
+      "framework": "MLX 0.31.2",
+      "model_revision": "f1dc8e8f4b847071ecb3dc0a09f56bf76f117677",
+      "quantization": "t512-6.561bpw",
+      "hardware": "Mac Studio M3 Ultra 512GB",
+      "api": "openai-compat-chat"
+    },
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 758,
+      "completion_tokens": 3574,
+      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=199.329."
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
     }
   },
   "suminagashi/kimi-k3": {

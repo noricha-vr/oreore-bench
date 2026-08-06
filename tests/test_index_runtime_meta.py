@@ -38,6 +38,11 @@ def test_format_run_meta_labels_runtime_engines() -> None:
             "reasoning_effort": "unknown",
             "runtime": {"engine": "untrusted", "quantization": "ignored"},
         },
+        {
+            "harness": "mlx-lm-api",
+            "reasoning_effort": "unknown",
+            "runtime": {"engine": "mlx-lm", "quantization": "t512"},
+        },
     ]
     script = (
         definitions
@@ -57,4 +62,5 @@ def test_format_run_meta_labels_runtime_engines() -> None:
         "LM Studio API ・ LM Studio (mlx-4bit)",
         "oMLX API ・ oMLX (mxfp4-mxfp8-mixed)",
         "oMLX API",
+        "MLX-LM API ・ MLX-LM (t512)",
     ]

@@ -49,6 +49,7 @@ LLM を「業務タスクの一発再現性」で評価する場。現実の制�
 | Gemma 4 12B (QAT) | Google | ローカル | QAT 4-bit |
 | Agents A1 4B | InternScience | ローカル | MLX 4-bit |
 | DeepSeek V4 Flash 0731 MLX | InferencerLabs / DeepSeek | ローカル (MoE) | mixed MXFP4 / MXFP8 |
+| Hy3 T512 MLX | avlp12 / Tencent | ローカル (MoE) | T512 6.561 bpw mixed |
 
 スペック値はサブエージェントによるファクトチェック済み（リリース日 / context window / output 上限などは Google DeepMind / Anthropic / xAI / Hugging Face / LM Studio の一次情報を参照）。
 
@@ -73,6 +74,8 @@ oreore-bench/
 │   └── runs.json                        ← run.json を集約して index.html が 1 回で fetch
 └── scripts/
     ├── add-model.sh                     ← 新モデル追加の汎用スクリプト
+    ├── index.md                         ← 主要スクリプトの目次
+    ├── mlx-lm-run.py                    ← mlx_lm.server API で生成 + usage 実測 run.json
     ├── openrouter-run.py                ← OpenRouter API で 1 テーマ生成 + usage 実測 run.json
     ├── gen-questions.py                 ← JSON テーマ（pr-triage 等）をローカル LLM で順次生成
     ├── model-map.json                   ← slug → OpenRouter モデル ID の単一情報源
@@ -125,11 +128,11 @@ oreore-bench/
 
 ### enum / 規約
 
-- `harness`: `lmstudio-api` / `gptme-lmstudio` / `claude-agent-sdk` / `claude-cli-headless` / `grok-cli` / `openai-api` / `openrouter-api` / `omlx-api` / `antigravity-cli` / `codex-exec` / `unknown`
+- `harness`: `lmstudio-api` / `gptme-lmstudio` / `claude-agent-sdk` / `claude-cli-headless` / `grok-cli` / `openai-api` / `openrouter-api` / `omlx-api` / `mlx-lm-api` / `antigravity-cli` / `codex-exec` / `unknown`
 - `reasoning_effort`: `none` / `low` / `medium` / `high` / `unknown`
 - `system_prompt`: `none` / `harness-default` / `custom` / `unknown` — **ラベルのみ。本文は絶対に記録しない**（公開配信されるためプライバシー保護。`validate-runs.mjs` で enum 外を必ず失敗させる）
 - `"unknown"` = 復元不能、`"default"` = 既定に任せた、`"none"` = 明示的に無し。確定値のみ数値で書く
-- `runtime`: `null` または `engine` / `version` / `framework` / `model_revision` / `quantization` / `api` の構造化フィールド（未知キーは禁止）
+- `runtime`: `null` または `engine` / `version` / `framework` / `model_revision` / `quantization` / `hardware` / `api` の構造化フィールド（未知キーは禁止）
 - `runtime.model_revision` には実測したモデルのコミット SHA を記録し、配布元の更新後も再現対象を区別する
 
 ### コスト表示は「推定・下限」
@@ -194,6 +197,33 @@ API request で reasoning effort を指定していない場合は、reasoning t
 node scripts/validate-pr-triage.mjs --model deepseek-v4-flash-0731-mlx
 python3 scripts/build-pr-triage-html.py --model deepseek-v4-flash-0731-mlx
 ```
+
+### 1b. ローカル LLM（mlx_lm.server 直接）の記録・実行
+
+loopback の `mlx_lm.server` OpenAI 互換 API を起動済みにし、`mlx-lm-run.py` で生成物と
+実測 `usage` 付きの `run.json` を同時に作る。この経路は oMLX ではないため、
+`harness: "mlx-lm-api"` / `runtime.engine: "mlx-lm"` と記録する。`--api-model-id` は
+ローカル API だけに送られ、公開 `run.json` には書かれない。`--public-model-id` には
+`owner/model` 形式の公開識別子を指定し、ローカル絶対パスを渡さない。
+
+```bash
+# 前提: http://127.0.0.1:18081/v1 で mlx_lm.server が起動済み
+MLX_MODEL_DIR=/path/to/hy3-t512
+uv run scripts/mlx-lm-run.py \
+  --theme lp-nishibi \
+  --model hy3-t512 \
+  --api-model-id "$MLX_MODEL_DIR" \
+  --public-model-id avlp12/Hy3-Alis-MLX-Dynamic \
+  --version 0.31.3 \
+  --framework "MLX 0.31.2" \
+  --model-revision f1dc8e8f4b847071ecb3dc0a09f56bf76f117677 \
+  --quantization t512-6.561bpw \
+  --hardware "Mac Studio M3 Ultra 512GB"
+```
+
+`--theme all` で `PROMPT.md` のある全テーマを対象にできる。完了済みの出力を検証して
+スキップする場合は `--resume` を付ける。その他のオプションは
+`uv run scripts/mlx-lm-run.py --help` で確認する。
 
 ### 2. API モデル（Claude Opus 等）の場合
 

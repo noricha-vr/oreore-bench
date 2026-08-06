@@ -9,6 +9,7 @@ BUILD_SCRIPT = ROOT / "scripts" / "build-pr-triage-html.py"
 VALIDATE_SCRIPT = ROOT / "scripts" / "validate-pr-triage.mjs"
 ANSWER_KEY = ROOT / "public" / "pr-triage" / "answer-key.json"
 MODEL = "deepseek-v4-flash-0731-mlx"
+HY3_MODEL = "hy3-t512"
 
 
 def load_python_script(path: Path, name: str):
@@ -69,6 +70,19 @@ def test_build_pr_triage_html_model_filter(tmp_path: Path) -> None:
     assert (selected / "output.html").exists()
     assert "DeepSeek V4 Flash 0731 MLX" in (selected / "output.html").read_text(encoding="utf-8")
     assert not (other / "output.html").exists()
+
+
+def test_build_pr_triage_html_renders_hy3_model(tmp_path: Path) -> None:
+    theme_dir = tmp_path / "pr-triage"
+    selected = write_model(theme_dir, HY3_MODEL, valid_output())
+    module = load_python_script(BUILD_SCRIPT, "build_pr_triage_html_hy3")
+
+    result = module.main(["--theme-dir", str(theme_dir), "--model", HY3_MODEL])
+
+    assert result == 0
+    output = (selected / "output.html").read_text(encoding="utf-8")
+    assert "Hy3 T512 MLX" in output
+    assert "avlp12 / Tencent" in output
 
 
 def test_validate_pr_triage_model_filter_and_exit_status(tmp_path: Path) -> None:
@@ -140,3 +154,18 @@ def test_backfill_maps_omlx_runtime_and_model_id() -> None:
         "quantization": "mxfp4-mxfp8-mixed",
         "api": "openai-compat",
     }
+
+
+def test_backfill_maps_mlx_lm_runner() -> None:
+    module = load_python_script(ROOT / "scripts" / "backfill-runs.py", "backfill_runs")
+
+    run = module.build_run({"theme": "lp-nishibi", "model": "hy3-t512", "runner": "MLX-LM API"})
+
+    assert run["harness"] == "mlx-lm-api"
+    assert run["reasoning_effort"] == "unknown"
+
+
+def test_hy3_t512_is_declared_as_a_local_model() -> None:
+    model_map = json.loads((ROOT / "scripts" / "model-map.json").read_text(encoding="utf-8"))
+
+    assert model_map["hy3-t512"] == {"id": None, "type": "local"}

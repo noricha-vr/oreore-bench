@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>CRYPT OF THE HOLLOW DEPTHS</title>
+<style>
+  body {
+    background: #111;
+    color: #ddd;
+    font-family: monospace;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+  }
+  #wrap {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+  }
+  canvas {
+    background: #000;
+    border: 1px solid #444;
+    image-rendering: pixelated;
+  }
+  #side {
+    width: 260px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  #side h2 {
+    margin: 0 0 8px;
+    font-size: 16px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 4px;
+  }
+  #log {
+    margin-top: 12px;
+    border-top: 1px solid #444;
+    padding-top: 8px;
+    height: 80px;
+    overflow: hidden;
+  }
+  .inv {
+    margin: 4px 0;
+  }
+  #title {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  #title h1 { font-size: 28px; margin-bottom: 12px; }
+  #title p { margin: 4px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game" width="800" height="500"></canvas>
+  <div id="side">
+    <h2>STATUS</h2>
+    <div id="stat"></div>
+    <h2>INVENTORY</h2>
+    <div id="inv"></div>
+    <div id="log"></div>
+  </div>
+</div>
+
+<div id="title">
+  <h1>CRYPT OF THE HOLLOW DEPTHS</h1>
+  <p>Arrow / WASD : Move</p>
+  <p>1-9 : Use Item</p>
+  <p>Enter or &gt; : Descend Stairs</p>
+  <p>R : Restart</p>
+  <p>Press Enter or Space to Start</p>
+</div>
+
+<script>
+(function(){
+  const W = 40, H = 25, TILE = 20;
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const statEl = document.getElementById('stat');
+  const invEl = document.getElementById('inv');
+  const logEl = document.getElementById('log');
+  const titleEl = document.getElementById('title');
+
+  let state = 'title';
+  let map, rooms, stairs, player, enemies, items, floor, logs, visible, explored;
+  let gameOver = false, cleared = false;
+
+  function rnd(n){ return Math.floor(Math.random()*n); }
+  function log(msg){
+    logs.push(msg);
+    if(logs.length>6) logs.shift();
+    logEl.innerHTML = logs.slice(-6).map(m=>'<div>'+m+'</div>').join('');
+  }
+
+  function genMap(){
+    map = [];
+    for(let y=0;y<H;y++){
+      map.push(new Array(W).fill('#'));
+    }
+    rooms = [];
+    let tries = 0;
+    while(rooms.length<8 && tries<200){
+      tries++;
+      let rw = 4+rnd(6), rh = 3+rnd(5);
+      let rx = 1+rnd(W-rw-2), ry = 1+rnd(H-rh-2);
+      let overlap = false;
+      for(let r of rooms){
+        if(rx < r.x+r.w+1 && rx+rw+1 > r.x && ry < r.y+r.h+1 && ry+rh+1 > r.y){
+          overlap = true; break;
+        }
+      }
+      if(overlap) continue;
+      for(let y=ry;y<ry+rh;y++)
+        for(let x=rx;x<rx+rw;x++)
+          map[y][x] = '.';
+      if(rooms.length>0){
+        let prev = rooms[rooms.length-1];
+        let cx = Math.floor(rx+rw/2), cy=Math.floor(ry+rh/2);
+        let px = Math.floor(prev.x+prev.w/2), py=Math.floor(prev.y+prev.h/2);
+        while(cx!==px){ map[cy][cx]='.'; cx+= cx<px?1:-1; }
+        while(cy!==py){ map[cy][cx]='.'; cy+= cy<py?1:-1; }
+      }
+      rooms.push({x:rx,y:ry,w:rw,h:rh});
+    }
+    let last = rooms[rooms.length-1];
+    stairs = {x: Math.floor(last.x+last.w/2), y: Math.floor(last.y+last.h/2)};
+    map[stairs.y][stairs.x] = '>';
+  }
+
+  function spawnEntities(){
+    enemies = [];
+    items = [];
+    let types = [
+      {ch:'s', name:'Slime', hp:6, atk:2, xp:4, track:false},
+      {ch:'g', name:'Ghoul', hp:10, atk:4, xp:8, track:true}
+    ];
+    for(let i=0;i<7;i++){
+      let r = rooms[rnd(rooms.length)];
+      let x = r.x+rnd(r.w), y=r.y+rnd(r.h);
+      if(map[y][x]!=='.') continue;
+      let base = types[rnd(types.length)];
+      let scale = 1 + (floor-1)*0.4;
+      enemies.push({
+        x,y,
+        ch: base.ch,
+        name: base.name,
+        hp: Math.floor(base.hp*scale),
+        maxhp: Math.floor(base.hp*scale),
+        atk: Math.floor(base.atk*scale),
+        xp: Math.floor(base.xp*scale),
+        track: base.track,
+        awake:false
+      });
+    }
+    let itemTypes = [
+      {ch:'!', name:'Healing Potion', type:'heal', val:10},
+      {ch:'/', name:'Sharp Blade', type:'weapon', val:3}
+    ];
+    for(let i=0;i<4;i++){
+      let r = rooms[rnd(rooms.length)];
+      let x = r.x+rnd(r.w), y=r.y+rnd(r.h);
+      if(map[y][x]!=='.') continue;
+      let it = itemTypes[rnd(itemTypes.length)];
+      items.push({x,y, ...it});
+    }
+  }
+
+  function computeFOV(){
+    visible = Array.from({length:H},()=>new Array(W).fill(false));
+    let px=player.x, py=player.y, R=6;
+    for(let y=0;y<H;y++)
+      for(let x=0;x<W;x++){
+        let dx=x-px, dy=y-py;
+        if(dx*dx+dy*dy <= R*R){
+          if(los(px,py,x,y)) visible[y][x]=true;
+        }
+      }
+    for(let y=0;y<H;y++)
+      for(let x=0;x<W;x++)
+        if(visible[y][x]) explored[y][x]=true;
+  }
+
+  function los(x0,y0,x1,y1){
+    let dx=Math.abs(x1-x0), dy=Math.abs(y1-y0);
+    let sx=x0<x1?1:-1, sy=y0<y1?1:-1;
+    let err=dx-dy, x=x0, y=y0;
+    while(true){
+      if(x===x1 && y===y1) return true;
+      if(map[y][x]==='#') return false;
+      let e2=2*err;
+      if(e2>-dy){ err-=dy; x+=sx; }
+      if(e2<dx){ err+=dx; y+=sy; }
+    }
+  }
+
+  function newGame(){
+    floor = 1;
+    player = {x:0,y:0,hp:30,maxhp:30,atk:5,lvl:1,xp:0,inv:[]};
+    let r0 = rooms[0];
+    player.x = Math.floor(r0.x+r0.w/2);
+    player.y = Math.floor(r0.y+r0.h/2);
+    logs = [];
+    gameOver=false; cleared=false;
+    genFloor();
+    log('You enter the crypt.');
+  }
+
+  function genFloor(){
+    genMap();
+    explored = Array.from({length:H},()=>new Array(W).fill(false));
+    spawnEntities();
+    player.x = Math.floor(rooms[0].x+rooms[0].w/2);
+    player.y = Math.floor(rooms[0].y+rooms[0].h/2);
+    computeFOV();
+  }
+
+  function descend(){
+    if(map[player.y][player.x]==='>'){
+      if(floor>=3){
+        cleared=true; state='end';
+        log('You escaped the depths! CLEAR!');
+        return;
+      }
+      floor++;
+      log('You descend to floor '+floor+'.');
+      genFloor();
+    }
+  }
+
+  function enemyTurn(){
+    for(let e of enemies){
+      if(e.hp<=0) continue;
+      let dist = Math.abs(e.x-player.x)+Math.abs(e.y-player.y);
+      if(e.track && dist<=8) e.awake=true;
+      if(e.awake){
+        if(dist===1){
+          attack(e, player);
+        } else {
+          let nx=e.x, ny=e.y;
+          if(Math.abs(player.x-e.x) > Math.abs(player.y-e.y)){
+            nx += player.x>e.x?1:-1;
+          } else {
+            ny += player.y>e.y?1:-1;
+          }
+          if(canWalk(nx,ny)) { e.x=nx; e.y=ny; }
+        }
+      }
+    }
+  }
+
+  function canWalk(x,y){
+    if(x<0||y<0||x>=W||y>=H) return false;
+    if(map[y][x]==='#') return false;
+    for(let e of enemies) if(e.hp>0 && e.x===x && e.y===y) return false;
+    return true;
+  }
+
+  function attack(a,b){
+    let dmg = Math.max(1, a.atk - 0);
+    b.hp -= dmg;
+    log(a.name+' hits you for '+dmg+'.');
+    if(b.hp<=0 && b===player){
+      gameOver=true; state='end';
+      log('You died... GAME OVER');
+    }
+  }
+
+  function playerAttack(e){
+    let dmg = Math.max(1, player.atk);
+    e.hp -= dmg;
+    log('You hit '+e.name+' for '+dmg+'.');
+    if(e.hp<=0){
+      log(e.name+' dies.');
+      player.xp += e.xp;
+      if(player.xp >= player.lvl*10){
+        player.xp -= player.lvl*10;
+        player.lvl++;
+        player.maxhp += 5; player.hp += 5; player.atk += 2;
+        log('Level up! Lv'+player.lvl);
+      }
+    }
+  }
+
+  function tryMove(dx,dy){
+    if(state!=='play') return;
+    let nx=player.x+dx, ny=player.y+dy;
+    if(nx<0||ny<0||nx>=W||ny>=H) return;
+    if(map[ny][nx]==='#') return;
+    let target = enemies.find(e=>e.hp>0 && e.x===nx && e.y===ny);
+    if(target){
+      playerAttack(target);
+      enemyTurn();
+      computeFOV();
+      return;
+    }
+    player.x=nx; player.y=ny;
+    let it = items.find(i=>i.x===nx && i.y===ny);
+    if(it){
+      player.inv.push(it);
+      items = items.filter(x=>x!==it);
+      log('Picked up '+it.name+'.');
+    }
+    enemyTurn();
+    computeFOV();
+  }
+
+  function useItem(slot){
+    let it = player.inv[slot];
+    if(!it) return;
+    if(it.type==='heal'){
+      player.hp = Math.min(player.maxhp, player.hp+it.val);
+      log('Used '+it.name+'. HP restored.');
+    } else if(it.type==='weapon'){
+      player.atk += it.val;
+      log('Equipped '+it.name+'. Atk +'+it.val+'.');
+    }
+    player.inv.splice(slot,1);
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.font = '16px monospace';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    for(let y=0;y<H;y++){
+      for(let x=0;x<W;x++){
+        if(!explored[y][x]) continue;
+        let px=x*TILE+10, py=y*TILE+10;
+        if(visible[y][x]){
+          if(map[y][x]==='#') { ctx.fillStyle='#555'; ctx.fillText('#',px,py); }
+          else if(map[y][x]==='>') { ctx.fillStyle='#ff0'; ctx.fillText('>',px,py); }
+          else { ctx.fillStyle='#333'; ctx.fillText('.',px,py); }
+        } else {
+          if(map[y][x]==='#') { ctx.fillStyle='#222'; ctx.fillText('#',px,py); }
+          else if(map[y][x]==='>') { ctx.fillStyle='#660'; ctx.fillText('>',px,py); }
+          else { ctx.fillStyle='#1a1a1a'; ctx.fillText('.',px,py); }
+        }
+      }
+    }
+    for(let it of items){
+      if(visible[it.y][it.x]){
+        ctx.fillStyle='#0ff';
+        ctx.fillText(it.ch, it.x*TILE+10, it.y*TILE+10);
+      }
+    }
+    for(let e of enemies){
+      if(e.hp>0 && visible[e.y][e.x]){
+        ctx.fillStyle = e.track? '#f55':'#fa0';
+        ctx.fillText(e.ch, e.x*TILE+10, e.y*TILE+10);
+      }
+    }
+    if(visible[player.y][player.x]){
+      ctx.fillStyle='#fff';
+      ctx.fillText('@', player.x*TILE+10, player.y*TILE+10);
+    }
+  }
+
+  function updateHUD(){
+    statEl.innerHTML =
+      'HP: '+player.hp+'/'+player.maxhp+'<br>'+
+      'Lv: '+player.lvl+'<br>'+
+      'XP: '+player.xp+'/'+(player.lvl*10)+'<br>'+
+      'Atk: '+player.atk+'<br>'+
+      'Floor: '+floor+'/3';
+    invEl.innerHTML = player.inv.length? player.inv.map((it,i)=>(i+1)+': '+it.name).join('<br>') : 'Empty';
+  }
+
+  function loop(){
+    if(state==='play'){
+      draw();
+      updateHUD();
+    } else if(state==='end'){
+      draw();
+      ctx.fillStyle='rgba(0,0,0,0.7)';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle = cleared? '#0f0':'#f00';
+      ctx.font='24px monospace';
+      ctx.fillText(cleared?'CLEAR!':'GAME OVER', canvas.width/2, canvas.height/2-20);
+      ctx.fillStyle='#fff';
+      ctx.font='14px monospace';
+      ctx.fillText('Press R to Restart', canvas.width/2, canvas.height/2+10);
+    }
+    requestAnimationFrame(loop);
+  }
+
+  document.addEventListener('keydown', e=>{
+    if(state==='title'){
+      if(e.key==='Enter'||e.key===' '){
+        state='play'; titleEl.classList.add('hidden'); newGame();
+      }
+      return;
+    }
+    if(state==='end'){
+      if(e.key==='r'||e.key==='R'){
+        state='play'; newGame();
+      }
+      return;
+    }
+    if(e.key==='r'||e.key==='R'){ state='play'; newGame(); return; }
+    if(['ArrowUp','w','W'].includes(e.key)) tryMove(0,-1);
+    else if(['ArrowDown','s','S'].includes(e.key)) tryMove(0,1);
+    else if(['ArrowLeft','a','A'].includes(e.key)) tryMove(-1,0);
+    else if(['ArrowRight','d','D'].includes(e.key)) tryMove(1,0);
+    else if(e.key==='Enter'||e.key==='>') descend();
+    else if(e.key>='1'&&e.key<='9') useItem(parseInt(e.key)-1);
+  });
+
+  loop();
+})();
+</script>
+</body>
+</html>

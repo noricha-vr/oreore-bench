@@ -50,6 +50,13 @@ MODEL_INFO = {
         "color": "#4D6BFE",
         "color_dark": "#354FC7",
     },
+    "hy3-t512": {
+        "label": "Hy3 T512 MLX",
+        "provider": "avlp12 / Tencent",
+        "type": "ローカル LLM",
+        "color": "#7C3AED",
+        "color_dark": "#5B21B6",
+    },
 }
 
 TEMPLATE = """<!DOCTYPE html>
