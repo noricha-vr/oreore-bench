@@ -323,9 +323,9 @@ def render(model_dir: Path) -> bool:
         provider=info["provider"],
         type_label=info["type"],
         model_label=info["label"],
-        parse_pass_count=meta.get("parse_pass_count", 0),
-        levels_total=meta.get("levels_total", 5),
-        score_pct=meta.get("score_pct", 0),
+        parse_pass_count=escape(str(meta.get("parse_pass_count", 0))),
+        levels_total=escape(str(meta.get("levels_total", 5))),
+        score_pct=escape(str(meta.get("score_pct", 0))),
         body=render_body(meta, raw_by_level(data)),
     )
     (model_dir / "output.html").write_text(html_text, encoding="utf-8")

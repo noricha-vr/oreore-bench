@@ -272,6 +272,10 @@ uv run scripts/json-ladder-run.py --model <slug> --backend local --base-url http
 # 検証 + HTML ビルド
 node scripts/validate-json-ladder.mjs --model <slug>
 python3 scripts/build-json-ladder-html.py --model <slug>
+
+# runs.json への集約 + スキーマ検証（これを忘れると validate-runs.mjs が missing key で落ちる）
+uv run scripts/build-runs-json.py
+node scripts/validate-runs.mjs
 ```
 
 openrouter 経路は打ち切り（truncation）を検出した時点で中止し、公開ファイルを一切書かない。

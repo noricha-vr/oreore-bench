@@ -197,6 +197,11 @@ async function loadAnswerKey() {
     if (!item || typeof item !== 'object') continue;
     byLevel.set(item.level, Array.isArray(item.fields) ? item.fields : []);
   }
+  // answer-key のレベル欠損は「満点でも 0 点」として黙って平均に混ざるため、明示エラーで落とす
+  const missing = EXPECTED_LEVELS.filter(l => !byLevel.has(l) || byLevel.get(l).length === 0);
+  if (missing.length > 0) {
+    throw new Error(`answer-key is missing fields for level(s): ${missing.join(', ')}`);
+  }
   return byLevel;
 }
 

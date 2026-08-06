@@ -1,5 +1,5 @@
 {
-  "description": "json-ladder の採点キー。path は dot + [i] の JSON-path-lite。type: string/integer/boolean/null/array_length。string は normalize（default: NFKC+空白圧縮 / exact: 前後 strip のみ）後に比較。primary 一致 1.0、also_acceptable 一致 0.5。",
+  "description": "json-ladder の採点キー。path は dot + [i] の JSON-path-lite。type: string/integer/boolean/null/array_length。string は normalize（default: NFKC+空白圧縮 / exact: 前後 strip のみ）後に比較。primary 一致 1.0、also_acceptable 一致 0.5。配列は array_length（件数）+ インデックス付き path（順序込み）で採点する（順序ズレは要素ごとに減点される設計）。L5 の characters[].name に also_acceptable が無いのは意図的（L5 は設問で『下の名前』を明示しており、より厳格に問う）。",
   "levels": [
     {
       "level": 1,

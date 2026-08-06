@@ -1,3 +1,7 @@
+# Prevent MIME sniffing from promoting model-generated artifacts (raw-l*.txt / output.json) to HTML.
+/*
+  X-Content-Type-Options: nosniff
+
 # Keep raw model-generated HTML in a unique origin, even when opened directly.
 /:theme/:model/
   Content-Security-Policy: sandbox allow-scripts

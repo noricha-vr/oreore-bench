@@ -54,6 +54,23 @@ def load_mlx_helpers() -> Any:
 OPENROUTER = load_openrouter_helpers()
 LOCAL = load_mlx_helpers()
 
+# importlib 経由の再利用は依存シンボルが暗黙になるため、起動時に契約を検証して
+# ヘルパー側の将来変更（リネーム・削除）を実行前に検出する
+_REQUIRED_OPENROUTER = (
+    "DEFAULT_MAX_TOKENS", "JSON_PROMPT_SUFFIX", "NAME_RE", "OpenRouterError",
+    "TruncatedOutputError", "UsageMissingError", "build_run_json", "call_openrouter",
+    "check_not_truncated", "load_api_key", "load_pricing", "read_usage",
+    "resolve_api_url", "resolve_model_id",
+)
+_REQUIRED_LOCAL = (
+    "DEFAULT_BASE_URL", "DEFAULT_TIMEOUT_SECONDS", "MlxApiError", "UsageMissingError",
+    "build_local_cost", "call_model", "preflight", "resolve_base_url",
+)
+for _module, _names in ((OPENROUTER, _REQUIRED_OPENROUTER), (LOCAL, _REQUIRED_LOCAL)):
+    _missing = [n for n in _names if not hasattr(_module, n)]
+    if _missing:
+        raise RuntimeError(f"{_module.__name__}: missing required helpers: {_missing}")
+
 
 def build_level_prompt(theme_dir: Path, level: int) -> str:
     """Build one frozen json-ladder request with level and input substitutions."""
