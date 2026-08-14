@@ -648,6 +648,7 @@ window.MODELS = {
 window.ENTRIES = [
             { theme: "lp-nishibi", model: "gemma-4-12b-qat",     runner: "LM Studio API",       note: "最軽量 12B での 1 ショット LP。約 13KB。31B と比較して選択肢。", kind: "html" },
             { theme: "lp-nishibi", model: "gemma-4-31b",         runner: "gptme (LM Studio)",   note: "ローカルLLM単体の1ショットLP。418行/14KB。", kind: "html" },
+            { theme: "lp-nishibi", model: "qwen3-8-27b",         runner: "Ollama API",          note: "JSエラー0。セリフ体+明朝の余白設計・時刻連動の表示まで作り込み完成度は高い。ただし写真に picsum.photos の外部ダミー画像を使っており（他モデルは Google Fonts のみ）オフラインでは崩れる。前置き文が混入。974行/54KB・38,734 tokens・33.7分。", kind: "html" },
             { theme: "lp-nishibi", model: "claude-opus-4-8",     runner: "Claude Agent SDK",    note: "ローマ数字章番号、SVG西日アーク、メタジョーク3つ。1342行/40KB。", kind: "html" },
             { theme: "lp-nishibi", model: "grok-4-5",            runner: "grok CLI (single-turn)", note: "全7セクション準拠。生成グラデ背景+細身セリフで上品にまとまる。714行/26KB。", kind: "html" },
             { theme: "othello",    model: "gemma-4-12b-qat",     runner: "LM Studio API",       note: "最軽量 12B での 1 ショットオセロ。約 10KB。", kind: "html" },

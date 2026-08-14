@@ -1,0 +1,975 @@
+# NISHIBI（西日）— 凍結プロンプト実装版
+
+以下、単一 `index.html` で完結します。開いた瞬間から「本物」であるための仕込みとして、**リアルタイム時計・現在の時間帯に応じたステータス表示（16:00–19:30 のみ営業という設定をページが守る）**、予約フォームからの予約票発行（当日の西日提供時刻・天候予報を日付から算出）、UV 曲線グラフの描画アニメーションなどを組み込みました。
+
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NISHIBI 西日 — 天然日焼けスタジオ</title>
+<meta name="description" content="紫外線ランプ不使用。窓から差し込む夕方の光だけで焼く、天然日焼けスタジオ。東京・南青山。">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Shippori+Mincho+B1:wght@200;300;400;500;700&family=Zen+Kaku+Gothic+New:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   NISHIBI — 西日 / 天然日焼けスタジオ
+   Palette: dusk orange, terracotta, warm beige, deep brown
+   ============================================================ */
+:root{
+  --paper:#F2E9DB;
+  --paper-2:#EADCC6;
+  --ticket:#F5ECDD;
+  --ink:#241610;
+  --ink-deep:#1A0F09;
+  --ink-soft:#4A3423;
+  --terra:#BC5B2E;
+  --seal:#A33B25;
+  --amber:#D89A57;
+  --glow:#F7DFAE;
+  --line:rgba(36,22,16,.16);
+  --line-strong:rgba(36,22,16,.34);
+  --line-dark:rgba(242,233,219,.16);
+  --muted:rgba(74,52,35,.72);
+  --muted-dark:rgba(242,233,219,.58);
+  --f-latin:'Cormorant Garamond',serif;
+  --f-serif:'Shippori Mincho B1','Hiragino Mincho ProN',serif;
+  --f-body:'Zen Kaku Gothic New','Hiragino Kaku Gothic ProN',sans-serif;
+  --pad:clamp(24px,5vw,72px);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--f-body);
+  font-weight:300;
+  background:var(--paper);
+  color:var(--ink);
+  line-height:1.9;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{background:var(--amber);color:var(--ink-deep)}
+img{display:block;width:100%;height:100%;object-fit:cover}
+a{color:inherit;text-decoration:none}
+button,input{font-family:inherit;font-size:inherit;color:inherit}
+section{scroll-margin-top:96px;position:relative}
+
+.container{max-width:1380px;margin:0 auto;padding-left:var(--pad);padding-right:var(--pad)}
+.section{padding-block:clamp(96px,12vw,170px)}
+
+/* ---------- grain overlay ---------- */
+.grain{
+  position:fixed;inset:-50%;width:200%;height:200%;
+  pointer-events:none;z-index:80;opacity:.07;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grainShift 1.4s steps(3) infinite;
+}
+@keyframes grainShift{
+  0%{transform:translate(0,0)} 33%{transform:translate(-2%,1.5%)}
+  66%{transform:translate(1.5%,-1%)} 100%{transform:translate(0,0)}
+}
+
+/* ---------- reveal system ---------- */
+.reveal{opacity:0;transform:translateY(30px);transition:opacity 1.1s ease var(--d,0s),transform 1.1s cubic-bezier(.22,1,.36,1) var(--d,0s)}
+.reveal.in{opacity:1;transform:none}
+.line-mask{display:block;overflow:hidden}
+.line-inner{display:inline-block;transform:translateY(115%);transition:transform 1.3s cubic-bezier(.22,1,.36,1) var(--d,0s)}
+.in .line-inner,.line-mask.in .line-inner{transform:none}
+
+/* ---------- section head pattern ---------- */
+.sec-head{display:flex;align-items:flex-start;gap:clamp(20px,3vw,40px);margin-bottom:clamp(56px,7vw,96px)}
+.sec-no{font-family:var(--f-latin);font-style:italic;font-weight:300;font-size:clamp(1.6rem,2.6vw,2.4rem);line-height:1;color:var(--terra);padding-top:.35em}
+.sec-head h2{font-family:var(--f-serif);font-weight:300;font-size:clamp(2rem,4.4vw,3.4rem);letter-spacing:.12em;line-height:1.2}
+.sec-latin{font-family:var(--f-latin);font-size:.72rem;letter-spacing:.42em;text-transform:uppercase;color:var(--muted);margin-top:10px}
+.dark-sec .sec-latin,.dark-sec .sci-desc{color:var(--muted-dark)}
+
+/* ---------- horizon divider ---------- */
+.divider{display:flex;align-items:center;gap:18px;padding-inline:var(--pad);max-width:1380px;margin:0 auto}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:currentColor;opacity:.25}
+.divider i{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 14px rgba(216,154,87,.9)}
+
+/* ============================================================ HEADER */
+#siteHeader{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  --hc:rgba(242,233,219,.92);
+  display:flex;align-items:center;justify-content:space-between;gap:24px;
+  padding:20px var(--pad);
+  border-bottom:1px solid transparent;
+  transition:background .5s ease,border-color .5s ease,padding .5s ease;
+}
+#siteHeader.scrolled{
+  --hc:var(--ink);
+  background:rgba(242,233,219,.92);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-bottom-color:var(--line);
+  padding-block:14px;
+}
+.brand{font-family:var(--f-latin);font-weight:500;font-size:1.05rem;letter-spacing:.32em;color:var(--hc);transition:color .5s;display:flex;align-items:baseline;gap:12px}
+.brand-jp{font-family:var(--f-serif);font-weight:300;font-size:.85rem;letter-spacing:.4em;opacity:.7}
+#siteHeader nav{display:flex;gap:clamp(18px,2.6vw,38px)}
+#siteHeader nav a{font-size:.72rem;letter-spacing:.3em;color:var(--hc);opacity:.72;transition:opacity .3s,color .5s;padding-block:4px}
+#siteHeader nav a:hover{opacity:1;border-bottom:1px solid var(--amber)}
+.header-right{display:flex;align-items:center;gap:22px}
+#clockTop{font-family:var(--f-latin);font-size:.85rem;letter-spacing:.14em;color:var(--hc);transition:color .5s;font-variant-numeric:tabular-nums}
+.btn-mini{
+  font-size:.68rem;letter-spacing:.3em;padding:10px 24px;border:1px solid var(--line-strong);
+  color:var(--hc);transition:all .4s;background:transparent;cursor:pointer;display:inline-block;
+}
+#siteHeader:not(.scrolled) .btn-mini{border-color:rgba(242,233,219,.4)}
+.btn-mini:hover{background:var(--amber);color:var(--ink-deep)!important;border-color:var(--amber)}
+
+/* ============================================================ HERO */
+.hero{
+  min-height:100svh;display:flex;align-items:center;position:relative;overflow:hidden;
+  background:linear-gradient(180deg,#170D07 0%,#2A160C 30%,#4E2513 52%,#8A4520 72%,#C4703A 88%,#DE9B58 100%);
+  color:var(--paper);
+}
+.sky{position:absolute;inset:0;pointer-events:none}
+.sun{
+  position:absolute;right:6%;bottom:12%;width:clamp(260px,38vw,540px);aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle at 50% 50%,var(--glow) 0%,#EDB36A 34%,rgba(224,150,80,.5) 55%,transparent 72%);
+  will-change:transform;
+}
+.sun::after{content:'';position:absolute;inset:-45%;border-radius:50%;background:radial-gradient(circle,rgba(237,179,106,.28),transparent 65%)}
+.sky-deep{position:absolute;inset:0;background:linear-gradient(180deg,#120A05 0%,#241209 55%,rgba(36,18,9,.4) 100%);opacity:0}
+.horizon-line{position:absolute;left:0;right:0;bottom:27%;height:1px;background:rgba(242,233,219,.2)}
+
+.hero .container{position:relative;z-index:2;width:100%;padding-top:120px;padding-bottom:120px}
+.hero-kicker{display:flex;align-items:center;gap:18px;font-size:.74rem;letter-spacing:.36em;color:rgba(242,233,219,.75);margin-bottom:clamp(30px,4vw,54px)}
+.hero-kicker::before{content:'';width:48px;height:1px;background:var(--amber)}
+.hero-title{
+  font-family:var(--f-serif);font-weight:200;
+  font-size:clamp(3rem,10.5vw,8.6rem);
+  letter-spacing:.08em;line-height:1.15;margin-bottom:clamp(28px,3.4vw,48px);
+}
+.hero-sub{font-weight:300;font-size:clamp(.95rem,1.4vw,1.12rem);letter-spacing:.14em;line-height:2.3;color:rgba(242,233,219,.82);max-width:34em;margin-bottom:clamp(36px,4vw,56px)}
+.hero-cta-row{display:flex;align-items:center;gap:clamp(24px,3.4vw,48px);flex-wrap:wrap}
+.btn-primary{
+  position:relative;display:inline-flex;align-items:center;gap:16px;overflow:hidden;cursor:pointer;
+  padding:19px 44px;border:1px solid rgba(242,233,219,.5);background:transparent;color:var(--paper);
+  font-size:.78rem;letter-spacing:.3em;transition:color .45s,border-color .45s;
+}
+.btn-primary::before{content:'';position:absolute;inset:0;background:var(--amber);transform:scaleX(0);transform-origin:left;transition:transform .55s cubic-bezier(.22,1,.36,1)}
+.btn-primary:hover{color:var(--ink-deep);border-color:var(--amber)}
+.btn-primary:hover::before{transform:scaleX(1)}
+.btn-primary>*{position:relative;z-index:1}
+.btn-primary .arr{transition:transform .45s cubic-bezier(.22,1,.36,1);font-family:var(--f-latin)}
+.btn-primary:hover .arr{transform:translateX(7px)}
+.hero-status{font-size:.8rem;letter-spacing:.16em;color:rgba(242,233,219,.62);min-height:1.5em}
+
+.hero-vertical{
+  position:absolute;right:var(--pad);top:50%;transform:translateY(-50%);z-index:2;
+  writing-mode:vertical-rl;font-family:var(--f-serif);font-weight:300;font-size:.92rem;
+  letter-spacing:.55em;color:rgba(242,233,219,.6);
+}
+.scroll-cue{position:absolute;left:var(--pad);bottom:34px;z-index:2;display:flex;flex-direction:column;align-items:center;gap:14px}
+.scroll-cue span{width:1px;height:56px;background:rgba(242,233,219,.28);position:relative;overflow:hidden}
+.scroll-cue span::after{content:'';position:absolute;left:0;top:-40%;width:100%;height:40%;background:var(--amber);animation:cueDrop 2.4s cubic-bezier(.65,0,.35,1) infinite}
+@keyframes cueDrop{to{top:110%}}
+.scroll-cue em{font-style:normal;font-size:.6rem;letter-spacing:.4em;color:rgba(242,233,219,.5);writing-mode:vertical-rl}
+
+/* ============================================================ TICKER */
+.ticker{background:#1E120B;border-top:1px solid var(--line-dark);border-bottom:1px solid var(--line-dark);overflow:hidden;padding-block:17px;position:relative;z-index:3}
+.ticker-track{display:inline-flex;white-space:nowrap;animation:tickerMove 48s linear infinite;will-change:transform}
+.ticker:hover .ticker-track{animation-play-state:paused}
+@keyframes tickerMove{to{transform:translateX(-50%)}}
+.tk{font-size:.76rem;letter-spacing:.2em;color:rgba(242,233,219,.72);padding-inline:8px;font-variant-numeric:tabular-nums}
+.tk-dot{color:var(--terra);padding-inline:10px;font-family:var(--f-latin)}
+
+/* ============================================================ PHILOSOPHY */
+.philosophy .container{display:grid;grid-template-columns:minmax(280px,4fr) 7fr;gap:clamp(40px,6vw,110px);align-items:start}
+.philo-sticky{position:sticky;top:130px}
+.philo-prose p{
+  font-family:var(--f-serif);font-weight:300;font-size:clamp(1.2rem,1.9vw,1.55rem);
+  line-height:2.2;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:1.4em;max-width:26em;
+}
+.philo-prose p:first-child{font-size:clamp(1.35rem,2.2vw,1.8rem)}
+.philo-figure{margin-top:clamp(48px,5vw,72px)}
+.kb-frame{overflow:hidden;background:#D9C6A8}
+.kb-frame img{transform-origin:center;animation:kenburns 20s ease-in-out infinite alternate}
+@keyframes kenburns{from{transform:scale(1) translateY(0)}to{transform:scale(1.08) translateY(-1.5%)}}
+.philo-figure .kb-frame{aspect-ratio:16/10}
+.fig-cap{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);margin-top:14px;padding-top:12px;font-size:.78rem;letter-spacing:.14em;color:var(--muted)}
+.fig-cap em{font-family:var(--f-latin);font-style:italic;font-size:.85rem}
+
+/* ============================================================ PLANS */
+.plans-head-row{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:clamp(40px,5vw,64px)}
+.plan-list{border-bottom:1px solid var(--line)}
+.plan-row{
+  position:relative;display:grid;align-items:center;overflow:hidden;cursor:pointer;
+  grid-template-columns:72px minmax(0,1.1fr) minmax(0,.95fr) auto auto;
+  grid-template-areas:"no name perks price cta";
+  gap:0 clamp(20px,3vw,44px);
+  padding:clamp(30px,3.6vw,46px) 10px;border-top:1px solid var(--line);
+}
+.plan-row::before{
+  content:'';position:absolute;top:50%;left:-160px;width:200px;height:200px;border-radius:50%;
+  transform:translateY(-50%);pointer-events:none;opacity:0;transition:left .9s cubic-bezier(.22,1,.36,1),opacity .5s;
+  background:radial-gradient(circle,rgba(237,179,106,.3),transparent 68%);
+}
+.plan-row:hover::before{left:calc(100% - 40px);opacity:1}
+.plan-no{grid-area:no;font-family:var(--f-latin);font-style:italic;font-weight:300;font-size:1.7rem;color:var(--terra)}
+.plan-name{grid-area:name;position:relative;z-index:1}
+.plan-tag{display:inline-block;font-size:.58rem;letter-spacing:.32em;color:var(--terra);border:1px solid rgba(188,91,46,.45);padding:4px 10px 3px;margin-bottom:12px}
+.plan-name h3{font-family:var(--f-serif);font-weight:400;font-size:clamp(1.5rem,2.8vw,2.3rem);letter-spacing:.1em;transition:letter-spacing .6s ease}
+.plan-row:hover .plan-name h3{letter-spacing:.16em}
+.plan-latin{font-family:var(--f-latin);font-size:.74rem;letter-spacing:.36em;color:var(--muted);margin-top:8px;text-transform:uppercase}
+.plan-desc{grid-area:name;width:100%;max-width:42ch;font-size:.9rem;color:var(--muted);margin-top:14px;line-height:2.1;position:relative;z-index:1}
+.plan-perks{grid-area:perks;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:.82rem;letter-spacing:.06em;color:var(--ink-soft)}
+.plan-perks li::before{content:'—';color:var(--terra);margin-right:12px}
+.plan-price{grid-area:price;text-align:right;position:relative;z-index:1}
+.plan-price b{font-family:var(--f-latin);font-weight:400;font-size:clamp(1.5rem,2.4vw,2rem);letter-spacing:.04em;display:block;line-height:1.2}
+.plan-price small{font-size:.68rem;letter-spacing:.2em;color:var(--muted)}
+.plan-cta{
+  grid-area:cta;background:none;border:none;cursor:pointer;text-align:left;position:relative;z-index:1;
+  font-size:.74rem;letter-spacing:.24em;color:var(--ink);padding:6px 0;display:inline-flex;align-items:center;gap:10px;
+}
+.plan-cta::after{content:'';position:absolute;left:0;bottom:0;height:1px;width:100%;background:var(--terra);transform:scaleX(.35);transform-origin:left;transition:transform .5s cubic-bezier(.22,1,.36,1)}
+.plan-cta:hover::after{transform:scaleX(1)}
+.plan-cta .arr{font-family:var(--f-latin);transition:transform .4s}
+.plan-cta:hover .arr{transform:translateX(5px)}
+.plans-note{margin-top:36px;font-size:.78rem;letter-spacing:.08em;color:var(--muted);line-height:2.3}
+
+/* ============================================================ SCIENCE (dark) */
+.science{background:#241610;color:var(--paper)}
+.science .container{display:grid;grid-template-columns:minmax(300px,5fr) 7fr;gap:clamp(48px,6vw,110px);align-items:start}
+.sci-sticky{position:sticky;top:130px}
+.sci-lede{font-family:var(--f-serif);font-weight:300;font-size:clamp(1.1rem,1.7vw,1.4rem);line-height:2.2;letter-spacing:.06em;color:rgba(242,233,219,.85);max-width:20em;margin-top:34px}
+.chart-card{border:1px solid var(--line-dark);padding:clamp(20px,3vw,36px);margin-bottom:clamp(48px,5vw,72px)}
+.chart-head{display:flex;justify-content:space-between;font-size:.66rem;letter-spacing:.3em;color:var(--muted-dark);text-transform:uppercase;margin-bottom:18px}
+#uvChart{width:100%;height:auto;display:block}
+.uv-line{fill:none;stroke:var(--amber);stroke-width:2}
+.win-rect{fill:rgba(188,91,46,.15);stroke:rgba(216,154,87,.4);stroke-dasharray:3 5}
+.win-label{font-family:var(--f-body);font-size:10px;letter-spacing:.2em;fill:rgba(242,233,219,.6)}
+.grid line{stroke:rgba(242,233,219,.08)}
+.axis text{font-family:var(--f-latin);font-size:12px;letter-spacing:.1em;fill:rgba(242,233,219,.45)}
+.uv-marker{stroke:rgba(242,233,219,.4);stroke-dasharray:2 4;opacity:0}
+.uv-dot{fill:var(--glow);opacity:0}
+.sci-item{border-top:1px solid var(--line-dark);padding-block:clamp(26px,3vw,40px)}
+.sci-num{font-family:var(--f-latin);font-weight:300;font-size:clamp(2.8rem,5.4vw,4.4rem);line-height:1;color:var(--amber);letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.sci-label{margin-top:14px;font-size:.76rem;letter-spacing:.3em;color:rgba(242,233,219,.85)}
+.sci-desc{margin-top:10px;font-size:.86rem;line-height:2.1;max-width:44ch}
+
+/* ============================================================ STUDIO */
+.studio-grid{display:grid;grid-template-columns:5fr 7fr;gap:clamp(40px,6vw,96px);align-items:start;margin-bottom:clamp(48px,6vw,80px)}
+.studio-img .kb-frame{aspect-ratio:3/4}
+.studio-feats{list-style:none}
+.studio-feats li{display:grid;grid-template-columns:56px 1fr;gap:20px;padding-block:clamp(22px,2.8vw,34px);border-top:1px solid var(--line);transition:padding-left .5s cubic-bezier(.22,1,.36,1)}
+.studio-feats li:last-child{border-bottom:1px solid var(--line)}
+.studio-feats li:hover{padding-left:14px}
+.feat-no{font-family:var(--f-latin);font-style:italic;font-weight:300;font-size:1.2rem;color:var(--terra);padding-top:.3em}
+.feat-body h4{font-family:var(--f-serif);font-weight:500;font-size:clamp(1.05rem,1.6vw,1.3rem);letter-spacing:.12em;margin-bottom:8px}
+.feat-body p{font-size:.86rem;color:var(--muted);line-height:2.1;max-width:48ch}
+.studio-stats{display:flex;flex-wrap:wrap;border-top:1px solid var(--line-strong);border-bottom:1px solid var(--line-strong)}
+.studio-stats span{flex:1 1 auto;padding:20px clamp(16px,3vw,40px);font-size:.72rem;letter-spacing:.28em;color:var(--muted);text-transform:uppercase;border-left:1px solid var(--line)}
+.studio-stats span:first-child{border-left:none}
+.studio-stats b{display:block;font-family:var(--f-latin);font-weight:400;font-size:1.5rem;letter-spacing:.06em;color:var(--ink);margin-bottom:4px}
+.studio-wide .kb-frame{aspect-ratio:21/8;margin-top:clamp(48px,6vw,80px)}
+
+/* ============================================================ VOICES */
+.voices{background:var(--paper-2)}
+.voice-list{display:flex;flex-direction:column;gap:clamp(56px,7vw,96px);max-width:1100px}
+.voice{border-top:1px solid var(--line-strong);padding-top:30px;max-width:640px}
+.voice:nth-child(2){margin-left:auto;margin-right:6%}
+.voice:nth-child(3){margin-left:14%}
+.voice blockquote{font-family:var(--f-serif);font-weight:300;font-size:clamp(1.35rem,2.4vw,1.85rem);line-height:2;letter-spacing:.06em;color:var(--ink)}
+.voice figcaption{display:flex;align-items:baseline;gap:18px;margin-top:22px}
+.voice .who{font-size:.82rem;font-weight:500;letter-spacing:.24em}
+.voice .meta{font-family:var(--f-latin);font-style:italic;font-size:.85rem;color:var(--muted)}
+.voice .idx{font-family:var(--f-latin);font-style:italic;color:var(--terra);margin-right:6px}
+
+/* ============================================================ NOTES */
+.notes-wrap{max-width:980px;margin:0 auto}
+.notes-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 clamp(40px,5vw,72px)}
+.notes-grid li{list-style:none;border-top:1px solid var(--line);padding-block:20px;font-size:.86rem;line-height:2.1;color:var(--ink-soft);letter-spacing:.04em}
+.notes-grid li::before{content:'※';color:var(--terra);margin-right:12px}
+
+/* ============================================================ RESERVE (dark) */
+.reserve{
+  background:radial-gradient(900px 520px at 85% -8%,rgba(216,154,87,.16),transparent 62%),#1E120B;
+  color:var(--paper);color-scheme:dark;
+}
+.reserve .sec-no{color:var(--amber)}
+.reserve-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(48px,6vw,96px);align-items:start}
+.reserve-lede{font-family:var(--f-serif);font-weight:300;font-size:clamp(1.15rem,1.9vw,1.5rem);line-height:2.2;letter-spacing:.08em;color:rgba(242,233,219,.88);max-width:22em;margin-bottom:clamp(44px,5vw,64px)}
+.field{margin-bottom:clamp(28px,3.4vw,40px)}
+.field label{display:block;font-size:.66rem;letter-spacing:.34em;color:rgba(242,233,219,.55);text-transform:uppercase;margin-bottom:12px}
+.field input[type=text],.field input[type=date]{
+  width:100%;background:transparent;border:none;border-bottom:1px solid var(--line-dark);
+  padding:12px 2px;font-size:1rem;letter-spacing:.1em;color:var(--paper);transition:border-color .4s;
+}
+.field input:focus{outline:none;border-bottom-color:var(--amber)}
+.slot-opts{display:flex;gap:14px;flex-wrap:wrap}
+.slot-opt input{position:absolute;opacity:0;pointer-events:none}
+.slot-opt span{
+  display:block;padding:15px 22px 13px;border:1px solid var(--line-dark);cursor:pointer;
+  font-size:.86rem;letter-spacing:.2em;color:rgba(242,233,219,.6);transition:all .4s;text-align:center;flex:1 1 auto;min-width:120px;
+}
+.slot-opt span small{display:block;font-family:var(--f-latin);font-size:.7rem;letter-spacing:.2em;margin-top:5px;opacity:.65}
+.slot-opt input:checked+span{border-color:var(--amber);color:var(--paper);background:rgba(216,154,87,.09)}
+.slot-opt span:hover{border-color:rgba(216,154,87,.6)}
+#formMsg{min-height:1.6em;font-size:.8rem;letter-spacing:.14em;color:#E8A87C;margin-top:18px}
+.reserve .btn-primary{margin-top:8px}
+.hint{font-size:.72rem;letter-spacing:.16em;color:rgba(242,233,219,.4);margin-top:16px}
+
+#ticketBox{min-height:460px;border:1px dashed var(--line-dark);display:flex;align-items:center;justify-content:center;padding:clamp(20px,3vw,40px)}
+.ticket-placeholder{text-align:center;color:rgba(242,233,219,.4);font-size:.86rem;letter-spacing:.2em;line-height:2.4}
+.ticket{
+  position:relative;background:var(--ticket);color:var(--ink);width:100%;padding:clamp(28px,3vw,40px);
+  animation:ticketIn .8s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes ticketIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.ticket::before,.ticket::after{content:'';position:absolute;top:74px;width:20px;height:20px;border-radius:50%;background:#1E120B}
+.ticket::before{left:-11px}.ticket::after{right:-11px}
+.tk-head{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:22px;margin-bottom:24px;border-bottom:1px dashed rgba(36,22,16,.4);font-size:.78rem;letter-spacing:.26em}
+.tk-head em{font-family:var(--f-latin);font-style:italic;font-size:.9rem;color:var(--terra)}
+.ticket dl div{display:grid;grid-template-columns:150px 1fr;gap:16px;padding-block:13px;border-bottom:1px solid rgba(36,22,16,.1);font-size:.9rem}
+.ticket dt{font-size:.7rem;letter-spacing:.24em;color:var(--muted);padding-top:.35em;text-transform:uppercase}
+.ticket dd{font-family:var(--f-serif);font-weight:400;letter-spacing:.06em;font-variant-numeric:tabular-nums}
+.tk-note{margin-top:22px;font-size:.8rem;letter-spacing:.14em;color:var(--ink-soft)}
+.seal{
+  position:absolute;top:26px;right:26px;width:78px;height:78px;border:2px solid var(--seal);color:var(--seal);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  transform:rotate(-12deg);opacity:.9;animation:sealIn .5s cubic-bezier(.34,1.56,.64,1) .45s both;
+}
+@keyframes sealIn{from{transform:rotate(-28deg) scale(1.7);opacity:0}to{transform:rotate(-12deg) scale(1);opacity:.9}}
+.seal b{font-family:var(--f-serif);font-weight:700;font-size:1.35rem;letter-spacing:.14em;line-height:1.15}
+.seal i{font-style:normal;font-family:var(--f-latin);font-size:.5rem;letter-spacing:.32em}
+
+/* ============================================================ FOOTER */
+footer{background:var(--ink-deep);color:rgba(242,233,219,.75);padding-top:clamp(70px,8vw,110px)}
+.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:clamp(36px,4vw,64px);padding-bottom:clamp(56px,6vw,80px)}
+.foot-brand .brand{color:var(--paper);font-size:1.3rem}
+.foot-tag{font-family:var(--f-serif);font-weight:300;font-size:1.02rem;letter-spacing:.2em;margin-top:26px;color:rgba(242,233,219,.85)}
+.foot-col h5{font-size:.64rem;letter-spacing:.36em;text-transform:uppercase;color:var(--amber);margin-bottom:22px;font-weight:400}
+.foot-col p,.foot-col a{display:block;font-size:.84rem;line-height:2.3;letter-spacing:.08em}
+.foot-col a:hover{color:var(--amber)}
+.foot-bottom{border-top:1px solid var(--line-dark);padding-block:26px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:.7rem;letter-spacing:.2em;color:rgba(242,233,219,.4)}
+
+/* ============================================================ RESPONSIVE */
+@media (max-width:1100px){
+  .hero-vertical{display:none}
+}
+@media (max-width:980px){
+  .philosophy .container,.science .container,.studio-grid,.reserve-grid{grid-template-columns:1fr}
+  .philo-sticky,.sci-sticky{position:static;margin-bottom:clamp(40px,5vw,64px)}
+  .plan-row{
+    grid-template-columns:56px 1fr auto;
+    grid-template-areas:"no name price" "no perks cta";
+    row-gap:22px;padding-inline:4px;
+  }
+  .plan-desc{grid-area:name}
+  .studio-img .kb-frame{aspect-ratio:16/10}
+  .voice:nth-child(2),.voice:nth-child(3){margin-left:0;margin-right:0}
+  #ticketBox{min-height:0;border-style:solid}
+}
+@media (max-width:720px){
+  #siteHeader nav,#clockTop{display:none}
+  .notes-grid{grid-template-columns:1fr}
+  .foot-grid{grid-template-columns:1fr 1fr}
+  .studio-stats span{flex-basis:50%;border-top:1px solid var(--line)}
+  .ticket dl div{grid-template-columns:1fr;gap:4px}
+  .seal{width:62px;height:62px;top:18px;right:18px}
+  .scroll-cue{display:none}
+}
+
+/* ============================================================ REDUCED MOTION */
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .reveal,.line-inner{opacity:1!important;transform:none!important}
+  .ticker-track{animation:none}
+  .kb-frame img{animation:none}
+  .grain{animation:none}
+}
+</style>
+</head>
+
+<body id="top">
+<div class="grain" aria-hidden="true"></div>
+
+<!-- ================= HEADER ================= -->
+<header id="siteHeader">
+  <a class="brand" href="#top">NISHIBI<span class="brand-jp">西日</span></a>
+  <nav aria-label="メイン">
+    <a href="#philosophy">哲学</a>
+    <a href="#plans">プラン</a>
+    <a href="#science">科学</a>
+    <a href="#studio">スタジオ</a>
+    <a href="#voices">声</a>
+  </nav>
+  <div class="header-right">
+    <span id="clockTop" aria-hidden="true">--:--:--</span>
+    <a href="#reserve" class="btn-mini">予約</a>
+  </div>
+</header>
+
+<main>
+<!-- ================= HERO ================= -->
+<section class="hero" id="hero">
+  <div class="sky" aria-hidden="true">
+    <div class="sun" id="sun"></div>
+    <div class="horizon-line"></div>
+    <div class="sky-deep" id="skyDeep"></div>
+  </div>
+
+  <div class="container">
+    <p class="hero-kicker line-mask"><span class="line-inner">天然日焼けスタジオ — 東京・南青山</span></p>
+    <h1 class="hero-title line-mask" style="--d:.15s"><span class="line-inner">西日で、焼く。</span></h1>
+    <p class="hero-sub reveal" style="--d:.45s">紫外線ランプは使わない。窓から差し込む夕方の光だけで、<br>あなたの肌はゆっくりと茜色へ。</p>
+    <div class="hero-cta-row reveal" style="--d:.65s">
+      <a href="#reserve" class="btn-primary"><span>西日を予約する</span><span class="arr">→</span></a>
+      <span class="hero-status" id="heroStatus" role="status"></span>
+    </div>
+  </div>
+
+  <p class="hero-vertical" aria-hidden="true">一日のうち、最も誠実な光。</p>
+  <div class="scroll-cue" aria-hidden="true"><em>SCROLL</em><span></span></div>
+</section>
+
+<!-- ================= TICKER ================= -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+
+<!-- ================= PHILOSOPHY ================= -->
+<section class="philosophy section" id="philosophy">
+  <div class="container">
+    <div class="philo-sticky">
+      <header class="sec-head" style="margin-bottom:0">
+        <span class="sec-no">01</span>
+        <div>
+          <h2 class="line-mask"><span class="line-inner">哲学</span></h2>
+          <p class="sec-latin">Philosophy — Why the West Sun</p>
+        </div>
+      </header>
+    </div>
+
+    <div>
+      <div class="philo-prose">
+        <p class="line-mask" style="--d:.05s"><span class="line-inner">午後の光は、まだ仕事をしている。</span></p>
+        <p class="line-mask" style="--d:.2s"><span class="line-inner">西日は違う。一日の終わりにだけ現れ、何の説明もせずに、ただ当たる。</span></p>
+        <p class="line-mask" style="--d:.35s"><span class="line-inner">角度が低くなるほど、光は丁寧になる。焼くのではなく、浴びる。</span></p>
+        <p class="line-mask" style="--d:.5s"><span class="line-inner">NISHIBI は、その違いのために存在する。</span></p>
+      </div>
+
+      <figure class="philo-figure reveal" style="--d:.2s">
+        <div class="kb-frame">
+          <img src="https://picsum.photos/seed/west-sun-window-light/1400/875" alt="窓から差し込む夕方の光が床に落ちている様子" loading="lazy">
+        </div>
+        <figcaption class="fig-cap"><span>窓から入る光、17時42分。再現は不可能です。</span><em>FIG. 01</em></figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PLANS ================= -->
+<section class="plans section" id="plans">
+  <div class="container">
+    <header class="sec-head">
+      <span class="sec-no">02</span>
+      <div>
+        <h2 class="line-mask"><span class="line-inner">プラン</span></h2>
+        <p class="sec-latin">Service — Three Windows of Light</p>
+      </div>
+    </header>
+
+    <div class="plans-head-row reveal">
+      <p style="font-size:.86rem;color:var(--muted);letter-spacing:.1em;max-width:46ch;line-height:2.2">一日のうち、西日は三つの顔で窓を通過します。時間帯ごとに、光の性格は異なります。</p>
+    </div>
+
+    <div class="plan-list">
+      <!-- I -->
+      <article class="plan-row reveal" data-slot="golden">
+        <span class="plan-no" aria-hidden="true">I.</span>
+        <div class="plan-name">
+          <h3>黄金時間</h3>
+          <p class="plan-latin">Golden Hour · 16:00–17:00</p>
+          <p class="plan-desc">最も角度が浅い光。肌への導入として設計された、最初の西日。</p>
+        </div>
+        <ul class="plan-perks">
+          <li>60分・専用窓席</li>
+          <li>白木綿タオル</li>
+          <li>冷麦茶</li>
+        </ul>
+        <div class="plan-price"><b>¥8,800</b><small>/ 1回（税込）</small></div>
+        <button class="plan-cta" data-slot="golden">この時間帯を予約<span class="arr">→</span></button>
+      </article>
+
+      <!-- II -->
+      <article class="plan-row reveal" style="--d:.12s" data-slot="akane">
+        <span class="plan-no" aria-hidden="true">II.</span>
+        <div class="plan-name">
+          <span class="plan-tag">最も予約が多い</span>
+          <h3>茜時間</h3>
+          <p class="plan-latin">Akane Hour · 17:00–18:30</p>
+          <p class="plan-desc">西日の頂点。一日のうち、最も深く、最も静かな色を落とす時間。</p>
+        </div>
+        <ul class="plan-perks">
+          <li>90分・最上段窓席（角）</li>
+          <li>アフター冷敷</li>
+          <li>夜茶一服</li>
+        </ul>
+        <div class="plan-price"><b>¥14,300</b><small>/ 1回（税込）</small></div>
+        <button class="plan-cta" data-slot="akane">この時間帯を予約<span class="arr">→</span></button>
+      </article>
+
+      <!-- III -->
+      <article class="plan-row reveal" style="--d:.24s" data-slot="remnant">
+        <span class="plan-no" aria-hidden="true">III.</span>
+        <div class="plan-name">
+          <h3>残光時間</h3>
+          <p class="plan-latin">Remnant Light · 18:30–19:30</p>
+          <p class="plan-desc">沈みゆく光の余韻。色は深めず、肌を整えるための最後の西日。</p>
+        </div>
+        <ul class="plan-perks">
+          <li>60分・沈みゆく光の席</li>
+          <li>温麦茶</li>
+          <li>帰りの灯り（玄関まで）</li>
+        </ul>
+        <div class="plan-price"><b>¥9,900</b><small>/ 1回（税込）</small></div>
+        <button class="plan-cta" data-slot="remnant">この時間帯を予約<span class="arr">→</span></button>
+      </article>
+    </div>
+
+    <p class="plans-note reveal">※ 天候により西日は提供できません。曇天・雨天時は全額返金いたします。<br>※ 冬至前後（12月〜1月中旬）は、営業時間が短縮されます。</p>
+  </div>
+</section>
+
+<div class="divider" style="color:var(--ink)" aria-hidden="true"><i></i></div>
+
+<!-- ================= SCIENCE ================= -->
+<section class="science section dark-sec" id="science">
+  <div class="container">
+    <div class="sci-sticky">
+      <header class="sec-head" style="margin-bottom:0">
+        <span class="sec-no">03</span>
+        <div>
+          <h2 class="line-mask"><span class="line-inner">光の科学</span></h2>
+          <p class="sec-latin">The Science of Western Light</p>
+        </div>
+      </header>
+      <p class="sci-lede reveal">数値は、光が正直であることの証拠だ。西日帯では、紫外線も角度も色温度も、すべてゆっくりと変化していく。</p>
+    </div>
+
+    <div>
+      <div class="chart-card reveal">
+        <div class="chart-head"><span>UV Index — Daily Curve (Tokyo)</span><span>単位：指数</span></div>
+        <svg id="uvChart" viewBox="0 0 680 300" role="img" aria-label="一日の紫外線指数の曲線。16時から19時30分が西日帯として示されている。">
+          <g class="grid"></g>
+          <rect id="winRect" class="win-rect"></rect>
+          <text id="winLabel" class="win-label">西日帯 16:00–19:30</text>
+          <path id="uvPath" class="uv-line"/>
+          <line id="uvMarker" class="uv-marker"/>
+          <circle id="uvDot" r="4.5" class="uv-dot"/>
+          <g class="axis"></g>
+        </svg>
+      </div>
+
+      <div class="sci-item reveal">
+        <div class="sci-num"><span data-count="62" data-suf="%">0%</span></div>
+        <p class="sci-label">正午比の紫外線量 — 西日帯平均</p>
+        <p class="sci-desc">角度が低いほど大気経路は長くなる。届く光は、少ない分だけ丁寧になる。</p>
+      </div>
+      <div class="sci-item reveal" style="--d:.08s">
+        <div class="sci-num"><span data-count="1900" data-suf="K">0K</span></div>
+        <p class="sci-label">茜時間の色温度（正午 5,800K）</p>
+        <p class="sci-desc">光の色が温かくなるほど、肌の上では時間が遅くなる。</p>
+      </div>
+      <div class="sci-item reveal" style="--d:.16s">
+        <div class="sci-num"><span data-count="17" data-suf="°">0°</span></div>
+        <p class="sci-label">西日帯の平均入射角（当スタジオ窓基準）</p>
+        <p class="sci-desc">水平に近い光は、影を長くし、色調を均一にする。</p>
+      </div>
+      <div class="sci-item reveal" style="--d:.24s">
+        <div class="sci-num"><span data-count="31" data-pre="+" data-suf="min">+0min</span></div>
+        <p class="sci-label">夜間メラトニン分泌の前倒し（自社調査 n=214）</p>
+        <p class="sci-desc">茜色の光は、一日の終わりを身体に教える。焼いた翌朝が、少しだけ早い。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= STUDIO ================= -->
+<section class="studio section" id="studio">
+  <div class="container">
+    <header class="sec-head">
+      <span class="sec-no">04</span>
+      <div>
+        <h2 class="line-mask"><span class="line-inner">スタジオ</span></h2>
+        <p class="sec-latin">The Studio — Minami-Aoyama, Corner Lot</p>
+      </div>
+    </header>
+
+    <div class="studio-grid">
+      <figure class="studio-img reveal">
+        <div class="kb-frame"><img src="https://picsum.photos/seed/hinoki-studio-interior/900/1200" alt="無垢材の床と南西向きの大きな窓を持つスタジオ内部" loading="lazy"></div>
+        <figcaption class="fig-cap"><span>南西向き全面窓 — 27m²</span><em>FIG. 02</em></figcaption>
+      </figure>
+
+      <ul class="studio-feats">
+        <li class="reveal"><span class="feat-no">01</span><div class="feat-body"><h4>南西向き全面窓</h4><p>床から天井まで、ガラス 27m²。角地のため、光は二方向から届く。</p></div></li>
+        <li class="reveal" style="--d:.08s"><span class="feat-no">02</span><div class="feat-body"><h4>無垢材の空間</h4><p>床は国産ヒノキ。光が木目に落ちる角度を計算した座面の高さ。</p></div></li>
+        <li class="reveal" style="--d:.16s"><span class="feat-no">03</span><div class="feat-body"><h4>無音</h4><p>BGMはありません。沈黙もまた、当スタジオのサービスです。</p></div></li>
+        <li class="reveal" style="--d:.24s"><span class="feat-no">04</span><div class="feat-body"><h4>空気</h4><p>常時換気。窓は開きません。西日は、外から届くものです。</p></div></li>
+        <li class="reveal" style="--d:.32s"><span class="feat-no">05</span><div class="feat-body"><h4>備品</h4><p>白木綿タオル、麦茶、そして時間。それだけです。</p></div></li>
+      </ul>
+    </div>
+
+    <div class="studio-stats reveal">
+      <span><b>84㎡</b>床面積</span>
+      <span><b>27㎡</b>窓</span>
+      <span><b>6脚</b>椅子</span>
+      <span><b>なし</b>BGM</span>
+    </div>
+
+    <figure class="studio-wide reveal">
+      <div class="kb-frame"><img src="https://picsum.photos/seed/oak-floor-sunset-shadow/1600/610" alt="夕方の光が木目の床に長い影を落としている様子" loading="lazy"></div>
+      <figcaption class="fig-cap"><span>無垢材の床、17時58分。影は無料です。</span><em>FIG. 03</em></figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ================= VOICES ================= -->
+<section class="voices section" id="voices">
+  <div class="container">
+    <header class="sec-head">
+      <span class="sec-no">05</span>
+      <div>
+        <h2 class="line-mask"><span class="line-inner">声</span></h2>
+        <p class="sec-latin">Voices — After the Light</p>
+      </div>
+    </header>
+
+    <div class="voice-list">
+      <figure class="voice reveal">
+        <blockquote>「光が沈むまで、何も考えられなかった。」</blockquote>
+        <figcaption><span class="who"><span class="idx">I.</span>建築家</span><span class="meta">42歳 / 通算31回</span></figcaption>
+      </figure>
+      <figure class="voice reveal" style="--d:.1s">
+        <blockquote>「午後の光より、西日のほうが正直だった。」</blockquote>
+        <figcaption><span class="who"><span class="idx">II.</span>写真家</span><span class="meta">36歳 / 通算17回</span></figcaption>
+      </figure>
+      <figure class="voice reveal" style="--d:.2s">
+        <blockquote>「焼けたというより、一日の終わりを浴びた気がする。」</blockquote>
+        <figcaption><span class="who"><span class="idx">III.</span>編集者</span><span class="meta">29歳 / 初回</span></figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ================= NOTES ================= -->
+<section class="notes section" id="notes">
+  <div class="container notes-wrap">
+    <header class="sec-head">
+      <span class="sec-no">06</span>
+      <div>
+        <h2 class="line-mask"><span class="line-inner">注記</span></h2>
+        <p class="sec-latin">Notes — Please Read Before the Sun Sets</p>
+      </div>
+    </header>
+    <ul class="notes-grid reveal">
+      <li>曇天・雨天時は営業中止。全額返金いたします。</li>
+      <li>東日は提供しておりません。</li>
+      <li>冬至前後（12月〜1月中旬）は、残光時間が短縮されます。</li>
+      <li>当スタジオ内での日焼け止めの使用は、西日を妨げるためご遠慮ください。</li>
+      <li>キャンセルは前日の西日まで可能です。</li>
+      <li>色の変化には個人差があります。茜は、誰にも同じにはなりません。</li>
+    </ul>
+  </div>
+</section>
+
+<div class="divider" style="color:var(--paper);opacity:.5;background:#1E120B" aria-hidden="true"><i></i></div>
+
+<!-- ================= RESERVE ================= -->
+<section class="reserve section dark-sec" id="reserve">
+  <div class="container reserve-grid">
+    <div>
+      <header class="sec-head">
+        <span class="sec-no">07</span>
+        <div>
+          <h2 class="line-mask"><span class="line-inner">予約</span></h2>
+          <p class="sec-latin">Reservation — The Light Cannot Be Booked</p>
+        </div>
+      </header>
+
+      <p class="reserve-lede reveal">光は予約できません。<br>席だけ、予約できます。</p>
+
+      <form id="bookForm" novalidate>
+        <div class="field reveal">
+          <label for="f-name">お名前 — Name</label>
+          <input type="text" id="f-name" name="name" autocomplete="name" placeholder="山田 茜">
+        </div>
+        <div class="field reveal" style="--d:.08s">
+          <label for="f-date">日付 — Date</label>
+          <input type="date" id="f-date" name="date">
+          <p class="hint">（西日は、今日から予約できます。）</p>
+        </div>
+        <div class="field reveal" style="--d:.16s">
+          <span class="slot-opts" role="radiogroup" aria-label="時間帯">
+            <label class="slot-opt"><input type="radio" name="slot" value="golden"><span>黄金時間<small>16:00–17:00</small></span></label>
+            <label class="slot-opt"><input type="radio" name="slot" value="akane" checked><span>茜時間<small>17:00–18:30</small></span></label>
+            <label class="slot-opt"><input type="radio" name="slot" value="remnant"><span>残光時間<small>18:30–19:30</small></span></label>
+          </span>
+        </div>
+        <button type="submit" id="bookBtn" class="btn-primary reveal" style="--d:.24s"><span>予約を確認する</span><span class="arr">→</span></button>
+        <p id="formMsg" role="alert"></p>
+      </form>
+    </div>
+
+    <div id="ticketBox" aria-live="polite">
+      <p class="ticket-placeholder">ここに、<br>あなたの予約票が生まれます。</p>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <span class="brand">NISHIBI<span class="brand-jp">西日</span></span>
+        <p class="foot-tag">光は予約できません。</p>
+      </div>
+      <div class="foot-col">
+        <h5>Access</h5>
+        <p>〒107-0062<br>東京都港区南青山五丁目二番一号<br>西日ビル 3階（角）</p>
+      </div>
+      <div class="foot-col">
+        <h5>Hours</h5>
+        <p>毎日 16:00–19:30<br>天候により閉店<br><a href="#reserve">hello@nishi.bi</a></p>
+      </div>
+      <div class="foot-col">
+        <h5>Social</h5>
+        <p><a href="#" aria-label="Instagram（架空）">Instagram — @nishi.bi</a><a href="#" aria-label="ジャーナル（架空）">Journal — 「光の記録」</a></p>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2025 NISHIBI Inc.</span>
+      <span>東日は提供しておりません。</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+'use strict';
+var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function $(s){return document.querySelector(s)}
+function $$(s){return Array.prototype.slice.call(document.querySelectorAll(s))}
+function pad(n){return String(n).padStart(2,'0')}
+
+/* ---------- 天候・光の疑似モデル（東京基準） ---------- */
+var SUNSET=['17:02','17:25','18:00','18:26','18:43','19:00','18:56','18:30','17:55','17:23','16:55','16:47'];
+var WD=['日','月','火','水','木','金','土'];
+function uvAt(h){ if(h<6||h>19.6) return 0; return Math.max(0,8.2*Math.pow(Math.sin(Math.PI*(h-6)/13.5),1.15)); }
+function elevAt(h){ return Math.max(0,42*Math.sin(Math.PI*(h-6.2)/13.8)); }
+function tempAt(h){ var s=Math.max(0,Math.sin(Math.PI*(h-6)/13.5)); return Math.round(1900+3900*s); }
+
+/* ---------- 時計・営業ステータス（西日は16:00–19:30のみ） ---------- */
+var clockEl=$('#clockTop'), statusEl=$('#heroStatus');
+function tick(){
+  var d=new Date(), hm=d.getHours()+d.getMinutes()/60, ss=SUNSET[d.getMonth()], msg;
+  if(clockEl) clockEl.textContent=pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+  if(hm>=16 && hm<19.5){ msg='現在、西日は窓を通過しています。本日 '+ss+' に沈みます。'; }
+  else if(hm<16){ msg='本日の西日帯 16:00–'+ss+'。光は準備中です。'; }
+  else{ msg='本日の西日は沈みました。明日、また窓が開きます。'; }
+  statusEl.textContent=msg;
+}
+tick(); setInterval(tick,1000);
+
+/* ---------- 太陽暦ティッカー ---------- */
+(function(){
+  var t=$('#tickerTrack'); if(!t) return;
+  var d=new Date(), hm=d.getHours()+d.getMinutes()/60;
+  var seed=d.getFullYear()*372+(d.getMonth()+1)*31+d.getDate();
+  var items=[
+    '現在 '+pad(d.getHours())+':'+pad(d.getMinutes()),
+    'UV指数 '+uvAt(hm).toFixed(1),
+    '光の角度 '+Math.round(elevAt(hm))+'°',
+    '色温度 '+tempAt(hm)+'K',
+    '本日 西日提供 16:00–'+SUNSET[d.getMonth()],
+    '湿度 '+(48+seed%30)+'%',
+    '窓の状態：開かず（西日は外から）',
+    '光は予約できません。席だけ、予約できます。'
+  ];
+  var html=items.map(function(i){return '<span class="tk">'+i+'</span><span class="tk-dot">·</span>'}).join('');
+  t.innerHTML=html+html;
+})();
+
+/* ---------- スクロールリビール ---------- */
+var io=new IntersectionObserver(function(es){
+  es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+},{threshold:.15,rootMargin:'0px 0px -6% 0px'});
+$$('.reveal,.line-mask').forEach(function(el){io.observe(el)});
+setTimeout(function(){ $$('.hero .line-mask,.hero .reveal').forEach(function(el){el.classList.add('in')}); }, reduced?0:180);
+
+/* ---------- 数値カウントアップ ---------- */
+function fmt(v,dec){ return dec? v.toFixed(dec) : Math.round(v).toLocaleString(); }
+function countUp(el){
+  var target=parseFloat(el.dataset.count), dec=+(el.dataset.dec||0), pre=el.dataset.pre||'', suf=el.dataset.suf||'';
+  if(reduced){ el.textContent=pre+fmt(target,dec)+suf; return; }
+  var t0=performance.now(), dur=1500;
+  function step(t){
+    var p=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-p,3);
+    el.textContent=pre+fmt(target*e,dec)+suf;
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+var cio=new IntersectionObserver(function(es){
+  es.forEach(function(e){ if(e.isIntersecting){ countUp(e.target); cio.unobserve(e.target);} });
+},{threshold:.6});
+$$('[data-count]').forEach(function(el){cio.observe(el)});
+
+/* ---------- UV曲線チャート ---------- */
+(function(){
+  var svg=$('#uvChart'); if(!svg) return;
+  var W=680,H=300,L=46,R=18,T=26,B=42,hMin=7,hMax=20,vMax=9;
+  function X(h){return L+(h-hMin)/(hMax-hMin)*(W-L-R)}
+  function Y(v){return T+(1-v/vMax)*(H-T-B)}
+  var NS='http://www.w3.org/2000/svg';
+
+  /* グリッド・軸 */
+  var grid=svg.querySelector('.grid'), axis=svg.querySelector('.axis');
+  [0,3,6,9].forEach(function(v){
+    var ln=document.createElementNS(NS,'line');
+    ln.setAttribute('x1',L);ln.setAttribute('x2',W-R);ln.setAttribute('y1',Y(v));ln.setAttribute('y2',Y(v));
+    grid.appendChild(ln);
+  });
+  for(var h=8;h<=20;h+=2){
+    var tx=document.createElementNS(NS,'text');
+    tx.setAttribute('x',X(h));tx.setAttribute('y',H-B+24);tx.setAttribute('text-anchor','middle');
+    tx.textContent=h+'時'; axis.appendChild(tx);
+  }
+
+  /* 曲線 */
+  var d='';
+  for(var hh=hMin;hh<=hMax+.001;hh+=.25){ d+=(d?' L':'M')+X(hh).toFixed(1)+' '+Y(uvAt(hh)).toFixed(1); }
+  var path=$('#uvPath'); path.setAttribute('d',d);
+
+  /* 西日帯 */
+  var wr=$('#winRect');
+  wr.setAttribute('x',X(16)); wr.setAttribute('width',X(19.5)-X(16));
+  wr.setAttribute('y',T);     wr.setAttribute('height',H-T-B);
+  $('#winLabel').setAttribute('x',X(16)+8); $('#winLabel').setAttribute('y',T+16);
+
+  /* 現在時刻マーカー */
+  var mk=$('#uvMarker'), dot=$('#uvDot');
+  function place(){
+    var now=new Date(), h=now.getHours()+now.getMinutes()/60;
+    if(h<hMin||h>hMax){ mk.style.opacity=0; dot.style.opacity=0; return; }
+    mk.style.opacity=1; dot.style.opacity=1;
+    mk.setAttribute('x1',X(h));mk.setAttribute('x2',X(h));mk.setAttribute('y1',T);mk.setAttribute('y2',H-B);
+    dot.setAttribute('cx',X(h));dot.setAttribute('cy',Y(uvAt(h)));
+  }
+  place(); setInterval(place,60000);
+
+  if(!reduced){
+    var len=path.getTotalLength();
+    path.style.strokeDasharray=len; path.style.strokeDashoffset=len;
+    var dio=new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(e.isIntersecting){
+          path.style.transition='stroke-dashoffset 2.4s cubic-bezier(.4,0,.2,1)';
+          requestAnimationFrame(function(){path.style.strokeDashoffset=0});
+          dio.disconnect();
+        }
+      });
+    },{threshold:.5});
+    dio.observe(svg);
+  }
+})();
+
+/* ---------- 日の沈み（ヒーローパララックス）& ヘッダー状態 ---------- */
+var hero=$('#hero'), sun=$('#sun'), skyDeep=$('#skyDeep'), head=$('#siteHeader');
+var ticking=false;
+function onScroll(){
+  if(ticking) return; ticking=true;
+  requestAnimationFrame(function(){
+    var y=window.scrollY, hh=hero.offsetHeight||1;
+    if(!reduced && y<hh*1.2){
+      var p=Math.min(1,y/hh);
+      sun.style.transform='translateY('+(p*150)+'px) scale('+(1+p*.16)+')';
+      skyDeep.style.opacity=(p*.78).toFixed(3);
+    }
+    head.classList.toggle('scrolled', y>hh*.72);
+    ticking=false;
+  });
+}
+window.addEventListener('scroll',onScroll,{passive:true}); onScroll();
+
+/* ---------- プラン → 予約フォーム同期 ---------- */
+var SLOTS={
+  golden:{name:'黄金時間',latin:'GOLDEN HOUR',time:'16:00–17:00'},
+  akane:{name:'茜時間',latin:'AKANE HOUR',time:'17:00–18:30'},
+  remnant:{name:'残光時間',latin:'REMNANT LIGHT',time:'18:30–19:30'}
+};
+var slot='akane';
+function syncSlot(){ $$('.slot-opt input').forEach(function(r){ r.checked=(r.value===slot); }); }
+$$('.plan-cta').forEach(function(b){
+  b.addEventListener('click',function(){
+    slot=b.dataset.slot; syncSlot();
+    document.getElementById('reserve').scrollIntoView({behavior:reduced?'auto':'smooth'});
+    var box=$('#ticketBox');
+    box.classList.remove('flash'); void box.offsetWidth;
+    box.style.transition='border-color .4s'; box.style.borderColor='var(--amber)';
+    setTimeout(function(){box.style.borderColor=''},1200);
+  });
+});
+$$('.slot-opt input').forEach(function(r){ r.addEventListener('change',function(){slot=r.value}); });
+
+/* ---------- 予約票発行 ---------- */
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+var form=$('#bookForm'), msg=$('#formMsg'), ticketBox=$('#ticketBox'), dateInput=$('#f-date');
+var today=new Date();
+dateInput.min=today.getFullYear()+'-'+pad(today.getMonth()+1)+'-'+pad(today.getDate());
+
+function shake(el){ el.classList.remove('shake'); void el.offsetWidth; el.style.animation='none'; }
+form.addEventListener('submit',function(e){
+  e.preventDefault(); msg.textContent='';
+  var name=$('#f-name').value.trim(), dv=dateInput.value;
+  if(!name||!dv){ msg.textContent='お名前と日付をお知らせください。'; shake(form); return; }
+  var parts=dv.split('-'), y=+parts[0], m=+parts[1], dd=+parts[2];
+  var dt=new Date(y,m-1,dd), base=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  if(dt<base){ msg.textContent='過去の日付には、西日は戻りません。'; shake(form); return; }
+
+  var btn=$('#bookBtn'); btn.disabled=true; btn.querySelector('span').textContent='確認中…';
+  setTimeout(function(){
+    var seed=y*372+m*31+dd, prob=62+seed%36;
+    var wx=prob>=85?'晴れ':(prob>=70?'晴れ時々曇':'曇り');
+    var s=SLOTS[slot];
+    ticketBox.innerHTML=
+      '<div class="ticket">'
+      +'<span class="seal" aria-hidden="true"><b>西日</b><i>RESERVED</i></span>'
+      +'<div class="tk-head"><span>NISHIBI — 予約票</span><em>Reservation</em></div>'
+      +'<dl>'
+      +'<div><dt>お名前</dt><dd>'+esc(name)+' 様</dd></div>'
+      +'<div><dt>日付</dt><dd>'+y+'年'+m+'月'+dd+'日（'+WD[dt.getDay()]+'）</dd></div>'
+      +'<div><dt>時間帯</dt><dd>'+s.name+' '+s.latin+' ／ '+s.time+'</dd></div>'
+      +'<div><dt>当日の西日提供予定</dt><dd>16:00 – '+SUNSET[m-1]+'</dd></div>'
+      +'<div><dt>天候予報</dt><dd>'+wx+'（西日提供確率 '+prob+'%）'+(wx==='曇り'?'・全額返金対象':'')+'</dd></div>'
+      +'</dl>'
+      +'<p class="tk-note">ご到着は開始の15分前まで。光は、待てません。</p>'
+      +'</div>';
+    btn.disabled=false; btn.querySelector('span').textContent='予約を確認する';
+  }, reduced?60:850);
+});
+})();
+</script>
+</body>
+</html>
+```
+
+## 実装メモ（再現時の確認ポイント）
+
+- **真顔の設計思想**: 冗談は「注記」セクションとフッター末行（「東日は提供しておりません。」）にだけ沈めて、本文はすべて建築事務所トーンで統一しています。
+- **ページが営業時間を守る**: ヒーローのステータス行とヘッダーの時計はリアルタイム動作し、16:00–19:30 以外では「本日の西日は沈みました」と表示します。UV チャートにも現在時刻のマーカーが入ります。
+- **予約票が本物感を出す**: 日付から当月の東京の落日時刻・曜日・天候予報（日付シードで確定値）を算出し、切符風のチケット＋「西日 RESERVED」の朱印を発行します。プラン行の CTA はフォームの時間帯と同期します。
+- **モーション**: 行マスクリビール / スローズーム / グレイン / ティッカーマーキー / UV 曲線の描画 / 数値カウントアップ / 日の沈みパララックス — いずれも `prefers-reduced-motion` で無効化されます。
