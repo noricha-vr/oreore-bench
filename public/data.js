@@ -659,6 +659,7 @@ window.ENTRIES = [
             { theme: "hasami-shogi", model: "gemma-4-12b-qat",     runner: "LM Studio API", note: "スモーク検証PASS。赤/紺バッジ駒の明瞭UI。初回生成は空応答で1回リトライ。438行/13KB。", kind: "html" },
             { theme: "hasami-shogi", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API", note: "スモーク検証PASS。クリーム地のミニマル盤面。415行/13KB。", kind: "html" },
             { theme: "hasami-shogi", model: "gemma-4-31b",         runner: "LM Studio API", note: "スモーク検証PASS。木枠将棋盤+取得数表示。467行/16KB。", kind: "html" },
+            { theme: "hasami-shogi", model: "qwen3-8-27b",         runner: "Ollama API", note: "スモーク検証PASS。盤面9x9・歩9/と9、駒選択→ハイライト→移動、JSエラー0。木枠盤+取得枚数カウンタ+ルール要約と作りは丁寧。ただし前置き文とコードフェンスが混入し、CPU は全探索のため応答検出が不安定（4回中2回）。577行/28KB・38,519 tokens・19.0 tok/s。", kind: "html" },
             { theme: "hasami-shogi", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "スモーク検証PASS。木目盤+ステータスバッジ+ルール折りたたみ付き。467行/14KB。", kind: "html" },
             { theme: "hasami-shogi", model: "grok-4-5",            runner: "grok CLI (single-turn)", note: "スモーク検証PASS。ダーク×市松模様のエレガント盤面+ルール要約footer。541行/14KB。", kind: "html" },
 
@@ -677,6 +678,7 @@ window.ENTRIES = [
             { theme: "lp-fable5", model: "gemma-4-12b-qat",     runner: "LM Studio API",   note: "JSエラー0。構成は追従するがイラストは簡素な図形寄り。616行/20KB。", kind: "html" },
             { theme: "lp-fable5", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",   note: "JSエラー0。トーンは保つがセクションの作り込みは薄め。456行/18KB。", kind: "html" },
             { theme: "lp-fable5", model: "gemma-4-31b",         runner: "LM Studio API",   note: "JSエラー0。丘の重なりと朱の太陽で世界観を再現、ローカル最良。484行/25KB。", kind: "html" },
+            { theme: "lp-fable5", model: "qwen3-8-27b",         runner: "Ollama API",      note: "JSエラー0。水彩SVGのイラスト・明朝の大見出し・セクション番号・スクロール演出まで作り込み、ローカル勢では最高水準の仕上がり。前置き文と末尾解説が混入。929行/54KB・55,360 tokens・49.5分。", kind: "html" },
             { theme: "lp-fable5", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "JSエラー0。紙テクスチャ+明朝の余白設計が最も「絵本」に迫る。1081行/50KB。", kind: "html" },
             { theme: "lp-fable5", model: "grok-4-5",            runner: "OpenRouter API",  note: "JSエラー0。7セクション完全追従+段状チャートの完成度が高い。1040行/48KB。", kind: "html" },
 

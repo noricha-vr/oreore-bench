@@ -1,0 +1,930 @@
+絵本の世界観で「Fable 5」の発表ページを、水彩SVG・スクロール演出込みの単一HTMLファイルで作りました。そのまま `index.html` として保存して開けば動きます。
+
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fable 5 | Claude — いま、いちばん賢いClaude</title>
+<meta name="description" content="MYTHOSクラスのニューモデル「Fable 5」。いま、いちばん賢いClaudeが、誰でも使える形に。">
+<meta name="theme-color" content="#faf6ee">
+<script>document.documentElement.className += ' js';</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Shippori+Mincho+B1:wght@400;600;700;800&family=Zen+Maru+Gothic:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#faf6ee;
+  --paper-2:#f4edde;
+  --card:#fffdf7;
+  --ink:#2f2a24;
+  --body:#5c5348;
+  --soft:#8a7a63;
+  --sepia:#b09a78;
+  --line:#e3d5ba;
+  --verm:#c65d3b;
+  --verm-2:#d97757;
+  --gold:#c9a24b;
+  --headH:72px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--paper);
+  color:var(--body);
+  font-family:'Zen Maru Gothic',sans-serif;
+  font-size:16px;
+  line-height:2;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{background:var(--verm);color:#faf6ee}
+img,svg{display:block;max-width:100%}
+a{color:inherit}
+:focus-visible{outline:2px dashed var(--verm);outline-offset:4px;border-radius:4px}
+
+/* ---------- 紙の粒子オーバーレイ ---------- */
+.grain{
+  position:fixed;inset:0;z-index:90;pointer-events:none;
+  opacity:.05;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+}
+
+/* ---------- レイアウト基本 ---------- */
+.wrap{max-width:1180px;margin-inline:auto;padding-inline:clamp(22px,5vw,48px)}
+section{scroll-margin-top:calc(var(--headH) + 20px)}
+.sec-pad{padding-block:clamp(96px,13vh,156px)}
+
+/* ---------- ヘッダー ---------- */
+.site-head{position:fixed;top:0;left:0;right:0;z-index:80;transition:background .35s ease,box-shadow .35s ease}
+.site-head .wrap{display:flex;align-items:center;justify-content:space-between;height:var(--headH)}
+.site-head.scrolled{background:rgba(250,246,238,.93);backdrop-filter:blur(7px);box-shadow:0 1px 0 rgba(176,141,106,.22)}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font-family:'Cormorant Garamond',serif;font-weight:600;font-size:25px;letter-spacing:.03em}
+.brand svg{width:26px;height:26px}
+.head-right{display:flex;align-items:center;gap:clamp(18px,3vw,40px)}
+.nav-links{display:flex;gap:clamp(20px,3vw,36px)}
+.nav-links a{font-size:14.5px;font-weight:500;color:var(--body);text-decoration:none;position:relative;padding-block:4px}
+.nav-links a::after{content:"";position:absolute;left:0;right:100%;bottom:-2px;height:2px;background:var(--verm);transition:right .35s ease;border-radius:2px}
+.nav-links a:hover{color:var(--ink)}
+.nav-links a:hover::after{right:0}
+
+/* ---------- ボタン ---------- */
+.btn{
+  display:inline-block;font-family:'Zen Maru Gothic',sans-serif;font-weight:700;
+  color:#fdf9f0;background:linear-gradient(180deg,var(--verm-2),var(--verm));
+  border:none;border-radius:999px;cursor:pointer;text-decoration:none;
+  padding:11px 26px;font-size:14.5px;line-height:1.6;letter-spacing:.06em;
+  box-shadow:0 10px 24px -12px rgba(198,93,59,.55);
+  transition:transform .3s ease,box-shadow .3s ease,filter .3s ease;
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 16px 32px -12px rgba(198,93,59,.62);filter:saturate(1.08)}
+.btn:active{transform:translateY(0) scale(.97)}
+.btn-lg{padding:18px 54px;font-size:17px;letter-spacing:.1em}
+
+/* ---------- セクション見出し ---------- */
+.sec-head{display:flex;align-items:center;gap:16px;margin-bottom:clamp(22px,3.5vh,34px)}
+.sec-no{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;font-size:23px;color:var(--verm);line-height:1}
+.sec-kick{font-size:12px;font-weight:500;letter-spacing:.4em;color:#a8937a;white-space:nowrap}
+.rule{flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+.sec-title{
+  font-family:'Shippori Mincho B1',serif;font-weight:700;color:var(--ink);
+  font-size:clamp(29px,4.4vw,50px);line-height:1.6;letter-spacing:.03em;
+}
+.lead{margin-top:clamp(16px,2.5vh,26px);max-width:660px;font-size:clamp(15px,1.35vw,17px);line-height:2.2;color:var(--body)}
+
+/* ---------- リビール演出（JS無効・未発火でも表示されるよう html.js でゲート） ---------- */
+.js [data-reveal]{opacity:0;transform:translateY(28px);transition:opacity .95s ease var(--d,0s),transform .95s cubic-bezier(.22,.7,.3,1) var(--d,0s)}
+.js [data-reveal].is-in{opacity:1;transform:none}
+
+/* ---------- 1. ヒーロー ---------- */
+.hero{position:relative;padding-top:calc(var(--headH) + clamp(44px,9vh,96px))}
+.hero-kick{display:flex;align-items:center;gap:12px;font-size:12.5px;font-weight:500;letter-spacing:.38em;color:#a08a6d}
+.hero-kick .tick{width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#e89a70,var(--verm));box-shadow:0 0 0 4px rgba(198,93,59,.12);flex:none}
+.hero-kick i{font-style:normal;color:#cbb694;margin-inline:2px}
+.hero-title{
+  font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--ink);
+  font-size:clamp(72px,26.5vw,350px);line-height:.98;letter-spacing:-.015em;
+  white-space:nowrap;margin-top:clamp(14px,2.5vh,28px);
+}
+.hero-title .dot{color:var(--verm)}
+.hero-sub{margin-top:clamp(22px,3.5vh,42px);font-family:'Shippori Mincho B1',serif;font-weight:700;color:var(--ink);font-size:clamp(19px,2.6vw,30px);letter-spacing:.08em;line-height:1.9}
+.hero-note{margin-top:14px;max-width:560px;font-size:clamp(14px,1.3vw,16px);line-height:2.2;color:#6a5f52}
+.hero-art{width:100%;height:clamp(300px,57vh,620px);margin-top:clamp(28px,5.5vh,64px)}
+
+/* ---------- 2. ファミリー（段状バー） ---------- */
+.chart-zone{margin-top:clamp(48px,7vh,80px)}
+.chart{position:relative;display:flex;align-items:flex-end;gap:clamp(12px,3vw,36px);height:clamp(250px,42vh,390px);border-bottom:2px solid #d8c6a4;padding-inline:6px}
+.bar-col{flex:1;height:100%;display:flex;align-items:flex-end;justify-content:center;position:relative}
+.bar{
+  width:min(74%,150px);height:var(--h);position:relative;overflow:hidden;
+  border-top-left-radius:48% 16px;border-top-right-radius:52% 12px;
+  box-shadow:inset 0 -14px 22px -14px rgba(139,94,55,.28);
+}
+.bar::after{content:"";position:absolute;inset:0;opacity:.16;mix-blend-mode:multiply;background-image:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23m)' opacity='0.7'/%3E%3C/svg%3E")}
+.bar-haiku{background:linear-gradient(180deg,#f0e2c2,#e4cf9f)}
+.bar-sonnet{background:linear-gradient(180deg,#ecd6ab,#dcb57f)}
+.bar-opus{background:linear-gradient(180deg,#ddb283,#c08a58)}
+.bar-mythos{background:linear-gradient(180deg,#e08a60,var(--verm));box-shadow:inset 0 -14px 22px -14px rgba(120,40,15,.35),0 18px 40px -20px rgba(198,93,59,.5)}
+.js [data-reveal] .bar{transform:scaleY(0);transform-origin:bottom}
+.js [data-reveal].is-in .bar{transform:scaleY(1);transition:transform 1.15s cubic-bezier(.2,.75,.25,1) var(--d,0s)}
+.bar-meta{position:absolute;top:calc(100% + 16px);left:50%;transform:translateX(-50%);width:max-content;text-align:center}
+.bar-name{display:block;font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(15px,1.7vw,20px);color:var(--ink);letter-spacing:.04em;line-height:1.3}
+.bar-cap{display:block;margin-top:4px;font-size:clamp(10.5px,1.1vw,12.5px);color:#a8937a;letter-spacing:.14em;line-height:1.6}
+.badge-new{display:inline-block;margin-left:6px;padding:1px 9px;border:1.5px solid var(--verm);border-radius:999px;color:var(--verm);font-size:10.5px;letter-spacing:.2em;font-weight:700;vertical-align:2px}
+.pair-top{position:absolute;left:50%;bottom:calc(var(--h) - 6px);width:clamp(64px,8vw,92px);transform:translateX(-50%)}
+.js [data-reveal] .pair-top{opacity:0;transform:translate(-50%,16px)}
+.js [data-reveal].is-in .pair-top{opacity:1;transform:translate(-50%,0);transition:opacity .8s ease 1.35s,transform .9s cubic-bezier(.2,.7,.3,1) 1.35s}
+.chart-note{margin-top:clamp(64px,9vh,92px);font-size:12.5px;color:#a8937a;letter-spacing:.06em}
+
+/* ---------- 3. できること（カード） ---------- */
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(18px,3vw,34px);margin-top:clamp(44px,7vh,72px)}
+.card{
+  display:flex;align-items:center;gap:clamp(16px,2.6vw,30px);
+  background:var(--card);border:1px solid #ecdfc6;padding:clamp(22px,3vw,36px);
+  box-shadow:0 26px 50px -34px rgba(139,94,55,.4);
+  transition:transform .5s cubic-bezier(.2,.7,.3,1),box-shadow .5s ease;
+}
+.card:nth-child(odd){border-radius:28px 20px 26px 22px}
+.card:nth-child(even){border-radius:20px 28px 22px 26px}
+.card:hover{transform:translateY(-7px);box-shadow:0 36px 60px -34px rgba(139,94,55,.5)}
+.card-art{flex:none;width:clamp(108px,12vw,152px)}
+.card-art svg{width:100%;height:auto;transition:transform .7s cubic-bezier(.2,.7,.3,1)}
+.card:hover .card-art svg{transform:scale(1.06) rotate(1.2deg)}
+.card h3{font-family:'Shippori Mincho B1',serif;font-weight:700;color:var(--ink);font-size:clamp(16.5px,1.6vw,20px);line-height:1.8;letter-spacing:.03em}
+.card p{margin-top:8px;font-size:14px;line-height:2.05;color:#6a5f52}
+
+/* ---------- 4. いちばんの強み（グラフ） ---------- */
+.graph-card{
+  margin-top:clamp(44px,7vh,72px);background:var(--card);border:1px solid #ecdfc6;
+  border-radius:26px;padding:clamp(18px,3.5vw,40px) clamp(14px,3vw,36px) clamp(20px,3vw,32px);
+  box-shadow:0 30px 60px -40px rgba(139,94,55,.45);
+}
+.legend{display:flex;flex-wrap:wrap;gap:clamp(14px,2.5vw,30px);margin-bottom:clamp(10px,2vh,20px)}
+.chip{display:inline-flex;align-items:center;gap:9px;font-size:13px;color:#6a5f52;letter-spacing:.08em}
+.chip i{width:26px;border-top:4px solid #b7ada0;border-radius:4px}
+.chip-fable{font-weight:700;color:var(--ink)}
+.chip-fable i{border-color:var(--verm);box-shadow:0 3px 8px -2px rgba(198,93,59,.6)}
+#graphChart{width:100%;height:auto}
+.gline{fill:none;stroke-linecap:round}
+.js .gline{stroke-dasharray:1;stroke-dashoffset:1}
+.glabel{opacity:0;transition:opacity .7s ease .15s}
+#graphChart.done .glabel{opacity:1}
+.garea{opacity:0;transition:opacity 1.2s ease .3s}
+#graphChart.done .garea{opacity:1}
+#gMarker{transition:opacity .4s ease}
+.js #gMarker{opacity:0}
+
+/* ---------- 5. 安全性 ---------- */
+.safety-art{width:100%;height:clamp(320px,56vh,620px);margin-top:clamp(40px,7vh,72px)}
+
+/* ---------- 6. はじめかた ---------- */
+.howto-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:clamp(36px,6vw,80px);align-items:center;margin-top:clamp(44px,7vh,72px)}
+.laptop-fig svg{width:min(100%,360px);height:auto;margin-inline:auto}
+.laptop-cap{text-align:center;margin-top:18px;font-size:13.5px;color:#a8937a;letter-spacing:.14em}
+.steps{list-style:none;display:flex;flex-direction:column;gap:clamp(26px,4.5vh,44px);position:relative;padding-left:clamp(20px,2.5vw,30px)}
+.steps::before{content:"";position:absolute;left:8px;top:14px;bottom:14px;border-left:2px dashed #d3bd97}
+.step{display:flex;gap:clamp(16px,2vw,26px);align-items:flex-start}
+.step-no{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;font-size:clamp(34px,4vw,48px);color:var(--verm);line-height:1;min-width:56px;text-align:center}
+.step h3{font-family:'Shippori Mincho B1',serif;font-weight:700;color:var(--ink);font-size:clamp(16.5px,1.6vw,19.5px);line-height:1.8;letter-spacing:.04em}
+.step p{margin-top:4px;font-size:13.5px;line-height:2;color:#7a6f60}
+
+/* ---------- 7. 最終CTA + フッター ---------- */
+.cta{position:relative;overflow:hidden;text-align:center;padding-top:clamp(130px,20vh,210px);padding-bottom:0}
+.cta-art{position:absolute;left:0;right:0;bottom:0;width:100%;height:clamp(340px,62vh,660px)}
+.cta .wrap{position:relative;z-index:2;padding-bottom:clamp(180px,34vh,340px)}
+.cta .sec-head{justify-content:center}
+.cta .rule:last-child{display:none}
+.cta-sub{margin-top:16px;font-size:15px;color:#7a6f60;letter-spacing:.08em}
+.cta .btn-lg{margin-top:clamp(34px,5vh,52px)}
+.cta-fine{margin-top:20px;font-size:12.5px;color:#9c8b72;letter-spacing:.16em}
+.site-foot{background:var(--paper-2);border-top:1px solid var(--line)}
+.site-foot .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px;padding-block:34px 40px}
+.foot-brand{display:flex;align-items:center;gap:9px;font-family:'Cormorant Garamond',serif;font-weight:600;font-size:20px;color:var(--ink)}
+.foot-brand svg{width:20px;height:20px}
+.foot-links{display:flex;gap:24px;font-size:13px}
+.foot-links a{text-decoration:none;color:#7a6f60;transition:color .3s}
+.foot-links a:hover{color:var(--verm)}
+.foot-note{width:100%;font-size:11.5px;color:#a8937a;letter-spacing:.08em;line-height:2}
+
+/* ---------- 雲の漂い ---------- */
+.drift{animation:drift 26s ease-in-out infinite alternate}
+.drift-slow{animation:drift 34s ease-in-out infinite alternate-reverse}
+@keyframes drift{from{transform:translateX(-14px)}to{transform:translateX(18px)}}
+
+/* ---------- レスポンシブ ---------- */
+@media (max-width:900px){
+  .cards{grid-template-columns:1fr}
+  .howto-grid{grid-template-columns:1fr;gap:52px}
+}
+@media (max-width:760px){
+  .nav-links{display:none}
+  .hero-title{font-size:min(26.5vw,340px)}
+  .card{align-items:flex-start}
+  .bar-cap{letter-spacing:.04em}
+}
+
+/* ---------- モーション低減 ---------- */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .js [data-reveal]{opacity:1;transform:none;transition:none}
+  .js [data-reveal] .bar{transform:none}
+  .js [data-reveal] .pair-top{opacity:1;transform:translateX(-50%)}
+  .drift,.drift-slow{animation:none}
+  .js .gline{stroke-dasharray:none;stroke-dashoffset:0}
+  .glabel,.garea,#gMarker{opacity:1 !important;transition:none}
+  .btn,.card,.card-art svg{transition:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ====== 共有：水彩フィルター・グラデーション・キャラクター ====== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="wcSoft" x="-12%" y="-12%" width="124%" height="124%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.1" result="b"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.021" numOctaves="3" seed="7" result="t"/>
+      <feDisplacementMap in="b" in2="t" scale="14"/>
+    </filter>
+    <filter id="wcBleed" x="-35%" y="-35%" width="170%" height="170%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4.5" result="b"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" seed="12" result="t"/>
+      <feDisplacementMap in="b" in2="t" scale="26"/>
+    </filter>
+    <filter id="wcFine" x="-18%" y="-18%" width="136%" height="136%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.45" result="b"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="2" seed="4" result="t"/>
+      <feDisplacementMap in="b" in2="t" scale="3.5"/>
+    </filter>
+
+    <radialGradient id="gSun">
+      <stop offset="0%" stop-color="#e89a70" stop-opacity=".95"/>
+      <stop offset="45%" stop-color="#dd8258" stop-opacity=".6"/>
+      <stop offset="100%" stop-color="#d97757" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="gGlow">
+      <stop offset="0%" stop-color="#f7d9bd" stop-opacity=".8"/>
+      <stop offset="100%" stop-color="#f7d9bd" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gHillFar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3e6c8"/><stop offset="1" stop-color="#ead7ae"/>
+    </linearGradient>
+    <linearGradient id="gHillMid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ecd8b0"/><stop offset="1" stop-color="#dcb57f"/>
+    </linearGradient>
+    <linearGradient id="gHillNear" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e3bf8d"/><stop offset="1" stop-color="#cd9a62"/>
+    </linearGradient>
+    <linearGradient id="gHillDeep" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c08557"/><stop offset="1" stop-color="#a06a41"/>
+    </linearGradient>
+    <linearGradient id="gHillDeep2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a9714a"/><stop offset="1" stop-color="#8a5636"/>
+    </linearGradient>
+    <linearGradient id="gSkyDusk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f9ecd9"/><stop offset="1" stop-color="#f2cda9"/>
+    </linearGradient>
+    <linearGradient id="gSkyDusk2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7e4ca"/><stop offset="1" stop-color="#edbd92"/>
+    </linearGradient>
+    <linearGradient id="gArea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c65d3b" stop-opacity=".22"/><stop offset="1" stop-color="#c65d3b" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- 歩くふたり（赤い服の人物 + ふわふわ相棒） -->
+    <g id="pairWalk">
+      <ellipse cx="1" cy="2.5" rx="34" ry="5.5" fill="#a97c4e" opacity=".25"/>
+      <g transform="translate(-16,0)">
+        <path d="M -2.5 -8 L -4.5 .5 M 2.5 -8 L 5.5 -.5" stroke="#6b4a35" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+        <path d="M -6 -21 Q -7.5 -10 -5 -8 L 5 -8 Q 7.5 -10 6 -21 Q 0 -24.5 -6 -21 Z" fill="#c65d3b"/>
+        <path d="M 4.5 -19 Q 8.5 -15 6.5 -11" stroke="#a84e30" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+        <circle cx="1" cy="-27" r="4.7" fill="#f2d9bd"/>
+        <path d="M -3.7 -27 A 4.8 4.8 0 0 1 5.8 -27 Z" fill="#5b4232"/>
+      </g>
+      <g transform="translate(16,0)">
+        <ellipse cx="0" cy="-13" rx="16.5" ry="14.5" fill="#f7efdd"/>
+        <circle cx="-12" cy="-22" r="7" fill="#f7efdd"/>
+        <circle cx="0" cy="-26" r="8" fill="#f7efdd"/>
+        <circle cx="12" cy="-21" r="7" fill="#f7efdd"/>
+        <ellipse cx="-7.5" cy="-1.5" rx="4.5" ry="2.6" fill="#efe3c8"/>
+        <ellipse cx="7.5" cy="-1.5" rx="4.5" ry="2.6" fill="#efe3c8"/>
+        <circle cx="-5" cy="-15" r="1.4" fill="#4a382b"/>
+        <circle cx="5" cy="-15" r="1.4" fill="#4a382b"/>
+        <circle cx="-9" cy="-12" r="2.2" fill="#e2957a" opacity=".6"/>
+        <circle cx="9" cy="-12" r="2.2" fill="#e2957a" opacity=".6"/>
+      </g>
+    </g>
+
+    <!-- 座って夕日を眺めるふたり（背中） -->
+    <g id="pairSit">
+      <ellipse cx="0" cy="2" rx="42" ry="6.5" fill="#6f4326" opacity=".18"/>
+      <g transform="translate(-18,0)">
+        <path d="M -7 0 Q -9 -15 0 -16.5 Q 9 -15 7 0 Z" fill="#c65d3b"/>
+        <circle cx="0" cy="-21" r="4.8" fill="#f2d9bd"/>
+        <path d="M -4.8 -21 A 4.9 4.9 0 0 1 4.8 -21 Z" fill="#5b4232"/>
+      </g>
+      <g transform="translate(16,0)">
+        <ellipse cx="0" cy="-11" rx="14.5" ry="12.5" fill="#f7efdd"/>
+        <circle cx="-9" cy="-19" r="6.5" fill="#f7efdd"/>
+        <circle cx="1" cy="-22" r="7.5" fill="#f7efdd"/>
+        <circle cx="10" cy="-18" r="6" fill="#f7efdd"/>
+      </g>
+    </g>
+  </defs>
+</svg>
+
+<div class="grain" aria-hidden="true"></div>
+
+<!-- ====== ヘッダー ====== -->
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Claude ホーム">
+      <svg viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="13" cy="13" r="5.4" fill="#cf6a45"/>
+        <g stroke="#c65d3b" stroke-width="1.7" stroke-linecap="round">
+          <line x1="13" y1="2.2" x2="13" y2="5"/><line x1="13" y1="21" x2="13" y2="23.8"/>
+          <line x1="2.2" y1="13" x2="5" y2="13"/><line x1="21" y1="13" x2="23.8" y2="13"/>
+          <line x1="5.4" y1="5.4" x2="7.3" y2="7.3"/><line x1="18.7" y1="18.7" x2="20.6" y2="20.6"/>
+          <line x1="20.6" y1="5.4" x2="18.7" y2="7.3"/><line x1="7.3" y1="18.7" x2="5.4" y2="20.6"/>
+        </g>
+      </svg>
+      Claude
+    </a>
+    <div class="head-right">
+      <nav class="nav-links" aria-label="ページ内ナビゲーション">
+        <a href="#family">モデル</a>
+        <a href="#capabilities">できること</a>
+        <a href="#safety">安全性</a>
+      </nav>
+      <a class="btn" href="#cta">使ってみる</a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ====== 1. ヒーロー ====== -->
+<section class="hero" aria-label="Fable 5 発表">
+  <div class="wrap">
+    <p class="hero-kick" data-reveal><span class="tick"></span>MYTHOS-CLASS<i>/</i>一般提供モデル</p>
+    <h1 class="hero-title" data-reveal style="--d:.08s">Fable&nbsp;5<span class="dot">.</span></h1>
+    <p class="hero-sub" data-reveal style="--d:.16s">今、いちばん賢いClaudeが、<br>誰でも使える形に。</p>
+    <p class="hero-note" data-reveal style="--d:.24s">MYTHOSクラスの新モデル。最初のひと歩から、いちばん遠くの目的地まで、あなたのそばを歩いていく相棒です。</p>
+  </div>
+
+  <!-- 丘を縫う小道の水彩風景 -->
+  <svg class="hero-art" viewBox="0 0 1440 620" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <ellipse cx="980" cy="190" rx="520" ry="270" fill="url(#gGlow)" filter="url(#wcBleed)"/>
+
+    <!-- 太陽（パララックス） -->
+    <g id="heroSun">
+      <circle cx="980" cy="138" r="94" fill="url(#gSun)" filter="url(#wcBleed)"/>
+      <circle cx="980" cy="138" r="45" fill="#d97757" opacity=".9" filter="url(#wcSoft)"/>
+    </g>
+
+    <!-- 雲（パララックス + 漂い） -->
+    <g id="heroClouds">
+      <g class="drift" filter="url(#wcBleed)" fill="#fffdf6">
+        <ellipse cx="520" cy="118" rx="66" ry="15" opacity=".9"/>
+        <ellipse cx="564" cy="106" rx="44" ry="13" opacity=".85"/>
+        <ellipse cx="478" cy="108" rx="36" ry="11" opacity=".8"/>
+      </g>
+      <g class="drift-slow" filter="url(#wcBleed)" fill="#fffdf6">
+        <ellipse cx="790" cy="72" rx="52" ry="12" opacity=".7"/>
+        <ellipse cx="826" cy="62" rx="32" ry="10" opacity=".6"/>
+      </g>
+    </g>
+
+    <!-- 鳥 -->
+    <path d="M 900 118 q 5 -6 10 0 q 5 -6 10 0 M 942 138 q 4.5 -5 9 0 q 4.5 -5 9 0" stroke="#b08d6a" stroke-width="2" fill="none" opacity=".7" stroke-linecap="round"/>
+
+    <!-- 遠い丘 -->
+    <path d="M -20 320 Q 200 258 430 300 T 900 292 T 1460 306 L 1460 640 L -20 640 Z" fill="url(#gHillFar)" filter="url(#wcSoft)"/>
+    <path d="M -20 320 Q 200 258 430 300 T 900 292 T 1460 306" fill="none" stroke="#d8bd8f" stroke-width="2.5" opacity=".35" filter="url(#wcSoft)"/>
+
+    <!-- 中距離の丘 -->
+    <path d="M -20 412 Q 260 322 560 392 T 1100 372 Q 1300 352 1460 386 L 1460 640 L -20 640 Z" fill="url(#gHillMid)" filter="url(#wcSoft)"/>
+    <path d="M -20 412 Q 260 322 560 392 T 1100 372 Q 1300 352 1460 386" fill="none" stroke="#cfa96f" stroke-width="2.5" opacity=".3" filter="url(#wcSoft)"/>
+
+    <!-- 白い小道 -->
+    <path d="M 468 640 C 520 560 610 480 742 436 C 830 407 900 394 948 386 L 962 390 C 918 402 852 420 776 452 C 660 500 588 570 556 640 Z" fill="#fffdf6" opacity=".97" filter="url(#wcSoft)"/>
+
+    <!-- 手前の丘 -->
+    <path d="M -20 640 L -20 500 Q 180 400 470 480 Q 760 556 1060 520 Q 1300 492 1460 540 L 1460 640 Z" fill="url(#gHillNear)" filter="url(#wcSoft)"/>
+    <path d="M -20 500 Q 180 400 470 480 Q 760 556 1060 520 Q 1300 492 1460 540" fill="none" stroke="#b98a52" stroke-width="3" opacity=".35" filter="url(#wcSoft)"/>
+
+    <!-- 茂み・草花・穂 -->
+    <g filter="url(#wcFine)">
+      <circle cx="212" cy="506" r="13" fill="#c65d3b" opacity=".85"/>
+      <circle cx="234" cy="514" r="9" fill="#a84e30" opacity=".75"/>
+      <circle cx="192" cy="516" r="7" fill="#c9a24b" opacity=".8"/>
+      <circle cx="1180" cy="404" r="8" fill="#a84e30" opacity=".7"/>
+      <circle cx="1214" cy="414" r="5.5" fill="#c9a24b" opacity=".75"/>
+      <circle cx="620" cy="414" r="2.6" fill="#d97757" opacity=".85"/>
+      <circle cx="656" cy="424" r="2.3" fill="#c9a24b" opacity=".85"/>
+      <circle cx="586" cy="428" r="2.1" fill="#d97757" opacity=".8"/>
+      <circle cx="1010" cy="398" r="2.4" fill="#c9a24b" opacity=".8"/>
+    </g>
+    <!-- 穂 -->
+    <g stroke="#b98f45" stroke-width="2" fill="none" stroke-linecap="round" filter="url(#wcFine)">
+      <path d="M 706 548 q -3 -18 3 -30"/><ellipse cx="711" cy="514" rx="3.2" ry="7.5" fill="#c9a24b" stroke="none" transform="rotate(14 711 514)"/>
+      <path d="M 688 552 q -2 -16 4 -26"/><ellipse cx="694" cy="523" rx="3" ry="7" fill="#c9a24b" stroke="none" transform="rotate(10 694 523)"/>
+      <path d="M 828 512 q -3 -16 2 -27"/><ellipse cx="832" cy="482" rx="3" ry="7" fill="#c9a24b" stroke="none" transform="rotate(12 832 482)"/>
+    </g>
+    <!-- 手前の草 -->
+    <g stroke="#b98a5e" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8" filter="url(#wcFine)">
+      <path d="M 70 640 q -4 -26 6 -44"/><path d="M 92 640 q 2 -22 -6 -38"/><path d="M 116 640 q 6 -24 14 -36"/>
+      <path d="M 1352 640 q -6 -26 4 -44"/><path d="M 1378 640 q 4 -22 -4 -38"/>
+    </g>
+
+    <!-- 歩くふたり -->
+    <use href="#pairWalk" transform="translate(700,486) scale(1.2)" filter="url(#wcFine)"/>
+  </svg>
+</section>
+
+<!-- ====== 2. Claudeファミリー ====== -->
+<section id="family" class="sec-pad">
+  <div class="wrap">
+    <header class="sec-head" data-reveal>
+      <span class="sec-no">01</span><span class="sec-kick">FAMILY · Claudeファミリー</span><span class="rule"></span>
+    </header>
+    <h2 class="sec-title" data-reveal style="--d:.08s">Claudeのいちばん上へ。</h2>
+    <p class="lead" data-reveal style="--d:.16s">Haiku、Sonnet、Opus——その上に、いまひとつ新しいクラスが生まれました。MYTHOS。Fable 5は、その最初のモデルです。</p>
+
+    <div class="chart-zone" data-reveal style="--d:.2s">
+      <div class="chart" role="img" aria-label="Haiku、Sonnet、Opus、Mythosの順に高くなる段状バーチャート。最上位のMythOSクラスの上に人物と相棒が立っている">
+        <div class="bar-col" style="--h:26%">
+          <div class="bar bar-haiku" style="--d:.05s"></div>
+          <div class="bar-meta"><span class="bar-name">Haiku</span><span class="bar-cap">軽快・迅速</span></div>
+        </div>
+        <div class="bar-col" style="--h:44%">
+          <div class="bar bar-sonnet" style="--d:.18s"></div>
+          <div class="bar-meta"><span class="bar-name">Sonnet</span><span class="bar-cap">バランス型</span></div>
+        </div>
+        <div class="bar-col" style="--h:66%">
+          <div class="bar bar-opus" style="--d:.31s"></div>
+          <div class="bar-meta"><span class="bar-name">Opus</span><span class="bar-cap">深い推論</span></div>
+        </div>
+        <div class="bar-col" style="--h:92%">
+          <svg class="pair-top" viewBox="-38 -42 76 52" aria-hidden="true"><use href="#pairWalk"/></svg>
+          <div class="bar bar-mythos" style="--d:.44s"></div>
+          <div class="bar-meta">
+            <span class="bar-name">Mythos<span class="badge-new">NEW</span></span>
+            <span class="bar-cap">Fable 5 がここに</span>
+          </div>
+        </div>
+      </div>
+      <p class="chart-note">※ 高さはクラスの能力階層を示す概念図です。Fable 5 は最上位の MYTHOS クラスに属します。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 3. できること ====== -->
+<section id="capabilities" class="sec-pad">
+  <div class="wrap">
+    <header class="sec-head" data-reveal>
+      <span class="sec-no">02</span><span class="sec-kick">CAPABILITIES · できること</span><span class="rule"></span>
+    </header>
+    <h2 class="sec-title" data-reveal style="--d:.08s">頼れる仕事の、その先まで。</h2>
+    <p class="lead" data-reveal style="--d:.16s">「できそう」で止まらない。Fable 5 は、最後まで歩き切って帰ってきます。</p>
+
+    <div class="cards">
+      <!-- ① ゲーム -->
+      <article class="card" data-reveal>
+        <div class="card-art" aria-hidden="true">
+          <svg viewBox="0 0 200 200">
+            <ellipse cx="100" cy="106" rx="86" ry="72" fill="#f3e6cd" opacity=".75" filter="url(#wcBleed)"/>
+            <rect x="40" y="46" width="120" height="88" rx="13" fill="#e5d6b8" filter="url(#wcFine)"/>
+            <rect x="47" y="53" width="106" height="74" rx="9" fill="#fffdf6"/>
+            <clipPath id="scrClip"><rect x="47" y="53" width="106" height="74" rx="9"/></clipPath>
+            <g clip-path="url(#scrClip)">
+              <ellipse cx="128" cy="72" rx="46" ry="26" fill="#f7e3c8" opacity=".8"/>
+              <circle cx="130" cy="70" r="9" fill="#d97757" opacity=".9"/>
+              <path d="M 47 108 Q 72 96 96 106 T 153 102 L 153 127 L 47 127 Z" fill="#e2c79b"/>
+              <path d="M 78 127 C 88 112 100 104 116 97 L 122 100 C 106 107 97 116 92 127 Z" fill="#fffdf6"/>
+              <path d="M 120 98 v -13" stroke="#8a5a3b" stroke-width="2" stroke-linecap="round"/>
+              <path d="M 120 85 l 12 4 -12 4 Z" fill="#c65d3b"/>
+              <use href="#pairWalk" transform="translate(106,117) scale(.5)"/>
+            </g>
+            <path d="M 92 134 h 16 l 7 14 h -30 Z" fill="#d9c3a0"/>
+            <ellipse cx="100" cy="151" rx="32" ry="5.5" fill="#e5d6b8"/>
+            <g stroke="#c9a24b" stroke-width="2" stroke-linecap="round" opacity=".85">
+              <path d="M 58 34 v 10 M 53 39 h 10"/><path d="M 152 30 v 8 M 148 34 h 8"/>
+            </g>
+          </svg>
+        </div>
+        <div class="card-body">
+          <h3>画面を見るだけで、ゲームを最後までクリア</h3>
+          <p>コードもコントローラーもいりません。見えているものだけで、自らの手で勝利までたどり着きます。</p>
+        </div>
+      </article>
+
+      <!-- ② コード移行 -->
+      <article class="card" data-reveal style="--d:.12s">
+        <div class="card-art" aria-hidden="true">
+          <svg viewBox="0 0 200 200">
+            <ellipse cx="100" cy="110" rx="86" ry="74" fill="#f3e6cd" opacity=".75" filter="url(#wcBleed)"/>
+            <g filter="url(#wcFine)">
+              <rect x="52" y="146" width="96" height="16" rx="3" fill="#fffdf6" transform="rotate(-1.5 100 154)"/>
+              <rect x="50" y="130" width="98" height="16" rx="3" fill="#f7efdd" transform="rotate(1 99 138)"/>
+              <rect x="53" y="114" width="95" height="16" rx="3" fill="#fffdf6" transform="rotate(-.8 100 122)"/>
+              <rect x="51" y="98" width="97" height="16" rx="3" fill="#f7efdd" transform="rotate(1.4 99 106)"/>
+              <rect x="54" y="82" width="94" height="16" rx="3" fill="#fffdf6" transform="rotate(-1 101 90)"/>
+              <rect x="52" y="66" width="96" height="16" rx="3" fill="#f7efdd" transform="rotate(.8 100 74)"/>
+            </g>
+            <g stroke="#cbb28b" stroke-width="2" stroke-linecap="round" opacity=".9">
+              <line x1="64" y1="154" x2="112" y2="153"/><line x1="63" y1="138" x2="106" y2="139"/>
+              <line x1="65" y1="122" x2="114" y2="121.5"/><line x1="63" y1="106" x2="108" y2="107"/>
+              <line x1="66" y1="90" x2="110" y2="89.4"/><line x1="64" y1="74" x2="113" y2="74.5"/>
+            </g>
+            <!-- 舞い上がる一枚 -->
+            <g transform="rotate(-14 150 52)" filter="url(#wcFine)">
+              <rect x="118" y="44" width="66" height="14" rx="3" fill="#fffdf6"/>
+              <line x1="127" y1="51" x2="160" y2="51" stroke="#cbb28b" stroke-width="2" stroke-linecap="round"/>
+            </g>
+            <!-- ブックマーク -->
+            <path d="M 138 64 l 0 26 l -6.5 -6.5 l -6.5 6.5 l 0 -26 Z" fill="#c65d3b"/>
+            <text x="44" y="176" font-family="'Cormorant Garamond',serif" font-size="26" font-weight="600" fill="#c9a24b" opacity=".85">{ }</text>
+          </svg>
+        </div>
+        <div class="card-body">
+          <h3>5,000万行のコードを、1日で移行</h3>
+          <p>何年もかかると言われたレガシーシステム。Fable 5 は全行を読み込み、夕暮れまでに移行を終えました。</p>
+        </div>
+      </article>
+
+      <!-- ③ 新薬設計 -->
+      <article class="card" data-reveal style="--d:.06s">
+        <div class="card-art" aria-hidden="true">
+          <svg viewBox="0 0 200 200">
+            <ellipse cx="100" cy="110" rx="86" ry="74" fill="#f3e6cd" opacity=".75" filter="url(#wcBleed)"/>
+            <!-- フラスコ -->
+            <g filter="url(#wcFine)">
+              <path d="M 62 42 h 18 v 26 L 96 136 q 3 12 -9 12 H 45 q -12 0 -9 -12 L 70 68 Z" fill="#fffdf6" opacity=".96"/>
+              <path d="M 52 112 Q 70 103 88 112 L 94.5 136 q 2.5 10 -8.5 10 H 45.5 q -11 0 -8.5 -10 Z" fill="#d97757" opacity=".82"/>
+              <circle cx="66" cy="100" r="3" fill="#fffdf6" opacity=".9"/>
+              <circle cx="76" cy="88" r="2.4" fill="#fffdf6" opacity=".85"/>
+            </g>
+            <!-- 分子 -->
+            <g filter="url(#wcFine)">
+              <line x1="138" y1="70" x2="166" y2="92" stroke="#a8937a" stroke-width="2.5"/>
+              <line x1="166" y1="92" x2="146" y2="114" stroke="#a8937a" stroke-width="2.5"/>
+              <line x1="146" y1="114" x2="170" y2="134" stroke="#a8937a" stroke-width="2.5"/>
+              <line x1="138" y1="70" x2="146" y2="114" stroke="#a8937a" stroke-width="2.5" opacity=".7"/>
+              <circle cx="138" cy="70" r="9" fill="#c9a24b"/>
+              <circle cx="166" cy="92" r="7" fill="#c65d3b"/>
+              <circle cx="146" cy="114" r="8" fill="#b08d6a"/>
+              <circle cx="170" cy="134" r="6" fill="#d97757"/>
+            </g>
+            <path d="M 178 52 v 10 M 173 57 h 10" stroke="#c9a24b" stroke-width="2" stroke-linecap="round" opacity=".85"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <h3>新薬の設計を、約10倍のスピードで</h3>
+          <p>誰も想像しなかった分子構造を探り当て、候補を早くラボの机まで届けてくれます。</p>
+        </div>
+      </article>
+
+      <!-- ④ 長時間タスク -->
+      <article class="card" data-reveal style="--d:.18s">
+        <div class="card-art" aria-hidden="true">
+          <svg viewBox="0 0 200 200">
+            <ellipse cx="100" cy="110" rx="86" ry="74" fill="#f3e6cd" opacity=".75" filter="url(#wcBleed)"/>
+            <!-- 時計 -->
+            <g filter="url(#wcFine)">
+              <circle cx="142" cy="70" r="30" fill="#fffdf6"/>
+              <circle cx="142" cy="70" r="30" fill="none" stroke="#c9a24b" stroke-width="3" opacity=".85"/>
+              <g stroke="#a8937a" stroke-width="2" stroke-linecap="round">
+                <line x1="142" y1="46" x2="142" y2="51"/><line x1="142" y1="89" x2="142" y2="94"/>
+                <line x1="118" y1="70" x2="123" y2="70"/><line x1="161" y1="70" x2="166" y2="70"/>
+              </g>
+              <line x1="142" y1="70" x2="135" y2="52" stroke="#5c5348" stroke-width="3" stroke-linecap="round"/>
+              <line x1="142" y1="70" x2="129" y2="60" stroke="#5c5348" stroke-width="2.4" stroke-linecap="round"/>
+              <circle cx="142" cy="70" r="2.6" fill="#c65d3b"/>
+            </g>
+            <!-- 月と星 -->
+            <path d="M 52 48 a 12 12 0 1 0 9 20 a 9.5 9.5 0 1 1 -9 -20 Z" fill="#e6cfa4" opacity=".9"/>
+            <path d="M 78 34 v 8 M 74 38 h 8" stroke="#c9a24b" stroke-width="1.8" stroke-linecap="round" opacity=".85"/>
+            <circle cx="96" cy="52" r="1.8" fill="#c9a24b" opacity=".8"/>
+            <!-- 道 -->
+            <path d="M 74 172 C 84 140 108 122 128 96 L 138 102 C 120 124 100 142 96 172 Z" fill="#fffdf6" filter="url(#wcFine)"/>
+            <path d="M 88 164 C 98 140 112 122 130 100" stroke="#cbb28b" stroke-width="2" fill="none" stroke-dasharray="6 7" stroke-linecap="round"/>
+            <use href="#pairWalk" transform="translate(104,142) scale(.5)" filter="url(#wcFine)"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <h3>長い作業も、休まず走りきる</h3>
+          <p>数日にも及ぶ仕事でも、道筋をたどるように着実に進み続けます。任せて、安心して眠れます。</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 4. いちばんの強み ====== -->
+<section id="strength" class="sec-pad">
+  <div class="wrap">
+    <header class="sec-head" data-reveal>
+      <span class="sec-no">03</span><span class="sec-kick">STRENGTH · いちばんの強み</span><span class="rule"></span>
+    </header>
+    <h2 class="sec-title" data-reveal style="--d:.08s">長く複雑な仕事ほど、差は開いていく。</h2>
+    <p class="lead" data-reveal style="--d:.16s">短い問いでは、どのモデルも大差ありません。ところが仕事が長くなり、複雑さを増していくと——Fable 5 の線だけが、静かに、しかし確実に上へ伸びていきます。</p>
+
+    <div class="graph-card" id="graphCard" data-reveal style="--d:.2s">
+      <div class="legend">
+        <span class="chip chip-fable"><i></i>Fable 5</span>
+        <span class="chip"><i></i>Opus 4.x</span>
+        <span class="chip"><i style="border-color:#cfc6b8"></i>Sonnet 4.x</span>
+      </div>
+      <svg id="graphChart" viewBox="0 0 900 470" role="img" aria-label="仕事の長さ・複雑さが増すほど、Fable 5 の性能が指数関数的に伸びる折れ線グラフ。他のモデルは低く留まる">
+        <!-- グリッド -->
+        <g stroke="#e5d7ba" stroke-width="1.4" stroke-dasharray="3 7" opacity=".9">
+          <line x1="70" y1="120" x2="850" y2="120"/><line x1="70" y1="196" x2="850" y2="196"/>
+          <line x1="70" y1="272" x2="850" y2="272"/><line x1="70" y1="348" x2="850" y2="348"/>
+        </g>
+        <!-- 軸 -->
+        <line x1="70" y1="48" x2="70" y2="392" stroke="#b09a78" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="70" y1="392" x2="862" y2="392" stroke="#b09a78" stroke-width="2.5" stroke-linecap="round"/>
+        <text x="74" y="34" font-family="'Zen Maru Gothic',sans-serif" font-size="15" fill="#a8937a">性能 ↑</text>
+
+        <!-- Fable 5 の下地 -->
+        <path class="garea" d="M 70 352 C 260 346 430 336 560 300 C 690 262 780 168 850 84 L 850 392 L 70 392 Z" fill="url(#gArea)"/>
+
+        <!-- 線 -->
+        <path class="gline" d="M 70 354 C 280 352 480 348 640 340 C 750 332 810 328 850 324" stroke="#cfc6b8" stroke-width="3.5" pathLength="1"/>
+        <path class="gline" d="M 70 352 C 280 348 480 340 640 318 C 740 304 800 296 850 290" stroke="#a89f93" stroke-width="3.5" pathLength="1"/>
+        <path class="gline gline-fable" id="fableLine" d="M 70 352 C 260 346 430 336 560 300 C 690 262 780 168 850 84" stroke="#c65d3b" stroke-width="5.5" pathLength="1"/>
+
+        <!-- ラベル -->
+        <text class="glabel" x="844" y="66" text-anchor="end" font-family="'Cormorant Garamond',serif" font-weight="600" font-size="27" fill="#c65d3b">Fable 5</text>
+        <text class="glabel" x="844" y="281" text-anchor="end" font-family="'Zen Maru Gothic',sans-serif" font-size="14.5" fill="#9a9186">Opus 4.x</text>
+        <text class="glabel" x="844" y="317" text-anchor="end" font-family="'Zen Maru Gothic',sans-serif" font-size="14.5" fill="#b0a79a">Sonnet 4.x</text>
+
+        <!-- 線の先端の小さな太陽 -->
+        <g id="gMarker" transform="translate(850,84)">
+          <circle r="10" fill="#e89a70" opacity=".5"/>
+          <circle r="4.6" fill="#c65d3b"/>
+        </g>
+
+        <!-- 軸ラベル -->
+        <text x="462" y="432" text-anchor="middle" font-family="'Zen Maru Gothic',sans-serif" font-size="17" letter-spacing="4" fill="#8a7a63">仕事の長さ・複雑さ →</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 5. 安全性 ====== -->
+<section id="safety" class="sec-pad">
+  <div class="wrap">
+    <header class="sec-head" data-reveal>
+      <span class="sec-no">04</span><span class="sec-kick">SAFETY · 安全性</span><span class="rule"></span>
+    </header>
+    <h2 class="sec-title" data-reveal style="--d:.08s">強い力には、やさしいブレーキを。</h2>
+    <p class="lead" data-reveal style="--d:.16s">公開前にレッドチームテストと外部専門家によるレビューを重ねて検証しています。自律の度合いは常にあなたの手に——いつでも立ち止まり、動く前に確認を求める設定もできます。</p>
+  </div>
+
+  <!-- ふたりが並んで夕日を眺める -->
+  <svg class="safety-art" viewBox="0 0 1440 600" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <rect x="-20" y="-20" width="1480" height="660" fill="url(#gSkyDusk)"/>
+
+    <!-- 大きな夕日 -->
+    <circle cx="950" cy="350" r="118" fill="url(#gSun)" filter="url(#wcBleed)"/>
+    <circle cx="950" cy="350" r="62" fill="#cf6a45" opacity=".92" filter="url(#wcSoft)"/>
+
+    <!-- 鳥 -->
+    <path d="M 300 150 q 5 -6 10 0 q 5 -6 10 0 M 348 172 q 4.5 -5 9 0 q 4.5 -5 9 0 M 268 192 q 4 -4.5 8 0 q 4 -4.5 8 0" stroke="#a8794e" stroke-width="2.4" fill="none" opacity=".7" stroke-linecap="round"/>
+
+    <!-- 丘の層 -->
+    <path d="M -20 400 Q 300 348 700 386 T 1460 372 L 1460 640 L -20 640 Z" fill="#d9a877" opacity=".8" filter="url(#wcSoft)"/>
+    <path d="M -20 452 Q 380 380 820 430 T 1460 420 L 1460 640 L -20 640 Z" fill="url(#gHillDeep)" filter="url(#wcSoft)"/>
+    <path d="M -20 452 Q 380 380 820 430 T 1460 420" fill="none" stroke="#8c5a37" stroke-width="3" opacity=".3" filter="url(#wcSoft)"/>
+    <path d="M -20 640 L -20 520 Q 240 428 560 470 Q 830 505 1080 560 Q 1260 596 1460 600 L 1460 640 Z" fill="url(#gHillDeep2)" filter="url(#wcSoft)"/>
+
+    <!-- 茂み -->
+    <g filter="url(#wcFine)">
+      <circle cx="1150" cy="562" r="10" fill="#c65d3b" opacity=".8"/>
+      <circle cx="1174" cy="570" r="7" fill="#a84e30" opacity=".75"/>
+      <circle cx="1128" cy="572" r="5.5" fill="#c9a24b" opacity=".8"/>
+    </g>
+    <g stroke="#d9b98a" stroke-width="2.4" fill="none" stroke-linecap="round" filter="url(#wcFine)" opacity=".85">
+      <path d="M 906 548 q -3 -16 3 -27"/><ellipse cx="911" cy="518" rx="3.2" ry="7.5" fill="#e6cfa4" stroke="none"/>
+      <path d="M 888 552 q -2 -14 4 -24"/><ellipse cx="894" cy="525" rx="3" ry="7" fill="#e6cfa4" stroke="none"/>
+    </g>
+
+    <!-- 座るふたり -->
+    <use href="#pairSit" transform="translate(640,482) scale(1.6)" filter="url(#wcFine)"/>
+  </svg>
+</section>
+
+<!-- ====== 6. はじめかた ====== -->
+<section id="howto" class="sec-pad">
+  <div class="wrap">
+    <header class="sec-head" data-reveal>
+      <span class="sec-no">05</span><span class="sec-kick">GET STARTED · はじめかた</span><span class="rule"></span>
+    </header>
+    <h2 class="sec-title" data-reveal style="--d:.08s">はじめかたは、かんたん。</h2>
+
+    <div class="howto-grid">
+      <figure class="laptop-fig" data-reveal style="--d:.16s">
+        <svg viewBox="0 0 320 240" aria-hidden="true">
+          <ellipse cx="168" cy="118" rx="150" ry="98" fill="#f3e6cd" opacity=".6" filter="url(#wcBleed)"/>
+          <!-- 画面 -->
+          <rect x="78" y="28" width="164" height="114" rx="11" fill="#e5d6b8" filter="url(#wcFine)"/>
+          <rect x="86" y="36" width="148" height="98" rx="7" fill="#fffdf6"/>
+          <clipPath id="lapClip"><rect x="86" y="36" width="148" height="98" rx="7"/></clipPath>
+          <g clip-path="url(#lapClip)">
+            <ellipse cx="206" cy="58" rx="52" ry="30" fill="#f7e3c8" opacity=".8"/>
+            <circle cx="212" cy="56" r="9.5" fill="#d97757" opacity=".9"/>
+            <path d="M 86 104 Q 130 88 170 100 T 234 96 L 234 134 L 86 134 Z" fill="#e2c79b"/>
+            <path d="M 150 134 C 158 116 168 106 182 97 L 189 100 C 176 108 168 118 164 134 Z" fill="#fffdf6"/>
+            <use href="#pairWalk" transform="translate(172,115) scale(.5)" filter="url(#wcFine)"/>
+          </g>
+          <!-- 本体 -->
+          <path d="M 60 142 L 260 142 L 278 168 q 3 9 -8 9 L 50 177 q -11 0 -8 -9 Z" fill="#d9c3a0"/>
+          <rect x="94" y="152" width="132" height="8" rx="4" fill="#cbb28b" opacity=".65"/>
+          <!-- ミルクティー -->
+          <g filter="url(#wcFine)">
+            <path d="M 262 150 h 32 v 22 q 0 9 -9 9 h -14 q -9 0 -9 -9 Z" fill="#c65d3b"/>
+            <path d="M 294 156 q 12 2 8 12 q -3 7 -10 5" stroke="#a84e30" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+          </g>
+          <path d="M 272 142 q 6 -8 0 -16 M 284 142 q -5 -9 1 -18" stroke="#b98f45" stroke-width="2.2" fill="none" opacity=".55" stroke-linecap="round"/>
+        </svg>
+        <figcaption class="laptop-cap">物語は、あなたの画面の上で続きます。</figcaption>
+      </figure>
+
+      <ol class="steps">
+        <li class="step" data-reveal style="--d:.1s">
+          <span class="step-no" aria-hidden="true">1</span>
+          <div><h3>ブラウザで Claude を開く</h3><p>インストールは不要。いつものページが、そのまま出発点です。</p></div>
+        </li>
+        <li class="step" data-reveal style="--d:.2s">
+          <span class="step-no" aria-hidden="true">2</span>
+          <div><h3>「Fable 5」と入力するだけ</h3><p>何も書かなければ、タスクに合ったモデルを自動で選んでくれます。</p></div>
+        </li>
+        <li class="step" data-reveal style="--d:.3s">
+          <span class="step-no" aria-hidden="true">3</span>
+          <div><h3>ひとことから、はじめる</h3><p>そこから道がひらけていきます。あとは、ふたりの歩みにまかせるだけ。</p></div>
+        </li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 7. 最終CTA ====== -->
+<section id="cta" class="cta">
+  <svg class="cta-art" viewBox="0 0 1440 620" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <rect x="-20" y="-20" width="1480" height="660" fill="url(#gSkyDusk2)"/>
+
+    <!-- 沈む太陽 -->
+    <circle cx="720" cy="330" r="132" fill="url(#gSun)" filter="url(#wcBleed)"/>
+    <circle cx="720" cy="330" r="70" fill="#cf6a45" opacity=".92" filter="url(#wcSoft)"/>
+
+    <!-- 鳥 -->
+    <path d="M 596 218 q 5 -6 10 0 q 5 -6 10 0 M 636 194 q 4.5 -5 9 0 q 4.5 -5 9 0" stroke="#a8794e" stroke-width="2.4" fill="none" opacity=".7" stroke-linecap="round"/>
+
+    <!-- 丘 -->
+    <path d="M -20 430 Q 350 380 720 412 Q 1090 380 1460 430 L 1460 640 L -20 640 Z" fill="#d9a877" opacity=".75" filter="url(#wcSoft)"/>
+    <path d="M -20 640 L -20 470 Q 260 418 520 480 Q 640 508 700 532 L 700 640 Z" fill="url(#gHillDeep)" filter="url(#wcSoft)"/>
+    <path d="M 1460 640 L 1460 470 Q 1180 418 920 480 Q 800 508 740 532 L 740 640 Z" fill="url(#gHillDeep)" filter="url(#wcSoft)"/>
+    <path d="M -20 640 L -20 560 Q 360 512 720 548 Q 1080 512 1460 560 L 1460 640 Z" fill="url(#gHillDeep2)" filter="url(#wcSoft)"/>
+
+    <!-- 夕暮れへ続く道 -->
+    <path d="M 682 640 C 706 556 692 512 712 452 L 728 452 C 742 512 730 556 758 640 Z" fill="#fffdf6" opacity=".95" filter="url(#wcSoft)"/>
+
+    <!-- 遠くへ歩くふたり -->
+    <use href="#pairWalk" transform="translate(718,508) scale(.6)" filter="url(#wcFine)"/>
+
+    <!-- 手前の草 -->
+    <g stroke="#8a5636" stroke-width="3.4" fill="none" stroke-linecap="round" opacity=".7" filter="url(#wcFine)">
+      <path d="M 120 640 q -6 -28 6 -48"/><path d="M 150 640 q 3 -24 -6 -42"/>
+      <path d="M 1310 640 q -7 -28 5 -48"/><path d="M 1342 640 q 4 -24 -5 -42"/>
+    </g>
+  </svg>
+
+  <div class="wrap">
+    <header class="sec-head" data-reveal>
+      <span class="rule"></span><span class="sec-no">06</span><span class="sec-kick">TOGETHER · いちばん遠くまで</span><span class="rule"></span>
+    </header>
+    <h2 class="sec-title" data-reveal style="--d:.08s">いちばん遠くまで、いっしょに。</h2>
+    <p class="cta-sub" data-reveal style="--d:.16s">道はもう、ここから続いています。</p>
+    <div data-reveal style="--d:.24s"><a class="btn btn-lg" href="#top">Claudeを使ってみる</a></div>
+    <p class="cta-fine" data-reveal style="--d:.32s">いますぐ利用可能 · クレジットカードは不要です</p>
+  </div>
+</section>
+
+</main>
+
+<!-- ====== フッター ====== -->
+<footer class="site-foot">
+  <div class="wrap">
+    <span class="foot-brand">
+      <svg viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="13" cy="13" r="5.4" fill="#cf6a45"/>
+        <g stroke="#c65d3b" stroke-width="1.7" stroke-linecap="round">
+          <line x1="13" y1="2.2" x2="13" y2="5"/><line x1="13" y1="21" x2="13" y2="23.8"/>
+          <line x1="2.2" y1="13" x2="5" y2="13"/><line x1="21" y1="13" x2="23.8" y2="13"/>
+          <line x1="5.4" y1="5.4" x2="7.3" y2="7.3"/><line x1="18.7" y1="18.7" x2="20.6" y2="20.6"/>
+          <line x1="20.6" y1="5.4" x2="18.7" y2="7.3"/><line x1="7.3" y1="18.7" x2="5.4" y2="20.6"/>
+        </g>
+      </svg>
+      Claude
+    </span>
+    <nav class="foot-links" aria-label="フッター">
+      <a href="#top">プライバシー</a><a href="#top">利用規約</a>
+    </nav>
+    <p class="foot-note">「Fable 5」は本デモのための架空のモデル名です。 · © 2025 Fable Project</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- リビール（IntersectionObserver） ---------- */
+  var revealEls = Array.prototype.slice.call(document.querySelectorAll('[data-reveal]'));
+  if ('IntersectionObserver' in window && !reduced) {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -6% 0px' });
+    revealEls.forEach(function(el){ io.observe(el); });
+  } else {
+    revealEls.forEach(function(el){ el.classList.add('is-in'); });
+  }
+
+  /* ---------- ヘッダーのスクロール状態 ---------- */
+  var head = document.querySelector('.site-head');
+  function onHeadScroll(){ head.classList.toggle('scrolled', (window.scrollY || window.pageYOffset) > 10); }
+  window.addEventListener('scroll', onHeadScroll, { passive: true });
+  onHeadScroll();
+
+  /* ---------- ヒーロー：太陽・雲のパララックス ---------- */
+  var sun = document.getElementById('heroSun');
+  var clouds = document.getElementById('heroClouds');
+  if (sun && clouds && !reduced) {
+    var ticking = false;
+    function parallax(){
+      var y = window.scrollY || 0, vh = window.innerHeight;
+      if (y < vh * 1.3) {
+        sun.setAttribute('transform', 'translate(0,' + (-y * 0.09).toFixed(2) + ')');
+        clouds.setAttribute('transform', 'translate(0,' + (-y * 0.16).toFixed(2) + ')');
+      }
+      ticking = false;
+    }
+    window.addEventListener('scroll', function(){
+      if (!ticking) { requestAnimationFrame(parallax); ticking = true; }
+    }, { passive: true });
+    parallax();
+  }
+
+  /* ---------- グラフ：スクロール連動の描画 ---------- */
+  var chart = document.getElementById('graphChart');
+  var card = document.getElementById('graphCard');
+  if (chart && card) {
+    var lines = Array.prototype.slice.call(chart.querySelectorAll('.gline'));
+    var fable = document.getElementById('fableLine') || lines[lines.length - 1];
+    var marker = document.getElementById('gMarker');
+    var len = fable.getTotalLength();
+
+    function setP(p){
+      p = Math.max(0, Math.min(1, p));
+      lines.forEach(function(l){ l.style.strokeDashoffset = String(1 - p); });
+      if (marker) {
+        var pt = fable.getPointAtLength(len * p);
+        marker.setAttribute('transform', 'translate(' + pt.x.toFixed(1) + ',' + pt.y.toFixed(1) + ')');
+        marker.style.opacity = p > 0.02 ? 1 : 0;
+      }
+      chart.classList.toggle('done', p >= 0.98);
+    }
+
+    if (reduced) { setP(1); return; }
+
+    var gTick = false;
+    function graphUpdate(){
+      var r = card.getBoundingClientRect();
+      var vh = window.innerHeight;
+      // チャートの頂がビューポートの90%に来た瞬間を 0、底が35%に達した瞬間を 1 とする
+      var start = vh * 0.9, end = vh * 0.35;
+      var p = (start - r.top) / (r.height + (start - end));
+      setP(p);
+      gTick = false;
+    }
+    function onGraphScroll(){ if (!gTick) { requestAnimationFrame(graphUpdate); gTick = true; } }
+    window.addEventListener('scroll', onGraphScroll, { passive: true });
+    window.addEventListener('resize', onGraphScroll, { passive: true });
+    graphUpdate();
+  }
+})();
+</script>
+</body>
+</html>
+```
+
+ポイント:
+
+- **水彩の再現** — 共有SVG定義に `feTurbulence + feDisplacementMap` のフィルターを3種用意し、丘・太陽・雲・キャラクターすべてのにじみと輪郭のはらみを表現。緑は使わず生成り〜黄土〜セピア+朱の秋配色です。
+- **物語の一貫性** — 赤い服の人物とクリーム色の相棒が「歩く(ヒーロー)→頂上に立つ(ファミリー)→画面の中で歩く(カード・ノートPC)→夕日を眺める(安全性)→遠くへ小さくなる(CTA)」とページ全体を歩いていきます。
+- **演出** — リビールは `html.js` クラスでゲートしているため、JS無効・IO未発火でも中身が非表示のまま残りません。グラフはスクロール位置に連動して線が伸び、朱色の線の先端に小さな太陽が追従します。`prefers-reduced-motion` 時はすべて静止画化されます。

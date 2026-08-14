@@ -1,0 +1,578 @@
+`index.html` 1枚で完成した実装です。指定ルールセット（挟み取り＋角塞ぎ・先取5枚・自挟みは取られない）を厳密に反映しています。
+
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>はさみ将棋 — 9×9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700;800&family=M+PLUS+1p:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============ 基本・変数 ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#181310;
+  --panel:#251c13; --panel-edge:#3d2e1d;
+  --text:#f0e4cb; --muted:#a3906f;
+  --shu:#cf4b2d; --gold:#e2b263;
+  --wood-line:rgba(64,38,14,.5);
+  --disp:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --body:"M PLUS 1p","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--body); color:var(--text); min-height:100vh; overflow-x:hidden;
+  background:
+    radial-gradient(1100px 720px at 60% 28%, rgba(224,150,60,.10), transparent 62%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,.013) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(-45deg, rgba(0,0,0,.05) 0 2px, transparent 2px 5px),
+    var(--bg);
+}
+body::before{ /* 周辺ビネット */
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:radial-gradient(120% 95% at 50% 38%, transparent 55%, rgba(0,0,0,.38));
+}
+.wm{position:fixed; font-family:var(--disp); font-weight:800; pointer-events:none; user-select:none; z-index:0; line-height:1}
+.wm1{font-size:min(56vmin,520px); right:-7vw; bottom:-12vh; color:rgba(240,228,203,.032)}
+.wm2{font-size:min(34vmin,300px); left:-5vw; top:-9vh;  color:rgba(240,228,203,.026)}
+
+/* ============ ヘッダー ============ */
+header.top{position:relative; z-index:1; max-width:1080px; margin:0 auto;
+  padding:20px clamp(14px,3vw,28px) 14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap}
+.brand{display:flex; align-items:center; gap:14px}
+.seal-sm{width:40px;height:40px; border-radius:7px; display:flex;align-items:center;justify-content:center;
+  font-family:var(--disp); font-weight:800; font-size:21px; color:#fff6ea; transform:rotate(-3deg);
+  background:linear-gradient(150deg,#d9573a,#b23a20);
+  box-shadow:0 4px 10px rgba(0,0,0,.45), inset 0 1px 1px rgba(255,255,255,.35)}
+h1{font-family:var(--disp); font-weight:800; font-size:clamp(24px,3.6vw,37px); letter-spacing:.09em}
+.tagline{font-size:12px; color:var(--muted); letter-spacing:.14em; margin-top:3px}
+.btn-reset{margin-left:auto; cursor:pointer; touch-action:manipulation;
+  font-family:var(--body); font-weight:700; font-size:13px; letter-spacing:.18em;
+  color:var(--gold); background:transparent; border:1px solid rgba(226,178,99,.45);
+  padding:10px 20px 10px 22px; border-radius:6px; transition:.2s}
+.btn-reset:hover{background:var(--shu); border-color:var(--shu); color:#fff6ea; transform:translateY(-1px)}
+.btn-reset:active{transform:translateY(0) scale(.97)}
+
+/* ============ レイアウト ============ */
+.layout{position:relative; z-index:1; max-width:1080px; margin:0 auto;
+  padding:14px clamp(14px,3vw,28px) 56px; display:grid; grid-template-columns:minmax(0,1fr) 316px; gap:26px; align-items:start}
+
+/* ============ ステータスバー ============ */
+.statusbar{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:4px 2px 12px}
+.turn{display:inline-flex; align-items:center; font-family:var(--disp); font-weight:700; font-size:clamp(16px,2.4vw,19px); letter-spacing:.08em}
+.lamp{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:10px;background:#6b5a3e}
+.turn.you .lamp{background:var(--gold); box-shadow:0 0 10px rgba(226,178,99,.85); animation:lampPulse 1.4s infinite}
+.turn.cpu .lamp{background:#d98a3f; animation:lampBlink 1s infinite}
+.turn.end.win .lamp{background:var(--gold); box-shadow:0 0 14px rgba(226,178,99,.9)}
+.turn.end.lose .lamp{background:var(--shu); box-shadow:0 0 12px rgba(207,75,45,.8)}
+.ttext.swap{display:inline-block; animation:fadeSwap .3s ease-out}
+.dots i{display:inline-block;width:4px;height:4px;border-radius:50%;background:currentColor;margin-left:4px;animation:dotB 1.1s infinite}
+.dots i:nth-child(2){animation-delay:.18s}.dots i:nth-child(3){animation-delay:.36s}
+.hint-text{font-size:12px;color:var(--muted);letter-spacing:.06em;transition:opacity .5s}
+.hint-text.off{opacity:0}
+.statusbar.nudge{animation:shake .28s}
+
+/* ============ 盤面 ============ */
+.board-frame{background:linear-gradient(170deg,#5c3f24,#3d2814); border-radius:12px; padding:clamp(8px,1.6vw,13px);
+  box-shadow:0 22px 44px rgba(0,0,0,.5), inset 0 1px 1px rgba(255,230,180,.22)}
+.board{position:relative; width:100%; max-width:640px; margin:0 auto; aspect-ratio:1/1; border-radius:4px; overflow:hidden;
+  background-color:#e3bd78;
+  background-image:
+    repeating-linear-gradient(93deg, rgba(120,70,20,.05) 0 3px, transparent 3px 8px),
+    linear-gradient(var(--wood-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--wood-line) 1px, transparent 1px),
+    linear-gradient(155deg,#eecd8f 0%,#e2bd76 45%,#d8ab63 100%);
+  background-size:auto, calc(100%/9) calc(100%/9), calc(100%/9) calc(100%/9), auto;
+}
+.cells{position:absolute; inset:0; display:grid; grid-template-columns:repeat(9,1fr); grid-template-rows:repeat(9,1fr)}
+.cell{position:relative}
+.board.my-turn .cell.hint{cursor:pointer; background:rgba(207,75,45,.10)}
+.cell.hint::after{content:""; position:absolute; inset:0; margin:auto; width:26%; height:26%;
+  background:var(--shu); border-radius:3px; transform:rotate(45deg) scale(.8); animation:hintPulse 1.2s infinite}
+.cell.last{background:rgba(229,180,95,.30)}
+
+/* ============ 駒 ============ */
+.pieces{position:absolute; inset:0; z-index:2}
+.piece{position:absolute; width:calc(100%/9); height:calc(100%/9); display:flex; align-items:center; justify-content:center;
+  transition:left .3s cubic-bezier(.2,.8,.25,1), top .3s cubic-bezier(.2,.8,.25,1)}
+.token{width:76%; height:76%; border-radius:14%; display:flex; align-items:center; justify-content:center;
+  font-family:var(--disp); font-weight:800; font-size:1em; transition:transform .18s ease, box-shadow .18s ease}
+.piece.s .token{background:linear-gradient(160deg,#f7e7c3,#ecd3a0 60%,#dfc088); color:#43290f;
+  border:1px solid rgba(90,50,10,.35);
+  box-shadow:0 3px 5px rgba(30,15,5,.4), inset 0 2px 2px rgba(255,255,255,.55), inset 0 -3px 4px rgba(90,50,10,.28)}
+.piece.g .token{background:linear-gradient(160deg,#d9a56b,#c98f52 60%,#b57a41); color:#2e1706;
+  border:1px solid rgba(60,25,5,.5);
+  box-shadow:0 3px 5px rgba(25,10,2,.45), inset 0 2px 2px rgba(255,240,210,.4), inset 0 -3px 4px rgba(70,30,5,.3)}
+.board.my-turn .piece.s:hover{cursor:pointer}
+.board.my-turn .piece.s:hover .token{transform:translateY(-4%) scale(1.03)}
+.piece.sel{z-index:3}
+.piece.sel .token{transform:translateY(-6%) scale(1.08);
+  box-shadow:0 9px 15px rgba(20,10,0,.5), 0 0 0 3px var(--shu), 0 0 18px rgba(207,75,46,.55), inset 0 2px 2px rgba(255,255,255,.5)}
+.piece.spawn .token{animation:drop .55s cubic-bezier(.2,1,.4,1) both}
+.piece.dying{pointer-events:none; z-index:4}
+.piece.dying .token{animation:die .5s ease-in both}
+
+/* ============ サイドパネル ============ */
+.panel{display:flex; flex-direction:column; gap:16px}
+.card{background:linear-gradient(180deg,#271d13,#1f1710); border:1px solid var(--panel-edge); border-radius:10px; padding:14px 16px}
+.s-head{display:flex; align-items:center; gap:10px; margin-bottom:11px}
+.chip{width:30px;height:30px;border-radius:8%; display:flex;align-items:center;justify-content:center; flex:none;
+  font-family:var(--disp); font-weight:800; font-size:15px; border:1px solid rgba(90,50,10,.4)}
+.chip.s{background:linear-gradient(160deg,#f7e7c3,#dfc088); color:#43290f}
+.chip.g{background:linear-gradient(160deg,#d9a56b,#b57a41); color:#2e1706; border-color:rgba(60,25,5,.5)}
+.s-name{font-weight:700; font-size:15px; letter-spacing:.05em}
+.s-name em{display:block; font-style:normal; font-weight:400; font-size:11px; color:var(--muted); margin-top:2px; letter-spacing:.12em}
+.cnt-wrap{margin-left:auto; text-align:right}
+.cnt{font-family:var(--disp); font-weight:800; font-size:27px; line-height:1; display:inline-block}
+.cnt.tick{animation:tick .35s ease-out}
+.cnt-wrap i{font-style:normal; font-size:12px; color:var(--muted)}
+.pips{display:flex; gap:6px}
+.pip{width:34px;height:34px;border-radius:6px; border:1px dashed rgba(226,178,99,.3); display:flex;align-items:center;justify-content:center}
+.mini{width:26px;height:26px;border-radius:8%; display:flex;align-items:center;justify-content:center;
+  font-family:var(--disp); font-weight:800; font-size:14px; border:1px solid rgba(90,50,10,.4)}
+.mini.s{background:linear-gradient(160deg,#f7e7c3,#dfc088); color:#43290f}
+.mini.g{background:linear-gradient(160deg,#d9a56b,#b57a41); color:#2e1706; border-color:rgba(60,25,5,.5)}
+.pip.full .mini{animation:pipPop .4s cubic-bezier(.2,1.3,.4,1) both}
+
+.rules h2{font-size:12px; font-weight:700; letter-spacing:.28em; color:var(--gold); margin-bottom:10px}
+.rules ul{list-style:none}
+.rules li{position:relative; padding-left:19px; font-size:13px; line-height:1.65; color:#d8c9ab; margin-bottom:7px}
+.rules li::before{content:""; position:absolute; left:2px; top:.6em; width:6px;height:6px; background:var(--shu); transform:rotate(45deg)}
+.rules .note{margin-top:10px; padding-top:9px; border-top:1px solid #382a1b; font-size:11px; color:var(--muted); line-height:1.6}
+
+/* ============ 結果オーバーレイ ============ */
+.overlay{position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center; padding:20px;
+  background:rgba(14,9,5,.68); opacity:0; pointer-events:none; transition:opacity .3s}
+.overlay.show{opacity:1; pointer-events:auto}
+.result-card{width:min(92vw,420px); text-align:center; padding:36px 30px 30px; border-radius:12px; position:relative; overflow:hidden;
+  background:linear-gradient(180deg,#2a1f14,#211810); border:1px solid #4a3620; box-shadow:0 30px 70px rgba(0,0,0,.6);
+  transform:translateY(14px) scale(.95); transition:transform .35s cubic-bezier(.2,1.4,.4,1)}
+.overlay.show .result-card{transform:none}
+.result-card::before{content:""; position:absolute; top:0; left:0; right:0; height:4px; background:var(--shu)}
+.r-seal{width:56px;height:56px;margin:0 auto 18px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--disp);font-weight:800;font-size:28px;color:#fff6ea;transform:rotate(-4deg);
+  background:linear-gradient(150deg,#d9573a,#b23a20); box-shadow:0 6px 14px rgba(0,0,0,.5), inset 0 1px 1px rgba(255,255,255,.35)}
+.r-title{font-family:var(--disp); font-weight:800; font-size:clamp(28px,7vw,42px); letter-spacing:.1em}
+.r-title.win{color:var(--gold)} .r-title.lose{color:#c98a6d}
+.r-reason{margin-top:10px; font-size:14px; color:var(--muted); letter-spacing:.08em}
+.btn-primary{margin-top:26px; cursor:pointer; touch-action:manipulation;
+  font-family:var(--body); font-weight:700; font-size:15px; letter-spacing:.22em; color:#fff6ea;
+  background:linear-gradient(160deg,#d9573a,#b83c22); border:none; border-radius:7px; padding:14px 38px 14px 42px;
+  box-shadow:0 8px 18px rgba(180,60,30,.35), inset 0 1px 1px rgba(255,255,255,.3); transition:.2s}
+.btn-primary:hover{transform:translateY(-2px); box-shadow:0 12px 24px rgba(180,60,30,.45), inset 0 1px 1px rgba(255,255,255,.3)}
+.btn-primary:active{transform:translateY(0) scale(.97)}
+
+/* ============ アニメーション ============ */
+@keyframes hintPulse{0%,100%{transform:rotate(45deg) scale(.7); opacity:.55} 50%{transform:rotate(45deg) scale(.95); opacity:.95}}
+@keyframes lampPulse{50%{box-shadow:0 0 16px rgba(226,178,99,1); transform:scale(1.18)}}
+@keyframes lampBlink{50%{opacity:.35}}
+@keyframes dotB{0%,60%,100%{opacity:.2; transform:translateY(0)} 30%{opacity:1; transform:translateY(-3px)}}
+@keyframes shake{25%{transform:translateX(-4px)} 75%{transform:translateX(4px)}}
+@keyframes fadeSwap{from{opacity:0; transform:translateY(5px)}}
+@keyframes drop{from{opacity:0; transform:translateY(-40%) scale(.6)} 70%{opacity:1; transform:translateY(4%) scale(1.02)} to{transform:none}}
+@keyframes die{30%{transform:scale(1.22) rotate(6deg); opacity:1} 100%{transform:scale(.15) rotate(-40deg); opacity:0}}
+@keyframes pipPop{from{transform:scale(.3) rotate(-20deg); opacity:0} 70%{transform:scale(1.18) rotate(4deg)} to{transform:none; opacity:1}}
+@keyframes tick{from{transform:scale(1.4); color:#fff}}
+
+/* ============ レスポンシブ ============ */
+@media (max-width:920px){
+  .layout{grid-template-columns:1fr}
+  .panel{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+  .rules{grid-column:1/-1}
+}
+@media (max-width:480px){
+  .pip{width:30px;height:30px}
+  .mini{width:23px;height:23px;font-size:12px}
+  .statusbar{padding-bottom:9px}
+}
+</style>
+</head>
+<body>
+
+<div class="wm wm1" aria-hidden="true">挟</div>
+<div class="wm wm2" aria-hidden="true">棋</div>
+
+<header class="top">
+  <div class="brand">
+    <span class="seal-sm" aria-hidden="true">棋</span>
+    <div>
+      <h1>はさみ将棋</h1>
+      <p class="tagline">挟めば取れる・先取5枚で勝ち</p>
+    </div>
+  </div>
+  <button id="resetBtn" class="btn-reset" type="button">リセット</button>
+</header>
+
+<main class="layout">
+  <section class="board-wrap">
+    <div class="statusbar" id="statusBar">
+      <span class="turn you" id="turnBox"></span>
+      <span class="hint-text" id="hintText">自駒をタップして選択し、光るマスへ指す</span>
+    </div>
+    <div class="board-frame">
+      <div class="board my-turn" id="board">
+        <div class="cells" id="cells"></div>
+        <div class="pieces" id="pieceLayer"></div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="card score">
+      <div class="s-head">
+        <span class="chip s">歩</span>
+        <span class="s-name">あなた<em>先手・歩</em></span>
+        <span class="cnt-wrap"><b class="cnt" id="cntS">0</b><i>/5</i></span>
+      </div>
+      <div class="pips" id="pipsS"></div>
+    </div>
+    <div class="card score">
+      <div class="s-head">
+        <span class="chip g">と</span>
+        <span class="s-name">CPU<em>後手・と</em></span>
+        <span class="cnt-wrap"><b class="cnt" id="cntG">0</b><i>/5</i></span>
+      </div>
+      <div class="pips" id="pipsG"></div>
+    </div>
+    <div class="card rules">
+      <h2>ルール</h2>
+      <ul>
+        <li>駒は縦・横に何マスでも動ける（飛車の動き）</li>
+        <li>敵の列を自駒2枚で挟んだら、その列すべてを取る</li>
+        <li>角の敵駒は隣接する2マスを塞げば取れる</li>
+        <li>先に5枚取った側の勝ち。指す手がないと負け</li>
+      </ul>
+      <p class="note">※地域差のあるルールは「挟み取り＋角塞ぎ・先取5枚」方式で統一しています。</p>
+    </div>
+  </aside>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="result-card">
+    <div class="r-seal" id="rSeal">勝</div>
+    <div class="r-title win" id="rTitle">あなたの勝ち</div>
+    <p class="r-reason" id="rReason"></p>
+    <button class="btn-primary" id="againBtn" type="button">もう一局</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ================= 定数・状態 ================= */
+const N = 9, WIN = 5;
+const DIRS = [[-1,0],[1,0],[0,-1],[0,1]];
+const CORNERS = [[0,0],[0,N-1],[N-1,0],[N-1,N-1]];
+
+let board, pieces, turn, captures, over, selected, lastMove;
+let gameId = 0, cpuTimer = null;
+
+const boardEl   = document.getElementById('board');
+const cellsBox  = document.getElementById('cells');
+const pieceLayer= document.getElementById('pieceLayer');
+const turnBox   = document.getElementById('turnBox');
+const statusBar = document.getElementById('statusBar');
+const hintText  = document.getElementById('hintText');
+const overlayEl = document.getElementById('overlay');
+const cntEls    = { S:document.getElementById('cntS'), G:document.getElementById('cntG') };
+const pipBoxes  = { S:document.getElementById('pipsS'), G:document.getElementById('pipsG') };
+
+/* セル生成 */
+const cellsEl = [];
+for (let r=0;r<N;r++){
+  cellsEl.push([]);
+  for (let c=0;c<N;c++){
+    const d = document.createElement('div');
+    d.className = 'cell'; d.dataset.r = r; d.dataset.c = c;
+    cellsBox.appendChild(d); cellsEl[r].push(d);
+  }
+}
+/* スコアの5枠生成 */
+const pips = { S:[], G:[] };
+for (const side of ['S','G']){
+  for (let i=0;i<WIN;i++){
+    const p = document.createElement('span');
+    p.className = 'pip'; pipBoxes[side].appendChild(p); pips[side].push(p);
+  }
+}
+
+/* ================= 盤面ユーティリティ ================= */
+function plainBoard(){
+  return board.map(row => row.map(id => id==null ? null : pieces.get(id).side));
+}
+function movesFrom(bd, r, c){ /* 飛車移動：空きマスまで、駒は飛び越えない */
+  const out = [];
+  for (const [dr,dc] of DIRS){
+    let rr=r+dr, cc=c+dc;
+    while (rr>=0 && rr<N && cc>=0 && cc<N && bd[rr][cc]==null){ out.push([rr,cc]); rr+=dr; cc+=dc; }
+  }
+  return out;
+}
+function allMovesOn(bd, side){
+  const out = [];
+  for (let r=0;r<N;r++) for (let c=0;c<N;c++){
+    if (bd[r][c]===side) for (const [r2,c2] of movesFrom(bd,r,c)) out.push({r,c,r2,c2});
+  }
+  return out;
+}
+
+/* 着手を模擬し、成立した挟み取り・角塞ぎを返す（純関数） */
+function simulate(bd, r, c, r2, c2){
+  const b = bd.map(row => row.slice());
+  const side = b[r][c];
+  b[r][c] = null; b[r2][c2] = side;
+  const opp = side==='S' ? 'G' : 'S';
+  const caps = [];
+
+  /* 通常の挟み取り：着手先を基準に4方向。連続した敵列の先に自駒があれば全取得 */
+  for (const [dr,dc] of DIRS){
+    let rr=r2+dr, cc=c2+dc;
+    const line = [];
+    while (rr>=0 && rr<N && cc>=0 && cc<N && b[rr][cc]===opp){ line.push([rr,cc]); rr+=dr; cc+=dc; }
+    if (line.length && rr>=0 && rr<N && cc>=0 && cc<N && b[rr][cc]===side) caps.push(...line);
+  }
+  /* 角の取り方：着手先が角に縦横隣接し、角の敵駒のもう一方の隣も自駒なら取得 */
+  for (const [kr,kc] of CORNERS){
+    if (Math.abs(kr-r2)+Math.abs(kc-c2) !== 1) continue;
+    if (b[kr][kc] !== opp) continue;
+    const n1 = kr>0 ? [kr-1,kc] : [kr+1,kc];
+    const n2 = kc>0 ? [kr,kc-1] : [kr,kc+1];
+    const other = (n1[0]===r2 && n1[1]===c2) ? n2 : n1;
+    if (b[other[0]][other[1]] === side) caps.push([kr,kc]);
+  }
+  return { bd:b, caps };
+}
+
+/* ================= DOM：駒の表示 ================= */
+function spawnPiece(side, r, c, idx){
+  const id = pieces.size;
+  const p = { id, side, r, c, el:null };
+  pieces.set(id, p); board[r][c] = id;
+  const el = document.createElement('div');
+  el.className = 'piece ' + (side==='S'?'s':'g') + ' spawn';
+  el.dataset.id = id;
+  el.style.left = (c*100/N)+'%'; el.style.top = (r*100/N)+'%';
+  const tk = document.createElement('span');
+  tk.className = 'token'; tk.textContent = side==='S' ? '歩' : 'と';
+  tk.style.animationDelay = (idx*28)+'ms';
+  el.appendChild(tk); pieceLayer.appendChild(el); p.el = el;
+}
+function positionPiece(p){
+  p.el.style.left = (p.c*100/N)+'%';
+  p.el.style.top  = (p.r*100/N)+'%';
+}
+function killPiece(cp){ /* 取得アニメーション */
+  cp.el.classList.add('dying');
+  setTimeout(()=>cp.el.remove(), 520);
+}
+
+/* ================= UI：ハイライト・ステータス・スコア ================= */
+function renderHints(){
+  for (let r=0;r<N;r++) for (let c=0;c<N;c++){
+    cellsEl[r][c].classList.remove('hint','last');
+  }
+  if (lastMove){
+    cellsEl[lastMove.r][lastMove.c].classList.add('last');
+    cellsEl[lastMove.r2][lastMove.c2].classList.add('last');
+  }
+  pieces.forEach(p => p.el.classList.toggle('sel', selected===p.id));
+  boardEl.classList.toggle('my-turn', !over && turn==='S');
+  if (selected!=null){
+    const p = pieces.get(selected);
+    for (const [r,c] of movesFrom(plainBoard(), p.r, p.c)) cellsEl[r][c].classList.add('hint');
+  }
+}
+function setTurnUI(){
+  let cls='turn', html;
+  if (turn==='S'){ cls+=' you'; html='<span class="lamp"></span><span class="ttext swap">あなたの番</span>'; }
+  else { cls+=' cpu'; html='<span class="lamp"></span><span class="ttext swap">CPU 思考中<span class="dots"><i></i><i></i><i></i></span></span>'; }
+  turnBox.className = cls; turnBox.innerHTML = html;
+}
+function setEndUI(winner){
+  const win = winner==='S';
+  turnBox.className = 'turn end ' + (win?'win':'lose');
+  turnBox.innerHTML = '<span class="lamp"></span><span class="ttext swap">' + (win?'あなたの勝ち':'CPU の勝ち') + '</span>';
+}
+function updateScores(){
+  for (const side of ['S','G']){
+    const cntEl = cntEls[side];
+    if (cntEl.textContent !== String(captures[side])){
+      cntEl.classList.remove('tick'); void cntEl.offsetWidth;
+      cntEl.textContent = captures[side]; cntEl.classList.add('tick');
+    }
+    let batch = 0;
+    for (let i=0;i<WIN;i++){
+      const pip = pips[side][i];
+      if (i < captures[side] && !pip.classList.contains('full')){
+        pip.classList.add('full');
+        const mini = document.createElement('span');
+        mini.className = 'mini ' + (side==='S'?'s':'g');
+        mini.textContent = side==='S' ? '歩' : 'と';
+        mini.style.animationDelay = (batch*120)+'ms'; batch++;
+        pip.appendChild(mini);
+      }
+    }
+  }
+}
+function clearPips(){
+  for (const side of ['S','G']) pips[side].forEach(p=>{ p.classList.remove('full'); p.innerHTML=''; });
+}
+
+/* ================= ゲーム進行 ================= */
+function doMove(m){ /* m:{r,c,r2,c2}、着手者は turn。勝敗成立したら true */
+  const mover = turn;
+  const res = simulate(plainBoard(), m.r, m.c, m.r2, m.c2);
+
+  const pid = board[m.r][m.c], p = pieces.get(pid);
+  board[m.r][m.c] = null; board[m.r2][m.c2] = pid;
+  p.r = m.r2; p.c = m.c2; positionPiece(p);
+  lastMove = m; selected = null;
+
+  const seen = new Set();
+  for (const [cr,cc] of res.caps){
+    const key = cr*N+cc; if (seen.has(key)) continue; seen.add(key);
+    const cid = board[cr][cc]; if (cid==null) continue;
+    const cp = pieces.get(cid);
+    board[cr][cc] = null; pieces.delete(cid);
+    captures[mover]++; killPiece(cp);
+  }
+  updateScores(); renderHints();
+
+  if (captures[mover] >= WIN){ endGame(mover, 'caps'); return true; }
+  const next = mover==='S' ? 'G' : 'S';
+  if (allMovesOn(plainBoard(), next).length === 0){ endGame(mover, 'stuck'); return true; }
+  turn = next; setTurnUI();
+  return false;
+}
+
+function endGame(winner, reason){
+  over = true; selected = null; clearTimeout(cpuTimer);
+  renderHints(); setEndUI(winner);
+  const gid = gameId;
+  setTimeout(()=>{
+    if (gid !== gameId) return;
+    const win = winner==='S';
+    document.getElementById('rSeal').textContent = win ? '勝' : '敗';
+    const t = document.getElementById('rTitle');
+    t.textContent = win ? 'あなたの勝ち' : 'CPU の勝ち';
+    t.className = 'r-title ' + (win?'win':'lose');
+    document.getElementById('rReason').textContent = reason==='caps'
+      ? (win ? '相手の駒を5枚取った' : 'あなたの駒が5枚取られた')
+      : (win ? 'CPU に指す手がない' : 'あなたに指す手がない');
+    overlayEl.classList.add('show');
+  }, 700);
+}
+
+/* ================= 人間の手番 ================= */
+function onCell(r, c){
+  if (over || turn!=='S'){ /* 非手番クリックへの反応 */
+    statusBar.classList.remove('nudge'); void statusBar.offsetWidth;
+    statusBar.classList.add('nudge'); return;
+  }
+  const id = board[r][c];
+  if (id!=null && pieces.get(id).side==='S'){ /* 自駒：選択・切替・解除 */
+    selected = (selected===id) ? null : id;
+    renderHints(); return;
+  }
+  if (selected!=null){
+    const p = pieces.get(selected);
+    const legal = movesFrom(plainBoard(), p.r, p.c);
+    if (legal.some(([a,b])=>a===r && b===c)){
+      hintText.classList.add('off');
+      const finished = doMove({r:p.r, c:p.c, r2:r, c2:c});
+      if (!finished) cpuTimer = setTimeout(()=>cpuGo(gameId), 700 + Math.random()*500);
+      return;
+    }
+  }
+  selected = null; renderHints(); /* 無効クリック：選択解除 */
+}
+
+boardEl.addEventListener('click', e=>{
+  const pc = e.target.closest('.piece');
+  let r, c;
+  if (pc){
+    const p = pieces.get(+pc.dataset.id); if (!p) return;
+    r = p.r; c = p.c;
+  } else {
+    const cell = e.target.closest('.cell'); if (!cell) return;
+    r = +cell.dataset.r; c = +cell.dataset.c;
+  }
+  onCell(r, c);
+});
+
+/* ================= CPU（取れる手を優先・取られる手を避ける） ================= */
+function cpuChoose(){
+  const bd = plainBoard();
+  const cands = allMovesOn(bd, 'G');
+  if (!cands.length) return null;
+  let best=null, bestScore=-Infinity;
+
+  for (const m of cands){
+    const res = simulate(bd, m.r, m.c, m.r2, m.c2);
+    if (res.caps >= WIN) return m;                       /* 即勝ち */
+    const sReplies = allMovesOn(res.bd, 'S');
+    if (!sReplies.length) return m;                      /* 相手に手なしで勝ち */
+
+    let hang = 0;                                        /* 相手の1手で取られる最大枚数 */
+    for (const sm of sReplies){
+      const sr = simulate(res.bd, sm.r, sm.c, sm.r2, sm.c2);
+      if (sr.caps > hang) hang = sr.caps;
+    }
+    let threat = 0;                                      /* 自分の次の手の最大取り */
+    const gFollows = allMovesOn(res.bd, 'G');
+    for (const gm of gFollows){
+      const gr = simulate(res.bd, gm.r, gm.c, gm.r2, gm.c2);
+      if (gr.caps > threat) threat = gr.caps;
+    }
+    const center = 8 - Math.abs(m.r2-4) - Math.abs(m.c2-4);
+    const score = res.caps*1000 - hang*350 + threat*80
+                + gFollows.length*1.2 + center*0.6 + Math.random()*6;
+    if (score > bestScore){ bestScore = score; best = m; }
+  }
+  return best;
+}
+function cpuGo(gid){
+  if (gid !== gameId || over) return;
+  const m = cpuChoose();
+  if (!m){ endGame('S','stuck'); return; }
+  doMove(m);
+}
+
+/* ================= 初期化・リセット ================= */
+function init(){
+  board = Array.from({length:N}, ()=>Array(N).fill(null));
+  pieces = new Map(); pieceLayer.innerHTML = '';
+  let idx = 0;
+  for (let c=0;c<N;c++){ spawnPiece('S', N-1, c, idx++); spawnPiece('G', 0, c, idx++); }
+  turn='S'; captures={S:0,G:0}; over=false; selected=null; lastMove=null;
+  clearPips(); cntEls.S.textContent='0'; cntEls.G.textContent='0';
+  hintText.classList.remove('off');
+  renderHints(); setTurnUI();
+  setTimeout(()=>pieceLayer.querySelectorAll('.spawn').forEach(el=>el.classList.remove('spawn')), 1600);
+}
+function reset(){
+  gameId++; clearTimeout(cpuTimer);
+  overlayEl.classList.remove('show');
+  init(); fitFont();
+}
+document.getElementById('resetBtn').addEventListener('click', reset);
+document.getElementById('againBtn').addEventListener('click', reset);
+
+/* 駒の文字サイズを盤幅に追従 */
+function fitFont(){ boardEl.style.fontSize = (boardEl.clientWidth/9*0.5)+'px'; }
+window.addEventListener('resize', fitFont);
+
+init(); fitFont();
+</script>
+</body>
+</html>
+```
+
+実装のポイント:
+
+- **挟み判定は着手先を基準に4方向＋角のみ走査**します。これにより「自分から挟まれた・角で塞がれた位置に自分で入っても取られない」「相手の着手によって成立した瞬間だけ取る」という指定ルールが自然に満たされます（既存の自挟み状態を後から再トリガーしない）。
+- **CPU**は候補手を全探索し、`取得枚数×1000 − 相手に取られる最大枚数×350 + 次の手の脅威×80 + 手数の確保 + 中央寄り + ランダム揺らぎ`で評価。即勝ち・相手の無着手は最優先、自滅的な着手は回避します（盤が小さいため1手あたり数十ms以内）。
+- **演出**: 駒のスライド移動・取得時の崩壊アニメ・着手マスと直前マスのハイライト・取った駒の5枠へのポップイン・CPU思考中のドット表示・非手番クリック時のシェイクなど。リセット時は駒が交互に落ちてきます。
+- CPUの待機タイマーは `gameId` トークンでガードしており、思考中にリセットしても古い手が指されることはありません。

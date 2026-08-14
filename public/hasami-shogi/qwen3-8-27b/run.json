@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "theme": "hasami-shogi",
+  "model": "qwen3-8-27b",
+  "model_id": "Qwen/Qwen3.8-27B",
+  "harness": "ollama-api",
+  "reasoning_effort": "unknown",
+  "attempts": 1,
+  "generated_at": "2026-08-15T03:45:35+09:00",
+  "generated_at_source": "measured",
+  "sampling": {
+    "temperature": 0.3,
+    "max_tokens": 65000,
+    "top_p": "default"
+  },
+  "system_prompt": "none",
+  "post_processing": "none",
+  "runtime": {
+    "engine": "ollama",
+    "version": "0.30.6",
+    "framework": "llama.cpp (ollama 0.30.6)",
+    "model_revision": "fdd03b8bbd279c1694563650e79d85a2373d9934",
+    "quantization": "Q8_0",
+    "hardware": "Mac Studio M3 Ultra 512GB",
+    "api": "openai-compat"
+  },
+  "usage": {
+    "estimated": false,
+    "method": "api-usage",
+    "prompt_tokens": 723,
+    "completion_tokens": 38519,
+    "note": "Ollama API applied the model chat template; finish_reason=stop; elapsed_seconds=2022.127."
+  },
+  "cost": {
+    "estimated": true,
+    "usd": null,
+    "actual_usd": 0,
+    "prompt_usd_per_mtok": null,
+    "completion_usd_per_mtok": null,
+    "pricing_source": "local-no-reference",
+    "pricing_model": null,
+    "pricing_fetched_at": null
+  }
+}
