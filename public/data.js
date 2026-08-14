@@ -636,7 +636,7 @@ window.MODELS = {
                     { value: "262K", label: "コンテキスト", note: "YaRN で 1M" },
                     { value: "18.5 tok/s", label: "今回の実測", note: "9テーマ加重平均" }
                 ],
-                strengths: "json-ladder はパース 6/6・score 100% でローカル勢唯一の全問正解（96 採点項目の L6 まで取りこぼしなし。既存最高は Gemma 4 31B の 99%）。pr-triage も正解キー一致 90% で Gemma 4 勢の 85% を上回る。HTML では lp-fable5・lp-nishibi・othello の作り込みがローカル最高水準で、9 テーマ中 8 テーマを finish_reason=stop で完走した。Apache 2.0 で重みが公開されている。",
+                strengths: "json-ladder はパース 6/6・score 100%（レベル別平均 99.5% の丸め）でローカル勢の最高スコア。全 191 採点項目のうち取りこぼしは 2 件だけで、既存最高の Gemma 4 31B（99%）を上回った。pr-triage も正解キー一致 90% で Gemma 4 勢の 85% を上回る。HTML では lp-fable5・lp-nishibi・othello の作り込みがローカル最高水準で、9 テーマ中 8 テーマを finish_reason=stop で完走した。Apache 2.0 で重みが公開されている。",
                 weaknesses: "thinking が長く 1 テーマ 32〜59 分（completion 合計 370,866 tokens・加重平均 18.5 tok/s）。HTML 一括生成では全テーマで前置き文・コードフェンス・末尾解説が混入し、phoenix-lp は 65,000 tokens の上限に達して末尾が切れた。roguelike はゲーム開始後に JS エラー 6 件、墨流しはフラグメントシェーダーがコンパイル不能でローカル勢の全滅傾向を踏襲。mlx_lm.server では長文生成中に Metal のバッファ数上限に達してクラッシュするため、測定は llama.cpp（Ollama）経由で行った。",
                 links: [
                     { label: "Qwen 公式モデル", href: "https://huggingface.co/Qwen/Qwen3.8-27B" },
@@ -762,7 +762,7 @@ window.ENTRIES.push(
 window.ENTRIES.push(
     { theme: "json-ladder", model: "gemma-4-31b", runner: "Ollama API", note: "パース 6/6・score 99%。L1〜L4 は満点、L5 98%、L6 93%。L6 では発話だけの行を段落として数えず、手紙の引用記号「>」も落とせない。completion 計 16,810 tokens。", kind: "json" },
     { theme: "json-ladder", model: "gemma-4-26b-a4b-qat", runner: "Ollama API", note: "パース 6/6・score 98%。31B とほぼ同等で L6 は 92%。発話行を句点で切って段落冒頭文を途中までしか返せず、根拠文の抜き出しも一文の範囲を取り違える。completion 計 17,916 tokens。", kind: "json" },
-    { theme: "json-ladder", model: "qwen3-8-27b", runner: "Ollama API", note: "パース 6/6・score 100%。L1〜L6 すべて満点で、96 採点項目の L6（全文の逐語インデックス）も取りこぼしなし。ローカル勢で唯一の全問正解。ただし thinking が長く completion 計 35,033 tokens を要した。", kind: "json" },
+    { theme: "json-ladder", model: "qwen3-8-27b", runner: "Ollama API", note: "パース 6/6・score 100%（レベル別平均 99.5% の丸め）。L1〜L4 は満点、L5 98%・L6 99% で取りこぼしは 2 件のみ。L6 の失敗は Gemma 4 勢と同じく手紙の引用記号「>」を落とせない箇所。ローカル勢では最高スコア。thinking が長く completion 計 35,033 tokens。", kind: "json" },
     { theme: "json-ladder", model: "gemma-4-12b-qat", runner: "Ollama API", note: "パース 6/6・score 91%。L6 は 97% と 3 モデル最高だが、L2 が 69%・L4 が 83% と基本の配列順序と忠実抽出で落とす。逐語インデックスより単純な列挙の方が苦手という逆転。completion 計 27,017 tokens。", kind: "json" }
 );
 
