@@ -711,6 +711,7 @@ window.ENTRIES = [
             // スモーク検証: ページロード + Canvas 存在 + スクロールで描画変化 + JS エラー数を機械確認）
             { theme: "phoenix-lp", model: "gemma-4-12b-qat",     runner: "LM Studio API", note: "1ショット551行/20KB。6シーン構成とスクロール遷移は動くが、初期化時 JS エラー1件（i is not defined）。所要2分10秒。", kind: "html" },
             { theme: "phoenix-lp", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API", note: "1ショット369行/16KB。canvas は出るがスクロールで描画が変化せず、JS エラー1件（undefined の x 参照）。所要55秒。", kind: "html" },
+            { theme: "phoenix-lp", model: "qwen3-8-27b",         runner: "Ollama API",    note: "verify PASS（canvas描画・スクロール演出・JSエラー0）。ただし finish_reason=length で 65,000 tokens の上限に到達し、末尾の JavaScript が途中で切れている（このテーマで唯一）。804行/42KB・58.9分。", kind: "html" },
             { theme: "phoenix-lp", model: "gemma-4-31b",         runner: "LM Studio API", note: "1ショット536行/20KB。ロード・canvas・スクロール遷移OK、JSエラー0。所要6分9秒。", kind: "html" },
             { theme: "phoenix-lp", model: "claude-opus-4-8",     runner: "claude CLI headless (effort high)", note: "1ショット432行/20KB。6シーン遷移・JSエラー0。所要2分6秒と最速級。", kind: "html" },
             { theme: "phoenix-lp", model: "grok-4-5",            runner: "OpenRouter API (reasoning high)", note: "1ショット1638行/52KB。スクロール遷移・JSエラー0。completion 18196 tok。", kind: "html" },
