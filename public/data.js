@@ -617,6 +617,31 @@ window.MODELS = {
                     { label: "avlp12 MLX版", href: "https://huggingface.co/avlp12/Hy3-Alis-MLX-Dynamic/tree/T512" },
                     { label: "ベンチマーク記事", href: "https://zenn.dev/noricha/articles/hy3-t512-m3-ultra-benchmark" }
                 ]
+            },
+            "qwen3-8-27b": {
+                label: "Qwen3.8 27B",
+                provider: "Alibaba",
+                type: "local",
+                color: "#0A2EFE",
+                colorDark: "#0A1FB8",
+                release: "2026-08-05",
+                size: "27B パラメータ（dense / Gated DeltaNet 3 層 + Gated Attention 1 層 を 16 回反復）",
+                context: "262,144 tokens（YaRN で最大 1M）",
+                output: "131K tokens（公式推奨。推論内容は別枠で最大 262K）",
+                quantization: "unsloth GGUF Q8_0（29GB）",
+                runtime: "Ollama 0.30.6 / llama.cpp（Mac Studio M3 Ultra 512GB）",
+                stats: [
+                    { value: "27B", label: "パラメータ", note: "dense / ハイブリッド注意機構" },
+                    { value: "Q8_0", label: "量子化", note: "unsloth GGUF 29GB" },
+                    { value: "262K", label: "コンテキスト", note: "YaRN で 1M" },
+                    { value: "131K", label: "最大出力", note: "公式推奨値" }
+                ],
+                strengths: "json-ladder はパース 6/6・score 100% で全レベル満点。96 採点項目の L6（全文の逐語インデックス）まで取りこぼしがなく、ローカル勢の既存最高（Gemma 4 31B の 99%）を上回った。Apache 2.0 で重みが公開されている。",
+                weaknesses: "thinking が既定で有効かつ長大で、json-ladder 6 問の completion だけで 35,033 tokens（Gemma 4 31B の約 2.1 倍）を要した。mlx_lm.server では長文生成の途中で Metal のバッファ数上限に達してクラッシュしたため、本ベンチは llama.cpp（Ollama）経由で測定している。",
+                links: [
+                    { label: "Qwen 公式モデル", href: "https://huggingface.co/Qwen/Qwen3.8-27B" },
+                    { label: "unsloth GGUF", href: "https://huggingface.co/unsloth/Qwen3.8-27B-GGUF" }
+                ]
             }
         };
 
@@ -729,6 +754,7 @@ window.ENTRIES.push(
 window.ENTRIES.push(
     { theme: "json-ladder", model: "gemma-4-31b", runner: "Ollama API", note: "パース 6/6・score 99%。L1〜L4 は満点、L5 98%、L6 93%。L6 では発話だけの行を段落として数えず、手紙の引用記号「>」も落とせない。completion 計 16,810 tokens。", kind: "json" },
     { theme: "json-ladder", model: "gemma-4-26b-a4b-qat", runner: "Ollama API", note: "パース 6/6・score 98%。31B とほぼ同等で L6 は 92%。発話行を句点で切って段落冒頭文を途中までしか返せず、根拠文の抜き出しも一文の範囲を取り違える。completion 計 17,916 tokens。", kind: "json" },
+    { theme: "json-ladder", model: "qwen3-8-27b", runner: "Ollama API", note: "パース 6/6・score 100%。L1〜L6 すべて満点で、96 採点項目の L6（全文の逐語インデックス）も取りこぼしなし。ローカル勢で唯一の全問正解。ただし thinking が長く completion 計 35,033 tokens を要した。", kind: "json" },
     { theme: "json-ladder", model: "gemma-4-12b-qat", runner: "Ollama API", note: "パース 6/6・score 91%。L6 は 97% と 3 モデル最高だが、L2 が 69%・L4 が 83% と基本の配列順序と忠実抽出で落とす。逐語インデックスより単純な列挙の方が苦手という逆転。completion 計 27,017 tokens。", kind: "json" }
 );
 

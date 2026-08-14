@@ -512,6 +512,49 @@
       "pricing_fetched_at": null
     }
   },
+  "json-ladder/qwen3-8-27b": {
+    "schema_version": 1,
+    "theme": "json-ladder",
+    "model": "qwen3-8-27b",
+    "model_id": "Qwen/Qwen3.8-27B",
+    "harness": "ollama-api",
+    "reasoning_effort": "unknown",
+    "attempts": 1,
+    "generated_at": null,
+    "generated_at_source": "unknown",
+    "sampling": {
+      "temperature": 0.3,
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "json-ladder-5-levels",
+    "runtime": {
+      "engine": "ollama",
+      "api": "openai-compat",
+      "quantization": "Q8_0",
+      "hardware": "Mac Studio M3 Ultra 512GB",
+      "model_revision": "fdd03b8bbd279c1694563650e79d85a2373d9934",
+      "version": "0.30.6"
+    },
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 11304,
+      "completion_tokens": 35033,
+      "note": "Ollama API 実測。5段階を独立リクエストで合算。"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
   "lp-fable5/agents-a1-4b": {
     "schema_version": 1,
     "theme": "lp-fable5",
