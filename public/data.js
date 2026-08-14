@@ -725,6 +725,7 @@ window.ENTRIES = [
             // pr-triage（PR 10件のトリアージ判断を answer-key と突合。一致率は meta.json 参照）
             { theme: "pr-triage", model: "gemma-4-12b-qat",     runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。正解キー一致 85%。スコープ肥大 PR の分割要求(fix)を hold と判断。", kind: "json" },
             { theme: "pr-triage", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。正解キー一致 85%。外しどころが 12B と完全に同じで、判断傾向はサイズ非依存。", kind: "json" },
+            { theme: "pr-triage", model: "qwen3-8-27b",         runner: "Ollama API",     note: "スキーマ準拠 PASS。正解キー一致 90%（9 primary）で、Gemma 4 勢の 85% を上回りローカル勢では DeepSeek V4 Flash の 95% に次ぐ。thinking を挟んでも JSON 単体の指示は守った。12,004 tokens・10.3分と他テーマより短時間。", kind: "json" },
             { theme: "pr-triage", model: "gemma-4-31b",         runner: "LM Studio API",  note: "✅ スキーマ準拠 PASS。正解キー一致 85%。dense 31B でもグレーケースの判断は 12B と同傾向。", kind: "json" },
             { theme: "pr-triage", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "✅ スキーマ準拠 PASS。正解キー一致 95%（唯一の非一致も許容解）。ただし出力は前置き文+コードフェンス付きで「JSON 単体」指示を破った。", kind: "json" },
             { theme: "pr-triage", model: "grok-4-5",            runner: "grok CLI (single-turn)", note: "✅ スキーマ準拠 PASS。正解キー一致 90%。設計議論が未決着の PR を hold でなく close と断定したのが唯一の非一致。", kind: "json" }

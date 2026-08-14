@@ -57,6 +57,13 @@ MODEL_INFO = {
         "color": "#7C3AED",
         "color_dark": "#5B21B6",
     },
+    "qwen3-8-27b": {
+        "label": "Qwen3.8 27B",
+        "provider": "Alibaba",
+        "type": "ローカル LLM",
+        "color": "#0A2EFE",
+        "color_dark": "#0A1FB8",
+    },
 }
 
 TEMPLATE = """<!DOCTYPE html>

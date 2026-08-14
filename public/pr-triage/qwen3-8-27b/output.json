@@ -1,0 +1,145 @@
+{
+  "triage": [
+    {
+      "pr": 101,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": [
+        "Issue #90 の P1 メール洪水を直接解決しており、CI・テスト追加・レビュー approve が揃っている",
+        "超過分は WARNING ログに集約する設計で、管理者メールのノイズ抑制と可観測性のバランスが妥当"
+      ],
+      "actions": [
+        "マージして本番デプロイし、管理者メール件数と WARNING ログを確認する",
+        "cache バックエンドの可用性や RATE_LIMIT_KEY の衝突がないことを確認する"
+      ],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 102,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": [
+        "新規 API なのにテストがなく、新機能にテスト必須という方針に反する",
+        "レビューで owner 絞り込み不足（他人のタスクをアーカイブできる IDOR）が指摘され未解決"
+      ],
+      "actions": [
+        "owner フィルター追加と権限・境界ケースのテスト追加を要求する",
+        "作者に返信期限を設け、応答なければクローズへ切り替える"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 103,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": [
+        "except Exception: pass は broad except / silent failure に該当し方針違反",
+        "Issue #91 のログ抑制は、例外を握りつぶすのではなく特定例外のログレベル調整や Sentry 無視設定で行うべき"
+      ],
+      "actions": [
+        "PR をクローズし、再提出を求めるコメントを残す",
+        "ConnectionError/Timeout 等を個別捕捉して WARNING ログ・リトライ・Sentry ignore を検討するよう提案する"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 104,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": [
+        "依存パッケージのバージョン固定解除と lock 削除はサプライチェーン攻撃防止方針に反する",
+        "CI が通っていても再現性・セキュリティリスクが高まる"
+      ],
+      "actions": [
+        "クローズし、requirements.txt と requirements.lock の固定を維持する",
+        "依存更新は Renovate/Dependabot 等で PR 単位・ロックファイル付きで行う運用へ誘導する"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 105,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": [
+        "Issue #92 のセキュリティ問題を直接修正し、CI・テスト・レビュー approve が揃っている",
+        "旧リンクの 24 時間互換は移行リスクを下げている"
+      ],
+      "actions": [
+        "最優先でマージして本番デプロイする",
+        "旧クエリトークン利用ログとリセット成功率を監視する"
+      ],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 106,
+      "verdict": "hold",
+      "confidence": "high",
+      "reasons": [
+        "42 ファイル・3,000 行超の UI/新アプリ/LP が混在し、レビュー不能",
+        "通知設定画面など新規機能だがテスト追加の有無や意図が不明"
+      ],
+      "actions": [
+        "ダークモード、通知設定、LP 刷新に分割して再提出するよう質問する",
+        "各スコープのテスト方針とセキュリティ影響（通知設定）を確認する"
+      ],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 107,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": [
+        "CI が失敗しているためマージ不可",
+        "DST 境界テストの失敗は flaky ではなくタイムゾーン修正の不備の可能性が高い"
+      ],
+      "actions": [
+        "CI を通すまで差し戻し、test_deadline_dst_boundary の再現手順を確認する",
+        "UTC/ローカル TZ 変換の境界ケース（DST 開始・終了）をテストで固定する"
+      ],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 108,
+      "verdict": "hold",
+      "confidence": "high",
+      "reasons": [
+        "Issue #94 で分離の是非が未決着のまま停止しており、判断根拠がない",
+        "28 ファイルと db_table を変えるマイグレーションを含むため影響範囲が大きく、パフォーマンス懸念への回答もない"
+      ],
+      "actions": [
+        "作者に Issue #94 の結論待ちか撤回かを質問する",
+        "性能影響（JOIN 増加）の測定結果と分割レビュー可能なスコープ提示を求める"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 109,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": [
+        "docs/setup.md が全面改訂済みで Issue #93 は解決済み",
+        "README にリンクがあるため重複した古い手順を追記する意味が薄く、コンフリクトもある"
+      ],
+      "actions": [
+        "クローズし、必要なら docs/setup.md 準拠の最小 README 更新を別 PR で依頼する"
+      ],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 110,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": [
+        "新規機能にテストがあり CI・レビュー approve が揃っている",
+        "残指摘は StreamingHttpResponse の nit のみで、現規模ではブロック不要"
+      ],
+      "actions": [
+        "マージし、件数増加時のストリーミング化を後続タスク化する",
+        "エクスポート対象の権限スコープが owner/管理者に限定されていることを確認する"
+      ],
+      "risk_if_merged": "low"
+    }
+  ],
+  "priority_order": [105, 101, 107, 102, 103, 104, 110, 108, 106, 109],
+  "summary": "セキュリティ修正と P1 の webhook メール洪水は即マージが妥当で、CI 失敗・テスト不足・方針違反の PR は差し戻しまたはクローズが必要。大型リファクタ/UI 変更は意図確認のため保留にし、重複した docs PR はクローズするのが安全。"
+}
