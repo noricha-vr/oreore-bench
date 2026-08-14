@@ -99,6 +99,7 @@ def make_args(**overrides: object) -> argparse.Namespace:
         "model": "hy3-t512",
         "api_model_id": "/private/models/hy3-t512",
         "public_model_id": "example/Hy3-T512",
+        "harness": None,
         "base_url": runner.DEFAULT_BASE_URL,
         "max_tokens": 65000,
         "timeout": 3600,
@@ -178,6 +179,58 @@ def test_main_writes_raw_content_and_measured_metadata(tmp_path: Path, monkeypat
     assert payload["stream"] is True
     assert payload["stream_options"] == {"include_usage": True}
     assert "system" not in json.dumps(payload)
+
+
+@pytest.mark.parametrize(
+    ("harness", "engine", "server"),
+    [
+        ("ollama-api", "ollama", "Ollama API"),
+        ("lmstudio-api", "lmstudio", "LM Studio API"),
+        ("omlx-api", "omlx", "oMLX API"),
+    ],
+)
+def test_non_mlx_harness_is_recorded_as_its_own_backend(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    harness: str,
+    engine: str,
+    server: str,
+) -> None:
+    """A run served by another local engine is never published as an mlx-lm measurement."""
+    public = make_public(tmp_path)
+    monkeypatch.setattr(runner, "PUBLIC", public)
+    monkeypatch.setattr(runner, "parse_args", lambda: make_args(harness=harness))
+    install_fake_http(monkeypatch, [{"data": []}, completion()])
+
+    assert runner.main() == 0
+
+    run = json.loads((public / "demo" / "hy3-t512" / "run.json").read_text(encoding="utf-8"))
+    assert run["harness"] == harness
+    assert run["runtime"]["engine"] == engine
+    assert run["runtime"]["api"] == "openai-compat"
+    assert run["usage"]["note"].startswith(server)
+    assert "mlx" not in run["usage"]["note"]
+
+
+def test_resume_rejects_a_result_recorded_under_a_different_harness(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Resume never treats another backend's completed run as this harness's work."""
+    public = make_public(tmp_path)
+    monkeypatch.setattr(runner, "PUBLIC", public)
+    monkeypatch.setattr(runner, "parse_args", lambda: make_args())
+    install_fake_http(monkeypatch, [{"data": []}, completion()])
+    assert runner.main() == 0
+    run_before = (public / "demo" / "hy3-t512" / "run.json").read_bytes()
+
+    monkeypatch.setattr(
+        runner, "parse_args", lambda: make_args(resume=True, harness="ollama-api")
+    )
+    sent = install_fake_http(monkeypatch, [{"data": []}])
+
+    assert runner.main() == 1
+    assert len(sent) == 1
+    assert (public / "demo" / "hy3-t512" / "run.json").read_bytes() == run_before
 
 
 def test_finish_reason_length_is_saved_as_a_model_result(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -404,7 +457,11 @@ def test_runaway_generation_is_cut_off_and_publishes_nothing(
     monkeypatch.setattr(
         runner,
         "parse_args",
-        lambda: make_args(base_url=f"http://127.0.0.1:{server.server_port}/v1", max_tokens=65000),
+        lambda: make_args(
+            base_url=f"http://127.0.0.1:{server.server_port}/v1",
+            harness="mlx-lm-api",
+            max_tokens=65000,
+        ),
     )
     try:
         assert runner.main() == 1
@@ -527,6 +584,106 @@ def test_framework_cli_option_is_distinct_from_runner_version(monkeypatch: pytes
 
     assert args.version == "0.31.3"
     assert args.framework == "MLX 0.32.0"
+
+
+def test_harness_flag_defaults_to_mlx_and_accepts_local_backends(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The CLI keeps mlx-lm-api as the default and only accepts known local harnesses."""
+    argv = [
+        "mlx-lm-run.py",
+        "--theme", "demo",
+        "--model", "hy3-t512",
+        "--api-model-id", "qwen3:27b",
+        "--public-model-id", "avlp12/Hy3-Alis-MLX-Dynamic",
+    ]
+    monkeypatch.setattr(sys, "argv", argv)
+    assert runner.resolve_harness(runner.parse_args().harness, runner.DEFAULT_BASE_URL) == "mlx-lm-api"
+
+    monkeypatch.setattr(sys, "argv", [*argv, "--harness", "ollama-api"])
+    assert runner.parse_args().harness == "ollama-api"
+
+    monkeypatch.setattr(sys, "argv", [*argv, "--harness", "openrouter-api"])
+    with pytest.raises(SystemExit):
+        runner.parse_args()
+
+
+def test_non_default_base_url_requires_an_explicit_harness(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Pointing at another engine without saying so publishes nothing at all.
+
+    Without this guard an ollama run reached with only --base-url would be
+    published as harness mlx-lm-api, which is exactly the false record the
+    harness flag exists to prevent.
+    """
+    public = make_public(tmp_path)
+    monkeypatch.setattr(runner, "PUBLIC", public)
+    monkeypatch.setattr(
+        runner, "parse_args", lambda: make_args(base_url="http://127.0.0.1:11434/v1")
+    )
+    sent = install_fake_http(monkeypatch, [{"data": []}, completion()])
+
+    assert runner.main() == 1
+    assert sent == []
+    assert not (public / "demo" / "hy3-t512").exists()
+
+    monkeypatch.setattr(
+        runner,
+        "parse_args",
+        lambda: make_args(base_url="http://127.0.0.1:11434/v1", harness="ollama-api"),
+    )
+    install_fake_http(monkeypatch, [{"data": []}, completion()])
+
+    assert runner.main() == 0
+    run = json.loads((public / "demo" / "hy3-t512" / "run.json").read_text(encoding="utf-8"))
+    assert run["harness"] == "ollama-api"
+
+
+def test_resume_skips_a_complete_run_written_under_a_non_default_harness(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Resume accepts its own backend's finished work instead of regenerating it."""
+    public = make_public(tmp_path)
+    monkeypatch.setattr(runner, "PUBLIC", public)
+    args = dict(base_url="http://127.0.0.1:11434/v1", harness="ollama-api")
+    monkeypatch.setattr(runner, "parse_args", lambda: make_args(**args))
+    install_fake_http(monkeypatch, [{"data": []}, completion()])
+    assert runner.main() == 0
+    run_before = (public / "demo" / "hy3-t512" / "run.json").read_bytes()
+
+    monkeypatch.setattr(runner, "parse_args", lambda: make_args(resume=True, **args))
+    sent = install_fake_http(monkeypatch, [{"data": []}])
+
+    assert runner.main() == 0
+    assert [request.full_url for request, _timeout in sent] == [
+        "http://127.0.0.1:11434/v1/models"
+    ]
+    assert (public / "demo" / "hy3-t512" / "run.json").read_bytes() == run_before
+
+
+def test_resume_mismatch_names_the_fields_that_differ(tmp_path: Path) -> None:
+    """A rejected resume says which identity fields differ, not just that one does."""
+    run = {
+        "schema_version": 1,
+        "theme": "demo",
+        "model": "hy3-t512",
+        "harness": "ollama-api",
+        "reasoning_effort": "unknown",
+        "attempts": 1,
+        "generated_at": "2026-08-15T00:00:00+09:00",
+        "generated_at_source": "measured",
+        "system_prompt": "none",
+        "post_processing": "none",
+        "model_id": "example/Hy3-T512",
+    }
+
+    with pytest.raises(ValueError) as excinfo:
+        runner.validate_resume_identity(
+            run, tmp_path / "run.json", "other-theme", "hy3-t512", "example/Hy3-T512", "mlx-lm-api"
+        )
+
+    assert "(theme, harness)" in str(excinfo.value)
 
 
 @pytest.mark.parametrize("theme", [".", ".."])

@@ -3,7 +3,11 @@
 # requires-python = ">=3.10"
 # dependencies = []
 # ///
-"""Generate benchmark artifacts through a loopback-only mlx_lm.server API.
+"""Generate benchmark artifacts through a loopback-only OpenAI-compatible API.
+
+mlx_lm.server is the default backend; --harness switches both the recorded
+harness label and its runtime identity, so a run served by another local engine
+(LM Studio, oMLX, Ollama) is not published as an mlx-lm measurement.
 
 The runner writes a response and its measured run.json to a hidden directory,
 then atomically renames that directory into public/<theme>/<model>.  It never
@@ -34,6 +38,16 @@ from runaway_detector import RunawayDetector, RunawayVerdict  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 PUBLIC = ROOT / "public"
+# harness ごとの runtime 既定値と usage.note の実測元表記。
+# scripts/json-ladder-run.py の LOCAL_HARNESSES と同じ対応表で、
+# validate-runs.mjs の HARNESS_ENUM のうち、この runner が扱うローカル 4 種のみを持つ。
+LOCAL_HARNESSES: dict[str, dict[str, str]] = {
+    "mlx-lm-api": {"engine": "mlx-lm", "api": "openai-compat-chat", "server": "mlx_lm.server"},
+    "lmstudio-api": {"engine": "lmstudio", "api": "openai-compat", "server": "LM Studio API"},
+    "omlx-api": {"engine": "omlx", "api": "openai-compat", "server": "oMLX API"},
+    "ollama-api": {"engine": "ollama", "api": "openai-compat", "server": "Ollama API"},
+}
+DEFAULT_HARNESS = "mlx-lm-api"
 DEFAULT_BASE_URL = "http://127.0.0.1:18081/v1"
 DEFAULT_MAX_TOKENS = 65000
 DEFAULT_TIMEOUT_SECONDS = 3600
@@ -47,7 +61,7 @@ RUNTIME_VALUE_RE = re.compile(r"^[A-Za-z0-9._ ()-]{1,40}$")
 
 
 class MlxApiError(RuntimeError):
-    """Represent a failed or malformed mlx_lm.server API response."""
+    """Represent a failed or malformed local API response."""
 
 
 class UsageMissingError(MlxApiError):
@@ -120,6 +134,23 @@ def resolve_base_url(raw_url: str) -> str:
     return urllib.parse.urlunparse(("http", parsed.netloc, path, "", "", ""))
 
 
+def resolve_harness(harness: str | None, base_url: str) -> str:
+    """Require an explicit harness whenever the target is not the default backend.
+
+    A non-default --base-url means another engine is serving the request, so an
+    implicit mlx-lm-api label would publish that run as an MLX-LM measurement.
+    """
+    if harness is not None:
+        return harness
+    if base_url != DEFAULT_BASE_URL:
+        raise ValueError(
+            f"--base-url が既定 ({DEFAULT_BASE_URL}) と異なるときは --harness を明示する: "
+            f"choices={', '.join(sorted(LOCAL_HARNESSES))}"
+            " (例: --harness ollama-api --base-url http://127.0.0.1:11434/v1)"
+        )
+    return DEFAULT_HARNESS
+
+
 def endpoint(base_url: str, suffix: str) -> str:
     """Build an API endpoint from a validated base URL."""
     return f"{base_url.rstrip('/')}/{suffix.lstrip('/')}"
@@ -134,17 +165,17 @@ def request_json(url: str, timeout: int, payload: dict[str, Any] | None = None) 
         with HTTP_OPENER.open(request, timeout=timeout) as response:
             raw = response.read().decode("utf-8")
     except urllib.error.HTTPError as exc:
-        raise MlxApiError(f"HTTP {exc.code} from mlx_lm.server") from exc
+        raise MlxApiError(f"HTTP {exc.code} from local API") from exc
     except (urllib.error.URLError, TimeoutError) as exc:
-        raise MlxApiError(f"network error calling mlx_lm.server: {exc}") from exc
+        raise MlxApiError(f"network error calling local API: {exc}") from exc
     try:
         body = json.loads(raw)
     except json.JSONDecodeError as exc:
-        raise MlxApiError("mlx_lm.server returned invalid JSON") from exc
+        raise MlxApiError("local API returned invalid JSON") from exc
     if not isinstance(body, dict):
-        raise MlxApiError("mlx_lm.server response must be a JSON object")
+        raise MlxApiError("local API response must be a JSON object")
     if body.get("error"):
-        raise MlxApiError("mlx_lm.server returned an error response")
+        raise MlxApiError("local API returned an error response")
     return body
 
 
@@ -161,7 +192,7 @@ def iter_sse_lines(response: Any) -> Any:
         if not line:
             return
         if len(line) > MAX_SSE_LINE_BYTES:
-            raise MlxApiError("mlx_lm.server sent an oversized SSE line")
+            raise MlxApiError("local API sent an oversized SSE line")
         yield line
 
 
@@ -176,11 +207,11 @@ def parse_sse_chunk(line: bytes) -> dict[str, Any] | None:
     try:
         chunk = json.loads(payload)
     except json.JSONDecodeError as exc:
-        raise MlxApiError("mlx_lm.server sent an invalid SSE chunk") from exc
+        raise MlxApiError("local API sent an invalid SSE chunk") from exc
     if not isinstance(chunk, dict):
-        raise MlxApiError("mlx_lm.server SSE chunk must be a JSON object")
+        raise MlxApiError("local API SSE chunk must be a JSON object")
     if chunk.get("error"):
-        raise MlxApiError("mlx_lm.server returned an error response")
+        raise MlxApiError("local API returned an error response")
     return chunk
 
 
@@ -256,9 +287,9 @@ def stream_completion(
                     response.close()
                     raise RunawayDetected(verdict)
     except urllib.error.HTTPError as exc:
-        raise MlxApiError(f"HTTP {exc.code} from mlx_lm.server") from exc
+        raise MlxApiError(f"HTTP {exc.code} from local API") from exc
     except (urllib.error.URLError, TimeoutError) as exc:
-        raise MlxApiError(f"network error calling mlx_lm.server: {exc}") from exc
+        raise MlxApiError(f"network error calling local API: {exc}") from exc
     content = "".join(parts)
     if not content and not allow_empty:
         raise MlxApiError("chat completion stream produced no content")
@@ -276,7 +307,7 @@ def stream_completion(
 
 
 def preflight(base_url: str, timeout: int) -> None:
-    """Confirm that the configured endpoint is a responding mlx_lm.server API."""
+    """Confirm that the configured endpoint is a responding local OpenAI-compatible API."""
     body = request_json(endpoint(base_url, "models"), timeout)
     if not isinstance(body.get("data"), list):
         raise MlxApiError("/v1/models response has no data list")
@@ -287,10 +318,11 @@ def build_usage(
     completion_tokens: int,
     finish_reason: str,
     elapsed_seconds: float,
+    server: str,
 ) -> dict[str, Any]:
     """Build measured API usage metadata for one generation."""
     note = (
-        "mlx_lm.server applied the model chat template; "
+        f"{server} applied the model chat template; "
         f"finish_reason={finish_reason}; elapsed_seconds={elapsed_seconds:.3f}."
     )
     return {
@@ -321,6 +353,7 @@ def build_run_json(
     theme: str,
     model: str,
     public_model_id: str,
+    harness: str,
     max_tokens: int,
     prompt_tokens: int,
     completion_tokens: int,
@@ -334,7 +367,7 @@ def build_run_json(
         "theme": theme,
         "model": model,
         "model_id": public_model_id,
-        "harness": "mlx-lm-api",
+        "harness": harness,
         "reasoning_effort": "unknown",
         "attempts": 1,
         "generated_at": datetime.now(timezone.utc).astimezone().replace(microsecond=0).isoformat(),
@@ -343,7 +376,13 @@ def build_run_json(
         "system_prompt": "none",
         "post_processing": "none",
         "runtime": runtime,
-        "usage": build_usage(prompt_tokens, completion_tokens, finish_reason, elapsed_seconds),
+        "usage": build_usage(
+            prompt_tokens,
+            completion_tokens,
+            finish_reason,
+            elapsed_seconds,
+            LOCAL_HARNESSES[harness]["server"],
+        ),
         "cost": build_local_cost(),
     }
 
@@ -424,21 +463,31 @@ def validate_resume_identity(
     theme: str,
     model: str,
     public_model_id: str,
+    harness: str,
 ) -> None:
     """Validate that resume metadata identifies this exact runner invocation."""
     expected = {
         "schema_version": 1,
         "theme": theme,
         "model": model,
-        "harness": "mlx-lm-api",
+        "harness": harness,
         "reasoning_effort": "unknown",
         "attempts": 1,
         "generated_at_source": "measured",
         "system_prompt": "none",
         "post_processing": "none",
     }
-    if any(type(run.get(key)) is not type(value) or run.get(key) != value for key, value in expected.items()):
-        raise ValueError(f"resume metadata does not match this run: {run_path}")
+    mismatched = [
+        key
+        for key, value in expected.items()
+        if type(run.get(key)) is not type(value) or run.get(key) != value
+    ]
+    if mismatched:
+        # 不一致キーを出す: harness 追加で「別バックエンドの結果を resume した」場合に
+        # どのフィールドが食い違ったのかが分からないと原因を追えないため。
+        raise ValueError(
+            f"resume metadata does not match this run ({', '.join(mismatched)}): {run_path}"
+        )
     if not isinstance(run.get("generated_at"), str) or not run["generated_at"]:
         raise ValueError(f"resume metadata has no measured generation time: {run_path}")
     if run.get("model_id") != public_model_id or not PUBLIC_MODEL_ID_RE.fullmatch(public_model_id):
@@ -465,10 +514,15 @@ def validate_resume_sampling_usage(run: dict[str, Any], run_path: Path) -> None:
             raise ValueError(f"resume metadata has invalid usage.{key}: {run_path}")
 
 
-def validate_resume_runtime_cost(run: dict[str, Any], run_path: Path) -> None:
+def validate_resume_runtime_cost(run: dict[str, Any], run_path: Path, harness: str) -> None:
     """Validate local runtime identity and the no-charge cost block."""
+    profile = LOCAL_HARNESSES[harness]
     runtime = run.get("runtime")
-    if not isinstance(runtime, dict) or runtime.get("engine") != "mlx-lm" or runtime.get("api") != "openai-compat-chat":
+    if (
+        not isinstance(runtime, dict)
+        or runtime.get("engine") != profile["engine"]
+        or runtime.get("api") != profile["api"]
+    ):
         raise ValueError(f"resume metadata has invalid runtime: {run_path}")
     for key in ("version", "framework", "model_revision", "quantization", "hardware"):
         if not isinstance(runtime.get(key), str) or not RUNTIME_VALUE_RE.fullmatch(runtime[key]):
@@ -493,12 +547,13 @@ def validate_resume_output(
     theme: str,
     model: str,
     public_model_id: str,
+    harness: str,
 ) -> None:
-    """Require a complete, matching prior MLX-LM result before resume skips it."""
+    """Require a complete, matching prior local API result before resume skips it."""
     run, run_path = load_resume_run(out_dir, output_name)
-    validate_resume_identity(run, run_path, theme, model, public_model_id)
+    validate_resume_identity(run, run_path, theme, model, public_model_id, harness)
     validate_resume_sampling_usage(run, run_path)
-    validate_resume_runtime_cost(run, run_path)
+    validate_resume_runtime_cost(run, run_path, harness)
 
 
 def write_atomically(out_dir: Path, output_name: str, content: str, run: dict[str, Any]) -> None:
@@ -561,6 +616,7 @@ def run_theme(
     model: str,
     api_model_id: str,
     public_model_id: str,
+    harness: str,
     base_url: str,
     max_tokens: int,
     timeout: int,
@@ -581,7 +637,7 @@ def run_theme(
         raise ValueError(f"model output must not be a symlink: {out_dir}")
     if out_dir.exists():
         if resume:
-            validate_resume_output(out_dir, output_name, theme, model, public_model_id)
+            validate_resume_output(out_dir, output_name, theme, model, public_model_id, harness)
             return "skipped"
         raise FileExistsError(f"already exists: {out_dir}; use --resume only for a complete run")
 
@@ -593,6 +649,7 @@ def run_theme(
         theme=theme,
         model=model,
         public_model_id=public_model_id,
+        harness=harness,
         max_tokens=max_tokens,
         prompt_tokens=prompt_tokens,
         completion_tokens=completion_tokens,
@@ -609,8 +666,17 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--theme", required=True, help="theme slug, or all")
     parser.add_argument("--model", required=True, help="public directory slug")
-    parser.add_argument("--api-model-id", required=True, help="mlx_lm.server model ID; never published")
+    parser.add_argument("--api-model-id", required=True, help="local API model ID; never published")
     parser.add_argument("--public-model-id", required=True, help="published non-local model identifier")
+    parser.add_argument(
+        "--harness",
+        default=None,
+        choices=sorted(LOCAL_HARNESSES),
+        help=(
+            f"ローカル OpenAI 互換 API の harness ラベル (既定: {DEFAULT_HARNESS})。"
+            "runtime.engine と runtime.api も切り替わる。--base-url を変えるときは必須"
+        ),
+    )
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
     parser.add_argument("--max-tokens", type=int, default=DEFAULT_MAX_TOKENS)
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT_SECONDS)
@@ -646,14 +712,16 @@ def main() -> int:
         if runaway_threshold is not None and not 0.0 < runaway_threshold < 1.0:
             raise ValueError("--runaway-threshold must be between 0 and 1")
         base_url = resolve_base_url(args.base_url)
+        harness = resolve_harness(args.harness, base_url)
+        profile = LOCAL_HARNESSES[harness]
         runtime = {
-            "engine": "mlx-lm",
+            "engine": profile["engine"],
             "version": args.version,
             "framework": args.framework,
             "model_revision": args.model_revision,
             "quantization": args.quantization,
             "hardware": args.hardware,
-            "api": "openai-compat-chat",
+            "api": profile["api"],
         }
         validate_runtime(runtime)
         themes = select_themes(args.theme)
@@ -668,6 +736,7 @@ def main() -> int:
                 model=args.model,
                 api_model_id=args.api_model_id,
                 public_model_id=args.public_model_id,
+                harness=harness,
                 base_url=base_url,
                 max_tokens=args.max_tokens,
                 timeout=args.timeout,

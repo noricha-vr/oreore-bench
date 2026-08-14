@@ -131,7 +131,7 @@ oreore-bench/
 
 ### enum / 規約
 
-- `harness`: `lmstudio-api` / `gptme-lmstudio` / `claude-agent-sdk` / `claude-cli-headless` / `grok-cli` / `openai-api` / `openrouter-api` / `omlx-api` / `mlx-lm-api` / `antigravity-cli` / `codex-exec` / `unknown`
+- `harness`: `lmstudio-api` / `gptme-lmstudio` / `claude-agent-sdk` / `claude-cli-headless` / `grok-cli` / `openai-api` / `openrouter-api` / `omlx-api` / `mlx-lm-api` / `ollama-api` / `antigravity-cli` / `codex-exec` / `unknown`（正本は `scripts/validate-runs.mjs` の `HARNESS_ENUM`）
 - `reasoning_effort`: `none` / `low` / `medium` / `high` / `unknown`
 - `system_prompt`: `none` / `harness-default` / `custom` / `unknown` — **ラベルのみ。本文は絶対に記録しない**（公開配信されるためプライバシー保護。`validate-runs.mjs` で enum 外を必ず失敗させる）
 - `"unknown"` = 復元不能、`"default"` = 既定に任せた、`"none"` = 明示的に無し。確定値のみ数値で書く
@@ -201,13 +201,26 @@ node scripts/validate-pr-triage.mjs --model deepseek-v4-flash-0731-mlx
 python3 scripts/build-pr-triage-html.py --model deepseek-v4-flash-0731-mlx
 ```
 
-### 1b. ローカル LLM（mlx_lm.server 直接）の記録・実行
+### 1b. ローカル LLM（loopback の OpenAI 互換 API 直接）の記録・実行
 
-loopback の `mlx_lm.server` OpenAI 互換 API を起動済みにし、`mlx-lm-run.py` で生成物と
-実測 `usage` 付きの `run.json` を同時に作る。この経路は oMLX ではないため、
-`harness: "mlx-lm-api"` / `runtime.engine: "mlx-lm"` と記録する。`--api-model-id` は
+loopback で OpenAI 互換 API を起動済みにし、`mlx-lm-run.py` で生成物と
+実測 `usage` 付きの `run.json` を同時に作る。`--api-model-id` は
 ローカル API だけに送られ、公開 `run.json` には書かれない。`--public-model-id` には
 `owner/model` 形式の公開識別子を指定し、ローカル絶対パスを渡さない。
+
+`--harness` で backend を指定する。指定した値に応じて `runtime.engine` / `runtime.api` と
+`usage.note` の実測元表記が切り替わるので、どのエンジンで測ったかが `run.json` に残る。
+
+| `--harness` | `runtime.engine` | `runtime.api` | `usage.note` の実測元 |
+|---|---|---|---|
+| `mlx-lm-api`（既定） | `mlx-lm` | `openai-compat-chat` | `mlx_lm.server` |
+| `lmstudio-api` | `lmstudio` | `openai-compat` | `LM Studio API` |
+| `omlx-api` | `omlx` | `openai-compat` | `oMLX API` |
+| `ollama-api` | `ollama` | `openai-compat` | `Ollama API` |
+
+**別エンジンで測るときは `--base-url` と `--harness` を必ずセットで渡す**。
+既定以外の `--base-url` に `--harness` を付けずに実行すると、エラーで停止する
+（ollama の測定が `mlx-lm-api` として公開される事故を構造的に防ぐため）。
 
 ```bash
 # 前提: http://127.0.0.1:18081/v1 で mlx_lm.server が起動済み
@@ -224,9 +237,26 @@ uv run scripts/mlx-lm-run.py \
   --hardware "Mac Studio M3 Ultra 512GB"
 ```
 
+```bash
+# 前提: ollama serve が起動済み（既定ポート 11434）
+uv run scripts/mlx-lm-run.py \
+  --theme lp-nishibi \
+  --model qwen3-8-27b \
+  --harness ollama-api \
+  --base-url http://127.0.0.1:11434/v1 \
+  --api-model-id qwen3:27b \
+  --public-model-id Qwen/Qwen3-27B \
+  --version 0.17.1 \
+  --framework "Ollama 0.17.1" \
+  --model-revision unknown \
+  --quantization q4_K_M \
+  --hardware "Mac Studio M3 Ultra 512GB"
+```
+
 `--theme all` で `PROMPT.md` のある全テーマを対象にできる。完了済みの出力を検証して
-スキップする場合は `--resume` を付ける。その他のオプションは
-`uv run scripts/mlx-lm-run.py --help` で確認する。
+スキップする場合は `--resume` を付ける。ただし backend を切り替えた再実行では
+`--resume` が既存テーマの harness 不一致で停止するため、未測定テーマを `--theme` で個別に指定する。
+その他のオプションは `uv run scripts/mlx-lm-run.py --help` で確認する。
 
 ### 2. API モデル（Claude Opus 等）の場合
 

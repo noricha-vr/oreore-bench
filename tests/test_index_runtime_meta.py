@@ -43,6 +43,11 @@ def test_format_run_meta_labels_runtime_engines() -> None:
             "reasoning_effort": "unknown",
             "runtime": {"engine": "mlx-lm", "quantization": "t512"},
         },
+        {
+            "harness": "ollama-api",
+            "reasoning_effort": "unknown",
+            "runtime": {"engine": "ollama", "quantization": "q4_K_M"},
+        },
     ]
     script = (
         definitions
@@ -63,4 +68,5 @@ def test_format_run_meta_labels_runtime_engines() -> None:
         "oMLX API ・ oMLX (mxfp4-mxfp8-mixed)",
         "oMLX API",
         "MLX-LM API ・ MLX-LM (t512)",
+        "Ollama API ・ Ollama (q4_K_M)",
     ]
