@@ -654,6 +654,7 @@ window.ENTRIES = [
             { theme: "othello",    model: "gemma-4-12b-qat",     runner: "LM Studio API",       note: "最軽量 12B での 1 ショットオセロ。約 10KB。", kind: "html" },
             { theme: "othello",    model: "gemma-4-26b-a4b-qat", runner: "gptme (LM Studio)",   note: "ライトテーマ。CPU AIランダムに圧勝(53-10)。Reset挙動が一度だけ不安定。", kind: "html" },
             { theme: "othello",    model: "gemma-4-31b",         runner: "gptme (LM Studio)",   note: "ダークBG+鮮緑盤+赤Reset。CPU AIが強く逆転勝利(34-30)。", kind: "html" },
+            { theme: "othello",    model: "qwen3-8-27b",         runner: "Ollama API",          note: "JSエラー0。8x8盤+座標軸・合法手の金リング表示・3Dフリップ反転・スコアボード・パス処理まで備え、着手とCPU応答を確認。前置き文と末尾の実装解説が混入。551行/26KB・38,563 tokens・33.5分。", kind: "html" },
             { theme: "othello",    model: "grok-4-5",            runner: "grok CLI (single-turn)", note: "ダークUI+石数バッジ。合法手ハイライト・反転・CPU応答をJSエラーなしで確認。520行/13KB。", kind: "html" },
 
             // hasami-shogi（公開実装が極めて少ない題材。スモーク検証: 初期配置/選択ハイライト/移動/CPU応答/JSエラー0 を全モデルで機械確認）

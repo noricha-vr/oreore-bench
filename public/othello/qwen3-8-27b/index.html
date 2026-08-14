@@ -1,0 +1,552 @@
+`index.html` 1枚で完成したオセロです。緑のフェルト盤面・木製フレームのトーナメント風デザインに、3Dフリップ反転アニメーションとスコアボードを備えました。
+
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OTHELLO — 人間 vs CPU</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* ============ 基本 ============ */
+*{box-sizing:border-box;margin:0;padding:0}
+button{font-family:inherit;-webkit-tap-highlight-color:transparent}
+body{
+  min-height:100vh;color:#eef3ec;overflow-x:hidden;position:relative;
+  font-family:'Zen Kaku Gothic New',sans-serif;
+  background:
+    radial-gradient(120% 90% at 50% -10%, #143024 0%, transparent 55%),
+    radial-gradient(100% 80% at 100% 110%, #10261c 0%, transparent 60%),
+    #0b1512;
+}
+/* 背景の漂う光 */
+body::before,body::after{content:"";position:fixed;z-index:-1;border-radius:50%;pointer-events:none}
+body::before{width:72vmax;height:72vmax;left:-24vmax;top:-32vmax;
+  background:radial-gradient(circle,rgba(46,129,83,.22),transparent 62%);
+  animation:driftA 26s ease-in-out infinite alternate}
+body::after{width:60vmax;height:60vmax;right:-22vmax;bottom:-26vmax;
+  background:radial-gradient(circle,rgba(240,182,79,.08),transparent 60%);
+  animation:driftB 34s ease-in-out infinite alternate}
+@keyframes driftA{to{transform:translate(9vmax,7vmax)}}
+@keyframes driftB{to{transform:translate(-8vmax,-6vmax)}}
+
+.wrap{max-width:1080px;margin:0 auto;padding:clamp(14px,3vw,26px) clamp(14px,3vw,24px) 30px}
+
+/* ============ ヘッダー ============ */
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  margin-bottom:clamp(16px,3vh,28px)}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{position:relative;width:40px;height:40px;flex:none}
+.logo i{position:absolute;top:50%;width:26px;height:26px;border-radius:50%;transform:translateY(-50%);
+  box-shadow:0 3px 8px rgba(0,0,0,.5)}
+.logo .lb{left:0;background:radial-gradient(circle at 35% 30%,#7d838f,#14171c 72%)}
+.logo .lw{right:0;z-index:1;background:radial-gradient(circle at 35% 30%,#fff,#c9ced6 78%)}
+h1{font-family:'Bebas Neue',sans-serif;font-weight:400;line-height:.9;
+  font-size:clamp(2.2rem,5vw,3.2rem);letter-spacing:.08em}
+.tag{margin-top:5px;font-size:.7rem;letter-spacing:.34em;color:#9fb4a7;text-transform:uppercase}
+
+.btn{display:inline-flex;align-items:center;gap:10px;padding:10px 18px;border-radius:8px;cursor:pointer;
+  font-weight:700;font-size:.95rem;letter-spacing:.06em;color:#ffd27a;background:transparent;
+  border:1.5px solid rgba(240,182,79,.55);transition:background .25s,color .25s,border-color .25s,transform .25s}
+.btn:hover{background:rgba(240,182,79,.12);border-color:#f0b64f;color:#ffe3a8;transform:translateY(-1px)}
+.btn:focus-visible{outline:2px solid #ffd27a;outline-offset:2px}
+.mini-disc{width:14px;height:14px;border-radius:50%;flex:none;
+  background:linear-gradient(105deg,#eef3ec 49%,#14171c 51%);
+  transition:transform .6s cubic-bezier(.3,1.4,.4,1)}
+.btn:hover .mini-disc{transform:rotate(360deg)}
+.btn.primary{background:#f0b64f;border-color:#f0b64f;color:#1a1207;font-weight:900}
+.btn.primary:hover{background:#ffd27a;color:#1a1207}
+
+/* ============ レイアウト ============ */
+main{display:grid;gap:clamp(18px,3vw,32px);grid-template-areas:"panel" "stage";align-items:center}
+.panel{grid-area:panel;display:flex;flex-direction:column;gap:14px}
+.stage{grid-area:stage;display:flex;flex-direction:column;align-items:center}
+@media (min-width:920px){
+  main{grid-template-columns:minmax(0,1fr) 320px;grid-template-areas:"stage panel"}
+}
+
+/* ============ スコアボード ============ */
+.scoreboard{display:flex;flex-direction:column;gap:12px}
+@media (max-width:919px){.scoreboard{display:grid;grid-template-columns:1fr 1fr;gap:10px}}
+.pcard{position:relative;display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;
+  background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.09);
+  transition:border-color .3s,box-shadow .3s,background .3s}
+@media (max-width:919px){.pcard{gap:8px;padding:10px 12px}}
+.pcard.active{border-color:rgba(240,182,79,.65);background:rgba(240,182,79,.06);
+  box-shadow:0 0 0 1px rgba(240,182,79,.25),0 8px 24px -12px rgba(240,182,79,.35)}
+.swatch{width:34px;height:34px;border-radius:50%;flex:none;
+  box-shadow:inset 0 -3px 6px rgba(0,0,0,.4),inset 0 2px 3px rgba(255,255,255,.25),0 3px 8px rgba(0,0,0,.5)}
+@media (max-width:919px){.swatch{width:26px;height:26px}}
+.swatch.b{background:radial-gradient(circle at 35% 30%,#7d838f,#14171c 72%)}
+.swatch.w{background:radial-gradient(circle at 35% 30%,#fff,#c9ced6 78%)}
+.pmeta{display:flex;flex-direction:column;line-height:1.25}
+.pname{font-weight:700;font-size:.95rem}
+@media (max-width:919px){.pname{font-size:.85rem}}
+.psub{margin-top:3px;font-size:.68rem;letter-spacing:.1em;color:#9fb4a7}
+.count{margin-left:auto;font-family:'Bebas Neue',sans-serif;line-height:1;
+  font-size:clamp(2.6rem,4vw,3.4rem);color:#eef3ec}
+@media (max-width:919px){.count{font-size:2.1rem}}
+.pcard.active .count{color:#ffd27a}
+.count.pop{animation:pop .5s cubic-bezier(.3,1.6,.4,1)}
+@keyframes pop{40%{transform:scale(1.28);color:#ffe3a8}}
+.chip{position:absolute;top:-9px;right:12px;padding:3px 8px;border-radius:99px;
+  font-size:.6rem;font-weight:700;letter-spacing:.18em;color:#0b1512;background:#f0b64f;
+  opacity:0;transform:translateY(4px);transition:opacity .3s,transform .3s}
+.pcard.active .chip{opacity:1;transform:none}
+
+/* ============ ステータス ============ */
+.statusbox{padding:14px 16px;border-radius:12px;background:rgba(255,255,255,.035);
+  border:1px solid rgba(255,255,255,.09);min-height:78px}
+.status{display:flex;align-items:center;gap:10px;font-weight:700;font-size:.98rem}
+.s-dot{width:10px;height:10px;border-radius:50%;flex:none;background:#f0b64f;animation:pulse 1.6s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 9px rgba(240,182,79,0)}100%{box-shadow:0 0 0 0 rgba(240,182,79,0)}}
+.sub{margin-top:6px;font-size:.76rem;color:#9fb4a7}
+.statusbox.swap #statusMain,.statusbox.swap .sub{animation:fadeUp .4s both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}}
+.note{padding:0 4px;font-size:.72rem;line-height:1.8;color:#8aa396}
+
+/* ============ 盤面 ============ */
+.board-wrap{position:relative;width:min(100%,560px)}
+.frame{width:100%;padding:clamp(12px,2.4vw,20px);border-radius:14px;user-select:none;
+  background:
+    repeating-linear-gradient(98deg,rgba(0,0,0,.07) 0 2px,transparent 2px 7px),
+    linear-gradient(135deg,#8a5a33 0%,#6d4526 45%,#57351c 100%);
+  box-shadow:0 24px 60px -18px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.22),inset 0 -2px 6px rgba(0,0,0,.35)}
+.board-area{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto 1fr;gap:clamp(4px,1vw,8px)}
+.coords-x{grid-column:2;grid-row:1;display:grid;grid-template-columns:repeat(8,1fr);gap:2px;padding:2px}
+.coords-y{grid-column:1;grid-row:2;display:grid;grid-template-rows:repeat(8,1fr);gap:2px;padding:2px}
+.coords-x span,.coords-y span{text-align:center;font-size:.6rem;font-weight:500;letter-spacing:.05em;
+  color:rgba(255,240,214,.55)}
+.board{grid-column:2;grid-row:2;display:grid;grid-template-columns:repeat(8,1fr);gap:2px;padding:2px;
+  border-radius:6px;background:#16382a;box-shadow:inset 0 2px 8px rgba(0,0,0,.5)}
+
+.cell{position:relative;aspect-ratio:1;border:none;padding:0;border-radius:3px;cursor:default;
+  perspective:340px;background:linear-gradient(150deg,#2f8153,#276e46);transition:background .2s}
+.cell:focus-visible{outline:2px solid rgba(255,210,122,.8);outline-offset:-3px;z-index:2}
+
+/* 合法手のハイライト */
+.cell.hint{cursor:pointer}
+.cell.hint::before{content:"";position:absolute;inset:31%;border-radius:50%;z-index:1;
+  background:radial-gradient(circle,#ffd27a 0 26%,transparent 28%);
+  box-shadow:0 0 0 2px rgba(255,210,122,.75),0 0 14px rgba(255,210,122,.35);
+  animation:hintPulse 1.5s ease-in-out infinite;transition:transform .2s}
+@keyframes hintPulse{50%{transform:scale(.86);opacity:.7}}
+.cell.hint:hover::before,.cell.hint:focus-visible::before{animation:none;transform:scale(1.15)}
+/* ホバー時のゴースト石 */
+.cell.hint::after{content:"";position:absolute;inset:9%;border-radius:50%;z-index:1;opacity:0;
+  transform:scale(.6);transition:opacity .2s,transform .2s;
+  background:radial-gradient(circle at 34% 28%,#8b92a0,#23262e 48%,#0d1015 78%)}
+.cell.hint:hover{background:linear-gradient(150deg,#37915f,#2c7a4e)}
+.cell.hint:hover::after,.cell.hint:focus-visible::after{opacity:.45;transform:scale(1)}
+
+/* 直前の着手マーカー */
+.cell.last{box-shadow:inset 0 0 0 2px rgba(255,210,122,.6),inset 0 0 18px rgba(255,210,122,.15)}
+
+/* ============ 石（3Dフリップ） ============ */
+.disc{position:absolute;inset:9%;--rot:0deg;transform-style:preserve-3d;will-change:transform;
+  transform:rotateY(var(--rot));transition:transform .5s cubic-bezier(.45,1.3,.4,1)}
+.disc.white{--rot:180deg}
+.disc.empty{transition:none}
+.inner{position:absolute;inset:0;display:block;transform-style:preserve-3d;
+  transform:scale(1);transition:transform .28s ease-out}
+.disc.empty .inner{transform:scale(.15)}
+.disc.spawn .inner{animation:drop .5s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes drop{from{transform:scale(0)}}
+.face{position:absolute;inset:0;display:block;border-radius:50%;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.fb{background:radial-gradient(circle at 34% 28%,#8b92a0,#23262e 48%,#0d1015 78%);
+  box-shadow:inset 0 -4px 8px rgba(0,0,0,.55),inset 0 3px 4px rgba(255,255,255,.16),0 4px 10px rgba(0,0,0,.45)}
+.fw{transform:rotateY(180deg);
+  background:radial-gradient(circle at 34% 28%,#fff,#e7ebf0 45%,#b9c0ca 80%);
+  box-shadow:inset 0 -4px 8px rgba(60,70,85,.35),inset 0 3px 4px rgba(255,255,255,.9),0 4px 10px rgba(0,0,0,.45)}
+
+.board-caption{margin-top:12px;text-align:center;font-size:.7rem;letter-spacing:.2em;color:#8aa396}
+
+/* ============ 終局オーバーレイ ============ */
+.overlay{position:absolute;inset:0;z-index:5;display:grid;place-items:center;border-radius:14px;
+  background:rgba(7,16,12,.78);opacity:0;pointer-events:none;transition:opacity .45s}
+.overlay.show{opacity:1;pointer-events:auto}
+.result-card{text-align:center;padding:clamp(24px,6vw,38px) clamp(24px,7vw,48px);border-radius:16px;
+  background:#0f241a;border:1px solid rgba(240,182,79,.4);
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.08);
+  transform:translateY(14px) scale(.96);transition:transform .5s cubic-bezier(.3,1.4,.4,1)}
+.overlay.show .result-card{transform:none}
+.result-en{font-family:'Bebas Neue',sans-serif;line-height:1;letter-spacing:.14em;
+  font-size:clamp(2.8rem,7vw,4rem);color:#cfd8d3}
+.win .result-en{color:#ffd27a;text-shadow:0 0 30px rgba(255,210,122,.4)}
+.lose .result-en{color:#ff9d8a}
+.result-ja{margin-top:10px;font-size:1.05rem;font-weight:900;letter-spacing:.5em;text-indent:.5em;color:#eef3ec}
+.final-score{display:flex;align-items:center;justify-content:center;gap:10px;margin:20px 0 24px;
+  font-family:'Bebas Neue',sans-serif;font-size:2rem;color:#eef3ec}
+.final-score i{font-style:normal;margin:0 2px;color:#9fb4a7}
+.final-score .swatch{width:22px;height:22px}
+
+.foot{margin-top:clamp(20px,4vh,36px);text-align:center;font-size:.6rem;letter-spacing:.3em;
+  color:rgba(159,180,167,.5)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <span class="logo" aria-hidden="true"><i class="lb"></i><i class="lw"></i></span>
+      <div>
+        <h1>OTHELLO</h1>
+        <p class="tag">Reversi · Human vs CPU</p>
+      </div>
+    </div>
+    <button id="resetBtn" class="btn"><span class="mini-disc" aria-hidden="true"></span>リセット</button>
+  </header>
+
+  <main>
+    <!-- スコアボード / ステータス -->
+    <aside class="panel">
+      <div class="scoreboard">
+        <article class="pcard" id="cardB">
+          <span class="swatch b"></span>
+          <div class="pmeta"><span class="pname">黒</span><span class="psub">YOU · HUMAN</span></div>
+          <span class="count" id="countB">2</span>
+          <span class="chip">TURN</span>
+        </article>
+        <article class="pcard" id="cardW">
+          <span class="swatch w"></span>
+          <div class="pmeta"><span class="pname">白</span><span class="psub">CPU · WHITE</span></div>
+          <span class="count" id="countW">2</span>
+          <span class="chip">TURN</span>
+        </article>
+      </div>
+      <div class="statusbox" id="statusBox" aria-live="polite">
+        <p class="status"><span class="s-dot" aria-hidden="true"></span><span id="statusMain">あなたの番です</span></p>
+        <p class="sub" id="statusSub">光っているマスをクリックして置石します。</p>
+      </div>
+      <p class="note">光るマスのみが合法手です。着手できない場合は自動でパスし、相手が連続着手できます。</p>
+    </aside>
+
+    <!-- 盤面 -->
+    <section class="stage">
+      <div class="board-wrap">
+        <div class="frame">
+          <div class="board-area">
+            <span></span>
+            <div class="coords-x" id="coordsX"></div>
+            <div class="coords-y" id="coordsY"></div>
+            <div class="board" id="board" aria-label="オセロ盤面"></div>
+          </div>
+        </div>
+        <div class="overlay" id="overlay" aria-hidden="true">
+          <div class="result-card" id="resultCard">
+            <p class="result-en" id="resultEn">VICTORY</p>
+            <p class="result-ja" id="resultJa">勝利</p>
+            <p class="final-score"><span class="swatch b"></span><b id="finalB">0</b><i>:</i><b id="finalW">0</b><span class="swatch w"></span></p>
+            <button class="btn primary" id="againBtn"><span class="mini-disc" aria-hidden="true"></span>もう一度</button>
+          </div>
+        </div>
+      </div>
+      <p class="board-caption" id="lastLine">最終手 —</p>
+    </section>
+  </main>
+
+  <footer class="foot">8×8 REVERSI — CORNER PRIORITY / EDGE BONUS / FLIP-COUNT HEURISTIC AI</footer>
+</div>
+
+<script>
+'use strict';
+/* ================= 定数・状態 ================= */
+const SIZE = 8, EMPTY = 0, BLACK = 1, WHITE = 2;
+const HUMAN = BLACK, CPU = WHITE;                 // 人間=黒(先手) / CPU=白
+const DIRS = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+const COLS = 'ABCDEFGH';
+
+// ポジション評価用マス（キー = r*8+c）
+const CORNERS = new Set([0, 7, 56, 63]);                                   // C: 角
+const X_SQ    = new Set([1, 6, 8, 15, 48, 55, 57, 62]);                    // X: 角の斜め隣(危険)
+const C_SQ    = new Set([2, 5, 16, 23, 40, 47, 58, 61]);                   // C: 角の縦横隣
+
+let board, turn, over = false;
+let prev = { bk: 2, wt: 2 };
+const timers = new Set();           // リセット時に一括破棄するタイマー群
+
+/* ================= DOM参照 ================= */
+const $ = id => document.getElementById(id);
+const boardEl = $('board'), overlay = $('overlay');
+const statusMain = $('statusMain'), statusSub = $('statusSub'), statusBox = $('statusBox');
+const countB = $('countB'), countW = $('countW'), cardB = $('cardB'), cardW = $('cardW');
+const lastLine = $('lastLine');
+
+/* ================= ユーティリティ ================= */
+function later(fn, ms){ const id = setTimeout(() => { timers.delete(id); fn(); }, ms); timers.add(id); }
+function clearTimers(){ for (const id of timers) clearTimeout(id); timers.clear(); }
+const inB   = (r,c) => r >= 0 && r < SIZE && c >= 0 && c < SIZE;
+const other = p => p === BLACK ? WHITE : BLACK;
+const coordName = (r,c) => COLS[c] + (r + 1);
+
+/* ================= ルール実装 ================= */
+function newBoard(){
+  const b = Array.from({ length: SIZE }, () => Array(SIZE).fill(EMPTY));
+  b[3][3] = WHITE; b[3][4] = BLACK;      // 中央4マスに黒白2石ずつ
+  b[4][3] = BLACK; b[4][4] = WHITE;
+  return b;
+}
+
+// (r,c) に p を置いたとき反転する相手の石を8方向で列挙。非法則なら空配列
+function getFlips(b, r, c, p){
+  if (!inB(r,c) || b[r][c] !== EMPTY) return [];
+  const opp = other(p);
+  let out = [];
+  for (const [dr,dc] of DIRS){
+    let rr = r + dr, cc = c + dc;
+    const line = [];
+    while (inB(rr,cc) && b[rr][cc] === opp){ line.push([rr,cc]); rr += dr; cc += dc; }
+    if (line.length && inB(rr,cc) && b[rr][cc] === p) out.push(...line);
+  }
+  return out;
+}
+
+function legalMap(p){
+  const m = new Map();
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++){
+    if (board[r][c] !== EMPTY) continue;
+    const f = getFlips(board, r, c, p);
+    if (f.length) m.set(r * SIZE + c, f);
+  }
+  return m;
+}
+
+function counts(){
+  let bk = 0, wt = 0;
+  for (const row of board) for (const v of row){
+    if (v === BLACK) bk++; else if (v === WHITE) wt++;
+  }
+  return { bk, wt };
+}
+const isFull = () => counts().bk + counts().wt === SIZE * SIZE;
+
+/* ================= 盤面DOM構築 ================= */
+const cells = [];   // [r][c] → <button>
+function buildBoard(){
+  for (let r = 0; r < SIZE; r++){
+    cells[r] = [];
+    for (let c = 0; c < SIZE; c++){
+      const cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'cell';
+      cell.innerHTML = '<span class="disc empty"><span class="inner">' +
+                       '<i class="face fb"></i><i class="face fw"></i></span></span>';
+      cell.addEventListener('click', () => onCellClick(r, c));
+      boardEl.appendChild(cell);
+      cells[r][c] = cell;
+    }
+  }
+  const cx = $('coordsX'), cy = $('coordsY');
+  for (let i = 0; i < SIZE; i++){
+    const a = document.createElement('span'); a.textContent = COLS[i]; cx.appendChild(a);
+    const b = document.createElement('span'); b.textContent = i + 1;   cy.appendChild(b);
+  }
+}
+const discAt = (r,c) => cells[r][c].firstElementChild;
+
+/* ================= 描画ヘルパー ================= */
+function setDiscColor(d, p){ d.classList.toggle('white', p === WHITE); }
+function spawn(d){
+  d.classList.remove('spawn'); void d.offsetWidth; d.classList.add('spawn');
+  later(() => d.classList.remove('spawn'), 650);
+}
+function clearHints(){ for (const row of cells) for (const cell of row) cell.classList.remove('hint'); }
+
+function renderHints(){
+  clearHints();
+  const humanTurn = !over && turn === HUMAN;
+  const mv = legalMap(HUMAN);
+  if (humanTurn) mv.forEach((f, key) => cells[key >> 3][key & 7].classList.add('hint'));
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++){
+    const v = board[r][c];
+    let label = coordName(r, c);
+    if (v === BLACK) label += ' 黒石';
+    else if (v === WHITE) label += ' 白石';
+    else if (humanTurn && mv.has(r * SIZE + c)) label += ' 置ける手';
+    cells[r][c].setAttribute('aria-label', label);
+  }
+}
+
+function updateTurnUI(){
+  cardB.classList.toggle('active', !over && turn === BLACK);
+  cardW.classList.toggle('active', !over && turn === WHITE);
+}
+
+const STATUS = {
+  you:   ['あなたの番です', '光っているマスをクリックして置石します。'],
+  cpu:   ['CPUが思考中…', '角優先 · 辺加点 · 反転数加点のヒューリスティックで選定'],
+  passW: ['白に合法手なし — パス', '黒が続いて着手します。'],
+  passB: ['黒に合法手なし — パス', '白（CPU）が続けて思考します。'],
+  over:  ['対局終了', '']
+};
+function setStatus(kind){
+  const [m, s] = STATUS[kind];
+  statusMain.textContent = m;
+  statusSub.textContent = s;
+  statusBox.classList.remove('swap'); void statusBox.offsetWidth; statusBox.classList.add('swap');
+}
+
+function pop(el){ el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+function updateScore(){
+  const { bk, wt } = counts();
+  if (bk !== prev.bk) pop(countB); countB.textContent = bk;
+  if (wt !== prev.wt) pop(countW); countW.textContent = wt;
+  prev = { bk, wt };
+}
+
+/* ================= ゲームフロー ================= */
+function onCellClick(r, c){
+  if (over || turn !== HUMAN) return;
+  if (!getFlips(board, r, c, HUMAN).length) return;   // 合法手のみ受理
+  doMove(r, c);
+}
+
+function doMove(r, c){
+  const p = turn;
+  const flips = getFlips(board, r, c, p);
+  if (!flips.length) return;
+  board[r][c] = p;
+  for (const [fr, fc] of flips) board[fr][fc] = p;
+
+  // 見た目更新：着手石はドロップイン、反転石は3Dフリップ
+  clearHints();
+  const d = discAt(r, c);
+  setDiscColor(d, p);
+  d.classList.remove('empty');
+  spawn(d);
+  for (const cell of cells.flat()) if (cell.classList.contains('last')) cell.classList.remove('last');
+  cells[r][c].classList.add('last');
+  for (const [fr, fc] of flips) setDiscColor(discAt(fr, fc), p);
+
+  lastLine.textContent = '最終手 — ' + coordName(r, c);
+  updateScore();
+  advance(p);
+}
+
+function advance(mover){
+  if (isFull()) return endGame();
+  const opp = other(mover);
+  if (!legalMap(opp).size){
+    if (!legalMap(mover).size) return endGame();      // 両者パス → 終局
+    turn = mover;                                     // 相手だけパス → 同一プレイヤー継続
+    setStatus(opp === WHITE ? 'passW' : 'passB');
+    later(beginTurn, 1300);                           // パス表示を少し見せる
+  } else {
+    turn = opp;
+    beginTurn();
+  }
+}
+
+function beginTurn(){
+  if (over) return;
+  updateTurnUI();
+  renderHints();
+  setStatus(turn === CPU ? 'cpu' : 'you');
+  if (turn === CPU) later(cpuMove, 700 + Math.random() * 500);   // 思考の遅延で自然に
+}
+
+/* ================= CPU（ヒューリスティック） ================= */
+const W = { CORNER: 120, X: -34, C: -12, EDGE: 8, FLIP: 5 };
+function cpuMove(){
+  if (over || turn !== CPU) return;
+  const mv = legalMap(CPU);
+  if (!mv.size) return;
+  let bestKey = null, bestS = -Infinity;
+  mv.forEach((flips, key) => {
+    const r = key >> 3, c = key & 7;
+    let s = flips.length * W.FLIP;                    // 反転数加点
+    if (CORNERS.has(key)) s += W.CORNER;              // 角優先（最大）
+    else {
+      if (X_SQ.has(key)) s += W.X;                    // 角の斜め隣は危険なので減点
+      if (C_SQ.has(key)) s += W.C;                    // 角の縦横隣も軽微に減点
+      if (r === 0 || r === SIZE-1 || c === 0 || c === SIZE-1) s += W.EDGE;   // 辺加点
+    }
+    s += Math.random() * 3;                           // 同点時のばらつき
+    if (s > bestS){ bestS = s; bestKey = key; }
+  });
+  doMove(bestKey >> 3, bestKey & 7);
+}
+
+/* ================= 終局・リセット ================= */
+function endGame(){
+  over = true;
+  clearHints();
+  updateTurnUI();
+  setStatus('over');
+  const { bk, wt } = counts();
+  later(() => showResult(bk, wt), 900);               // 最後の反転を見送ってから表示
+}
+
+function showResult(bk, wt){
+  $('finalB').textContent = bk;
+  $('finalW').textContent = wt;
+  let en, ja, cls;
+  if (bk > wt)      { en = 'VICTORY'; ja = '勝利';   cls = 'win'; }
+  else if (bk < wt) { en = 'DEFEAT';  ja = '敗北';   cls = 'lose'; }
+  else              { en = 'DRAW';    ja = '引き分け'; cls = 'draw'; }
+  $('resultEn').textContent = en;
+  $('resultJa').textContent = ja;
+  overlay.classList.remove('win', 'lose', 'draw');
+  overlay.classList.add(cls, 'show');
+  overlay.setAttribute('aria-hidden', 'false');
+}
+
+function reset(){
+  clearTimers();
+  board = newBoard();
+  turn = HUMAN;
+  over = false;
+  overlay.classList.remove('show', 'win', 'lose', 'draw');
+  overlay.setAttribute('aria-hidden', 'true');
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++){
+    const cell = cells[r][c];
+    cell.classList.remove('last', 'hint');
+    const d = discAt(r, c);
+    d.classList.add('empty');
+    d.classList.remove('white', 'spawn');
+  }
+  lastLine.textContent = '最終手 —';
+  countB.textContent = '2'; countW.textContent = '2';
+  prev = { bk: 2, wt: 2 };
+  updateTurnUI();
+  setStatus('you');
+
+  // 初期4石を順番に落としていく演出
+  const init = [[3,3,WHITE],[4,4,WHITE],[3,4,BLACK],[4,3,BLACK]];
+  init.forEach(([r,c,p], i) => later(() => {
+    const d = discAt(r, c);
+    setDiscColor(d, p);
+    d.classList.remove('empty');
+    spawn(d);
+  }, 200 + i * 140));
+
+  later(beginTurn, 950);   // 初期配置が落ち着いてから着手開始
+}
+
+/* ================= 起動 ================= */
+buildBoard();
+$('resetBtn').addEventListener('click', reset);
+$('againBtn').addEventListener('click', reset);
+reset();
+</script>
+</body>
+</html>
+```
+
+## 実装のポイント
+
+- **反転アニメーション** — 各マスに表(黒)/裏(白)の2枚の面を持つ石を常時配置し、色変更は `rotateY` のトグルのみ。CSSトランジションで3Dフリップになり、複数同時反転も自然に動きます。
+- **合法手ハイライト** — 着手前に金色のパルスリングを表示。ホバー/フォーカス時はゴースト石のプレビュー。キーボード操作（Tab + Enter）にも対応しています。
+- **CPUヒューリスティック** — 角 `+120` / 辺 `+8` / 反転数 `×5` に加え、角を奪われる斜め隣(Xマス) `-34`・縦横隣(Cマス) `-12` の減点で「角優先」を安定させます。同点は乱数でばらつき。
+- **パス処理** — 相手だけ着手不能ならステータスに「パス」を表示して同一プレイヤーが継続、両者不能または盤面埋まれば終局オーバーレイ（勝利/敗北/引き分け + 最終スコア）を表示します。
+- **リセットの安全性** — CPU思考・パス表示・演出の全タイマーを `Set` で管理し、リセット時に一括破棄。進行中のアニメーション中にリセットしても状態が壊れません。
+
+Google Fonts（Bebas Neue / Zen Kaku Gothic New）へのリンクのみ外部依存で、それ以外は完全に1枚に収まっています。
