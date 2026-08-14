@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>幽窟 — The Gloam Vault</title>
+<style>
+:root{
+  --mono:ui-monospace,'Cascadia Mono','SF Mono',Consolas,Menlo,'Courier New',monospace;
+  --disp:'Hiragino Mincho ProN','Yu Mincho','MS PMincho',Georgia,serif;
+  --bg:#0e1219;--panel:#151a26;--panel2:#0c101a;--line:#2a3245;--line2:#232b3d;
+  --ink:#cdd6e4;--dim:#7d8aa0;--faint:#5b6880;
+  --amber:#ffb454;--gold:#ffd97a;--blood:#ff5d5d;--jade:#5fd39a;--steel:#8fb3d9;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{
+  background:var(--bg);color:var(--ink);font-family:var(--mono);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;padding:20px 16px;overflow-x:hidden;user-select:none;
+}
+body::before{content:'';position:fixed;inset:-25%;z-index:-2;background:
+  radial-gradient(55% 45% at 16% 10%,rgba(255,168,74,.10),transparent 62%),
+  radial-gradient(48% 42% at 86% 92%,rgba(64,168,178,.09),transparent 60%),
+  radial-gradient(30% 30% at 75% 15%,rgba(255,120,60,.05),transparent 65%);
+  animation:drift 24s ease-in-out infinite alternate}
+body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.013) 0 1px,transparent 1px 3px);
+  box-shadow:inset 0 0 190px rgba(0,0,0,.78)}
+@keyframes drift{to{transform:translate(-2.5%,2%) scale(1.05)}}
+
+#wrap{display:flex;flex-direction:column;gap:10px;align-items:center}
+#app{display:flex;gap:16px;align-items:stretch}
+
+/* ---------- サイドバー ---------- */
+#side{width:302px;display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--panel);border:1px solid var(--line);padding:12px 14px;position:relative}
+.panel h2{font-size:10px;font-weight:700;letter-spacing:.28em;color:var(--dim);text-transform:uppercase;margin-bottom:9px}
+.panel h2::before{content:'◆ ';color:rgba(255,180,84,.55)}
+
+.crest{text-align:center;padding:16px 10px 13px;background:linear-gradient(180deg,#1b2130,#131826);border:1px solid var(--line)}
+.crest h1{font-family:var(--disp);font-size:42px;font-weight:700;color:#e9dcb8;letter-spacing:.32em;text-indent:.32em;line-height:1.15;
+  text-shadow:0 0 18px rgba(255,180,84,.35),0 0 46px rgba(255,140,60,.18)}
+.crest span{display:block;margin-top:7px;font-size:9px;letter-spacing:.44em;color:var(--dim);text-indent:.44em}
+
+.lvrow{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.lvbox{text-align:center;border:1px solid var(--line);padding:5px 12px;background:var(--panel2)}
+.lvbox b{font-family:var(--disp);font-size:27px;color:var(--gold);display:block;line-height:1.05}
+.lvbox i{font-style:normal;font-size:8px;letter-spacing:.34em;color:var(--faint);text-indent:.34em}
+.floorbox{text-align:right}
+.floorbox label{display:block;font-size:8px;letter-spacing:.3em;color:var(--faint)}
+#flr{font-family:var(--disp);font-size:17px;color:#e9dcb8;letter-spacing:.14em;display:block;margin-top:2px}
+.pips{margin-top:5px;display:flex;gap:4px;justify-content:flex-end}
+.pips span{width:20px;height:13px;border:1px solid var(--line);font-size:8px;line-height:12px;text-align:center;color:var(--faint);background:var(--panel2)}
+.pips span.done{color:#9a7c46;border-color:#5d4b2a;background:#241d10}
+.pips span.cur{color:#1a1206;font-weight:700;background:var(--amber);border-color:var(--gold);box-shadow:0 0 8px rgba(255,180,84,.5)}
+
+.bar{display:flex;align-items:center;gap:8px;margin-top:9px}
+.track{flex:1;height:15px;background:var(--panel2);border:1px solid var(--line);position:relative;overflow:hidden}
+.track::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 9px,rgba(0,0,0,.28) 9px 10px)}
+#hpfill{height:100%;width:100%;background:linear-gradient(90deg,#a53028,#ff7a4d);box-shadow:0 0 10px rgba(255,90,60,.35);transition:width .3s ease}
+.track.thin{height:9px;margin-top:0}
+#xpfill{height:100%;width:0;background:linear-gradient(90deg,#8a6a1f,var(--gold));box-shadow:0 0 8px rgba(255,210,74,.3);transition:width .3s ease}
+.bar span{font-size:11px;color:#9fb0c8;min-width:66px;text-align:right;font-variant-numeric:tabular-nums}
+.track.low #hpfill{animation:hplow .85s ease-in-out infinite}
+@keyframes hplow{50%{filter:brightness(1.7);box-shadow:0 0 16px rgba(255,60,40,.8)}}
+.track.hit{animation:barhit .45s ease}
+@keyframes barhit{0%{box-shadow:inset 0 0 0 2px rgba(255,93,93,.9),0 0 18px rgba(255,93,93,.6)}100%{}}
+
+.statline{display:flex;justify-content:space-between;margin-top:11px;font-size:10px;color:var(--faint);letter-spacing:.08em}
+.statline b{color:#c4d0e2;font-size:12px;margin-left:4px}
+
+.slots{display:grid;grid-template-columns:repeat(9,1fr);gap:4px}
+.slot{height:38px;border:1px solid #262e40;background:var(--panel2);display:flex;align-items:center;justify-content:center;position:relative;transition:transform .12s ease,border-color .12s ease,background .12s ease}
+.slot em{position:absolute;top:2px;left:3px;font-style:normal;font-size:8px;color:#46536e}
+.slot b{font-size:17px;color:#39445c;font-weight:700}
+.slot.on{border-color:#3d4a66;background:#131a29;box-shadow:inset 0 0 8px rgba(255,180,84,.08)}
+.slot:hover{transform:translateY(-2px);border-color:var(--amber)}
+
+.logsec{flex:1;display:flex;flex-direction:column;min-height:170px}
+#log{flex:1;overflow-y:auto;font-size:12px;line-height:1.75;padding-right:4px;
+  -webkit-mask-image:linear-gradient(transparent,#000 30%);mask-image:linear-gradient(transparent,#000 30%)}
+#log p{animation:lin .28s ease both}
+@keyframes lin{from{opacity:0;transform:translateX(-7px)}to{opacity:1}}
+#log::-webkit-scrollbar{width:6px}
+#log::-webkit-scrollbar-thumb{background:#2a3245}
+.l-hit{color:#ff9b8a}.l-hurt{color:#ff6d6d;font-weight:700}.l-gain{color:#7fe0a8}
+.l-sys{color:#8fa0bd}.l-lvl{color:var(--gold)}.l-pick{color:#ffd24a}
+
+/* ---------- ステージ ---------- */
+#stage{position:relative;border:1px solid var(--line);background:#0b0e15;padding:10px;
+  box-shadow:0 18px 50px rgba(0,0,0,.55),inset 0 0 60px rgba(0,0,0,.6);animation:frameglow 5s ease-in-out infinite}
+@keyframes frameglow{50%{box-shadow:0 18px 50px rgba(0,0,0,.55),inset 0 0 60px rgba(0,0,0,.6),0 0 22px rgba(255,170,80,.07)}}
+#stage i{position:absolute;width:14px;height:14px;border:2px solid rgba(255,180,84,.4);z-index:3;pointer-events:none}
+#c1{top:-2px;left:-2px;border-right:none;border-bottom:none}
+#c2{top:-2px;right:-2px;border-left:none;border-bottom:none}
+#c3{bottom:-2px;left:-2px;border-right:none;border-top:none}
+#c4{bottom:-2px;right:-2px;border-left:none;border-top:none}
+canvas{display:block;max-width:100%;height:auto}
+#scan{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:.5;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.02) 0 1px,transparent 1px 3px)}
+
+/* ---------- オーバーレイ ---------- */
+#ov{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;text-align:center;
+  background:radial-gradient(80% 80% at 50% 42%,rgba(13,16,24,.7),rgba(7,9,14,.94))}
+#ov.hide{display:none}
+.ov-in{padding:20px;max-width:92%}
+.t-orn{color:#5d4b2a;font-size:11px;letter-spacing:.3em;margin-bottom:14px}
+.t-name{font-family:var(--disp);font-size:min(96px,17vw);line-height:1.05;letter-spacing:.3em;text-indent:.3em;color:#efe3c0;
+  text-shadow:0 0 24px rgba(255,180,84,.5),0 0 70px rgba(255,140,60,.25);animation:flicker 3.6s infinite}
+@keyframes flicker{0%,91%,94%,97%,100%{opacity:1}92%{opacity:.72}95%{opacity:.85}}
+.t-sub{margin-top:10px;font-size:11px;letter-spacing:.5em;text-indent:.5em;color:var(--amber)}
+.t-flavor{margin:18px 0 4px;color:#93a1ba;font-family:var(--disp);font-size:15px;letter-spacing:.14em}
+.t-keys{margin:16px auto 0;display:inline-grid;gap:7px;font-size:12px;color:var(--dim)}
+.t-keys b{color:#cdd6e4;background:#1b2130;border:1px solid var(--line);padding:1px 7px;margin-right:9px}
+.t-go{margin-top:24px;color:var(--gold);font-size:13px;letter-spacing:.22em;animation:blink 1.2s steps(2) infinite}
+@keyframes blink{50%{opacity:.2}}
+.o-name{font-family:var(--disp);font-size:min(76px,14vw);letter-spacing:.3em;text-indent:.3em;line-height:1.1}
+.o-name.dead{color:#ff6d6d;text-shadow:0 0 26px rgba(255,60,60,.55),0 0 70px rgba(255,40,40,.3)}
+.o-name.winname{color:var(--gold);text-shadow:0 0 26px rgba(255,190,80,.55),0 0 70px rgba(255,160,60,.3)}
+.o-stats{display:flex;gap:20px;justify-content:center;margin-top:16px;font-size:12px;color:#9fb0c8;flex-wrap:wrap}
+
+#hint{font-size:11px;color:var(--dim);display:flex;align-items:center;flex-wrap:wrap;justify-content:center;gap:4px 0}
+#hint i{margin:0 9px;color:#39445c;font-style:normal}
+#hint b{color:#aebad0;background:#161c29;border:1px solid var(--line);padding:1px 6px;margin-right:5px;font-weight:700}
+
+@media(max-width:1280px){
+  #app{flex-direction:column;width:min(96vw,940px)}
+  #stage{order:-1}
+  #side{width:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));align-items:start}
+  .logsec{min-height:150px}
+}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="app">
+    <aside id="side">
+      <header class="crest"><h1>幽窟</h1><span>THE GLOAM VAULT</span></header>
+
+      <section class="panel">
+        <h2>Vitals</h2>
+        <div class="lvrow">
+          <div class="lvbox"><b id="lvl">1</b><i>LVL</i></div>
+          <div class="floorbox">
+            <label>FLOOR</label>
+            <span id="flr">地下 1 階</span>
+            <div class="pips" id="pips"><span>B1</span><span>B2</span><span>B3</span></div>
+          </div>
+        </div>
+        <div class="bar"><div class="track" id="hptrack"><div id="hpfill"></div></div><span id="hptxt">30/30</span></div>
+        <div class="bar"><div class="track thin"><div id="xpfill"></div></div><span id="xptxt">0/18</span></div>
+        <div class="statline">
+          <span>ATK<b id="atk">4</b></span>
+          <span>KILL<b id="kills">0</b></span>
+          <span>TURN<b id="turns">0</b></span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Inventory</h2>
+        <div class="slots" id="inv"></div>
+      </section>
+
+      <section class="panel logsec">
+        <h2>Log</h2>
+        <div id="log"><p class="l-sys">… 探索はまだ始まっていない。</p></div>
+      </section>
+    </aside>
+
+    <main id="stage">
+      <i id="c1"></i><i id="c2"></i><i id="c3"></i><i id="c4"></i>
+      <canvas id="cv"></canvas>
+      <div id="scan"></div>
+      <div id="ov" class="hide"></div>
+    </main>
+  </div>
+
+  <footer id="hint">
+    <span><b>&larr;&uarr;&darr;&rarr; / WASD</b>移動・攻撃</span><i>|</i>
+    <span><b>1〜9</b>アイテム使用</span><i>|</i>
+    <span><b>Enter / &gt;</b>階段を降りる</span><i>|</i>
+    <span><b>Space</b>待機</span><i>|</i>
+    <span><b>R</b>リスタート</span>
+  </footer>
+</div>
+
+<script>
+'use strict';
+/* ================= 基本定数 ================= */
+const W=48,H=30,TS=18,R=8,FLOORS=3;
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+const CFONT='Consolas,Menlo,"Courier New",monospace';
+function fit(){
+  const dpr=Math.max(1,window.devicePixelRatio||1);
+  cv.width=W*TS*dpr;cv.height=H*TS*dpr;
+  cv.style.width=(W*TS)+'px';cv.style.height=(H*TS)+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+fit();addEventListener('resize',fit);
+
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const sign=n=>n<0?-1:n>0?1:0;
+
+/* ================= 敵定義 ================= */
+const ETYPES={
+  s:{name:'スライム',ch:'s',hp:8, atk:2,xp:4, chase:true, col:'#7ee08a'},
+  b:{name:'コウモリ',ch:'b',hp:6, atk:3,xp:5, chase:false,col:'#9fb4d8'},
+  O:{name:'魔像',  ch:'O',hp:16,atk:4,xp:12,chase:true, col:'#ff8a5c'}
+};
+const POOLS={1:['s','s','s','b'],2:['s','s','b','b','O'],3:['s','b','b','O','O']};
+
+let G=null,state='title';
+const ov=document.getElementById('ov');
+function setOv(h){ov.innerHTML=h;ov.classList.remove('hide');}
+function hideOv(){ov.classList.add('hide');}
+
+/* ================= 生成 ================= */
+function newGame(){
+  G={floor:1,turns:0,kills:0,shake:0,fade:1,pops:[],stairsHint:false,logArr:[],
+     P:{x:0,y:0,hp:30,maxHp:30,atk:4,lvl:1,xp:0,rx:0,ry:0},inv:[]};
+  genFloor(1);
+  state='play';
+  log('地下 1 階に降り立った。空気が重い…','sys');
+  hideOv();refreshHUD();
+}
+
+function genFloor(f){
+  let grid=null,rooms=null;
+  for(let a=0;a<80&&(!grid);a++){
+    const g=Array.from({length:H},()=>new Array(W).fill(0));
+    const rs=[];let t=0;
+    while(rs.length<7&&t++<420){
+      const w=rnd(5,11),h=rnd(4,7);
+      if(w>W-3||h>H-3)continue;
+      const x=rnd(1,W-w-1),y=rnd(1,H-h-1);
+      if(rs.some(o=>x<o.x+o.w+1&&x+w+1>o.x&&y<o.y+o.h+1&&y+h+1>o.y))continue;
+      rs.push({x,y,w,h,cx:x+(w>>1),cy:y+(h>>1)});
+    }
+    if(rs.length<7)continue;
+    for(const r of rs)for(let y=r.y;y<r.y+r.h;y++)for(let x=r.x;x<r.x+r.w;x++)g[y][x]=1;
+    const dig=(A,B)=>{let x=A.cx,y=A.cy;
+      if(Math.random()<.5){while(x!==B.cx){g[y][x]=1;x+=sign(B.cx-x);}while(y!==B.cy){g[x][y]=1;y+=sign(B.cy-y);}}
+      else{while(y!==B.cy){g[y][x]=1;y+=sign(B.cy-y);}while(x!==B.cx){g[y][x]=1;x+=sign(B.cx-x);}}};
+    for(let i=0;i<rs.length-1;i++)dig(rs[i],rs[i+1]);
+    if(rs.length>4)dig(pick(rs),pick(rs));
+    grid=g;rooms=rs;
+  }
+
+  const start=rooms[0];
+  let far=rooms[1],fd=-1;
+  for(const r of rooms){const d=(r.cx-start.cx)**2+(r.cy-start.cy)**2;if(d>fd){fd=d;far=r;}}
+  const sx=far.cx,sy=far.cy;
+
+  G.grid=grid;G.stairs={x:sx,y:sy};
+  G.explored=Array.from({length:H},()=>new Array(W).fill(false));
+  G.visible =Array.from({length:H},()=>new Array(W).fill(false));
+  const P=G.P;P.x=start.cx;P.y=start.cy;P.rx=P.x;P.ry=P.y;
+
+  /* 敵 */
+  const enemies=[];const n=5+f,sc=f-1,pool=POOLS[f];
+  for(let i=0;i<n;i++){
+    let x,y,t2=0;
+    do{x=rnd(1,W-2);y=rnd(1,H-2);}while(t2++<240&&(grid[y][x]!==1||Math.abs(x-P.x)+Math.abs(y-P.y)<8||(x===sx&&y===sy)||enemies.some(e=>e.x===x&&e.y===y)));
+    if(grid[y][x]!==1)continue;
+    const k=pick(pool),d=ETYPES[k];
+    enemies.push({k,name:d.name,ch:d.ch,col:d.col,chase:d.chase,x,y,rx:x,ry:y,
+      hp:Math.round(d.hp*(1+.4*sc)),maxHp:Math.round(d.hp*(1+.4*sc)),
+      atk:Math.max(1,Math.round(d.atk*(1+.35*sc))),xp:Math.round(d.xp*(1+.5*sc))});
+  }
+
+  /* アイテム */
+  const items=[];const ni=f===3?5:4,npot=f===3?2:3;
+  for(let i=0;i<ni;i++){
+    let x,y,t2=0;
+    do{x=rnd(1,W-2);y=rnd(1,H-2);}while(t2++<240&&(grid[y][x]!==1||(x===P.x&&y===P.y)||(x===sx&&y===sy)||items.some(it=>it.x===x&&it.y===y)));
+    if(grid[y][x]!==1)continue;
+    items.push(i<npot
+      ?{x,y,ch:'!',col:'#ff7d9c',name:'紅の薬瓶'}
+      :{x,y,ch:'†',col:'#ffd24a',name:f>=3?'黒鉄の大剣':'鋼の短剣',pow:f>=3?3:2});
+  }
+
+  G.enemies=enemies;G.items=items;G.pops=[];G.stairsHint=false;
+  computeFov();
+}
+
+/* ================= FOV ================= */
+function los(x0,y0,x1,y1){
+  const g=G.grid;
+  let dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1,err=dx+dy,x=x0,y=y0;
+  while(!(x===x1&&y===y1)){
+    const e2=2*err;
+    if(e2>=dy){err+=dy;x+=sx;}
+    if(e2<dx){err+=dx;y+=sy;}
+    if(x===x1&&y===y1)return true;
+    if(g[y][x]===0)return false;
+  }
+  return true;
+}
+function computeFov(){
+  const P=G.P,v=G.visible,xp=P.x,yp=P.y;
+  for(let y=0;y<H;y++)v[y].fill(false);
+  for(let dy=-R;dy<=R;dy++)for(let dx=-R;dx<=R;dx++){
+    if(dx*dx+dy*dy>R*R)continue;
+    const x=xp+dx,y=yp+dy;
+    if(x<0||y<0||x>=W||y>=H)continue;
+    if(los(xp,yp,x,y)){v[y][x]=true;G.explored[y][x]=true;}
+  }
+}
+
+/* ================= プレイヤー行動 ================= */
+function tryMove(dx,dy){
+  if(state!=='play')return;
+  const P=G.P,nx=P.x+dx,ny=P.y+dy;
+  if(nx<0||ny<0||nx>=W||ny>=H)return;
+  if(G.grid[ny][nx]===0)return;                       /* 壁にぶつかる：ターン消費なし */
+  const en=G.enemies.find(e=>e.x===nx&&e.y===ny);
+  if(en){attackEnemy(en);endTurn();return;}
+  P.x=nx;P.y=ny;
+  const ii=G.items.findIndex(i=>i.x===nx&&i.y===ny);
+  if(ii>=0){
+    const item=G.items.splice(ii,1)[0];
+    if(G.inv.length<9){G.inv.push(item);log(`${item.name}を拾った (スロット ${G.inv.length})`,'pick');}
+    else{G.items.push(item);log('インベントリが満杯だ。置き去りにした','sys');}
+  }
+  if(nx===G.stairs.x&&ny===G.stairs.y&&!G.stairsHint){
+    G.stairsHint=true;log('階段がある。Enter または > で降りられる','sys');
+  }
+  endTurn();
+}
+
+function attackEnemy(en){
+  const P=G.P;let d=Math.max(1,P.atk+rnd(-1,2));
+  const crit=Math.random()<.1;if(crit)d*=2;
+  en.hp-=d;pop(en.x,en.y,'-'+d,crit?'#ffd97a':'#ffffff');
+  log(`${en.name}に ${d} ダメージを与えた${crit?'（会心!）':''}`,'hit');
+  if(en.hp<=0){G.enemies.splice(G.enemies.indexOf(en),1);G.kills++;gainXp(en.xp);}
+}
+
+function gainXp(n){
+  const P=G.P;P.xp+=n;log(`経験値 ${n} を獲得`,'gain');
+  while(P.xp>=xpNeed()){
+    P.xp-=xpNeed();P.lvl++;P.maxHp+=6;P.hp=Math.min(P.maxHp,P.hp+8);P.atk++;
+    log(`レベルアップ! Lv.${P.lvl} (最大HP+6 / ATK+1)`,'lvl');
+    pop(P.x,P.y,'LV UP','#ffd97a');
+  }
+}
+const xpNeed=()=>10+G.P.lvl*8;
+
+function useItem(i){
+  if(state!=='play')return;
+  const it=G.inv[i];if(!it)return;
+  const P=G.P;
+  if(it.name==='紅の薬瓶'){
+    const h=Math.round(P.maxHp*.4)+4,real=Math.min(h,P.maxHp-P.hp);
+    P.hp+=real;G.inv.splice(i,1);pop(P.x,P.y,'+'+real,'#5fd39a');
+    log(`紅の薬瓶を飲んだ。HP ${real} 回復`,'gain');endTurn();refreshHUD();
+  }else{
+    P.atk+=it.pow;G.inv.splice(i,1);pop(P.x,P.y,'ATK+'+it.pow,'#ffd24a');
+    log(`${it.name}を鍛え上げた (ATK +${it.pow})`,'lvl');endTurn();refreshHUD();
+  }
+}
+
+function descend(){
+  if(state!=='play')return;
+  const P=G.P,s=G.stairs;
+  if(P.x!==s.x||P.y!==s.y)return;
+  G.floor++;
+  if(G.floor>FLOORS){win();return;}
+  log(`階段を降りる… 地下 ${G.floor} 階`,'sys');
+  G.fade=1;genFloor(G.floor);refreshHUD();
+}
+
+function waitTurn(){if(state!=='play')return;endTurn();}
+
+/* ================= ターン処理・敵AI ================= */
+function endTurn(){
+  if(state!=='play')return;
+  G.turns++;enemiesAct();computeFov();refreshHUD();
+}
+
+function enemiesAct(){
+  const P=G.P,occ=new Set(G.enemies.map(e=>e.x+','+e.y));
+  occ.add(P.x+','+P.y);
+  for(const e of G.enemies){
+    const dx=P.x-e.x,dy=P.y-e.y;
+    if(Math.max(Math.abs(dx),Math.abs(dy))===1){       /* 隣接：攻撃 */
+      const d=Math.max(1,e.atk+rnd(-1,2));
+      P.hp-=d;G.shake=6;pop(P.x,P.y,'-'+d,'#ff5d5d');flashHp();
+      log(`${e.name}があなたに ${d} ダメージ`,'hurt');
+      if(P.hp<=0){P.hp=0;die();return;}
+      continue;
+    }
+    const sees=los(e.x,e.y,P.x,P.y)&&dx*dx+dy*dy<=R*R;
+    if((e.chase&&sees)||(!e.chase&&Math.random()<.45)){
+      stepToward(e,occ);
+    }else{                                             /* 徘徊 */
+      if(Math.random()>=.3){
+        const dirs=[[1,0],[-1,0],[0,1],[0,-1]].sort(()=>Math.random()-.5);
+        for(const[mx,my]of dirs){
+          const nx=e.x+mx,ny=e.y+my;
+          if(nx<0||ny<0||nx>=W||ny>=H)continue;
+          if(G.grid[ny][nx]===0)continue;
+          const k=nx+','+ny;if(k===P.x+','+P.y||occ.has(k))continue;
+          e.x=nx;e.y=ny;occ.add(k);break;
+        }
+      }
+    }
+  }
+}
+
+function stepToward(e,occ){
+  const P=G.P,dx=sign(P.x-e.x),dy=sign(P.y-e.y);
+  const order=Math.abs(P.x-e.x)>=Math.abs(P.y-e.y)?[[dx,0],[0,dy]]:[[0,dy],[dx,0]];
+  for(const[mx,my]of order){
+    if(!mx&&!my)continue;
+    const nx=e.x+mx,ny=e.y+my;
+    if(nx===P.x&&ny===P.y)continue;
+    if(G.grid[ny][nx]===0)continue;
+    const k=nx+','+ny;if(occ.has(k))continue;
+    e.x=nx;e.y=ny;occ.add(k);return;
+  }
+}
+
+/* ================= 終了処理 ================= */
+function die(){
+  state='over';log('あなたは倒れた…','hurt');refreshHUD();
+  setOv(`<div class="ov-in">
+    <h2 class="o-name dead">死 亡</h2>
+    <p class="t-flavor">闇が、あなたを呑み込んだ。</p>
+    <div class="o-stats">${statLine()}</div>
+    <div class="t-go">&#9654; R で再挑戦</div></div>`);
+}
+function win(){
+  state='win';log('三階の闇を抜け出した。脱出成功!','lvl');refreshHUD();
+  setOv(`<div class="ov-in">
+    <div class="t-orn">&#9670; ─────── &#9670;</div>
+    <h2 class="o-name winname">脱 出</h2>
+    <p class="t-flavor">闇を抜け、光を見た。</p>
+    <div class="o-stats">${statLine()}</div>
+    <div class="t-go">&#9654; R で新しい探索へ</div></div>`);
+}
+function statLine(){
+  const P=G.P;
+  return `<span>FLOOR 地下${Math.min(G.floor,FLOORS)}階</span><span>LVL ${P.lvl}</span><span>KILL ${G.kills}</span><span>TURN ${G.turns}</span>`;
+}
+
+/* ================= HUD / ログ ================= */
+function log(t,cls){
+  G.logArr.push({t,cls});if(G.logArr.length>60)G.logArr.shift();
+  const el=document.getElementById('log');
+  el.innerHTML=G.logArr.slice(-14).map(m=>`<p class="${m.cls||''}">${m.t}</p>`).join('');
+  el.scrollTop=el.scrollHeight;
+}
+
+function refreshHUD(){
+  if(!G)return;
+  const P=G.P,need=xpNeed();
+  document.getElementById('lvl').textContent=P.lvl;
+  document.getElementById('atk').textContent=P.atk;
+  document.getElementById('kills').textContent=G.kills;
+  document.getElementById('turns').textContent=G.turns;
+  document.getElementById('flr').textContent=`地下 ${Math.min(G.floor,FLOORS)} 階`;
+  const pips=document.getElementById('pips').children;
+  for(let i=0;i<3;i++){
+    pips[i].className=(state==='win'||i+1<G.floor)?'done':(i+1===G.floor?'cur':'');
+  }
+  document.getElementById('hpfill').style.width=Math.max(0,P.hp/P.maxHp*100)+'%';
+  document.getElementById('hptxt').textContent=`${P.hp}/${P.maxHp}`;
+  document.getElementById('xpfill').style.width=Math.min(100,P.xp/need*100)+'%';
+  document.getElementById('xptxt').textContent=`${P.xp}/${need}`;
+  document.getElementById('hptrack').classList.toggle('low',state==='play'&&P.hp/P.maxHp<.3);
+  renderInv();
+}
+
+function renderInv(){
+  const el=document.getElementById('inv');
+  for(let i=0;i<9;i++){
+    const it=G?G.inv[i]:null,s=el.children[i];
+    if(it){s.className='slot on';s.title=it.name;s.innerHTML=`<em>${i+1}</em><b style="color:${it.col}">${it.ch}</b>`;}
+    else{s.className='slot';s.title='';s.innerHTML=`<em>${i+1}</em><b>&middot;</b>`;}
+  }
+}
+(function(){const el=document.getElementById('inv');for(let i=0;i<9;i++){const d=document.createElement('div');d.className='slot';el.appendChild(d);}})();
+
+function flashHp(){
+  const el=document.getElementById('hptrack');
+  el.classList.remove('hit');void el.offsetWidth;el.classList.add('hit');
+}
+
+/* ================= 入力 ================= */
+addEventListener('keydown',e=>{
+  if(e.metaKey||e.ctrlKey||e.altKey)return;
+  const k=e.key,code=e.code;
+  if(state==='title'){
+    if(k==='Enter'||k===' '){e.preventDefault();newGame();}
+    else if(code==='KeyR')newGame();
+    return;
+  }
+  if(state==='over'||state==='win'){
+    if(code==='KeyR'||k==='Enter')newGame();
+    return;
+  }
+  const mvMap={ArrowUp:[0,-1],KeyW:[0,-1],ArrowDown:[0,1],KeyS:[0,1],ArrowLeft:[-1,0],KeyA:[-1,0],ArrowRight:[1,0],KeyD:[1,0]};
+  const mv=mvMap[code];
+  if(mv){e.preventDefault();if(!e.repeat)tryMove(mv[0],mv[1]);else tryMove(mv[0],mv[1]);return;}
+  if(e.repeat)return;
+  if(/^[1-9]$/.test(k)){useItem(+k-1);return;}
+  if(k==='Enter'||k==='>'){descend();return;}
+  if(code==='Space'||k==='.'){e.preventDefault();waitTurn();return;}
+  if(code==='KeyR')newGame();
+});
+
+/* ================= 描画 ================= */
+function pop(x,y,txt,col){G.pops.push({x,y,txt,col,t0:performance.now()});}
+
+let last=performance.now();
+function frame(t){
+  const dt=Math.min(50,t-last);last=t;draw(t,dt);requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+function draw(t,dt){
+  const w=W*TS,h=H*TS;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle='#0b0e15';ctx.fillRect(0,0,w,h);
+  if(!G)return;
+
+  let shx=0,shy=0;
+  if(G.shake>.2){shx=(Math.random()-.5)*G.shake;shy=(Math.random()-.5)*G.shake;G.shake*=Math.pow(.9,dt/16);}else G.shake=0;
+  ctx.save();ctx.translate(shx,shy);
+
+  const k=1-Math.exp(-dt/70);
+  for(const e of G.enemies){e.rx+=(e.x-e.rx)*k;e.ry+=(e.y-e.ry)*k;}
+  const P=G.P;P.rx+=(P.x-P.rx)*k;P.ry+=(P.y-P.ry)*k;
+
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    if(!G.explored[y][x])continue;                    /* 未探索は描画しない */
+    const vis=G.visible[y][x],X=x*TS,Y=y*TS;
+    if(G.grid[y][x]===1){                             /* 床 */
+      ctx.fillStyle=vis?'#1c2333':'#141a28';ctx.fillRect(X,Y,TS,TS);
+      if((x*7+y*13)%5===0){ctx.fillStyle=vis?'#263049':'#1a2135';ctx.fillRect(X+TS/2-1,Y+TS/2-1,2,2);}
+    }else{                                            /* 壁 */
+      ctx.fillStyle=vis?'#3b4763':'#222941';ctx.fillRect(X,Y,TS,TS);
+      ctx.fillStyle=vis?'#4a5878':'#2b3450';ctx.fillRect(X+1,Y+1,TS-2,3);
+      ctx.fillStyle='rgba(0,0,0,.28)';ctx.fillRect(X+1,Y+TS-4,TS-2,3);
+    }
+  }
+
+  /* 階段 */
+  const s=G.stairs;
+  if(G.explored[s.y][s.x]){
+    const vis=G.visible[s.y][s.x];
+    ctx.font='bold '+(TS-2)+'px '+CFONT;
+    ctx.fillStyle=vis?'#ffd97a':'#6e5f38';
+    if(vis){ctx.shadowColor='#ffb454';ctx.shadowBlur=8+4*Math.sin(t/280);}
+    ctx.fillText('>',s.x*TS+TS/2,s.y*TS+TS/2+1);
+    ctx.shadowBlur=0;
+  }
+
+  /* アイテム（視界内は明、探索済みは薄） */
+  ctx.font='bold '+(TS-3)+'px '+CFONT;
+  for(const it of G.items){
+    if(!G.explored[it.y][it.x])continue;
+    const vis=G.visible[it.y][it.x];
+    ctx.globalAlpha=vis?1:.45;ctx.fillStyle=it.col;
+    ctx.fillText(it.ch,it.x*TS+TS/2,it.y*TS+TS/2);
+  }
+  ctx.globalAlpha=1;
+
+  /* 敵（視界内のみ） */
+  for(const e of G.enemies){
+    if(!G.visible[e.y][e.x])continue;
+    ctx.font='bold '+(TS-3)+'px '+CFONT;
+    ctx.shadowColor=e.col;ctx.shadowBlur=6;ctx.fillStyle=e.col;
+    ctx.fillText(e.ch,e.rx*TS+TS/2,e.ry*TS+TS/2);
+    ctx.shadowBlur=0;
+  }
+
+  /* プレイヤー */
+  ctx.font='bold '+(TS-3)+'px '+CFONT;
+  ctx.shadowColor='#ffb454';ctx.shadowBlur=10+3*Math.sin(t/130);
+  ctx.fillStyle='#ffd24a';
+  ctx.fillText('@',P.rx*TS+TS/2,P.ry*TS+TS/2);
+  ctx.shadowBlur=0;
+
+  /* ダメージポップアップ */
+  G.pops=G.pops.filter(p=>t-p.t0<750);
+  for(const p of G.pops){
+    const a=1-(t-p.t0)/750;
+    ctx.globalAlpha=a;ctx.font='bold 13px '+CFONT;
+    const px=p.x*TS+TS/2,py=p.y*TS-((t-p.t0)*.03);
+    ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.6)';ctx.strokeText(p.txt,px,py);
+    ctx.fillStyle=p.col;ctx.fillText(p.txt,px,py);
+  }
+  ctx.globalAlpha=1;
+
+  /* 低HPビネット */
+  const pct=P.hp/P.maxHp;
+  if(state==='play'&&pct<.35){
+    const a=(0.35-pct)/0.35*(0.25+0.1*Math.sin(t/240));
+    const g=ctx.createRadialGradient(w/2,h/2,h*.35,w/2,h/2,h*.78);
+    g.addColorStop(0,'rgba(180,30,30,0)');g.addColorStop(1,`rgba(180,30,30,${a})`);
+    ctx.fillStyle=g;ctx.fillRect(-8,-8,w+16,h+16);
+  }
+
+  /* 階層遷移フェード */
+  if(G.fade>0){
+    ctx.fillStyle=`rgba(7,9,14,${G.fade})`;ctx.fillRect(-8,-8,w+16,h+16);
+    G.fade=Math.max(0,G.fade-dt*.0025);
+  }
+  ctx.restore();
+}
+
+/* ================= タイトル ================= */
+function showTitle(){
+  state='title';
+  setOv(`<div class="ov-in">
+    <div class="t-orn">&#9670; ─────── &#9670;</div>
+    <h2 class="t-name">幽 窟</h2>
+    <div class="t-sub">THE GLOAM VAULT</div>
+    <p class="t-flavor">三階の闇を抜けろ。光は、階段の下にある。</p>
+    <div class="t-keys">
+      <span><b>&larr;&uarr;&darr;&rarr; / WASD</b>移動・攻撃（1入力=1ターン）</span>
+      <span><b>1〜9</b>インベントリ使用</span>
+      <span><b>Enter / &gt;</b>階段を降りる</span>
+      <span><b>Space</b>待機 ／ <b>R</b>リスタート</span>
+    </div>
+    <div class="t-go">&#9654; ENTER / SPACE で開始</div></div>`);
+}
+showTitle();
+</script>
+</body>
+</html>

@@ -669,6 +669,7 @@ window.ENTRIES = [
             { theme: "roguelike", model: "gemma-4-12b-qat",     runner: "LM Studio API",   note: "context 65536 に拡張して3回目で完走（既定 32768 では reasoning が上限を食い潰し空出力）。ただし初期化時 JS エラー44件で盤面が描画されず黒画面（HP 0/0）。508行/16KB。", kind: "html" },
             { theme: "roguelike", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",   note: "スモークPASS・JSエラー0。移動・戦闘・HUD が動くローカル勢唯一の完走。メッセージログの更新は乏しくフォグは簡素。496行/15KB。", kind: "html" },
             { theme: "roguelike", model: "gemma-4-31b",         runner: "LM Studio API",   note: "JSエラー2件（undefined 参照）で verify FAIL。盤面と HUD は出るが敵・アイテムが機能せず体裁が崩れる。503行/16KB。", kind: "html" },
+            { theme: "roguelike", model: "qwen3-8-27b",         runner: "Ollama API",      note: "タイトル画面「幽窟」・VITALS・9枠インベントリ・ログの UI は作り込まれ、canvas描画・移動・入力・マップ更新も動く。ただしゲーム開始後に JSエラー6件（配列外への代入、G.enemies が iterable でない）で verify FAIL。635行/28KB・37,137 tokens・32.2分。", kind: "html" },
             { theme: "roguelike", model: "gpt-5.6-sol",         runner: "OpenAI API (reasoning high)", note: "JSエラー0。日本語UI「灰灯の地下譜」。FOV+フォグ・9枠インベントリ・戦闘ログまで揃い完成度は全モデル中最高。1183行/31KB。", kind: "html" },
             { theme: "roguelike", model: "gpt-5.6-terra",       runner: "OpenAI API (reasoning high)", note: "JSエラー0。「星煤の地下回廊」。記号凡例付きで情報設計が丁寧、フォグは階調表現。960行/23KB。", kind: "html" },
             { theme: "roguelike", model: "gpt-5.6-luna",        runner: "OpenAI API (reasoning high)", note: "JSエラー0。FOV の明暗が最も明瞭なモノトーン。残り敵数 HUD など独自要素あり。866行/20KB。", kind: "html" },
