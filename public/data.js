@@ -634,10 +634,10 @@ window.MODELS = {
                     { value: "27B", label: "パラメータ", note: "dense / ハイブリッド注意機構" },
                     { value: "Q8_0", label: "量子化", note: "unsloth GGUF 29GB" },
                     { value: "262K", label: "コンテキスト", note: "YaRN で 1M" },
-                    { value: "131K", label: "最大出力", note: "公式推奨値" }
+                    { value: "18.5 tok/s", label: "今回の実測", note: "9テーマ加重平均" }
                 ],
-                strengths: "json-ladder はパース 6/6・score 100% で全レベル満点。96 採点項目の L6（全文の逐語インデックス）まで取りこぼしがなく、ローカル勢の既存最高（Gemma 4 31B の 99%）を上回った。Apache 2.0 で重みが公開されている。",
-                weaknesses: "thinking が既定で有効かつ長大で、json-ladder 6 問の completion だけで 35,033 tokens（Gemma 4 31B の約 2.1 倍）を要した。mlx_lm.server では長文生成の途中で Metal のバッファ数上限に達してクラッシュしたため、本ベンチは llama.cpp（Ollama）経由で測定している。",
+                strengths: "json-ladder はパース 6/6・score 100% でローカル勢唯一の全問正解（96 採点項目の L6 まで取りこぼしなし。既存最高は Gemma 4 31B の 99%）。pr-triage も正解キー一致 90% で Gemma 4 勢の 85% を上回る。HTML では lp-fable5・lp-nishibi・othello の作り込みがローカル最高水準で、9 テーマ中 8 テーマを finish_reason=stop で完走した。Apache 2.0 で重みが公開されている。",
+                weaknesses: "thinking が長く 1 テーマ 32〜59 分（completion 合計 370,866 tokens・加重平均 18.5 tok/s）。HTML 一括生成では全テーマで前置き文・コードフェンス・末尾解説が混入し、phoenix-lp は 65,000 tokens の上限に達して末尾が切れた。roguelike はゲーム開始後に JS エラー 6 件、墨流しはフラグメントシェーダーがコンパイル不能でローカル勢の全滅傾向を踏襲。mlx_lm.server では長文生成中に Metal のバッファ数上限に達してクラッシュするため、測定は llama.cpp（Ollama）経由で行った。",
                 links: [
                     { label: "Qwen 公式モデル", href: "https://huggingface.co/Qwen/Qwen3.8-27B" },
                     { label: "unsloth GGUF", href: "https://huggingface.co/unsloth/Qwen3.8-27B-GGUF" }
@@ -688,6 +688,7 @@ window.ENTRIES = [
             // suminagashi（WebGL 流体。スモーク検証: ロード + ドラッグ描画で JS エラー数を機械確認。シェーダー不備はここで露呈する）
             { theme: "suminagashi", model: "gemma-4-12b-qat",     runner: "LM Studio API",   note: "頂点シェーダーがコンパイル不能（Shader Error ×2）で描画されず。388行/14KB。", kind: "html" },
             { theme: "suminagashi", model: "gemma-4-26b-a4b-qat", runner: "LM Studio API",   note: "フラグメントシェーダーがコンパイル不能（Shader Error ×2）。UI だけ表示。574行/22KB。", kind: "html" },
+            { theme: "suminagashi", model: "qwen3-8-27b",         runner: "Ollama API",      note: "フラグメントシェーダーがコンパイル不能（Shader Error ×3）で流体が描画されない。canvas と UI は出る。ローカル勢の全滅傾向を踏襲した唯一の FAIL テーマ。707行/36KB・50,516 tokens・45.4分。", kind: "html" },
             { theme: "suminagashi", model: "gemma-4-31b",         runner: "LM Studio API",   note: "uniform 未定義 TypeError が毎フレーム発生（440件）。ローカル勢は全滅。500行/19KB。", kind: "html" },
             { theme: "suminagashi", model: "claude-opus-4-8",     runner: "Claude Agent SDK", note: "JSエラー0で流体が動く。にじみ柔らかめ・淡い水彩調の解釈。765行/24KB。", kind: "html" },
             { theme: "suminagashi", model: "grok-4-5",            runner: "OpenRouter API",  note: "JSエラー0で流体が動く。墨の濃淡と乱流の迫力はこちらが上。747行/25KB。", kind: "html" },
