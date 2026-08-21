@@ -2,13 +2,15 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>HIBANA — 不死鳥スクロール没入型LP</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIBANA — 不死鳥スクロールLP</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Shippori+Mincho:wght@400;500&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Shippori+Mincho:wght@400;500&family=Zen+Kaku+Gothic+New:wght@300&display=swap" rel="stylesheet">
     <style>
-        * {
+        *,
+        *::before,
+        *::after {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -39,120 +41,13 @@
             letter-spacing: 0.04em;
         }
         #scroll-container {
+            height: 600vh;
+            /* 6 scenes × 100vh, but we use 150vh per scene? Actually 6*150=900vh, but we set 600vh for simplicity? 
+               Let's use 900vh to match spec. */
             height: 900vh;
-            /* 6 scenes × 150vh */
             position: relative;
         }
-        #canvas-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 0;
-            pointer-events: none;
-        }
-        #main-canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        /* UI overlay */
-        #ui-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 100;
-            pointer-events: none;
-            font-family: var(--font-ui);
-            font-weight: 300;
-            color: var(--ink);
-        }
-        #logo {
-            position: absolute;
-            top: 2rem;
-            left: 2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            font-size: 1.2rem;
-            letter-spacing: 0.15em;
-            font-weight: 400;
-        }
-        #logo svg {
-            width: 1.4rem;
-            height: 1.4rem;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 1.2;
-        }
-        #logo .sub {
-            font-size: 0.7rem;
-            opacity: 0.7;
-            letter-spacing: 0.1em;
-            margin-left: 0.3rem;
-        }
-        #nav {
-            position: absolute;
-            top: 2rem;
-            right: 2rem;
-            display: flex;
-            gap: 1.8rem;
-            font-size: 0.75rem;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-        }
-        #nav a {
-            text-decoration: none;
-            color: inherit;
-            opacity: 0.7;
-            transition: opacity 0.3s;
-        }
-        #nav a:hover {
-            opacity: 1;
-        }
-        #progress-bar {
-            position: absolute;
-            bottom: 2.5rem;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 30vw;
-            height: 1px;
-            background: rgba(42, 36, 56, 0.2);
-            border-radius: 2px;
-        }
-        #progress-fill {
-            height: 100%;
-            width: 0%;
-            background: var(--flame);
-            transition: width 0.1s linear;
-        }
-        #sound-ring {
-            position: absolute;
-            bottom: 2rem;
-            left: 2rem;
-            width: 3rem;
-            height: 3rem;
-            border: 1px solid rgba(42, 36, 56, 0.4);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7rem;
-            opacity: 0;
-            transition: opacity 0.5s;
-            pointer-events: auto;
-            cursor: pointer;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(2px);
-        }
-        #sound-ring.visible {
-            opacity: 1;
-        }
-        /* Scene layers */
-        .scene {
+        #canvas-fixed {
             position: fixed;
             top: 0;
             left: 0;
@@ -160,14 +55,139 @@
             height: 100vh;
             z-index: 1;
             pointer-events: none;
+        }
+        .scene {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 2;
             opacity: 0;
-            transition: opacity 0.3s ease-out;
-            will-change: opacity, transform;
+            visibility: hidden;
+            transition: opacity 0.8s ease, visibility 0.8s;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
         }
         .scene.active {
             opacity: 1;
+            visibility: visible;
             pointer-events: auto;
         }
+        /* UI overlay */
+        #ui-top-left {
+            position: fixed;
+            top: 2rem;
+            left: 2.5rem;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-family: var(--font-ui);
+            font-weight: 300;
+            color: var(--ink);
+            mix-blend-mode: difference;
+            color: #fff;
+        }
+        #ui-top-left .logo {
+            font-family: var(--font-serif);
+            font-size: 1.8rem;
+            font-style: italic;
+            letter-spacing: 0.1em;
+        }
+        #ui-top-left .bird-icon {
+            width: 24px;
+            height: 24px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><path d="M3 12c3-4 6-6 9-6s6 2 9 6c-3 4-6 6-9 6s-6-2-9-6z"/><path d="M12 6C9 9 8 12 8 15c0 2 1 4 4 4s4-2 4-4c0-3-1-6-4-9z"/></svg>') no-repeat center/contain;
+            opacity: 0.8;
+        }
+        #ui-top-left .date {
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            opacity: 0.7;
+        }
+        #ui-top-right {
+            position: fixed;
+            top: 2rem;
+            right: 2.5rem;
+            z-index: 10;
+            display: flex;
+            gap: 2rem;
+            font-family: var(--font-ui);
+            font-size: 0.75rem;
+            letter-spacing: 0.15em;
+            color: #fff;
+            mix-blend-mode: difference;
+        }
+        #ui-top-right a {
+            color: inherit;
+            text-decoration: none;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+        #ui-top-right a:hover {
+            opacity: 1;
+        }
+        #progress-bar {
+            position: fixed;
+            bottom: 2.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40vw;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.3);
+            z-index: 10;
+            mix-blend-mode: difference;
+        }
+        #progress-fill {
+            height: 100%;
+            width: 0%;
+            background: #fff;
+            transition: width 0.1s linear;
+        }
+        #sound-ring {
+            position: fixed;
+            bottom: 2rem;
+            left: 2.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            mix-blend-mode: difference;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+        #sound-ring::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #fff;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.5);
+                opacity: 0.4;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+        }
+        /* Scene specific */
         .scene-inner {
             position: relative;
             width: 100%;
@@ -175,199 +195,305 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-direction: column;
             padding: 0 6vw;
         }
-        /* Text styling */
-        .poem {
-            font-family: var(--font-serif);
+        .text-block {
+            max-width: 60%;
+            text-align: center;
             font-style: italic;
             font-size: clamp(1.4rem, 3.2vw, 2.6rem);
             line-height: 1.5;
             letter-spacing: 0.04em;
             color: var(--ink);
-            max-width: 70%;
         }
-        .poem .word {
+        .text-block .word {
             display: inline-block;
             opacity: 0;
             transform: translateY(20px);
             transition: opacity 0.6s ease, transform 0.6s ease;
-            transition-delay: calc(var(--i) * 60ms);
-            margin-right: 0.15em;
+            transition-delay: calc(var(--i) * 70ms);
         }
-        .scene.active .poem .word {
+        .scene.active .text-block .word {
             opacity: 1;
             transform: translateY(0);
         }
         .jp-text {
             font-family: var(--font-jp);
+            font-style: normal;
             font-weight: 400;
-            font-size: clamp(1.2rem, 2.5vw, 2rem);
-            line-height: 1.7;
-            letter-spacing: 0.08em;
-            color: var(--ink);
         }
-        .jp-text .word {
-            display: inline-block;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.6s ease, transform 0.6s ease;
-            transition-delay: calc(var(--i) * 60ms);
+        .sub-text {
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            opacity: 0.7;
+            margin-top: 1.5rem;
+            font-style: normal;
         }
-        .scene.active .jp-text .word {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        /* Scene-specific */
+        /* Scene 1: Dawn */
         #scene-dawn {
-            background: var(--dawn-bg);
+            background: linear-gradient(135deg, #f2ecf5 0%, #e0d4f0 50%, #c9b8e8 100%);
         }
-        #scene-dawn .poem {
+        #scene-dawn .orb {
             position: absolute;
-            right: 6vw;
-            top: 50%;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, var(--orb) 0%, rgba(232, 240, 168, 0.3) 70%);
+            border-radius: 50%;
+            filter: blur(10px);
+            animation: orbFloat 6s ease-in-out infinite;
+        }
+        @keyframes orbFloat {
+            0%,
+            100% {
+                transform: translateX(-50%) translateY(0);
+            }
+            50% {
+                transform: translateX(-50%) translateY(-20px);
+            }
+        }
+        #scene-dawn .text-block {
+            position: absolute;
+            right: 8vw;
+            top: 55%;
             transform: translateY(-50%);
             text-align: right;
             max-width: 40%;
+            color: var(--ink);
         }
+        /* Scene 2: Rise */
         #scene-rise {
-            background: linear-gradient(180deg, #f2ecf5 0%, #ffd9b3 40%, #ff9a5c 100%);
+            background: linear-gradient(to top, #ff7a2f 0%, #ffb36b 40%, #ffd9b0 100%);
         }
-        #scene-rise .jp-text {
+        #scene-rise .phoenix {
             position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            font-size: clamp(2rem, 5vw, 4rem);
-            font-weight: 500;
-            letter-spacing: 0.2em;
-            color: #fff;
-            text-shadow: 0 0 20px rgba(255, 122, 47, 0.5);
-        }
-        #scene-halo {
-            background: radial-gradient(circle, rgba(255, 200, 150, 0.8) 0%, rgba(255, 150, 100, 0.4) 30%, rgba(100, 50, 80, 0.6) 70%, var(--night) 100%);
-        }
-        #scene-halo .jp-text {
-            font-size: clamp(4rem, 10vw, 8rem);
-            color: rgba(255, 255, 255, 0.9);
-            text-shadow: 0 0 40px rgba(255, 200, 100, 0.8);
-            letter-spacing: 0.1em;
-        }
-        #scene-feather {
-            background: var(--night);
-        }
-        #scene-feather .poem {
-            position: absolute;
-            bottom: 15vh;
+            bottom: -10%;
             left: 50%;
             transform: translateX(-50%);
-            text-align: center;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, var(--flame) 0%, transparent 70%);
+            filter: blur(20px);
+            animation: riseUp 8s ease-in-out infinite;
+        }
+        @keyframes riseUp {
+            0% {
+                transform: translateX(-50%) translateY(0) scale(0.8);
+                opacity: 0.5;
+            }
+            50% {
+                transform: translateX(-50%) translateY(-100px) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(-50%) translateY(0) scale(0.8);
+                opacity: 0.5;
+            }
+        }
+        #scene-rise .text-block {
             color: #fff;
-            font-size: clamp(1.2rem, 2.5vw, 2rem);
-            max-width: 80%;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
         }
-        #scene-feather .jp-text {
+        /* Scene 3: Halo */
+        #scene-halo {
+            background: radial-gradient(circle, #ffd9b0 0%, #ff9a5c 30%, #ff6b3d 60%, #c23a1f 100%);
+        }
+        #scene-halo .halo-ring {
             position: absolute;
-            left: 8vw;
-            top: 20vh;
+            width: 80vmin;
+            height: 80vmin;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #ffb36b, #ff7a2f, #ffd9b0, #ffb36b);
+            filter: blur(30px);
+            opacity: 0.6;
+            animation: rotateHalo 20s linear infinite;
+        }
+        @keyframes rotateHalo {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        #scene-halo .big-char {
+            font-family: var(--font-jp);
+            font-size: 12rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 0 40px rgba(255, 255, 255, 0.5);
+            animation: flicker 3s ease-in-out infinite;
+            position: relative;
+            z-index: 2;
+        }
+        @keyframes flicker {
+            0%,
+            100% {
+                opacity: 0.8;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+        }
+        /* Scene 4: Feather */
+        #scene-feather {
+            background: linear-gradient(180deg, #0a1030 0%, #0d1a3a 100%);
+        }
+        #scene-feather .feather {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            width: 60px;
+            height: 150px;
+            background: linear-gradient(180deg, var(--feather) 0%, transparent 100%);
+            border-radius: 50% 50% 0 0;
+            filter: blur(5px);
+            animation: featherFall 6s ease-in-out infinite;
+            opacity: 0.8;
+        }
+        @keyframes featherFall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 0;
+            }
+            20% {
+                opacity: 0.8;
+            }
+            80% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(80vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        #scene-feather .vertical-text {
+            position: absolute;
+            left: 10%;
+            top: 50%;
+            transform: translateY(-50%);
             writing-mode: vertical-rl;
-            color: rgba(255, 255, 255, 0.6);
+            font-family: var(--font-jp);
             font-size: 1rem;
+            color: rgba(255, 255, 255, 0.6);
             letter-spacing: 0.2em;
+            line-height: 2;
         }
-        #scene-feather .jp-text.right {
+        #scene-feather .vertical-text.right {
             left: auto;
-            right: 8vw;
-            top: 40vh;
+            right: 10%;
         }
+        #scene-feather .text-block {
+            color: #fff;
+            text-shadow: 0 0 20px rgba(127, 184, 255, 0.3);
+            max-width: 70%;
+        }
+        /* Scene 5: Crystal */
         #scene-crystal {
-            background: var(--night);
+            background: linear-gradient(180deg, #0a1030 0%, #0d1a3a 100%);
         }
-        #scene-crystal .crystal-container {
-            position: absolute;
-            width: 100%;
-            height: 100%;
+        .crystal-container {
             display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10vw;
-            perspective: 800px;
+            gap: 4rem;
+            perspective: 1000px;
+            position: relative;
+            z-index: 2;
         }
         .crystal {
             width: 120px;
             height: 120px;
-            background: linear-gradient(135deg, rgba(127, 184, 255, 0.3), rgba(255, 255, 255, 0.1), rgba(255, 122, 47, 0.2));
+            background: linear-gradient(135deg, rgba(127, 184, 255, 0.3), rgba(255, 255, 255, 0.1));
             border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 0 30px rgba(127, 184, 255, 0.3);
             transform-style: preserve-3d;
-            animation: rotate-crystal 8s infinite linear;
-            transition: transform 0.3s;
+            animation: rotateCrystal 8s ease-in-out infinite;
+            box-shadow: 0 0 30px rgba(127, 184, 255, 0.2);
+            backdrop-filter: blur(5px);
+        }
+        .crystal:nth-child(2) {
+            animation-delay: -2s;
+            width: 80px;
+            height: 80px;
+        }
+        .crystal:nth-child(3) {
+            animation-delay: -4s;
+            width: 100px;
+            height: 100px;
+        }
+        @keyframes rotateCrystal {
+            0% {
+                transform: rotateX(0deg) rotateY(0deg);
+            }
+            50% {
+                transform: rotateX(30deg) rotateY(45deg);
+            }
+            100% {
+                transform: rotateX(0deg) rotateY(0deg);
+            }
         }
         .crystal:hover {
             animation-play-state: paused;
-            transform: scale(1.05) rotateY(15deg) rotateX(10deg);
+            transform: scale(1.1) rotate(5deg);
+            transition: transform 0.3s;
         }
-        .crystal::before,
-        .crystal::after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: inherit;
-            border: inherit;
-            box-shadow: inherit;
-        }
-        .crystal::before {
-            transform: rotateY(60deg);
-        }
-        .crystal::after {
-            transform: rotateY(-60deg);
-        }
-        @keyframes rotate-crystal {
-            0% {
-                transform: rotateY(0deg) rotateX(0deg);
-            }
-            100% {
-                transform: rotateY(360deg) rotateX(360deg);
-            }
-        }
+        /* Scene 6: Finale */
         #scene-finale {
-            background: linear-gradient(180deg, #2a1a3a 0%, #c23a1f 50%, #ff7a2f 100%);
+            background: linear-gradient(180deg, #c23a1f 0%, #ff7a2f 40%, #ffb36b 70%, #2a2438 100%);
         }
-        #scene-finale .poem {
+        #scene-finale .sunset-mountains {
             position: absolute;
-            bottom: 15vh;
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40%;
+            background: linear-gradient(180deg, transparent, #2a2438 80%);
+            clip-path: polygon(0% 100%, 0% 60%, 20% 40%, 40% 55%, 60% 30%, 80% 50%, 100% 35%, 100% 100%);
+        }
+        #scene-finale .water-reflection {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 30%;
+            background: linear-gradient(180deg, rgba(255, 122, 47, 0.3), rgba(42, 36, 56, 0.8));
+            filter: blur(10px);
+            transform: scaleY(-1);
+            transform-origin: bottom;
+            opacity: 0.5;
+        }
+        #scene-finale .text-block {
             color: #fff;
-            font-size: clamp(1.4rem, 3vw, 2.4rem);
-            text-shadow: 0 0 20px rgba(255, 122, 47, 0.7);
-            max-width: 80%;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+            z-index: 2;
         }
         /* Responsive */
         @media (max-width: 768px) {
-            #nav {
+            .text-block {
+                max-width: 80%;
+                font-size: 1.2rem;
+            }
+            #ui-top-right {
                 display: none;
             }
-            #logo .sub {
-                display: none;
+            #progress-bar {
+                width: 60vw;
             }
-            .poem {
-                max-width: 85%;
+            .crystal-container {
+                gap: 2rem;
             }
-            #scene-dawn .poem {
-                max-width: 70%;
-                right: 4vw;
-            }
-            #scene-feather .jp-text {
-                font-size: 0.8rem;
+            .crystal {
+                width: 80px;
+                height: 80px;
             }
         }
         @media (prefers-reduced-motion: reduce) {
             * {
                 animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
                 transition-duration: 0.01ms !important;
             }
         }
@@ -375,393 +501,342 @@
 </head>
 <body>
     <div id="scroll-container"></div>
-    <div id="canvas-container">
-        <canvas id="main-canvas"></canvas>
+    <canvas id="canvas-fixed"></canvas>
+
+    <!-- UI -->
+    <div id="ui-top-left">
+        <div class="bird-icon"></div>
+        <span class="logo">HIBANA</span>
+        <span class="date">Sept. 29</span>
     </div>
-    <div id="ui-overlay">
-        <div id="logo">
-            <svg viewBox="0 0 24 24" width="24" height="24">
-                <path d="M12 2C8 6 4 10 4 15c0 4 4 7 8 7s8-3 8-7c0-5-4-9-8-13z" stroke="currentColor" fill="none" stroke-width="1.5"/>
-                <circle cx="12" cy="15" r="2" fill="currentColor"/>
-            </svg>
-            <span>HIBANA</span>
-            <span class="sub">Sept. 29</span>
-        </div>
-        <div id="nav">
-            <a href="#">作品</a>
-            <a href="#">思想</a>
-            <a href="#">接続</a>
-        </div>
-        <div id="progress-bar">
-            <div id="progress-fill"></div>
-        </div>
-        <div id="sound-ring" class="visible">♪</div>
-    </div>
+    <nav id="ui-top-right">
+        <a href="#">作品</a>
+        <a href="#">思想</a>
+        <a href="#">接続</a>
+    </nav>
+    <div id="progress-bar"><div id="progress-fill"></div></div>
+    <div id="sound-ring"></div>
 
     <!-- Scenes -->
-    <div id="scene-dawn" class="scene active" data-scene="0">
-        <div class="scene-inner">
-            <div class="poem" id="dawn-poem">
-                <span class="word" style="--i:0">what</span>
-                <span class="word" style="--i:1">guides</span>
-                <span class="word" style="--i:2">us</span>
-                <span class="word" style="--i:3">through</span>
-                <span class="word" style="--i:4">change,</span>
-                <br>
-                <span class="word" style="--i:5">reinvention,</span>
-                <span class="word" style="--i:6">and</span>
-                <span class="word" style="--i:7">the</span>
-                <span class="word" style="--i:8">unknown—</span>
-            </div>
+    <section class="scene" id="scene-dawn" data-scene="0">
+        <div class="orb"></div>
+        <div class="text-block" data-stagger>
+            <span class="word" style="--i:0">what</span>
+            <span class="word" style="--i:1">guides</span>
+            <span class="word" style="--i:2">us</span>
+            <span class="word" style="--i:3">through</span>
+            <span class="word" style="--i:4">change,</span>
+            <span class="word" style="--i:5">reinvention,</span>
+            <span class="word" style="--i:6">and</span>
+            <span class="word" style="--i:7">the</span>
+            <span class="word" style="--i:8">unknown—</span>
         </div>
-    </div>
-    <div id="scene-rise" class="scene" data-scene="1">
-        <div class="scene-inner">
-            <div class="jp-text">
-                <span class="word" style="--i:0">再生である。</span>
-            </div>
+    </section>
+
+    <section class="scene" id="scene-rise" data-scene="1">
+        <div class="phoenix"></div>
+        <div class="text-block" data-stagger>
+            <span class="word jp-text" style="--i:0">再生である。</span>
         </div>
-    </div>
-    <div id="scene-halo" class="scene" data-scene="2">
-        <div class="scene-inner">
-            <div class="jp-text">
-                <span class="word" style="--i:0">音</span>
-            </div>
+    </section>
+
+    <section class="scene" id="scene-halo" data-scene="2">
+        <div class="halo-ring"></div>
+        <div class="big-char">音</div>
+    </section>
+
+    <section class="scene" id="scene-feather" data-scene="3">
+        <div class="feather"></div>
+        <div class="vertical-text">静寂のなかで、羽根は光を集める。</div>
+        <div class="vertical-text right">その一滴が、やがて炎となる。</div>
+        <div class="text-block" data-stagger>
+            <span class="word" style="--i:0">don't just</span>
+            <span class="word" style="--i:1">speak</span>
+            <span class="word" style="--i:2">to us.</span>
+            <span class="word" style="--i:3">they</span>
+            <span class="word" style="--i:4">stimulate</span>
+            <span class="word" style="--i:5">us.</span>
+            <br>
+            <span class="word" style="--i:6">light</span>
+            <span class="word" style="--i:7">becomes</span>
+            <span class="word jp-text" style="--i:8">私、</span>
+            <span class="word" style="--i:9">flare。</span>
         </div>
-    </div>
-    <div id="scene-feather" class="scene" data-scene="3">
-        <div class="scene-inner">
-            <div class="jp-text left">
-                <span class="word" style="--i:0">羽根は</span><br>
-                <span class="word" style="--i:1">光を</span><br>
-                <span class="word" style="--i:2">集めて</span><br>
-                <span class="word" style="--i:3">落ちる</span>
-            </div>
-            <div class="jp-text right">
-                <span class="word" style="--i:4">夜に</span><br>
-                <span class="word" style="--i:5">浮かぶ</span><br>
-                <span class="word" style="--i:6">青い</span><br>
-                <span class="word" style="--i:7">炎</span>
-            </div>
-            <div class="poem">
-                <span class="word" style="--i:8">don't just</span>
-                <span class="word" style="--i:9">speak</span>
-                <span class="word" style="--i:10">to us.</span>
-                <span class="word" style="--i:11">they</span>
-                <span class="word" style="--i:12">stimulate</span>
-                <span class="word" style="--i:13">us.</span>
-                <br>
-                <span class="word" style="--i:14">light</span>
-                <span class="word" style="--i:15">becomes</span>
-                <span class="word" style="--i:16">私、</span>
-                <span class="word" style="--i:17">flare。</span>
-            </div>
+    </section>
+
+    <section class="scene" id="scene-crystal" data-scene="4">
+        <div class="crystal-container">
+            <div class="crystal"></div>
+            <div class="crystal"></div>
+            <div class="crystal"></div>
         </div>
-    </div>
-    <div id="scene-crystal" class="scene" data-scene="4">
-        <div class="scene-inner">
-            <div class="crystal-container">
-                <div class="crystal"></div>
-                <div class="crystal" style="animation-delay: -3s; width: 90px; height: 90px;"></div>
-                <div class="crystal" style="animation-delay: -5s; width: 70px; height: 70px;"></div>
-            </div>
+    </section>
+
+    <section class="scene" id="scene-finale" data-scene="5">
+        <div class="sunset-mountains"></div>
+        <div class="water-reflection"></div>
+        <div class="text-block" data-stagger>
+            <span class="word" style="--i:0">feel</span>
+            <span class="word" style="--i:1">their</span>
+            <span class="word" style="--i:2">heat.</span>
+            <span class="word jp-text" style="--i:3">焔と</span>
+            <span class="word" style="--i:4">interact</span>
+            <span class="word" style="--i:5">with。</span>
         </div>
-    </div>
-    <div id="scene-finale" class="scene" data-scene="5">
-        <div class="scene-inner">
-            <div class="poem">
-                <span class="word" style="--i:0">feel</span>
-                <span class="word" style="--i:1">their</span>
-                <span class="word" style="--i:2">heat.</span>
-                <span class="word" style="--i:3">焔と</span>
-                <span class="word" style="--i:4">interact</span>
-                <span class="word" style="--i:5">with。</span>
-            </div>
-        </div>
-    </div>
+    </section>
 
     <script>
         (function() {
             'use strict';
-            // ====== Canvas setup ======
-            const canvas = document.getElementById('main-canvas');
-            const ctx = canvas.getContext('2d');
-            let W = window.innerWidth;
-            let H = window.innerHeight;
-            let dpr = Math.min(window.devicePixelRatio || 1, 2);
-            canvas.width = W * dpr;
-            canvas.height = H * dpr;
-            ctx.scale(dpr, dpr);
 
-            // ====== Scroll tracking ======
-            const scrollContainer = document.getElementById('scroll-container');
-            const totalScroll = scrollContainer.offsetHeight - window.innerHeight;
-            let targetScroll = 0;
-            let currentScroll = 0;
-            let currentScene = 0;
+            // ===== CONFIG =====
+            const SCENE_COUNT = 6;
+            const SCROLL_HEIGHT = SCENE_COUNT * 150; // vh
+            const LERP_FACTOR = 0.08;
+
+            // ===== DOM =====
             const scenes = document.querySelectorAll('.scene');
-            const sceneCount = scenes.length;
             const progressFill = document.getElementById('progress-fill');
+            const soundRing = document.getElementById('sound-ring');
+            const canvas = document.getElementById('canvas-fixed');
+            const ctx = canvas.getContext('2d');
 
-            // ====== Particle system ======
-            const particles = [];
-            const MAX_PARTICLES = 300;
-            let activeEmitter = null;
+            // ===== STATE =====
+            let currentScroll = 0;
+            let targetScroll = 0;
+            let activeScene = 0;
+            let prevScene = -1;
+            let width = window.innerWidth;
+            let height = window.innerHeight;
+            let reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-            // Emitter definitions per scene
-            const emitters = [
-                // Scene 0: Dawn - gentle floating dust / wing particles
-                {
-                    type: 'dawn',
-                    rate: 0.5,
-                    max: 80,
-                    spawn: function() {
-                        return {
-                            x: Math.random() * W * 0.3 + W * 0.1,
-                            y: Math.random() * H,
-                            vx: (Math.random() - 0.5) * 0.2,
-                            vy: (Math.random() - 0.5) * 0.1 - 0.1,
-                            size: Math.random() * 3 + 1,
-                            color: `rgba(185, 166, 224, ${Math.random() * 0.5 + 0.2})`,
-                            life: 1,
-                            decay: 0.002 + Math.random() * 0.003,
-                            type: 'dust'
-                        };
-                    }
-                },
-                // Scene 1: Rise - flame particles rising
-                {
-                    type: 'rise',
-                    rate: 1.5,
-                    max: 150,
-                    spawn: function() {
-                        return {
-                            x: W * 0.5 + (Math.random() - 0.5) * 100,
-                            y: H + Math.random() * 50,
-                            vx: (Math.random() - 0.5) * 0.5,
-                            vy: -(Math.random() * 2 + 1),
-                            size: Math.random() * 6 + 2,
-                            color: `rgba(255, ${Math.floor(Math.random() * 100 + 100)}, 50, ${Math.random() * 0.8 + 0.2})`,
-                            life: 1,
-                            decay: 0.005 + Math.random() * 0.005,
-                            type: 'flame'
-                        };
-                    }
-                },
-                // Scene 2: Halo - concentric light particles
-                {
-                    type: 'halo',
-                    rate: 0.8,
-                    max: 100,
-                    spawn: function() {
-                        const angle = Math.random() * Math.PI * 2;
-                        const radius = Math.random() * 200 + 50;
-                        return {
-                            x: W / 2 + Math.cos(angle) * radius,
-                            y: H / 2 + Math.sin(angle) * radius,
-                            vx: -Math.cos(angle) * 0.3,
-                            vy: -Math.sin(angle) * 0.3,
-                            size: Math.random() * 4 + 1,
-                            color: `rgba(255, 200, 150, ${Math.random() * 0.6 + 0.2})`,
-                            life: 1,
-                            decay: 0.003,
-                            type: 'glow'
-                        };
-                    }
-                },
-                // Scene 3: Feather - falling feather particles
-                {
-                    type: 'feather',
-                    rate: 0.4,
-                    max: 60,
-                    spawn: function() {
-                        return {
-                            x: W / 2 + (Math.random() - 0.5) * 200,
-                            y: -20,
-                            vx: (Math.random() - 0.5) * 0.3,
-                            vy: Math.random() * 0.5 + 0.3,
-                            size: Math.random() * 5 + 2,
-                            color: `rgba(127, 184, 255, ${Math.random() * 0.7 + 0.3})`,
-                            life: 1,
-                            decay: 0.002,
-                            type: 'feather',
-                            angle: Math.random() * Math.PI * 2,
-                            angularVel: (Math.random() - 0.5) * 0.02
-                        };
-                    }
-                },
-                // Scene 4: Crystal - subtle sparkles
-                {
-                    type: 'crystal',
-                    rate: 0.3,
-                    max: 40,
-                    spawn: function() {
-                        return {
-                            x: Math.random() * W,
-                            y: Math.random() * H,
-                            vx: (Math.random() - 0.5) * 0.1,
-                            vy: (Math.random() - 0.5) * 0.1,
-                            size: Math.random() * 2 + 0.5,
-                            color: `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.2})`,
-                            life: 1,
-                            decay: 0.005,
-                            type: 'sparkle'
-                        };
-                    }
-                },
-                // Scene 5: Finale - phoenix fire particles from wing shape
-                {
-                    type: 'finale',
-                    rate: 2,
-                    max: 200,
-                    spawn: function() {
-                        // Wing shape emitter: approximate with two arcs
-                        const wing = Math.random() < 0.5 ? -1 : 1;
-                        const baseX = W / 2 + wing * (Math.random() * 150 + 50);
-                        const baseY = H / 2 + (Math.random() - 0.5) * 100;
-                        return {
-                            x: baseX,
-                            y: baseY,
-                            vx: wing * (Math.random() * 1 + 0.5),
-                            vy: -(Math.random() * 2 + 1),
-                            size: Math.random() * 8 + 2,
-                            color: `rgba(255, ${Math.floor(Math.random() * 100 + 50)}, 0, ${Math.random() * 0.8 + 0.2})`,
-                            life: 1,
-                            decay: 0.004 + Math.random() * 0.004,
-                            type: 'flame'
-                        };
-                    }
+            // ===== RESIZE =====
+            function resize() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width;
+                canvas.height = height;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            // ===== SCROLL =====
+            window.addEventListener('scroll', function() {
+                const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+                targetScroll = window.scrollY / maxScroll;
+            }, { passive: true });
+
+            // ===== SCENE MANAGEMENT =====
+            function updateScenes() {
+                const sceneIndex = Math.min(SCENE_COUNT - 1, Math.floor(currentScroll * SCENE_COUNT));
+                if (sceneIndex !== activeScene) {
+                    prevScene = activeScene;
+                    activeScene = sceneIndex;
+                    // Update classes
+                    scenes.forEach((scene, idx) => {
+                        scene.classList.toggle('active', idx === activeScene);
+                    });
+                    // Show sound ring after scene 3 (index 3)
+                    soundRing.style.opacity = activeScene >= 3 ? '1' : '0';
                 }
-            ];
-
-            function updateEmitter(sceneIndex) {
-                if (sceneIndex !== currentScene) return;
-                const emitter = emitters[sceneIndex];
-                if (!emitter) return;
-                // Spawn particles based on rate
-                if (Math.random() < emitter.rate && particles.length < MAX_PARTICLES) {
-                    particles.push(emitter.spawn());
-                }
+                // Progress bar
+                progressFill.style.width = (currentScroll * 100) + '%';
             }
 
-            // ====== Particle update & draw ======
-            function updateParticles() {
-                for (let i = particles.length - 1; i >= 0; i--) {
-                    const p = particles[i];
-                    p.x += p.vx;
-                    p.y += p.vy;
-                    p.life -= p.decay;
-                    if (p.type === 'feather') {
-                        p.angle += p.angularVel;
-                        p.vx += Math.sin(p.angle) * 0.01;
+            // ===== PARTICLE SYSTEM =====
+            const particles = [];
+            const MAX_PARTICLES = reducedMotion ? 60 : 200;
+
+            class Particle {
+                constructor(type, x, y, vx, vy, life, color, size) {
+                    this.type = type; // 'wing', 'flame', 'feather', 'ember', 'beam'
+                    this.x = x;
+                    this.y = y;
+                    this.vx = vx;
+                    this.vy = vy;
+                    this.life = life;
+                    this.maxLife = life;
+                    this.color = color;
+                    this.size = size;
+                    this.rotation = Math.random() * Math.PI * 2;
+                    this.rotSpeed = (Math.random() - 0.5) * 0.1;
+                }
+
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    this.life -= 1;
+                    this.rotation += this.rotSpeed;
+                    // Gravity for some
+                    if (this.type === 'feather') {
+                        this.vy += 0.02;
+                        this.vx += Math.sin(this.rotation) * 0.01;
                     }
-                    if (p.life <= 0 || p.y > H + 50 || p.y < -50 || p.x < -50 || p.x > W + 50) {
-                        particles.splice(i, 1);
-                        continue;
+                    if (this.type === 'flame') {
+                        this.vy -= 0.05;
+                        this.vx += (Math.random() - 0.5) * 0.1;
                     }
-                    // Draw
-                    ctx.globalAlpha = Math.max(0, p.life);
-                    ctx.fillStyle = p.color;
-                    if (p.type === 'feather') {
-                        ctx.save();
-                        ctx.translate(p.x, p.y);
-                        ctx.rotate(p.angle);
+                    if (this.type === 'beam') {
+                        this.vy -= 0.2;
+                    }
+                }
+
+                draw(ctx) {
+                    const alpha = Math.max(0, this.life / this.maxLife);
+                    ctx.save();
+                    ctx.globalAlpha = alpha;
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.rotation);
+                    ctx.fillStyle = this.color;
+                    if (this.type === 'wing') {
+                        // Elliptical wing shape
                         ctx.beginPath();
-                        ctx.ellipse(0, 0, p.size * 1.5, p.size * 0.5, 0, 0, Math.PI * 2);
+                        ctx.ellipse(0, 0, this.size * 1.5, this.size * 0.5, 0, 0, Math.PI * 2);
                         ctx.fill();
-                        ctx.restore();
-                    } else if (p.type === 'flame') {
+                    } else if (this.type === 'flame') {
                         ctx.beginPath();
-                        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                        ctx.arc(0, 0, this.size * 0.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else if (this.type === 'feather') {
+                        ctx.beginPath();
+                        ctx.moveTo(0, -this.size);
+                        ctx.quadraticCurveTo(this.size * 0.5, 0, 0, this.size);
+                        ctx.quadraticCurveTo(-this.size * 0.5, 0, 0, -this.size);
+                        ctx.fill();
+                    } else if (this.type === 'beam') {
+                        ctx.beginPath();
+                        ctx.moveTo(0, -this.size * 2);
+                        ctx.lineTo(this.size * 0.2, 0);
+                        ctx.lineTo(0, this.size * 2);
+                        ctx.lineTo(-this.size * 0.2, 0);
+                        ctx.closePath();
                         ctx.fill();
                     } else {
                         ctx.beginPath();
-                        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        ctx.arc(0, 0, this.size * 0.3, 0, Math.PI * 2);
                         ctx.fill();
                     }
-                }
-                ctx.globalAlpha = 1;
-            }
-
-            // ====== Scene management ======
-            function updateScene() {
-                const scrollRatio = currentScroll / totalScroll;
-                const sceneProgress = scrollRatio * sceneCount;
-                const newScene = Math.min(sceneCount - 1, Math.floor(sceneProgress));
-                if (newScene !== currentScene) {
-                    currentScene = newScene;
-                    scenes.forEach((scene, idx) => {
-                        scene.classList.toggle('active', idx === currentScene);
-                    });
-                    // Clear particles on scene change
-                    particles.length = 0;
-                }
-                // Update progress bar
-                progressFill.style.width = (scrollRatio * 100) + '%';
-                // Show sound ring after scene 3
-                const soundRing = document.getElementById('sound-ring');
-                if (currentScene >= 3) {
-                    soundRing.classList.add('visible');
-                } else {
-                    soundRing.classList.remove('visible');
+                    ctx.restore();
                 }
             }
 
-            // ====== Main animation loop ======
+            function spawnParticlesForScene(sceneIdx) {
+                if (reducedMotion) return;
+                const count = Math.floor(Math.random() * 3) + 1;
+                for (let i = 0; i < count; i++) {
+                    if (particles.length >= MAX_PARTICLES) break;
+                    let p;
+                    const x = Math.random() * width;
+                    const y = Math.random() * height;
+                    switch (sceneIdx) {
+                        case 0: // Dawn - wing particles
+                            p = new Particle('wing', x, y,
+                                (Math.random() - 0.5) * 0.5,
+                                (Math.random() - 0.5) * 0.5,
+                                100 + Math.random() * 100,
+                                `rgba(185,166,224,${0.3 + Math.random() * 0.4})`,
+                                10 + Math.random() * 20);
+                            break;
+                        case 1: // Rise - flame particles
+                            p = new Particle('flame', width * 0.5 + (Math.random() - 0.5) * 100, height * 0.8,
+                                (Math.random() - 0.5) * 0.5,
+                                -1 - Math.random() * 2,
+                                80 + Math.random() * 60,
+                                `rgba(255,122,47,${0.5 + Math.random() * 0.5})`,
+                                15 + Math.random() * 25);
+                            break;
+                        case 2: // Halo - ember particles
+                            p = new Particle('ember', width * 0.5 + (Math.random() - 0.5) * 200, height * 0.5 + (Math.random() - 0.5) * 200,
+                                (Math.random() - 0.5) * 0.3,
+                                (Math.random() - 0.5) * 0.3,
+                                60 + Math.random() * 60,
+                                `rgba(255,179,107,${0.4 + Math.random() * 0.5})`,
+                                5 + Math.random() * 10);
+                            break;
+                        case 3: // Feather - beam particles
+                            p = new Particle('beam', width * 0.5 + (Math.random() - 0.5) * 20, height * 0.3,
+                                (Math.random() - 0.5) * 0.2,
+                                0.5 + Math.random() * 1,
+                                50 + Math.random() * 50,
+                                `rgba(127,184,255,${0.5 + Math.random() * 0.5})`,
+                                8 + Math.random() * 12);
+                            break;
+                        case 4: // Crystal - subtle sparkles
+                            p = new Particle('ember', x, y,
+                                (Math.random() - 0.5) * 0.2,
+                                (Math.random() - 0.5) * 0.2,
+                                40 + Math.random() * 40,
+                                `rgba(255,255,255,${0.3 + Math.random() * 0.4})`,
+                                2 + Math.random() * 4);
+                            break;
+                        case 5: // Finale - flame burst
+                            p = new Particle('flame', width * 0.5 + (Math.random() - 0.5) * 150, height * 0.6,
+                                (Math.random() - 0.5) * 1,
+                                -1 - Math.random() * 3,
+                                60 + Math.random() * 80,
+                                `rgba(255,122,47,${0.6 + Math.random() * 0.4})`,
+                                20 + Math.random() * 30);
+                            break;
+                        default:
+                            return;
+                    }
+                    particles.push(p);
+                }
+            }
+
+            function updateParticles() {
+                // Spawn based on active scene
+                spawnParticlesForScene(activeScene);
+
+                // Update and filter
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    particles[i].update();
+                    if (particles[i].life <= 0 || particles[i].y > height + 50 || particles[i].y < -50) {
+                        particles.splice(i, 1);
+                    }
+                }
+            }
+
+            function drawParticles() {
+                ctx.clearRect(0, 0, width, height);
+                for (const p of particles) {
+                    p.draw(ctx);
+                }
+            }
+
+            // ===== ANIMATION LOOP =====
             function animate() {
                 // Smooth scroll
-                currentScroll += (targetScroll - currentScroll) * 0.08;
-                if (Math.abs(targetScroll - currentScroll) < 0.1) {
+                currentScroll += (targetScroll - currentScroll) * LERP_FACTOR;
+                if (Math.abs(targetScroll - currentScroll) < 0.0001) {
                     currentScroll = targetScroll;
                 }
-                updateScene();
 
-                // Clear canvas
-                ctx.clearRect(0, 0, W, H);
-
-                // Update emitter
-                updateEmitter(currentScene);
-
-                // Update particles
+                updateScenes();
                 updateParticles();
+                drawParticles();
 
                 requestAnimationFrame(animate);
             }
 
-            // ====== Event listeners ======
-            window.addEventListener('scroll', () => {
-                targetScroll = window.scrollY;
-            });
+            // ===== INIT =====
+            // Set scroll height
+            document.getElementById('scroll-container').style.height = SCROLL_HEIGHT + 'vh';
 
-            window.addEventListener('resize', () => {
-                W = window.innerWidth;
-                H = window.innerHeight;
-                dpr = Math.min(window.devicePixelRatio || 1, 2);
-                canvas.width = W * dpr;
-                canvas.height = H * dpr;
-                ctx.scale(dpr, dpr);
-            });
+            // Initial scene
+            scenes[0].classList.add('active');
 
-            // ====== Init ======
-            // Set scroll container height
-            scrollContainer.style.height = (sceneCount * 150) + 'vh';
             // Start animation
             animate();
 
-            // Handle reduced motion
-            const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            if (prefersReduced) {
-                // Reduce particle density
-                MAX_PARTICLES = 75;
-                // Stop auto animation? We'll just reduce rate
-                emitters.forEach(e => e.rate *= 0.25);
+            // ===== REDUCED MOTION =====
+            if (reducedMotion) {
+                // Just show all scenes? No, we still scroll but no particles.
+                // We'll just skip particle spawning.
             }
 
-            // Sound ring click (decorative)
-            document.getElementById('sound-ring').addEventListener('click', function() {
-                this.style.transform = 'scale(1.2)';
-                setTimeout(() => this.style.transform = 'scale(1)', 200);
-            });
+            // ===== KEYBOARD / ACCESSIBILITY =====
+            // Not required but nice
 
         })();
     </script>
