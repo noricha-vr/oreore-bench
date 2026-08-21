@@ -10,7 +10,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from runaway_detector import RunawayDetector, RunawayVerdict, scan_text  # noqa: E402
+from runaway_detector import THRESHOLD, RunawayDetector, RunawayVerdict, scan_text  # noqa: E402
 
 
 def healthy_html(blocks: int = 40) -> str:
@@ -164,3 +164,50 @@ def test_scan_text_matches_streaming_for_finished_output() -> None:
 
     assert scan_text(text) is not None
     assert scan_text(healthy_html(200)) is None
+
+
+def document_restart_loop(passes: int = 5) -> str:
+    """Build a generation that restarts the whole single-file artifact each pass.
+
+    Distinct from rewrite_loop(): there the boilerplate recurs verbatim, here
+    every pass is textually fresh.  The paired score therefore stays healthy and
+    only the repeated doctype reveals that the deliverable is being redone.
+    This is the shape that ran to max_tokens while scoring 0.809.
+    """
+    return "".join(healthy_html(30).replace("card-", f"pass{i}-card-") for i in range(passes))
+
+
+def test_document_restart_loop_is_caught_even_though_the_score_stays_healthy() -> None:
+    """A restarted document fires on the doctype count, not on the score."""
+    text = document_restart_loop()
+
+    assert scan_text(text.replace("<!doctype html>", "<div>")) is None  # 書き直しの痕跡を消すと素通り
+    verdict = scan_text(text)
+    assert verdict is not None
+    assert verdict.restarts >= 3
+    assert verdict.score >= THRESHOLD  # 既存の指標では健全のまま
+
+
+def test_two_doctypes_stay_healthy() -> None:
+    """A preamble that quotes the markup is not a rewrite loop."""
+    text = healthy_html(30).replace("<body>", "<body>\n<pre>&lt;!doctype html&gt;</pre>", 1)
+
+    assert scan_text(text + "\n<!doctype html>\n<html><body>再掲</body></html>") is None
+
+
+@pytest.mark.parametrize("chunk", [1, 7, 200, 5000])
+def test_restart_count_survives_chunk_boundaries(chunk: int) -> None:
+    """A doctype split across chunks is still counted once."""
+    verdict = feed_all(document_restart_loop(), chunk=chunk)
+
+    assert verdict is not None
+    assert verdict.restarts >= 3
+
+
+def test_describe_reports_the_rewrite_shape() -> None:
+    """The message names the doctype count so the run note explains itself."""
+    verdict = scan_text(document_restart_loop())
+
+    assert verdict is not None
+    assert "書き直しループ" in verdict.describe()
+    assert "doctype" in verdict.describe()

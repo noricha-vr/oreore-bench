@@ -10,9 +10,17 @@ because every line differs textually.  Rewrite loops are caught by delta
 compression against the text already generated, but that measure alone flags
 healthy CSS-heavy output.  Requiring both signals at once separates the two
 observed runaways from every healthy artifact in the benchmark corpus.
+
+Requiring both signals also leaves a gap: a generation that restarts the whole
+document each pass keeps every line textually distinct, so the line measure
+stays high and the pair never fires.  One such output restarted a single-file
+page 45 times and ran to max_tokens while scoring 0.809 -- comfortably healthy
+by the paired measure.  Document restarts are therefore counted separately:
+they are not a score, they are a structural fact about single-file artifacts.
 """
 from __future__ import annotations
 
+import re
 import zlib
 from dataclasses import dataclass
 
@@ -31,6 +39,13 @@ MIN_START_CHARS = 6000
 # the output and retune with --runaway-threshold, not as settled ground truth.
 THRESHOLD = 0.55
 MIN_LINES = 15
+# Themes whose deliverable is one self-contained file emit exactly one doctype.
+# Two occurrences still happen in healthy output (a preamble that quotes the
+# markup, a code sample inside the page), so only the third one is treated as
+# a rewrite loop.  Measured: healthy artifacts in the corpus top out at 2,
+# the observed loops reach 3 and 45.
+RESTART_LIMIT = 3
+_DOCTYPE_RE = re.compile(r"<!doctype\s+html", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -41,9 +56,15 @@ class RunawayVerdict:
     delta_ratio: float
     unique_line_ratio: float
     score: float
+    restarts: int = 0
 
     def describe(self) -> str:
         """Render a one-line reason suitable for an error message or run note."""
+        if self.restarts:
+            return (
+                f"{self.position:,} 文字目で書き直しループを検知 "
+                f"(doctype {self.restarts} 回目)"
+            )
         return (
             f"{self.position:,} 文字目で繰り返し暴走を検知 "
             f"(score={self.score:.3f}, D={self.delta_ratio:.3f}, "
@@ -100,6 +121,11 @@ class RunawayDetector:
         self._length = 0
         self._next_check = max(MIN_START_CHARS, WINDOW_CHARS)
         self._fired = False
+        self._restarts = 0
+        # A doctype can straddle a chunk boundary, so keep the tail that could
+        # still complete one.  len("<!doctype html") - 1 is the longest prefix
+        # that is not yet a match.
+        self._restart_tail = ""
 
     @property
     def length(self) -> int:
@@ -112,10 +138,35 @@ class RunawayDetector:
             return None
         self._buffer = (self._buffer + chunk)[-(WINDOW_CHARS + CONTEXT_CHARS) :]
         self._length += len(chunk)
-        if self._fired or self._length < self._next_check:
+        if self._fired:
+            return None
+        restart = self._count_restarts(chunk)
+        if restart is not None:
+            return restart
+        if self._length < self._next_check:
             return None
         self._next_check = self._length + STEP_CHARS
         return self._evaluate()
+
+    def _count_restarts(self, chunk: str) -> RunawayVerdict | None:
+        """Track document restarts and fire once the artifact is rewritten again.
+
+        Counted on the raw stream rather than the trailing buffer so that a long
+        rewrite loop cannot push earlier restarts out of the comparison window.
+        """
+        scan = self._restart_tail + chunk
+        self._restarts += len(_DOCTYPE_RE.findall(scan))
+        self._restart_tail = scan[-13:]
+        if self._restarts < RESTART_LIMIT:
+            return None
+        self._fired = True
+        return RunawayVerdict(
+            position=self._length,
+            delta_ratio=1.0,
+            unique_line_ratio=1.0,
+            score=1.0,
+            restarts=self._restarts,
+        )
 
     def _evaluate(self) -> RunawayVerdict | None:
         """Score the newest window against its context and record a firing verdict."""
