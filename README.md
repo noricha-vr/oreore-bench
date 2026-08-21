@@ -49,8 +49,13 @@ LLM を「業務タスクの一発再現性」で評価する場。現実の制�
 | Gemma 4 26B-A4B (QAT) | Google | ローカル (MoE) | QAT 4-bit |
 | Gemma 4 12B (QAT) | Google | ローカル | QAT 4-bit |
 | Agents A1 4B | InternScience | ローカル | MLX 4-bit |
-| DeepSeek V4 Flash 0731 MLX | InferencerLabs / DeepSeek | ローカル (MoE) | mixed MXFP4 / MXFP8 |
+| DeepSeek V4 Flash 0731 MLX | Vontra / InferencerLabs / DeepSeek | ローカル (MoE) | mixed MXFP4 / MXFP8 |
 | Hy3 T512 MLX | avlp12 / Tencent | ローカル (MoE) | T512 6.561 bpw mixed |
+
+DeepSeek V4 Flash 0731 MLX は 2 種類の量子化が混在している。MTP（投機デコード）の重みを持つ
+`Vontra/DeepSeek-V4-Flash-0731-MXFP4-MLX` で再測定したテーマと、MTP 重みを持たない
+`inferencerlabs/DeepSeek-V4-Flash-0731-MLX` のまま残したテーマがある（後者は再測定が
+生成ループで完走しなかったテーマ）。どちらかは各 `run.json` の `model_id` が正本。
 
 スペック値はサブエージェントによるファクトチェック済み（リリース日 / context window / output 上限などは Google DeepMind / Anthropic / xAI / Hugging Face / LM Studio の一次情報を参照）。
 
