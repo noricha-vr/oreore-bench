@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>GLOOM DELVE — 昏き地下迷宮</title>
+<style>
+  html,body{margin:0;padding:0;background:#07070d;color:#c9c9da;font-family:Menlo,Consolas,monospace;}
+  #wrap{display:flex;flex-direction:column;align-items:center;padding:10px;}
+  #hud{width:960px;box-sizing:border-box;display:flex;gap:18px;flex-wrap:wrap;align-items:center;
+      background:#12121c;border:1px solid #2b2b3f;border-bottom:none;padding:7px 12px;font-size:14px;}
+  #hud .hp{color:#ff7a7a;} #hud .lv{color:#ffd24a;} #hud .xp{color:#7ad9ff;} #hud .fl{color:#9dff9d;}
+  #inv{margin-left:auto;color:#b9b9d0;}
+  canvas{display:block;background:#000;border:1px solid #2b2b3f;}
+  #log{width:960px;box-sizing:border-box;height:7.4em;overflow:hidden;background:#0d0d16;
+      border:1px solid #2b2b3f;border-top:none;padding:5px 12px;font-size:13px;line-height:1.35em;}
+  #log div{white-space:pre;}
+  #hint{width:960px;box-sizing:border-box;color:#5a5a72;font-size:11px;padding:4px 2px;}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="hud">
+    <span class="hp" id="hHp"></span>
+    <span class="lv" id="hLv"></span>
+    <span class="xp" id="hXp"></span>
+    <span class="fl" id="hFl"></span>
+    <span class="at" id="hAt"></span>
+    <span id="inv"></span>
+  </div>
+  <canvas id="cv" width="960" height="560"></canvas>
+  <div id="log"></div>
+  <div id="hint">移動: 矢印キー / WASD &nbsp; アイテム使用: 1-9 &nbsp; 階段: Enter / &gt; &nbsp; リスタート: R</div>
+</div>
+<script>
+"use strict";
+const MW = 48, MH = 28, T = 20;
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const logEl = document.getElementById('log');
+const hHp = document.getElementById('hHp'), hLv = document.getElementById('hLv'),
+      hXp = document.getElementById('hXp'), hFl = document.getElementById('hFl'),
+      hAt = document.getElementById('hAt'), invEl = document.getElementById('inv');
+
+function ri(n){ return Math.floor(Math.random()*n); }
+
+let state = 'title'; // title | play | gameover | clear
+let tiles, rooms, visible, explored;
+let enemies = [], items = [];
+let floor = 1;
+let logs = [];
+let p;
+
+const ETYPES = [
+  {ch:'s', name:'スライム',   color:'#7dff7d', hp:9,  atk:2, xp:4,  aggro:false},
+  {ch:'g', name:'ゴブリン',   color:'#ffb347', hp:13, atk:4, xp:8,  aggro:true },
+  {ch:'o', name:'オーク',     color:'#ff6a6a', hp:22, atk:6, xp:15, aggro:true },
+  {ch:'b', name:'洞窟コウモリ', color:'#c9a2ff', hp:7,  atk:3, xp:5,  aggro:false},
+];
+const ITYPES = [
+  {ch:'!', name:'回復薬',     color:'#ff7ad9', use:function(){ const d=Math.min(15,p.maxHp-p.hp); p.hp+=d; log('回復薬を飲んだ。HP '+d+' 回復'); }},
+  {ch:'/', name:'鋭い剣',     color:'#7ab8ff', use:function(){ p.atk+=2; log('鋭い剣を装備した。攻撃力 +2'); }},
+  {ch:'%', name:'命の果実',   color:'#ffd24a', use:function(){ p.maxHp+=5; p.hp+=5; log('命の果実を食べた。最大HP +5'); }},
+];
+
+function log(s){ logs.push(s); if(logs.length>60) logs.shift(); renderLog(); }
+function renderLog(){
+  const tail = logs.slice(-5);
+  let html='';
+  for(let i=0;i<5;i++) html += '<div>'+(tail[i]||'')+'</div>';
+  logEl.innerHTML = html;
+}
+
+function idx(x,y){ return y*MW+x; }
+function walkable(x,y){ return x>=0&&y>=0&&x<MW&&y<MH&&(tiles[idx(x,y)]===1||tiles[idx(x,y)]===2); }
+
+function carveCorr(a,b,c,d){
+  let x=a,y=b;
+  const horizFirst = Math.random()<0.5;
+  function hx(){ while(x!==c){ x+=Math.sign(c-x); tiles[idx(x,y)]=1; } }
+  function hy(){ while(y!==d){ y+=Math.sign(d-y); tiles[idx(x,y)]=1; } }
+  if(horizFirst){ hx(); hy(); } else { hy(); hx(); }
+}
+
+function genMap(){
+  do {
+    tiles = new Array(MW*MH).fill(0);
+    rooms = [];
+    for(let tries=0; tries<200 && rooms.length<11; tries++){
+      const w=4+ri(8), h=3+ri(6);
+      const x=1+ri(MW-w-2), y=1+ri(MH-h-2);
+      let ok=true;
+      for(const r of rooms){
+        if(x < r.x+r.w+1 && x+w+1 > r.x && y < r.y+r.h+1 && y+h+1 > r.y){ ok=false; break; }
+      }
+      if(!ok) continue;
+      rooms.push({x:x,y:y,w:w,h:h,cx:x+(w>>1),cy:y+(h>>1)});
+      for(let yy=y;yy<y+h;yy++) for(let xx=x;xx<x+w;xx++) tiles[idx(xx,yy)]=1;
+    }
+  } while(rooms.length < 6);
+  for(let i=1;i<rooms.length;i++)
+    carveCorr(rooms[i-1].cx,rooms[i-1].cy,rooms[i].cx,rooms[i].cy);
+  // 追加の環状通路（行き止まりを減らす）
+  for(let i=0;i<2;i++){
+    const a=rooms[ri(rooms.length)], b=rooms[ri(rooms.length)];
+    if(a!==b) carveCorr(a.cx,a.cy,b.cx,b.cy);
+  }
+}
+
+function los(x0,y0,x1,y1){
+  let dx=Math.abs(x1-x0), dy=Math.abs(y1-y0);
+  let sx=x0<x1?1:-1, sy=y0<y1?1:-1;
+  let err=dx-dy, x=x0, y=y0;
+  while(true){
+    if(x===x1 && y===y1) return true;
+    const e2=2*err;
+    if(e2>-dy){ err-=dy; x+=sx; }
+    if(e2< dx){ err+=dx; y+=sy; }
+    if(x===x1 && y===y1) return true;
+    if(tiles[idx(x,y)]===0) return false;
+  }
+}
+
+function computeFov(){
+  visible = new Array(MW*MH).fill(false);
+  const R=8;
+  for(let y=Math.max(0,p.y-R); y<=Math.min(MH-1,p.y+R); y++){
+    for(let x=Math.max(0,p.x-R); x<=Math.min(MW-1,p.x+R); x++){
+      const d2=(x-p.x)*(x-p.x)+(y-p.y)*(y-p.y);
+      if(d2>R*R) continue;
+      if(los(p.x,p.y,x,y)){ visible[idx(x,y)]=true; explored[idx(x,y)]=true; }
+    }
+  }
+}
+
+function pickEType(){
+  const pool = floor===1 ? [0,0,0,1,3]
+             : floor===2 ? [0,1,1,1,2,3]
+                         : [1,1,2,2,2,3];
+  return ETYPES[pool[ri(pool.length)]];
+}
+function pickIType(){
+  const pool=[0,0,0,1,1,2];
+  return ITYPES[pool[ri(pool.length)]];
+}
+
+function freeFloorTile(){
+  for(let tries=0; tries<500; tries++){
+    const x=ri(MW), y=ri(MH);
+    if(tiles[idx(x,y)]!==1) continue;
+    if(x===p.x&&y===p.y) continue;
+    if(enemyAt(x,y)||itemAt(x,y)) continue;
+    return {x:x,y:y};
+  }
+  return null;
+}
+
+function genLevel(){
+  genMap();
+  explored = new Array(MW*MH).fill(false);
+  enemies=[]; items=[];
+  const pr = rooms[0];
+  p.x=pr.cx; p.y=pr.cy;
+  // 階段: プレイヤー部屋から最も遠い部屋の中心
+  let far=rooms[0], bd=-1;
+  for(const r of rooms){
+    const d=(r.cx-p.x)*(r.cx-p.x)+(r.cy-p.y)*(r.cy-p.y);
+    if(d>bd){bd=d;far=r;}
+  }
+  tiles[idx(far.cx,far.cy)]=2;
+  const nE=5+floor, nI=3+floor;
+  for(let i=0;i<nE;i++){
+    const s=freeFloorTile(); if(!s)break;
+    const t=pickEType();
+    enemies.push({x:s.x,y:s.y,ch:t.ch,name:t.name,color:t.color,
+      hp:t.hp+(floor-1)*4+ri(4), maxHp:t.hp+(floor-1)*4+4,
+      atk:t.atk+(floor-1), xp:t.xp+(floor-1)*3, aggro:t.aggro, alert:false});
+  }
+  for(let i=0;i<nI;i++){
+    const s=freeFloorTile(); if(!s)break;
+    const t=pickIType();
+    items.push({x:s.x,y:s.y,ch:t.ch,name:t.name,color:t.color,use:t.use});
+  }
+  computeFov();
+}
+
+function enemyAt(x,y){ for(const e of enemies) if(e.x===x&&e.y===y) return e; return null; }
+function itemAt(x,y){ for(const it of items) if(it.x===x&&it.y===y) return it; return null; }
+
+function gainXp(n){
+  p.xp+=n; log(n+' の経験値を得た');
+  while(p.xp>=p.xpNext){
+    p.xp-=p.xpNext; p.level++; p.xpNext=10*p.level;
+    p.maxHp+=6; p.atk+=1; p.hp=Math.min(p.maxHp,p.hp+8);
+    log('レベルアップ! Lv'+p.level+' になった (最大HP+6 攻撃力+1)');
+  }
+}
+
+function dmg(v){ return Math.max(1, v+ri(3)-1); }
+
+function playerAttack(e){
+  const d=dmg(p.atk);
+  e.hp-=d;
+  log(e.name+' に '+d+' ダメージ');
+  if(e.hp<=0){
+    log(e.name+' を倒した');
+    enemies.splice(enemies.indexOf(e),1);
+    gainXp(e.xp);
+  }
+}
+function enemyAttack(e){
+  const d=dmg(e.atk);
+  p.hp-=d;
+  log(e.name+' から '+d+' ダメージ');
+  if(p.hp<=0){ p.hp=0; state='gameover'; log('力尽きた… R で再挑戦'); }
+}
+
+function enemySees(e){
+  const d2=(e.x-p.x)*(e.x-p.x)+(e.y-p.y)*(e.y-p.y);
+  return d2<=64 && los(e.x,e.y,p.x,p.y);
+}
+
+function stepToward(e){
+  const dx=Math.sign(p.x-e.x), dy=Math.sign(p.y-e.y);
+  const opts=[];
+  if(dx)opts.push([dx,0]);
+  if(dy)opts.push([0,dy]);
+  if(Math.random()<0.5) opts.reverse();
+  for(const o of opts){
+    const nx=e.x+o[0], ny=e.y+o[1];
+    if(walkable(nx,ny) && !enemyAt(nx,ny) && !(nx===p.x&&ny===p.y)){
+      e.x=nx; e.y=ny; return;
+    }
+  }
+}
+function wander(e){
+  if(ri(3)!==0) return;
+  const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+  const d=dirs[ri(4)];
+  const nx=e.x+d[0], ny=e.y+d[1];
+  if(walkable(nx,ny) && !enemyAt(nx,ny) && !(nx===p.x&&ny===p.y)){ e.x=nx; e.y=ny; }
+}
+
+function enemiesTurn(){
+  for(const e of enemies.slice()){
+    if(state!=='play') return;
+    const ad=Math.abs(p.x-e.x)+Math.abs(p.y-e.y);
+    if(ad===1){ enemyAttack(e); continue; }
+    if(e.aggro && enemySees(e)) e.alert=true;
+    if(e.alert) stepToward(e); else wander(e);
+  }
+}
+
+function endTurn(){
+  enemiesTurn();
+  computeFov();
+  render();
+}
+
+function tryMove(dx,dy){
+  if(state!=='play') return;
+  const nx=p.x+dx, ny=p.y+dy;
+  if(nx<0||ny<0||nx>=MW||ny>=MH) return;
+  const e=enemyAt(nx,ny);
+  if(e){ playerAttack(e); endTurn(); return; }
+  if(tiles[idx(nx,ny)]===0) return; // 壁: ターン消費なし
+  p.x=nx; p.y=ny;
+  const it=itemAt(nx,ny);
+  if(it){
+    if(p.inv.length<9){
+      items.splice(items.indexOf(it),1);
+      p.inv.push(it);
+      log(it.name+' を拾った ('+p.inv.length+'番スロット)');
+    } else {
+      log('持ち物がいっぱいで拾えない');
+    }
+  }
+  endTurn();
+}
+
+function descend(){
+  if(state!=='play') return;
+  if(tiles[idx(p.x,p.y)]!==2){ log('ここに階段はない'); render(); return; }
+  if(floor>=3){
+    state='clear';
+    log('地上への光が見える… 脱出成功!');
+    render();
+    return;
+  }
+  floor++;
+  genLevel();
+  log('地下 '+floor+' 階に降りた');
+  endTurn();
+}
+
+function useItem(i){
+  if(state!=='play') return;
+  const it=p.inv[i];
+  if(!it){ log('スロット '+(i+1)+' は空だ'); render(); return; }
+  p.inv.splice(i,1);
+  it.use();
+  endTurn();
+}
+
+function newGame(){
+  floor=1;
+  logs=[];
+  p={x:0,y:0,hp:20,maxHp:20,atk:5,level:1,xp:0,xpNext:10,inv:[]};
+  genLevel();
+  state='play';
+  log('GLOOM DELVE — 昏き地下迷宮へようこそ');
+  log('地下1階。階段(>)を探して地下3階を目指せ');
+  render();
+}
+
+function renderHud(){
+  hHp.textContent='HP '+p.hp+'/'+p.maxHp;
+  hLv.textContent='Lv '+p.level;
+  hXp.textContent='XP '+p.xp+'/'+p.xpNext;
+  hFl.textContent='B'+floor+'F';
+  hAt.textContent='攻撃力 '+p.atk;
+  let s='持物: ';
+  for(let i=0;i<9;i++){
+    s += (p.inv[i] ? (i+1)+':'+p.inv[i].name : (i+1)+':--');
+    if(i<8) s+='  ';
+  }
+  invEl.textContent=s;
+}
+
+function render(){
+  renderHud();
+  ctx.fillStyle='#000';
+  ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.font='16px Menlo,Consolas,monospace';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  for(let y=0;y<MH;y++){
+    for(let x=0;x<MW;x++){
+      const i=idx(x,y);
+      const cx=x*T+T/2, cy=y*T+T/2;
+      if(visible[i]){
+        const t=tiles[i];
+        if(t===0){ ctx.fillStyle='#4a4a66'; ctx.fillText('#',cx,cy); }
+        else if(t===1){ ctx.fillStyle='#3d3d52'; ctx.fillText('.',cx,cy); }
+        else { ctx.fillStyle='#ffe14a'; ctx.fillText('>',cx,cy); }
+      } else if(explored[i]){
+        const t=tiles[i];
+        if(t===0){ ctx.fillStyle='#1c1c2c'; ctx.fillText('#',cx,cy); }
+        else if(t===1){ ctx.fillStyle='#181822'; ctx.fillText('.',cx,cy); }
+        else { ctx.fillStyle='#4d4520'; ctx.fillText('>',cx,cy); }
+      }
+    }
+  }
+  for(const it of items){
+    if(!visible[idx(it.x,it.y)]) continue;
+    ctx.fillStyle=it.color;
+    ctx.fillText(it.ch, it.x*T+T/2, it.y*T+T/2);
+  }
+  for(const e of enemies){
+    if(!visible[idx(e.x,e.y)]) continue;
+    ctx.fillStyle=e.color;
+    ctx.fillText(e.ch, e.x*T+T/2, e.y*T+T/2);
+  }
+  if(state!=='title'){
+    ctx.fillStyle='#ffffff';
+    ctx.fillText('@', p.x*T+T/2, p.y*T+T/2);
+  }
+  if(state==='title')   overlay('GLOOM DELVE','昏き地下迷宮 — Enter / Space で開始');
+  if(state==='gameover')overlay('GAME OVER','あなたは地下 '+floor+' 階で倒れた — R で再挑戦');
+  if(state==='clear')  overlay('CLEAR!','迷宮を脱出した! — R で新しいダンジョンへ');
+}
+
+function overlay(big,small){
+  ctx.fillStyle='rgba(0,0,0,0.72)';
+  ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.fillStyle='#ffe14a';
+  ctx.font='bold 44px Menlo,Consolas,monospace';
+  ctx.fillText(big, cv.width/2, cv.height/2-30);
+  ctx.fillStyle='#c9c9da';
+  ctx.font='18px Menlo,Consolas,monospace';
+  ctx.fillText(small, cv.width/2, cv.height/2+24);
+  ctx.font='16px Menlo,Consolas,monospace';
+}
+
+document.addEventListener('keydown', function(ev){
+  const k=ev.key;
+  let handled=true;
+  if(state==='title'){
+    if(k==='Enter'||k===' '){ newGame(); }
+  } else if(k==='r'||k==='R'){
+    newGame();
+  } else if(state==='play'){
+    if(k==='ArrowUp'||k==='w'||k==='W') tryMove(0,-1);
+    else if(k==='ArrowDown'||k==='s'||k==='S') tryMove(0,1);
+    else if(k==='ArrowLeft'||k==='a'||k==='A') tryMove(-1,0);
+    else if(k==='ArrowRight'||k==='d'||k==='D') tryMove(1,0);
+    else if(k==='Enter'||k==='>') descend();
+    else if(k>='1'&&k<='9') useItem(k.charCodeAt(0)-49);
+    else handled=false;
+  } else {
+    handled=false; // gameover / clear では R のみ有効（上で処理済み）
+  }
+  if(handled) ev.preventDefault();
+});
+
+// 初期画面（タイトル）
+p={x:0,y:0,hp:20,maxHp:20,atk:5,level:1,xp:0,xpNext:10,inv:[]};
+tiles=new Array(MW*MH).fill(0);
+rooms=[];
+explored=new Array(MW*MH).fill(false);
+visible=new Array(MW*MH).fill(false);
+render();
+</script>
+</body>
+</html>
