@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>墨流し — Suminagashi</title>
+<style>
+  :root{
+    --paper:#efeae0;
+    --sumi:#1a1a1f;
+    --ai:#16407a;
+    --shu:#c8372d;
+    --matsuba:#2e6e52;
+    --ink-text:#2b2925;
+    --muted:#8b8377;
+    --faint:#a39c8e;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;overflow:hidden;background:var(--paper)}
+  body{
+    font-family:"Hiragino Mincho ProN","Hiragino Mincho Pro","Yu Mincho","YuMincho","MS PMincho",serif;
+    color:var(--ink-text);
+    -webkit-user-select:none;user-select:none;
+    overscroll-behavior:none;
+  }
+  canvas{
+    position:fixed;inset:0;width:100%;height:100%;display:block;
+    touch-action:none;cursor:crosshair;
+  }
+
+  /* 左上 縦書き表題 */
+  .title{
+    position:fixed;top:36px;left:42px;
+    writing-mode:vertical-rl;
+    font-size:34px;font-weight:400;letter-spacing:.42em;
+    color:var(--ink-text);
+    pointer-events:none;
+  }
+
+  /* 左端 縦方向キャプション */
+  .caption{
+    position:fixed;left:16px;top:50%;transform:translateY(-50%);
+    writing-mode:vertical-rl;
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-size:9px;letter-spacing:.55em;
+    color:var(--faint);
+    pointer-events:none;
+  }
+
+  /* 中央ヒント */
+  .hint{
+    position:fixed;top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    font-size:15px;letter-spacing:.55em;text-indent:.55em;
+    color:#7d766a;
+    white-space:nowrap;
+    pointer-events:none;
+    transition:opacity 1.6s ease, filter 1.6s ease;
+  }
+  .hint.gone{opacity:0;filter:blur(8px)}
+
+  /* 下部ドック */
+  .dock{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%);
+    display:flex;align-items:center;gap:16px;
+    padding:12px 22px;
+    border-radius:999px;
+    background:rgba(252,250,246,.55);
+    -webkit-backdrop-filter:blur(14px) saturate(1.05);
+    backdrop-filter:blur(14px) saturate(1.05);
+    border:1px solid rgba(60,55,45,.10);
+    box-shadow:0 10px 34px rgba(50,45,35,.10);
+  }
+  .swatches{display:flex;align-items:center;gap:13px}
+  .swatch{
+    display:flex;flex-direction:column;align-items:center;gap:5px;
+    background:none;border:none;cursor:pointer;padding:2px;
+    font-family:inherit;
+  }
+  .chip{
+    width:20px;height:20px;border-radius:50%;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.14);
+    transition:transform .25s ease, box-shadow .25s ease;
+  }
+  .swatch:hover .chip{transform:scale(1.08)}
+  .swatch[data-ink="-1"] .chip{
+    background:conic-gradient(from 40deg,var(--sumi),var(--ai),var(--matsuba),var(--shu),var(--sumi));
+  }
+  .swatch[data-ink="0"] .chip{background:var(--sumi)}
+  .swatch[data-ink="1"] .chip{background:var(--ai)}
+  .swatch[data-ink="2"] .chip{background:var(--shu)}
+  .swatch[data-ink="3"] .chip{background:var(--matsuba)}
+  .swatch .slabel{
+    font-size:9px;letter-spacing:.12em;line-height:1;color:#6d675c;
+  }
+  .swatch.selected .chip{
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.14),
+               0 0 0 2.5px var(--paper),
+               0 0 0 4px rgba(43,41,37,.8);
+  }
+
+  .divider{width:1px;height:30px;background:rgba(60,55,45,.16)}
+
+  /* 自動演出トグル */
+  .toggle{
+    display:flex;align-items:center;gap:9px;
+    background:none;border:none;cursor:pointer;
+    font-family:inherit;font-size:11px;letter-spacing:.14em;color:#4d4941;
+    padding:4px 2px;
+  }
+  .track{
+    position:relative;width:30px;height:16px;border-radius:999px;
+    background:rgba(60,55,45,.18);
+    transition:background .3s ease;
+    flex:none;
+  }
+  .dot{
+    position:absolute;top:3px;left:3px;width:10px;height:10px;border-radius:50%;
+    background:#fbf9f4;
+    box-shadow:0 1px 3px rgba(40,35,28,.35);
+    transition:transform .3s ease;
+  }
+  .toggle.on .track{background:rgba(43,41,37,.72)}
+  .toggle.on .dot{transform:translateX(14px)}
+
+  .wash{
+    background:none;border:none;cursor:pointer;
+    font-family:inherit;font-size:11px;letter-spacing:.16em;color:#4d4941;
+    padding:6px 2px;
+    border-bottom:1px solid transparent;
+    transition:color .25s ease,border-color .25s ease;
+  }
+  .wash:hover{color:var(--ink-text);border-bottom-color:rgba(43,41,37,.5)}
+
+  .credit{
+    position:fixed;right:18px;bottom:16px;
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-size:9px;letter-spacing:.28em;color:var(--faint);
+    pointer-events:none;
+  }
+
+  @media (max-width:680px){
+    .title{font-size:25px;top:24px;left:24px;letter-spacing:.36em}
+    .caption{display:none}
+    .hint{font-size:12px;letter-spacing:.4em;text-indent:.4em}
+    .dock{gap:11px;padding:10px 16px;bottom:16px;max-width:94vw}
+    .swatches{gap:9px}
+    .toggle{font-size:10px}
+    .wash{font-size:10px}
+    .credit{font-size:8px;right:12px;bottom:8px}
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<h1 class="title">墨流し</h1>
+<div class="caption">SUMINAGASHI — INK DISSOLUTION</div>
+<div class="hint" id="hint">画 面 を な ぞ っ て 墨 を 流 す</div>
+
+<div class="dock" id="dock">
+  <div class="swatches">
+    <button class="swatch selected" data-ink="-1" aria-label="自動で色が巡る"><span class="chip"></span><span class="slabel">巡</span></button>
+    <button class="swatch" data-ink="0" aria-label="墨"><span class="chip"></span><span class="slabel">墨</span></button>
+    <button class="swatch" data-ink="1" aria-label="藍"><span class="chip"></span><span class="slabel">藍</span></button>
+    <button class="swatch" data-ink="2" aria-label="朱"><span class="chip"></span><span class="slabel">朱</span></button>
+    <button class="swatch" data-ink="3" aria-label="松葉"><span class="chip"></span><span class="slabel">松葉</span></button>
+  </div>
+  <div class="divider"></div>
+  <button class="toggle" id="autoBtn" aria-pressed="false"><span>自動演出</span><span class="track"><span class="dot"></span></span></button>
+  <button class="wash" id="washBtn">洗い流す</button>
+</div>
+
+<div class="credit">THREE.JS · STABLE FLUIDS</div>
+
+<script>
+(function () {
+'use strict';
+
+var canvas = document.getElementById('c');
+var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- インク定義（吸光度 = 1 - 顔料色） ---------- */
+var INKS = [
+  { rgb: [0.102, 0.102, 0.122] },  // 墨  #1a1a1f
+  { rgb: [0.086, 0.251, 0.478] },  // 藍  #16407a
+  { rgb: [0.784, 0.216, 0.176] },  // 朱  #c8372d
+  { rgb: [0.180, 0.431, 0.322] }   // 松葉 #2e6e52
+];
+var PAPER = [0.937, 0.918, 0.878]; // #efeae0
+
+var config = {
+  SIM_RESOLUTION: 160,
+  DYE_RESOLUTION: 1024,
+  PRESSURE_ITERATIONS: 22,
+  PRESSURE: 0.8,
+  CURL: reducedMotion ? 3 : 7,
+  VELOCITY_DISSIPATION: 0.22,   // 粘性のある水面のようにゆっくり減衰
+  DENSITY_DISSIPATION: 0.025,   // インクは長く紙に残る
+  SPLAT_RADIUS: 0.5,
+  SPLAT_FORCE: 6200,
+  HOVER_FORCE: 2300,
+  BLEED: 0.11,                  // にじみの拡散（ふんわり）
+  INK_SCALE: 3.1,               // 吸光度の強さ
+  STROKE_INK: 0.5,
+  DROP_INK: 1.05
+};
+var FORCE_K = reducedMotion ? 0.5 : 1.0;
+
+/* ---------- WebGL コンテキスト ---------- */
+function getWebGLContext (canvas) {
+  var params = { alpha: false, depth: false, stencil: false, antialias: false, preserveDrawingBuffer: false };
+  var gl = canvas.getContext('webgl2', params);
+  var isWebGL2 = !!gl;
+  if (!isWebGL2)
+    gl = canvas.getContext('webgl', params) || canvas.getContext('experimental-webgl', params);
+  if (!gl) return null;
+
+  var halfFloat = null;
+  var supportLinearFiltering = false;
+  if (isWebGL2) {
+    gl.getExtension('EXT_color_buffer_float');
+    supportLinearFiltering = true; // 16F の線形フィルタリングは WebGL2 コア
+  } else {
+    halfFloat = gl.getExtension('OES_texture_half_float');
+    supportLinearFiltering = !!gl.getExtension('OES_texture_half_float_linear');
+  }
+
+  gl.clearColor(PAPER[0], PAPER[1], PAPER[2], 1.0);
+
+  var halfFloatTexType = isWebGL2 ? gl.HALF_FLOAT : (halfFloat && halfFloat.HALF_FLOAT_OES);
+
+  function supportRenderTextureFormat (internalFormat, format, type) {
+    if (type == null) return false;
+    var texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, 4, 4, 0, format, type, null);
+    var fbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+    var ok = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    gl.deleteFramebuffer(fbo);
+    gl.deleteTexture(texture);
+    return ok;
+  }
+
+  function getSupportedFormat (internalFormat, format, type) {
+    if (!supportRenderTextureFormat(internalFormat, format, type)) {
+      if (isWebGL2) {
+        switch (internalFormat) {
+          case gl.R16F:  return getSupportedFormat(gl.RG16F, gl.RG, type);
+          case gl.RG16F: return getSupportedFormat(gl.RGBA16F, gl.RGBA, type);
+          default: return null;
+        }
+      }
+      return null;
+    }
+    return { internalFormat: internalFormat, format: format };
+  }
+
+  var formatRGBA, formatRG, formatR, texType = halfFloatTexType;
+  if (isWebGL2) {
+    formatRGBA = getSupportedFormat(gl.RGBA16F, gl.RGBA, texType);
+    formatRG   = getSupportedFormat(gl.RG16F,   gl.RG,   texType);
+    formatR    = getSupportedFormat(gl.R16F,    gl.RED,  texType);
+  } else {
+    formatRGBA = getSupportedFormat(gl.RGBA, gl.RGBA, texType);
+    formatRG = formatRGBA;
+    formatR  = formatRGBA;
+  }
+  if (formatRGBA == null) {           // 浮動小数点が使えない環境のフォールバック
+    texType = gl.UNSIGNED_BYTE;
+    formatRGBA = { internalFormat: gl.RGBA, format: gl.RGBA };
+    formatRG = formatRGBA;
+    formatR  = formatRGBA;
+    supportLinearFiltering = true;
+  }
+  if (formatRG == null) formatRG = formatRGBA;
+  if (formatR  == null) formatR  = formatRGBA;
+
+  return {
+    gl: gl,
+    ext: {
+      formatRGBA: formatRGBA, formatRG: formatRG, formatR: formatR,
+      halfFloatTexType: texType,
+      supportLinearFiltering: supportLinearFiltering
+    }
+  };
+}
+
+var ctx = getWebGLContext(canvas);
+if (!ctx) {
+  document.body.innerHTML = '<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#6d675c;font-size:13px;letter-spacing:.2em;">この作品は WebGL に対応したブラウザでご覧ください</div>';
+  return;
+}
+var gl = ctx.gl;
+var ext = ctx.ext;
+
+/* ---------- シェーダ ---------- */
+function compileShader (type, source, keywords) {
+  if (keywords) {
+    var head = '';
+    for (var i = 0; i < keywords.length; i++) head += '#define ' + keywords[i] + '\n';
+    source = head + source;
+  }
+  var shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS))
+    console.error(gl.getShaderInfoLog(shader));
+  return shader;
+}
+function createProgram (vs, fs) {
+  var program = gl.createProgram();
+  gl.attachShader(program, vs);
+  gl.attachShader(program, fs);
+  gl.bindAttribLocation(program, 0, 'aPosition');
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS))
+    console.error(gl.getProgramInfoLog(program));
+  return program;
+}
+function getUniforms (program) {
+  var uniforms = {};
+  var count = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
+  for (var i = 0; i < count; i++) {
+    var name = gl.getActiveUniform(program, i).name;
+    uniforms[name] = gl.getUniformLocation(program, name);
+  }
+  return uniforms;
+}
+function Program (fragmentSource, keywords) {
+  this.program = createProgram(baseVertexShader, compileShader(gl.FRAGMENT_SHADER, fragmentSource, keywords));
+  this.uniforms = getUniforms(this.program);
+}
+Program.prototype.bind = function () { gl.useProgram(this.program); };
+
+var baseVertexShader = compileShader(gl.VERTEX_SHADER, [
+  'precision highp float;',
+  'attribute vec2 aPosition;',
+  'varying vec2 vUv;',
+  'varying vec2 vL;',
+  'varying vec2 vR;',
+  'varying vec2 vT;',
+  'varying vec2 vB;',
+  'uniform vec2 texelSize;',
+  'void main () {',
+  '    vUv = aPosition * 0.5 + 0.5;',
+  '    vL = vUv - vec2(texelSize.x, 0.0);',
+  '    vR = vUv + vec2(texelSize.x, 0.0);',
+  '    vT = vUv + vec2(0.0, texelSize.y);',
+  '    vB = vUv - vec2(0.0, texelSize.y);',
+  '    gl_Position = vec4(aPosition, 0.0, 1.0);',
+  '}'
+].join('\n'));
+
+var splatShader = [
+  'precision highp float;',
+  'varying vec2 vUv;',
+  'uniform sampler2D uTarget;',
+  'uniform float aspectRatio;',
+  'uniform vec3 color;',
+  'uniform vec2 point;',
+  'uniform float radius;',
+  'void main () {',
+  '    vec2 p = vUv - point.xy;',
+  '    p.x *= aspectRatio;',
+  '    vec3 splat = exp(-dot(p, p) / radius) * color;',
+  '    vec3 base = texture2D(uTarget, vUv).xyz;',
+  '    gl_FragColor = vec4(base + splat, 1.0);',
+  '}'
+].join('\n');
+
+var advectionShader = [
+  'precision highp float;',
+  'varying vec2 vUv;',
+  'uniform sampler2D uVelocity;',
+  'uniform sampler2D uSource;',
+  'uniform vec2 texelSize;',
+  'uniform vec2 dyeTexelSize;',
+  'uniform float dt;',
+  'uniform float dissipation;',
+  'vec4 bilerp (sampler2D sam, vec2 uv, vec2 tsize) {',
+  '    vec2 st = uv / tsize - 0.5;',
+  '    vec2 iuv = floor(st);',
+  '    vec2 fuv = fract(st);',
+  '    vec4 a = texture2D(sam, (iuv + vec2(0.5, 0.5)) * tsize);',
+  '    vec4 b = texture2D(sam, (iuv + vec2(1.5, 0.5)) * tsize);',
+  '    vec4 c = texture2D(sam, (iuv + vec2(0.5, 1.5)) * tsize);',
+  '    vec4 d = texture2D(sam, (iuv + vec2(1.5, 1.5)) * tsize);',
+  '    return mix(mix(a, b, fuv.x), mix(c, d, fuv.x), fuv.y);',
+  '}',
+  'void main () {',
+  '#ifdef MANUAL_FILTERING',
+  '    vec2 coord = vUv - dt * bilerp(uVelocity, vUv, texelSize).xy * texelSize;',
+  '    vec4 result = bilerp(uSource, coord, dyeTexelSize);',
+  '#else',
+  '    vec2 coord = vUv - dt * texture2D(uVelocity, vUv).xy * texelSize;',
+  '    vec4 result = texture2D(uSource, coord);',
+  '#endif',
+  '    float decay = 1.0 + dissipation * dt;',
+  '    gl_FragColor = result / decay;',
+  '}'
+].join('\n');
+
+var divergenceShader = [
+  'precision mediump float;',
+  'varying vec2 vUv;',
+  'varying vec2 vL;',
+  'varying vec2 vR;',
+  'varying vec2 vT;',
+  'varying vec2 vB;',
+  'uniform sampler2D uVelocity;',
+  'void main () {',
+  '    float L = texture2D(uVelocity, vL).x;',
+  '    float R = texture2D(uVelocity, vR).x;',
+  '    float T = texture2D(uVelocity, vT).y;',
+  '    float B = texture2D(uVelocity, vB).y;',
+  '    vec2 C = texture2D(uVelocity, vUv).xy;',
+  '    if (vL.x < 0.0) { L = -C.x; }',
+  '    if (vR.x > 1.0) { R = -C.x; }',
+  '    if (vT.y > 1.0) { T = -C.y; }',
+  '    if (vB.y < 0.0) { B = -C.y; }',
+  '    float div = 0.5 * (R - L + T - B);',
+  '    gl_FragColor = vec4(div, 0.0, 0.0, 1.0);',
+  '}'
+].join('\n');
+
+var curlShader = [
+  'precision mediump float;',
+  'varying vec2 vUv;',
+  'varying vec2 vL;',
+  'varying vec2 vR;',
+  'varying vec2 vT;',
+  'varying vec2 vB;',
+  'uniform sampler2D uVelocity;',
+  'void main () {',
+  '    float L = texture2D(uVelocity, vL).y;',
+  '    float R = texture2D(uVelocity, vR).y;',
+  '    float T = texture2D(uVelocity, vT).x;',
+  '    float B = texture2D(uVelocity, vB).x;',
+  '    float vorticity = R - L - T + B;',
+  '    gl_FragColor = vec4(0.5 * vorticity, 0.0, 0.0, 1.0);',
+  '}'
+].join('\n');
+
+var vorticityShader = [
+  'precision highp float;',
+  'varying vec2 vUv;',
+  'varying vec2 vL;',
+  'varying vec2 vR;',
+  'varying vec2 vT;',
+  'varying vec2 vB;',
+  'uniform sampler2D uVelocity;',
+  'uniform sampler2D uCurl;',
+  'uniform float curl;',
+  'uniform float dt;',
+  'void main () {',
+  '    float L = texture2D(uCurl, vL).x;',
+  '    float R = texture2D(uCurl, vR).x;',
+  '    float T = texture2D(uCurl, vT).x;',
+  '    float B = texture2D(uCurl, vB).x;',
+  '    float C = texture2D(uCurl, vUv).x;',
+  '    vec2 force = 0.5 * vec2(abs(T) - abs(B), abs(R) - abs(L));',
+  '    force /= length(force) + 0.0001;',
+  '    force *= curl * C;',
+  '    force.y *= -1.0;',
+  '    vec2 velocity = texture2D(uVelocity, vUv).xy;',
+  '    velocity += force * dt;',
+  '    velocity = min(max(velocity, -1000.0), 1000.0);',
+  '    gl_FragColor = vec4(velocity, 0.0, 1.0);',
+  '}'
+].join('\n');
+
+var pressureShader = [
+  'precision mediump float;',
+  'varying vec2 vUv;',
+  'varying vec2 vL;',
+  'varying vec2 vR;',
+  'varying vec2 vT;',
+  'varying vec2 vB;',
+  'uniform sampler2D uPressure;',
+  'uniform sampler2D uDivergence;',
+  'void main () {',
+  '    float L = texture2D(uPressure, vL).x;',
+  '    float R = texture2D(uPressure, vR).x;',
+  '    float T = texture2D(uPressure, vT).x;',
+  '    float B = texture2D(uPressure, vB).x;',
+  '    float divergence = texture2D(uDivergence, vUv).x;',
+  '    float pressure = (L + R + B + T - divergence) * 0.25;',
+  '    gl_FragColor = vec4(pressure, 0.0, 0.0, 1.0);',
+  '}'
+].join('\n');
+
+var clearShader = [
+  'precision mediump float;',
+  'varying vec2 vUv;',
+  'uniform sampler2D uTexture;',
+  'uniform float value;',
+  'void main () {',
+  '    gl_FragColor = value * texture2D(uTexture, vUv);',
+  '}'
+].join('\n');
+
+var gradientSubtractShader = [
+  'precision mediump float;',
+  'varying vec2 vUv;',
+  'varying vec2 vL;',
+  'varying vec2 vR;',
+  'varying vec2 vT;',
+  'varying vec2 vB;',
+  'uniform sampler2D uPressure;',
+  'uniform sampler2D uVelocity;',
+  'void main () {',
+  '    float L = texture2D(uPressure, vL).x;',
+  '    float R = texture2D(uPressure, vR).x;',
+  '    float T = texture2D(uPressure, vT).x;',
+  '    float B = texture2D(uPressure, vB).x;',
+  '    vec2 velocity = texture2D(uVelocity, vUv).xy;',
+  '    velocity.xy -= vec2(R - L, T - B);',
+  '    gl_FragColor = vec4(velocity, 0.0, 1.0);',
+  '}'
+].join('\n');
+
+/* にじみ: 染料をわずかに拡散させて縁をやわらげる */
+var bleedShader = [
+  'precision highp float;',
+  'varying vec2 vUv;',
+  'varying vec2 vL;',
+  'varying vec2 vR;',
+  'varying vec2 vT;',
+  'varying vec2 vB;',
+  'uniform sampler2D uTexture;',
+  'uniform float amount;',
+  'void main () {',
+  '    vec4 c = texture2D(uTexture, vUv);',
+  '    vec4 n = texture2D(uTexture, vL) + texture2D(uTexture, vR)',
+  '           + texture2D(uTexture, vT) + texture2D(uTexture, vB);',
+  '    vec4 blur = (c * 2.0 + n) / 6.0;',
+  '    gl_FragColor = mix(c, blur, amount);',
+  '}'
+].join('\n');
+
+/* 表示: 和紙色 × exp(-吸光度) の減法混色 */
+var displayShader = [
+  'precision highp float;',
+  'varying vec2 vUv;',
+  'uniform sampler2D uDye;',
+  'uniform sampler2D uPaper;',
+  'uniform vec3 uPaperColor;',
+  'uniform float uGrain;',
+  'void main () {',
+  '    vec3 absorb = texture2D(uDye, vUv).rgb;',
+  '    float g = texture2D(uPaper, vUv * 3.0).r;',
+  '    vec3 paper = uPaperColor * (1.0 + (g - 0.5) * uGrain);',
+  '    vec3 col = paper * exp(-absorb);',
+  '    gl_FragColor = vec4(col, 1.0);',
+  '}'
+].join('\n');
+
+/* ---------- ジオメトリ（全画面クアッド） ---------- */
+var blit = (function () {
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 3]), gl.STATIC_DRAW);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(0);
+  return function (target) {
+    if (target == null) {
+      gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    } else {
+      gl.viewport(0, 0, target.width, target.height);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, target.fbo);
+    }
+    gl.drawElements(gl.TRIANGLE_FAN, 4, gl.UNSIGNED_SHORT, 0);
+  };
+})();
+
+/* ---------- FBO ---------- */
+function createFBO (w, h, internalFormat, format, type, param) {
+  gl.activeTexture(gl.TEXTURE0);
+  var texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, param);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, param);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, w, h, 0, format, type, null);
+
+  var fbo = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+  gl.viewport(0, 0, w, h);
+  gl.clearColor(0, 0, 0, 0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+
+  return {
+    texture: texture, fbo: fbo,
+    width: w, height: h,
+    texelSizeX: 1.0 / w, texelSizeY: 1.0 / h,
+    attach: function (id) {
+      gl.activeTexture(gl.TEXTURE0 + id);
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      return id;
+    }
+  };
+}
+function createDoubleFBO (w, h, internalFormat, format, type, param) {
+  var fbo1 = createFBO(w, h, internalFormat, format, type, param);
+  var fbo2 = createFBO(w, h, internalFormat, format, type, param);
+  return {
+    width: w, height: h,
+    texelSizeX: fbo1.texelSizeX, texelSizeY: fbo1.texelSizeY,
+    get read () { return fbo1; },
+    set read (v) { fbo1 = v; },
+    get write () { return fbo2; },
+    set write (v) { fbo2 = v; },
+    swap: function () { var t = fbo1; fbo1 = fbo2; fbo2 = t; }
+  };
+}
+function getResolution (resolution) {
+  var aspectRatio = gl.drawingBufferWidth / gl.drawingBufferHeight;
+  if (aspectRatio < 1) aspectRatio = 1.0 / aspectRatio;
+  var min = Math.round(resolution);
+  var max = Math.round(resolution * aspectRatio);
+  if (gl.drawingBufferWidth > gl.drawingBufferHeight)
+    return { width: max, height: min };
+  return { width: min, height: max };
+}
+
+var dye, velocity, divergence, curl, pressure;
+function initFramebuffers () {
+  var simRes = getResolution(config.SIM_RESOLUTION);
+  var dyeRes = getResolution(config.DYE_RESOLUTION);
+  var texType = ext.halfFloatTexType;
+  var rgba = ext.formatRGBA;
+  var rg = ext.formatRG;
+  var r = ext.formatR;
+  var filtering = ext.supportLinearFiltering ? gl.LINEAR : gl.NEAREST;
+  gl.disable(gl.BLEND);
+
+  dye      = createDoubleFBO(dyeRes.width, dyeRes.height, rgba.internalFormat, rgba.format, texType, filtering);
+  velocity = createDoubleFBO(simRes.width, simRes.height, rg.internalFormat, rg.format, texType, filtering);
+  divergence = createFBO(simRes.width, simRes.height, r.internalFormat, r.format, texType, gl.NEAREST);
+  curl       = createFBO(simRes.width, simRes.height, r.internalFormat, r.format, texType, gl.NEAREST);
+  pressure   = createDoubleFBO(simRes.width, simRes.height, r.internalFormat, r.format, texType, gl.NEAREST);
+}
+
+/* ---------- 和紙テクスチャ（ごく淡い繊維） ---------- */
+function createPaperTexture () {
+  var size = 256;
+  var c = document.createElement('canvas');
+  c.width = c.height = size;
+  var g = c.getContext('2d');
+  g.fillStyle = '#808080';
+  g.fillRect(0, 0, size, size);
+  g.globalAlpha = 0.045;
+  for (var i = 0; i < 150; i++) {
+    g.strokeStyle = Math.random() < 0.5 ? '#8c8c8c' : '#747474';
+    g.lineWidth = 0.3 + Math.random() * 1.1;
+    var x = Math.random() * size, y = Math.random() * size;
+    var a = Math.random() * Math.PI, l = 6 + Math.random() * 34;
+    g.beginPath();
+    g.moveTo(x, y);
+    g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l);
+    g.stroke();
+  }
+  g.globalAlpha = 1;
+  var img = g.getImageData(0, 0, size, size);
+  var d = img.data;
+  for (var j = 0; j < d.length; j += 4) {
+    var n = (Math.random() - 0.5) * 24;
+    d[j] += n; d[j + 1] += n; d[j + 2] += n;
+  }
+  g.putImageData(img, 0, 0);
+
+  var texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+  return {
+    attach: function (id) {
+      gl.activeTexture(gl.TEXTURE0 + id);
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      return id;
+    }
+  };
+}
+
+/* ---------- プログラム構築 ---------- */
+var splatProgram            = new Program(splatShader);
+var advectionProgram        = new Program(advectionShader, ext.supportLinearFiltering ? null : ['MANUAL_FILTERING']);
+var divergenceProgram       = new Program(divergenceShader);
+var curlProgram             = new Program(curlShader);
+var vorticityProgram        = new Program(vorticityShader);
+var pressureProgram         = new Program(pressureShader);
+var clearProgram            = new Program(clearShader);
+var gradientSubtractProgram = new Program(gradientSubtractShader);
+var bleedProgram            = new Program(bleedShader);
+var displayProgram          = new Program(displayShader);
+
+var paperTex = createPaperTexture();
+
+/* ---------- キャンバスサイズ ---------- */
+function resizeCanvas () {
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var w = Math.floor(canvas.clientWidth * dpr);
+  var h = Math.floor(canvas.clientHeight * dpr);
+  if (canvas.width !== w || canvas.height !== h) {
+    canvas.width = w;
+    canvas.height = h;
+    return true;
+  }
+  return false;
+}
+resizeCanvas();
+initFramebuffers();
+
+/* ---------- スプラット ---------- */
+function correctRadius (radius) {
+  var aspectRatio = canvas.width / canvas.height;
+  if (aspectRatio > 1) radius *= aspectRatio;
+  return radius;
+}
+function correctDeltaX (delta) {
+  var aspectRatio = canvas.width / canvas.height;
+  if (aspectRatio < 1) delta *= aspectRatio;
+  return delta;
+}
+function correctDeltaY (delta) {
+  var aspectRatio = canvas.width / canvas.height;
+  if (aspectRatio > 1) delta /= aspectRatio;
+  return delta;
+}
+function splatForce (x, y, dx, dy, radiusScale) {
+  splatProgram.bind();
+  setTexel(splatProgram, velocity.texelSizeX, velocity.texelSizeY);
+  gl.uniform1i(splatProgram.uniforms.uTarget, velocity.read.attach(0));
+  gl.uniform1f(splatProgram.uniforms.aspectRatio, canvas.width / canvas.height);
+  gl.uniform2f(splatProgram.uniforms.point, x, y);
+  gl.uniform3f(splatProgram.uniforms.color, dx, dy, 0.0);
+  gl.uniform1f(splatProgram.uniforms.radius, correctRadius(config.SPLAT_RADIUS / 100.0 * radiusScale));
+  blit(velocity.write);
+  velocity.swap();
+}
+function splatDye (x, y, absorb, radiusScale) {
+  splatProgram.bind();
+  setTexel(splatProgram, dye.texelSizeX, dye.texelSizeY);
+  gl.uniform1i(splatProgram.uniforms.uTarget, dye.read.attach(0));
+  gl.uniform1f(splatProgram.uniforms.aspectRatio, canvas.width / canvas.height);
+  gl.uniform2f(splatProgram.uniforms.point, x, y);
+  gl.uniform3f(splatProgram.uniforms.color, absorb[0], absorb[1], absorb[2]);
+  gl.uniform1f(splatProgram.uniforms.radius, correctRadius(config.SPLAT_RADIUS / 100.0 * radiusScale));
+  blit(dye.write);
+  dye.swap();
+}
+function setTexel (prog, x, y) {
+  if (prog.uniforms.texelSize) gl.uniform2f(prog.uniforms.texelSize, x, y);
+}
+function absorbance (rgb, k) {
+  return [(1.0 - rgb[0]) * k, (1.0 - rgb[1]) * k, (1.0 - rgb[2]) * k];
+}
+
+/* ---------- シミュレーションステップ ---------- */
+function step (dt) {
+  gl.disable(gl.BLEND);
+
+  curlProgram.bind();
+  setTexel(curlProgram, velocity.texelSizeX, velocity.texelSizeY);
+  gl.uniform1i(curlProgram.uniforms.uVelocity, velocity.read.attach(0));
+  blit(curl);
+
+  vorticityProgram.bind();
+  setTexel(vorticityProgram, velocity.texelSizeX, velocity.texelSizeY);
+  gl.uniform1i(vorticityProgram.uniforms.uVelocity, velocity.read.attach(0));
+  gl.uniform1i(vorticityProgram.uniforms.uCurl, curl.attach(1));
+  gl.uniform1f(vorticityProgram.uniforms.curl, config.CURL);
+  gl.uniform1f(vorticityProgram.uniforms.dt, dt);
+  blit(velocity.write);
+  velocity.swap();
+
+  divergenceProgram.bind();
+  setTexel(divergenceProgram, velocity.texelSizeX, velocity.texelSizeY);
+  gl.uniform1i(divergenceProgram.uniforms.uVelocity, velocity.read.attach(0));
+  blit(divergence);
+
+  clearProgram.bind();
+  gl.uniform1i(clearProgram.uniforms.uTexture, pressure.read.attach(0));
+  gl.uniform1f(clearProgram.uniforms.value, config.PRESSURE);
+  blit(pressure.write);
+  pressure.swap();
+
+  pressureProgram.bind();
+  setTexel(pressureProgram, velocity.texelSizeX, velocity.texelSizeY);
+  gl.uniform1i(pressureProgram.uniforms.uDivergence, divergence.attach(0));
+  for (var i = 0; i < config.PRESSURE_ITERATIONS; i++) {
+    gl.uniform1i(pressureProgram.uniforms.uPressure, pressure.read.attach(1));
+    blit(pressure.write);
+    pressure.swap();
+  }
+
+  gradientSubtractProgram.bind();
+  setTexel(gradientSubtractProgram, velocity.texelSizeX, velocity.texelSizeY);
+  gl.uniform1i(gradientSubtractProgram.uniforms.uPressure, pressure.read.attach(0));
+  gl.uniform1i(gradientSubtractProgram.uniforms.uVelocity, velocity.read.attach(1));
+  blit(velocity.write);
+  velocity.swap();
+}
+function advect (dt) {
+  advectionProgram.bind();
+  setTexel(advectionProgram, velocity.texelSizeX, velocity.texelSizeY);
+  if (!ext.supportLinearFiltering)
+    gl.uniform2f(advectionProgram.uniforms.dyeTexelSize, velocity.texelSizeX, velocity.texelSizeY);
+  var velocityId = velocity.read.attach(0);
+  gl.uniform1i(advectionProgram.uniforms.uVelocity, velocityId);
+  gl.uniform1i(advectionProgram.uniforms.uSource, velocityId);
+  gl.uniform1f(advectionProgram.uniforms.dt, dt);
+  gl.uniform1f(advectionProgram.uniforms.dissipation, config.VELOCITY_DISSIPATION);
+  blit(velocity.write);
+  velocity.swap();
+
+  if (!ext.supportLinearFiltering)
+    gl.uniform2f(advectionProgram.uniforms.dyeTexelSize, dye.texelSizeX, dye.texelSizeY);
+  gl.uniform1i(advectionProgram.uniforms.uVelocity, velocity.read.attach(0));
+  gl.uniform1i(advectionProgram.uniforms.uSource, dye.read.attach(1));
+  gl.uniform1f(advectionProgram.uniforms.dissipation, config.DENSITY_DISSIPATION);
+  blit(dye.write);
+  dye.swap();
+}
+function bleed () {
+  bleedProgram.bind();
+  setTexel(bleedProgram, dye.texelSizeX, dye.texelSizeY);
+  gl.uniform1i(bleedProgram.uniforms.uTexture, dye.read.attach(0));
+  gl.uniform1f(bleedProgram.uniforms.amount, config.BLEED);
+  blit(dye.write);
+  dye.swap();
+}
+function render () {
+  displayProgram.bind();
+  gl.uniform1i(displayProgram.uniforms.uDye, dye.read.attach(0));
+  gl.uniform1i(displayProgram.uniforms.uPaper, paperTex.attach(1));
+  gl.uniform3f(displayProgram.uniforms.uPaperColor, PAPER[0], PAPER[1], PAPER[2]);
+  gl.uniform1f(displayProgram.uniforms.uGrain, 0.07);
+  blit(null);
+}
+
+/* ---------- 入力・状態 ---------- */
+var selectedInk = -1;   // -1 = 巡（自動サイクル）
+var cycleIdx = 0;
+var autoOn = !reducedMotion;
+var washing = false;
+var washT = 0;
+var lastInteract = performance.now() - 2500;
+var nextDrop = 0;
+var nextStir = 0;
+var hintGone = false;
+var hintEl = document.getElementById('hint');
+
+var autoBtn = document.getElementById('autoBtn');
+if (autoOn) { autoBtn.classList.add('on'); autoBtn.setAttribute('aria-pressed', 'true'); }
+
+function hideHint () {
+  if (hintGone) return;
+  hintGone = true;
+  hintEl.classList.add('gone');
+  setTimeout(function () { hintEl.style.display = 'none'; }, 1900);
+}
+function pickInk () {
+  if (selectedInk >= 0) return INKS[selectedInk];
+  var ink = INKS[cycleIdx % 4];
+  cycleIdx = (cycleIdx + 1) % 4;
+  return ink;
+}
+function getUV (e) {
+  var r = canvas.getBoundingClientRect();
+  return { x: (e.clientX - r.left) / r.width, y: 1.0 - (e.clientY - r.top) / r.height };
+}
+
+var pointers = new Map();
+
+canvas.addEventListener('pointerdown', function (e) {
+  e.preventDefault();
+  try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  var uv = getUV(e);
+  var ink = pickInk();
+  pointers.set(e.pointerId, { x: uv.x, y: uv.y, ink: ink });
+  hideHint();
+  lastInteract = performance.now();
+  splatDye(uv.x, uv.y, absorbance(ink.rgb, config.INK_SCALE * 0.9), 1.0);
+});
+
+canvas.addEventListener('pointermove', function (e) {
+  var uv = getUV(e);
+  var p = pointers.get(e.pointerId);
+  if (p) {
+    var dx = correctDeltaX(uv.x - p.x) * config.SPLAT_FORCE * FORCE_K;
+    var dy = correctDeltaY(uv.y - p.y) * config.SPLAT_FORCE * FORCE_K;
+    if (dx !== 0 || dy !== 0) {
+      splatForce(uv.x, uv.y, dx, dy, 1.0);
+      splatDye(uv.x, uv.y, absorbance(p.ink.rgb, config.INK_SCALE * config.STROKE_INK), 1.0);
+    }
+    p.x = uv.x; p.y = uv.y;
+    lastInteract = performance.now();
+  } else if (e.pointerType === 'mouse' || e.pointerType === 'pen') {
+    // ホバー: 水流だけを乱す（インクは出さない）
+    var prev = hoverPrev;
+    if (prev) {
+      var hx = correctDeltaX(uv.x - prev.x) * config.HOVER_FORCE * FORCE_K;
+      var hy = correctDeltaY(uv.y - prev.y) * config.HOVER_FORCE * FORCE_K;
+      if (hx !== 0 || hy !== 0) {
+        splatForce(uv.x, uv.y, hx, hy, 1.5);
+        lastInteract = performance.now();
+      }
+    }
+    hoverPrev = uv;
+  }
+});
+var hoverPrev = null;
+
+function endPointer (e) {
+  pointers.delete(e.pointerId);
+  if (e.pointerType === 'mouse') hoverPrev = null;
+}
+canvas.addEventListener('pointerup', endPointer);
+canvas.addEventListener('pointercancel', endPointer);
+canvas.addEventListener('pointerleave', function (e) {
+  if (e.pointerType === 'mouse') hoverPrev = null;
+});
+window.addEventListener('blur', function () { pointers.clear(); });
+canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+/* ---------- ドック UI ---------- */
+var swatches = document.querySelectorAll('.swatch');
+swatches.forEach(function (b) {
+  b.addEventListener('click', function () {
+    swatches.forEach(function (x) { x.classList.remove('selected'); });
+    b.classList.add('selected');
+    selectedInk = parseInt(b.dataset.ink, 10);
+    hideHint();
+  });
+});
+autoBtn.addEventListener('click', function () {
+  autoOn = !autoOn;
+  autoBtn.classList.toggle('on', autoOn);
+  autoBtn.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+  lastInteract = performance.now();
+  hideHint();
+});
+document.getElementById('washBtn').addEventListener('click', function () {
+  washing = true;
+  washT = 0;
+  hideHint();
+});
+
+window.addEventListener('resize', function () {
+  if (resizeCanvas()) initFramebuffers();
+});
+
+/* ---------- 自動演出・洗い流し ---------- */
+function autoUpdate (now) {
+  if (!autoOn || washing) return;
+  if (now - lastInteract < 3200) return;
+
+  if (now > nextDrop) {
+    nextDrop = now + 1100 + Math.random() * 1600;
+    var x = 0.15 + Math.random() * 0.7;
+    var y = 0.2 + Math.random() * 0.6;
+    var ink = pickInk();
+    splatDye(x, y, absorbance(ink.rgb, config.INK_SCALE * config.DROP_INK), 1.7);
+    for (var i = 0; i < 3; i++) {
+      splatForce(
+        x + (Math.random() - 0.5) * 0.1,
+        y + (Math.random() - 0.5) * 0.1,
+        (Math.random() - 0.5) * 700 * FORCE_K,
+        (Math.random() - 0.5) * 700 * FORCE_K,
+        1.3
+      );
+    }
+  }
+  if (now > nextStir) {
+    nextStir = now + 650 + Math.random() * 700;
+    splatForce(
+      0.1 + Math.random() * 0.8,
+      0.15 + Math.random() * 0.7,
+      (Math.random() - 0.5) * 420 * FORCE_K,
+      (Math.random() - 0.5) * 420 * FORCE_K,
+      2.4
+    );
+  }
+}
+function washUpdate (dt) {
+  washT += dt;
+  // 染料を徐々に流して紙へ戻す
+  clearProgram.bind();
+  gl.uniform1i(clearProgram.uniforms.uTexture, dye.read.attach(0));
+  gl.uniform1f(clearProgram.uniforms.value, Math.exp(-dt * 1.7));
+  blit(dye.write);
+  dye.swap();
+  // 下へ流れ落ちる筋をつくる
+  for (var i = 0; i < 3; i++) {
+    splatForce(
+      Math.random(),
+      0.25 + Math.random() * 0.75,
+      (Math.random() - 0.5) * 220,
+      -(1000 + Math.random() * 700),
+      2.2
+    );
+  }
+  if (washT > 3.6) washing = false;
+}
+function seep () {
+  // 押さえたままの場所へ墨がじわりと滲む
+  pointers.forEach(function (p) {
+    splatDye(p.x, p.y, absorbance(p.ink.rgb, config.INK_SCALE * 0.045), 1.1);
+  });
+}
+
+/* ---------- メインループ ---------- */
+var lastTime = performance.now();
+function frame (now) {
+  var dt = Math.min((now - lastTime) / 1000, 0.02);
+  lastTime = now;
+
+  seep();
+  autoUpdate(now);
+  if (washing) washUpdate(dt);
+  step(dt);
+  advect(dt);
+  bleed();
+  render();
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+})();
+</script>
+</body>
+</html>
