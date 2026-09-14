@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>はさみ将棋</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", sans-serif;
+    background: #2b241c;
+    color: #f3ead8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100%;
+    padding: 16px 10px 32px;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  header { text-align: center; margin-bottom: 12px; }
+  h1 {
+    font-size: clamp(20px, 5vw, 30px);
+    letter-spacing: 0.2em;
+    font-weight: 700;
+    color: #e8c98a;
+  }
+  h1 span { font-size: 0.6em; color: #b8a888; letter-spacing: 0.1em; display: block; margin-top: 2px; }
+
+  .status-bar {
+    width: min(94vw, 560px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  #turn {
+    font-size: clamp(15px, 4vw, 19px);
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 6px;
+    background: #453a29;
+    border: 1px solid #6b5a3a;
+    transition: background .2s;
+  }
+  #turn.thinking { background: #5a3a2a; color: #f0c9a0; }
+  #turn.finished { background: #23406b; color: #cfe3ff; }
+
+  .scores {
+    display: flex;
+    gap: 14px;
+    font-size: clamp(12px, 3.4vw, 15px);
+  }
+  .score-box {
+    background: #3a3226;
+    border: 1px solid #5c4d33;
+    border-radius: 6px;
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+  .score-box b { color: #e8c98a; font-size: 1.15em; }
+
+  .board-wrap { position: relative; width: min(94vw, 560px); }
+  .board {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    grid-template-rows: repeat(9, 1fr);
+    gap: 1px;
+    background: #4a3319;
+    padding: 5px;
+    border: 3px solid #3a2810;
+    border-radius: 4px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.5), inset 0 0 0 1px #6b4c22;
+  }
+  .cell {
+    background: linear-gradient(145deg, #e3b76f, #d9a85c);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background .12s;
+  }
+  .cell:hover { background: linear-gradient(145deg, #eec680, #e2b468); }
+  .board.locked .cell { cursor: default; }
+  .cell.lastmove { background: linear-gradient(145deg, #f0d08e, #e6c174); }
+  .cell.target { background: linear-gradient(145deg, #cfe39a, #bcd27e); }
+  .cell.target::after {
+    content: "";
+    position: absolute;
+    width: 26%;
+    height: 26%;
+    border-radius: 50%;
+    background: rgba(60, 90, 30, 0.55);
+    pointer-events: none;
+  }
+
+  .piece {
+    width: 78%;
+    height: 88%;
+    clip-path: polygon(50% 0%, 100% 30%, 88% 100%, 12% 100%, 0% 30%);
+    background: linear-gradient(160deg, #f9ecd2, #ecd3a0);
+    color: #201409;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(13px, 4.2vw, 24px);
+    font-weight: 700;
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+    padding-top: 14%;
+    box-shadow: 0 2px 4px rgba(0,0,0,.4);
+    transition: transform .12s, filter .12s;
+    pointer-events: none;
+  }
+  .piece.cpu {
+    transform: rotate(180deg);
+    background: linear-gradient(160deg, #e8d6ae, #d3b881);
+  }
+  .piece.sel {
+    filter: drop-shadow(0 0 6px rgba(200, 60, 30, .9));
+    background: linear-gradient(160deg, #ffe9b8, #f4c976);
+  }
+  .cell.sel-cell { background: linear-gradient(145deg, #f5d896, #ecc57c); }
+
+  .result-banner {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(20, 14, 6, 0.55);
+    border-radius: 4px;
+    z-index: 5;
+  }
+  .result-banner.show { display: flex; }
+  .result-inner {
+    background: #fdf3dd;
+    color: #2a1c08;
+    padding: 22px 34px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,.6);
+    border: 3px solid #b98d4a;
+  }
+  .result-inner .who { font-size: clamp(20px, 6vw, 30px); font-weight: 800; margin-bottom: 6px; }
+  .result-inner .why { font-size: clamp(12px, 3.6vw, 15px); color: #6b5230; }
+
+  .controls { margin-top: 14px; }
+  #reset {
+    font-size: clamp(14px, 4vw, 16px);
+    font-weight: 700;
+    padding: 10px 34px;
+    border-radius: 8px;
+    border: 1px solid #8a6f3f;
+    background: linear-gradient(160deg, #6b5230, #4f3c21);
+    color: #f3e6c8;
+    cursor: pointer;
+    letter-spacing: 0.15em;
+    transition: filter .15s, transform .1s;
+  }
+  #reset:hover { filter: brightness(1.2); }
+  #reset:active { transform: scale(0.97); }
+
+  .rules-note {
+    margin-top: 14px;
+    font-size: 11px;
+    color: #8d7f63;
+    text-align: center;
+    line-height: 1.7;
+    max-width: 560px;
+  }
+
+  @media (max-width: 420px) {
+    .status-bar { justify-content: center; }
+    .scores { width: 100%; justify-content: space-between; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>はさみ将棋<span>HASAMI SHOGI &mdash; 9&times;9</span></h1>
+  </header>
+
+  <div class="status-bar">
+    <div id="turn">あなたの番</div>
+    <div class="scores">
+      <div class="score-box">あなた（歩）が取った駒 <b id="humanCaps">0</b> / 5</div>
+      <div class="score-box">CPU（と）が取った駒 <b id="cpuCaps">0</b> / 5</div>
+    </div>
+  </div>
+
+  <div class="board-wrap">
+    <div id="board" class="board"></div>
+    <div id="result" class="result-banner">
+      <div class="result-inner">
+        <div class="who" id="resultWho"></div>
+        <div class="why" id="resultWhy"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="reset" type="button">リセット</button>
+  </div>
+
+  <p class="rules-note">
+    駒は縦横に何マスでも動けます（飛び越え不可）。相手の駒の列を自分の駒2枚で挟むと取れます。<br>
+    角の駒は隣接2マスを塞ぐと取れます。先に5枚取るか、相手を動けなくした側の勝ちです。
+  </p>
+
+<script>
+(function () {
+  "use strict";
+
+  var SIZE = 9;
+  var EMPTY = 0, HUMAN = 1, CPU = 2;
+  var WIN_CAPTURES = 5;
+  var DIRS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+  var CORNERS = [[0, 0], [0, SIZE - 1], [SIZE - 1, 0], [SIZE - 1, SIZE - 1]];
+
+  var board, selected, targets, turn, caps, gameOver, thinking, lastMove;
+
+  var boardEl = document.getElementById("board");
+  var turnEl = document.getElementById("turn");
+  var humanCapsEl = document.getElementById("humanCaps");
+  var cpuCapsEl = document.getElementById("cpuCaps");
+  var resultEl = document.getElementById("result");
+  var resultWhoEl = document.getElementById("resultWho");
+  var resultWhyEl = document.getElementById("resultWhy");
+  var resetBtn = document.getElementById("reset");
+
+  function inB(r, c) { return r >= 0 && r < SIZE && c >= 0 && c < SIZE; }
+
+  function copyBoard(b) {
+    var nb = new Array(SIZE);
+    for (var r = 0; r < SIZE; r++) nb[r] = b[r].slice();
+    return nb;
+  }
+
+  // ある駒が (r,c) から移動できる全マス
+  function movesFrom(b, r, c) {
+    var res = [];
+    for (var i = 0; i < DIRS.length; i++) {
+      var dr = DIRS[i][0], dc = DIRS[i][1];
+      var nr = r + dr, nc = c + dc;
+      while (inB(nr, nc) && b[nr][nc] === EMPTY) {
+        res.push([nr, nc]);
+        nr += dr; nc += dc;
+      }
+    }
+    return res;
+  }
+
+  // player の全合法手
+  function allMoves(b, player) {
+    var res = [];
+    for (var r = 0; r < SIZE; r++) {
+      for (var c = 0; c < SIZE; c++) {
+        if (b[r][c] === player) {
+          var ms = movesFrom(b, r, c);
+          for (var i = 0; i < ms.length; i++) {
+            res.push({ fr: r, fc: c, tr: ms[i][0], tc: ms[i][1] });
+          }
+        }
+      }
+    }
+    return res;
+  }
+
+  // (r,c) に player が移動した直後の挟み取り・角取りを解決する。
+  // 盤面 b を直接更新し、取った駒の座標リストを返す。
+  function resolveCaptures(b, r, c, player) {
+    var opp = 3 - player;
+    var taken = [];
+
+    // 通常の挟み取り: 移動した駒を片端として 4 方向を調べる
+    for (var i = 0; i < DIRS.length; i++) {
+      var dr = DIRS[i][0], dc = DIRS[i][1];
+      var nr = r + dr, nc = c + dc;
+      var line = [];
+      while (inB(nr, nc) && b[nr][nc] === opp) {
+        line.push([nr, nc]);
+        nr += dr; nc += dc;
+      }
+      if (line.length > 0 && inB(nr, nc) && b[nr][nc] === player) {
+        for (var j = 0; j < line.length; j++) taken.push(line[j]);
+      }
+    }
+
+    // 角取り: 四隅の敵駒について、縦横の隣接2マスが自駒で塞がれたか
+    for (var k = 0; k < CORNERS.length; k++) {
+      var cr = CORNERS[k][0], cc = CORNERS[k][1];
+      if (b[cr][cc] === opp) {
+        var adj = [
+          [cr === 0 ? 1 : SIZE - 2, cc],
+          [cr, cc === 0 ? 1 : SIZE - 2]
+        ];
+        // この移動で塞ぎが成立したか（移動した駒が隣接マスの一方を占めたか）
+        var movedAdjacent = (adj[0][0] === r && adj[0][1] === c) ||
+                            (adj[1][0] === r && adj[1][1] === c);
+        if (movedAdjacent &&
+            b[adj[0][0]][adj[0][1]] === player &&
+            b[adj[1][0]][adj[1][1]] === player) {
+          taken.push([cr, cc]);
+        }
+      }
+    }
+
+    for (var t = 0; t < taken.length; t++) b[taken[t][0]][taken[t][1]] = EMPTY;
+    return taken;
+  }
+
+  // 盤面 b 上で move を適用し、取った駒リストを返す
+  function applyMove(b, m, player) {
+    b[m.tr][m.tc] = b[m.fr][m.fc];
+    b[m.fr][m.fc] = EMPTY;
+    return resolveCaptures(b, m.tr, m.tc, player);
+  }
+
+  function isTarget(r, c) {
+    for (var i = 0; i < targets.length; i++) {
+      if (targets[i][0] === r && targets[i][1] === c) return true;
+    }
+    return false;
+  }
+
+  function render() {
+    boardEl.innerHTML = "";
+    for (var r = 0; r < SIZE; r++) {
+      for (var c = 0; c < SIZE; c++) {
+        var cell = document.createElement("div");
+        cell.className = "cell";
+        if (isTarget(r, c)) cell.classList.add("target");
+        if (lastMove && ((lastMove.fr === r && lastMove.fc === c) ||
+                         (lastMove.tr === r && lastMove.tc === c))) {
+          cell.classList.add("lastmove");
+        }
+        if (selected && selected.r === r && selected.c === c) cell.classList.add("sel-cell");
+        var v = board[r][c];
+        if (v !== EMPTY) {
+          var p = document.createElement("div");
+          p.className = "piece " + (v === HUMAN ? "human" : "cpu");
+          p.textContent = (v === HUMAN) ? "歩" : "と";
+          if (selected && selected.r === r && selected.c === c) p.classList.add("sel");
+          cell.appendChild(p);
+        }
+        (function (rr, cc) {
+          cell.addEventListener("click", function () { onCell(rr, cc); });
+        })(r, c);
+        boardEl.appendChild(cell);
+      }
+    }
+    humanCapsEl.textContent = caps[HUMAN];
+    cpuCapsEl.textContent = caps[CPU];
+    boardEl.classList.toggle("locked", gameOver || thinking || turn !== HUMAN);
+  }
+
+  function setStatus(text, cls) {
+    turnEl.textContent = text;
+    turnEl.className = cls || "";
+  }
+
+  function endGame(winner, reason) {
+    gameOver = true;
+    thinking = false;
+    var who = (winner === HUMAN) ? "あなたの勝ち" : "CPU の勝ち";
+    var why = (reason === "capture")
+      ? "相手の駒を先に 5 枚取りました"
+      : "相手に合法手が残っていません";
+    setStatus("ゲーム終了", "finished");
+    resultWhoEl.textContent = who;
+    resultWhyEl.textContent = why;
+    resultEl.classList.add("show");
+    render();
+  }
+
+  // 手を進め、捕獲・勝敗を処理する。終了しなければ次の手番へ。
+  function doMove(m, player) {
+    var taken = applyMove(board, m, player);
+    caps[player] += taken.length;
+    lastMove = m;
+    selected = null;
+    targets = [];
+
+    if (caps[player] >= WIN_CAPTURES) {
+      endGame(player, "capture");
+      return;
+    }
+    var opp = 3 - player;
+    if (allMoves(board, opp).length === 0) {
+      endGame(player, "nomove");
+      return;
+    }
+
+    if (player === HUMAN) {
+      turn = CPU;
+      thinking = true;
+      setStatus("CPU 思考中", "thinking");
+      render();
+      setTimeout(cpuMove, 550);
+    } else {
+      turn = HUMAN;
+      thinking = false;
+      setStatus("あなたの番");
+      render();
+    }
+  }
+
+  function onCell(r, c) {
+    if (gameOver || thinking || turn !== HUMAN) return;
+
+    if (board[r][c] === HUMAN) {
+      // 自駒のクリック: 同じ駒なら解除、別の駒なら切り替え
+      if (selected && selected.r === r && selected.c === c) {
+        selected = null;
+        targets = [];
+      } else {
+        selected = { r: r, c: c };
+        targets = movesFrom(board, r, c);
+      }
+      render();
+      return;
+    }
+
+    if (selected && isTarget(r, c)) {
+      doMove({ fr: selected.r, fc: selected.c, tr: r, tc: c }, HUMAN);
+      return;
+    }
+
+    // それ以外（空きマス・敵駒・非ターゲット）: 選択解除
+    if (selected) {
+      selected = null;
+      targets = [];
+      render();
+    }
+  }
+
+  // CPU: 「取れる手を優先し、取られる手を避ける」ヒューリスティック
+  function chooseCpuMove() {
+    var ms = allMoves(board, CPU);
+    if (ms.length === 0) return null;
+
+    var bestScore = -Infinity;
+    var bestList = [];
+
+    for (var i = 0; i < ms.length; i++) {
+      var m = ms[i];
+      var b = copyBoard(board);
+      var myCaps = applyMove(b, m, CPU).length;
+
+      // この手の後、人間が1手で取れる最大枚数を見る（取られる手を避ける）
+      var oppMax = 0;
+      var oppMoves = allMoves(b, HUMAN);
+      for (var j = 0; j < oppMoves.length; j++) {
+        var b2 = copyBoard(b);
+        var n = applyMove(b2, oppMoves[j], HUMAN).length;
+        if (n > oppMax) oppMax = n;
+      }
+
+      // 前進して敵に近づく手をわずかに優先（駒が下がり続けるのを防ぐ）
+      var advance = m.tr; // CPUは行が大きい方（下）へ進む
+      var score = myCaps * 100 - oppMax * 70 + advance * 0.5 + Math.random();
+
+      if (score > bestScore + 1e-9) {
+        bestScore = score;
+        bestList = [m];
+      } else if (Math.abs(score - bestScore) < 1e-9) {
+        bestList.push(m);
+      }
+    }
+    return bestList[Math.floor(Math.random() * bestList.length)];
+  }
+
+  function cpuMove() {
+    if (gameOver) return;
+    var m = chooseCpuMove();
+    if (!m) {
+      endGame(HUMAN, "nomove");
+      return;
+    }
+    doMove(m, CPU);
+  }
+
+  function init() {
+    board = [];
+    for (var r = 0; r < SIZE; r++) {
+      var row = new Array(SIZE).fill(EMPTY);
+      board.push(row);
+    }
+    for (var c = 0; c < SIZE; c++) {
+      board[0][c] = CPU;               // 後手「と」: 最上段
+      board[SIZE - 1][c] = HUMAN;      // 先手「歩」: 最下段
+    }
+    selected = null;
+    targets = [];
+    lastMove = null;
+    caps = {};
+    caps[HUMAN] = 0;
+    caps[CPU] = 0;
+    gameOver = false;
+    thinking = false;
+    turn = HUMAN;
+    resultEl.classList.remove("show");
+    setStatus("あなたの番");
+    render();
+  }
+
+  resetBtn.addEventListener("click", init);
+  init();
+})();
+</script>
+</body>
+</html>
