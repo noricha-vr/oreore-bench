@@ -433,6 +433,45 @@
       "pricing_fetched_at": null
     }
   },
+  "hasami-shogi/swe-2-high": {
+    "schema_version": 1,
+    "theme": "hasami-shogi",
+    "model": "swe-2-high",
+    "model_id": "swe-2-high",
+    "harness": "devin-subagent",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-09-15T08:03:29+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "devin-cli",
+      "version": "3000.10.21"
+    },
+    "usage": {
+      "estimated": true,
+      "method": "tiktoken-o200k_base-proxy",
+      "prompt_tokens": 864,
+      "completion_tokens": 4986,
+      "note": "tiktoken o200k_base 推定（Devin subagent は usage 実測を返さない）。reasoning・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "subscription",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
   "json-ladder/gemma-4-12b-qat": {
     "schema_version": 1,
     "theme": "json-ladder",
@@ -595,6 +634,45 @@
       "prompt_usd_per_mtok": null,
       "completion_usd_per_mtok": null,
       "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
+  "json-ladder/swe-2-high": {
+    "schema_version": 1,
+    "theme": "json-ladder",
+    "model": "swe-2-high",
+    "model_id": "swe-2-high",
+    "harness": "devin-subagent",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-09-15T08:01:07+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "json-ladder-6-levels",
+    "runtime": {
+      "engine": "devin-cli",
+      "version": "3000.10.21"
+    },
+    "usage": {
+      "estimated": true,
+      "method": "tiktoken-o200k_base-proxy",
+      "prompt_tokens": 14002,
+      "completion_tokens": 2490,
+      "note": "tiktoken o200k_base 推定。6レベル独立リクエストの実プロンプト/応答を合算。reasoning・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "subscription",
       "pricing_model": null,
       "pricing_fetched_at": null
     }
@@ -1249,6 +1327,45 @@
       "pricing_fetched_at": null
     }
   },
+  "lp-fable5/swe-2-high": {
+    "schema_version": 1,
+    "theme": "lp-fable5",
+    "model": "swe-2-high",
+    "model_id": "swe-2-high",
+    "harness": "devin-subagent",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-09-15T08:06:40+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "devin-cli",
+      "version": "3000.10.21"
+    },
+    "usage": {
+      "estimated": true,
+      "method": "tiktoken-o200k_base-proxy",
+      "prompt_tokens": 1122,
+      "completion_tokens": 14801,
+      "note": "tiktoken o200k_base 推定（Devin subagent は usage 実測を返さない）。reasoning・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "subscription",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
   "lp-nishibi/agents-a1-4b": {
     "schema_version": 1,
     "theme": "lp-nishibi",
@@ -1639,6 +1756,45 @@
       "prompt_usd_per_mtok": null,
       "completion_usd_per_mtok": null,
       "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
+  "lp-nishibi/swe-2-high": {
+    "schema_version": 1,
+    "theme": "lp-nishibi",
+    "model": "swe-2-high",
+    "model_id": "swe-2-high",
+    "harness": "devin-subagent",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-09-15T08:02:17+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "devin-cli",
+      "version": "3000.10.21"
+    },
+    "usage": {
+      "estimated": true,
+      "method": "tiktoken-o200k_base-proxy",
+      "prompt_tokens": 782,
+      "completion_tokens": 8500,
+      "note": "tiktoken o200k_base 推定（Devin subagent は usage 実測を返さない）。reasoning・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "subscription",
       "pricing_model": null,
       "pricing_fetched_at": null
     }
@@ -2037,6 +2193,45 @@
       "prompt_usd_per_mtok": null,
       "completion_usd_per_mtok": null,
       "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
+  "othello/swe-2-high": {
+    "schema_version": 1,
+    "theme": "othello",
+    "model": "swe-2-high",
+    "model_id": "swe-2-high",
+    "harness": "devin-subagent",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-09-15T08:01:35+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "devin-cli",
+      "version": "3000.10.21"
+    },
+    "usage": {
+      "estimated": true,
+      "method": "tiktoken-o200k_base-proxy",
+      "prompt_tokens": 253,
+      "completion_tokens": 4023,
+      "note": "tiktoken o200k_base 推定（Devin subagent は usage 実測を返さない）。reasoning・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "subscription",
       "pricing_model": null,
       "pricing_fetched_at": null
     }
@@ -2691,6 +2886,45 @@
       "pricing_fetched_at": null
     }
   },
+  "phoenix-lp/swe-2-high": {
+    "schema_version": 1,
+    "theme": "phoenix-lp",
+    "model": "swe-2-high",
+    "model_id": "swe-2-high",
+    "harness": "devin-subagent",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-09-15T08:08:30+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "devin-cli",
+      "version": "3000.10.21"
+    },
+    "usage": {
+      "estimated": true,
+      "method": "tiktoken-o200k_base-proxy",
+      "prompt_tokens": 1643,
+      "completion_tokens": 12193,
+      "note": "tiktoken o200k_base 推定（Devin subagent は usage 実測を返さない）。reasoning・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "subscription",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
   "pr-triage/agents-a1-4b": {
     "schema_version": 1,
     "theme": "pr-triage",
@@ -3121,6 +3355,45 @@
       "prompt_usd_per_mtok": null,
       "completion_usd_per_mtok": null,
       "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
+  "pr-triage/swe-2-high": {
+    "schema_version": 1,
+    "theme": "pr-triage",
+    "model": "swe-2-high",
+    "model_id": "swe-2-high",
+    "harness": "devin-subagent",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-09-15T08:01:20+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "devin-cli",
+      "version": "3000.10.21"
+    },
+    "usage": {
+      "estimated": true,
+      "method": "tiktoken-o200k_base-proxy",
+      "prompt_tokens": 2600,
+      "completion_tokens": 2446,
+      "note": "tiktoken o200k_base 推定（Devin subagent は usage 実測を返さない）。reasoning・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "subscription",
       "pricing_model": null,
       "pricing_fetched_at": null
     }
@@ -3699,6 +3972,45 @@
       "prompt_usd_per_mtok": null,
       "completion_usd_per_mtok": null,
       "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
+  "roguelike/swe-2-high": {
+    "schema_version": 1,
+    "theme": "roguelike",
+    "model": "swe-2-high",
+    "model_id": "swe-2-high",
+    "harness": "devin-subagent",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-09-15T08:03:00+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "devin-cli",
+      "version": "3000.10.21"
+    },
+    "usage": {
+      "estimated": true,
+      "method": "tiktoken-o200k_base-proxy",
+      "prompt_tokens": 1052,
+      "completion_tokens": 4753,
+      "note": "tiktoken o200k_base 推定（Devin subagent は usage 実測を返さない）。reasoning・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "subscription",
       "pricing_model": null,
       "pricing_fetched_at": null
     }
@@ -4349,6 +4661,45 @@
       "prompt_usd_per_mtok": null,
       "completion_usd_per_mtok": null,
       "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
+  "suminagashi/swe-2-high": {
+    "schema_version": 1,
+    "theme": "suminagashi",
+    "model": "swe-2-high",
+    "model_id": "swe-2-high",
+    "harness": "devin-subagent",
+    "reasoning_effort": "high",
+    "attempts": 1,
+    "generated_at": "2026-09-15T08:08:28+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": "default",
+      "max_tokens": "default",
+      "top_p": "default"
+    },
+    "system_prompt": "harness-default",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "devin-cli",
+      "version": "3000.10.21"
+    },
+    "usage": {
+      "estimated": true,
+      "method": "tiktoken-o200k_base-proxy",
+      "prompt_tokens": 727,
+      "completion_tokens": 11613,
+      "note": "tiktoken o200k_base 推定（Devin subagent は usage 実測を返さない）。reasoning・ハーネス側 system prompt を含まない下限値"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": null,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "subscription",
       "pricing_model": null,
       "pricing_fetched_at": null
     }

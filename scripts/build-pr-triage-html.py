@@ -64,6 +64,13 @@ MODEL_INFO = {
         "color": "#0A2EFE",
         "color_dark": "#0A1FB8",
     },
+    "swe-2-high": {
+        "label": "SWE-2 High",
+        "provider": "Cognition",
+        "type": "API LLM",
+        "color": "#3B4BDB",
+        "color_dark": "#2B3AAD",
+    },
 }
 
 TEMPLATE = """<!DOCTYPE html>

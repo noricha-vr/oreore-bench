@@ -17,7 +17,7 @@ const RUNS_JSON = path.join(PUBLIC, 'runs.json');
 const HARNESS_ENUM = new Set([
   'lmstudio-api', 'gptme-lmstudio', 'claude-agent-sdk', 'claude-cli-headless',
   'grok-cli', 'openai-api', 'openrouter-api', 'omlx-api', 'mlx-lm-api', 'ollama-api',
-  'antigravity-cli', 'codex-exec', 'unknown',
+  'antigravity-cli', 'codex-exec', 'devin-subagent', 'unknown',
 ]);
 const SYSTEM_PROMPT_ENUM = new Set(['none', 'harness-default', 'custom', 'unknown']);
 const EFFORT_ENUM = new Set(['none', 'low', 'medium', 'high', 'unknown']);
@@ -43,7 +43,8 @@ const COST_ALLOWED = new Set([
 //   openrouter           = 実請求相当 (type=api、単価そのまま cost)
 //   openrouter-reference = 参考仮想コスト (type=local + 参考単価あり。actual_usd=0)
 //   local-no-reference   = 参考単価なし (type=local、OpenRouter 対応 ID なし)
-const PRICING_SOURCE_ENUM = new Set(['openrouter', 'openrouter-reference', 'local-no-reference']);
+//   subscription         = 定額制で従量単価が存在しない (Devin 等。usd/actual_usd とも null)
+const PRICING_SOURCE_ENUM = new Set(['openrouter', 'openrouter-reference', 'local-no-reference', 'subscription']);
 
 // runtime の値は index.html に innerHTML で入る可能性があるため、
 // 短く安全な文字列のみ許可（英数 / ハイフン / アンダースコア / ドット / 空白 / 括弧）。
@@ -155,6 +156,9 @@ function validateRun(run, where) {
   } else if (cost.pricing_source === 'openrouter') {
     if (typeof cost.usd !== 'number') err(where, 'openrouter requires cost.usd = number');
     if (cost.actual_usd !== null) err(where, 'openrouter requires cost.actual_usd = null (real charge not yet measured)');
+  } else if (cost.pricing_source === 'subscription') {
+    if (cost.usd !== null) err(where, 'subscription requires cost.usd = null (no per-token price)');
+    if (cost.actual_usd !== null) err(where, 'subscription requires cost.actual_usd = null (flat plan, not measured)');
   }
 }
 

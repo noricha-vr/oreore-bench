@@ -642,6 +642,30 @@ window.MODELS = {
                     { label: "Qwen 公式モデル", href: "https://huggingface.co/Qwen/Qwen3.8-27B" },
                     { label: "unsloth GGUF", href: "https://huggingface.co/unsloth/Qwen3.8-27B-GGUF" }
                 ]
+            },
+            "swe-2-high": {
+                label: "SWE-2 High",
+                provider: "Cognition",
+                type: "api",
+                color: "#3B4BDB",
+                colorDark: "#2B3AAD",
+                release: "2026-09-10",
+                size: "Kimi K3（2.8T パラメータ）を RL で post-train（公式）",
+                context: "非公開",
+                output: "非公開",
+                quantization: "—（Devin 専用・ウェイト非公開）",
+                runtime: "Devin CLI / Devin Desktop（effort: high）",
+                stats: [
+                    { value: "2.8T", label: "ベース", note: "Kimi K3 を post-train" },
+                    { value: "50.0%", label: "FrontierCode 1.1", note: "Main・公式値" },
+                    { value: "92.8%", label: "Terminal-Bench 2.1", note: "公式値" },
+                    { value: "3段階", label: "effort", note: "medium/high/max を単一 RL run" }
+                ],
+                strengths: "Cognition のコーディングモデル。FrontierCode 1.1 Main 50.0% で Fable 5.1（50.9%）に 1pt 差・64% 低コスト（公式）。Kimi K3 から多くのベンチで +5〜6pt。effort medium/high/max を1回の RL で訓練し、high/max は複雑タスクで探索・検証を厚くする設計。",
+                weaknesses: "単体 API・ウェイトとも非公開で Devin サブスク内のみ利用可。per-token 単価・コンテキスト長・最大出力は非公表。本ベンチは Devin CLI サブエージェント経由のためトークン実測値はなく推定のみ。",
+                links: [
+                    { label: "Cognition 公式発表", href: "https://cognition.com/blog/swe-2" }
+                ]
             }
         };
 
@@ -803,4 +827,18 @@ window.ENTRIES.push(
     { theme: "pr-triage", model: "hy3-t512", runner: "MLX-LM API", note: "PASS。86.012秒・15.614 tok/s。85行/4,294B。スキーマ準拠PASS、正解キー一致90%（9 primary）。PR106だけ期待fixをhold。", kind: "json" },
     { theme: "roguelike", model: "hy3-t512", runner: "MLX-LM API", note: "FAIL High。221.580秒・17.926 tok/s。421行/11,604B。純粋HTMLだが newGame で rooms[0] 初期化前参照、矢印map参照TypeErrorで開始不能。mobile scrollWidth 743/client 375。", kind: "html" },
     { theme: "suminagashi", model: "hy3-t512", runner: "MLX-LM API", note: "FAIL High。199.329秒・17.930 tok/s。220行/10,149B。Three.js取得成功だが GLSL sampler/varying 同名 v でcompile fail、FORCE.uniforms.d undefined、canvas無地。前後説明が露出。", kind: "html" }
+);
+
+// swe-2-high（Cognition SWE-2 / effort high。Devin CLI サブエージェントが各テーマを独立生成。
+// トークン実測値はハーネスが返さないため run.json の usage は tiktoken 推定）
+window.ENTRIES.push(
+    { theme: "lp-nishibi", model: "swe-2-high", runner: "Devin subagent (effort high)", note: "JSエラー0。748行/26KB。前置き・フェンス混入なしの純粋 HTML を1ショットで出力。", kind: "html" },
+    { theme: "othello", model: "swe-2-high", runner: "Devin subagent (effort high)", note: "JSエラー0。478行/12.5KB。盤面・合法手・CPU応答まで破綻なく完走。", kind: "html" },
+    { theme: "hasami-shogi", model: "swe-2-high", runner: "Devin subagent (effort high)", note: "スモーク検証PASS。歩9/と9・9x9グリッド・選択ハイライト・移動・CPU応答・JSエラー0。518行/15KB。", kind: "html" },
+    { theme: "roguelike", model: "swe-2-high", runner: "Devin subagent (effort high)", note: "スモーク検証PASS。canvas描画・移動・入力・リロードでマップ再生成・JSエラー0。413行/13KB。", kind: "html" },
+    { theme: "lp-fable5", model: "swe-2-high", runner: "Devin subagent (effort high)", note: "JSエラー0。823行/42KB。水彩絵本トーンの7セクション構成を完走。", kind: "html" },
+    { theme: "suminagashi", model: "swe-2-high", runner: "Devin subagent (effort high)", note: "スモーク検証PASS。WebGL2 で実際にインクが描画される（painted=true）・JSエラー0。1048行/36.6KB。", kind: "html" },
+    { theme: "phoenix-lp", model: "swe-2-high", runner: "Devin subagent (effort high)", note: "スモーク検証PASS。canvas・スクロールで描画変化・JSエラー0。901行/32.8KB。", kind: "html" },
+    { theme: "pr-triage", model: "swe-2-high", runner: "Devin subagent (effort high)", note: "✅ スキーマ準拠 PASS。正解キー一致 95%（9 primary・1 acceptable）。前置き・フェンスなしの純粋 JSON。", kind: "json" },
+    { theme: "json-ladder", model: "swe-2-high", runner: "Devin subagent (effort high)", note: "パース 6/6・score 100%（レベル別平均 99.7% の丸め、L5 のみ 98%）。全レベル schema_pass。completion 計 2,490 tokens（推定）と最少級。", kind: "json" }
 );
