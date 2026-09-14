@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Othello — 人間(黒) vs CPU(白)</title>
+<style>
+  :root {
+    --board-size: min(92vw, 92vh - 220px, 560px);
+    --green-dark: #14532d;
+    --green: #166534;
+    --green-light: #1d7a3f;
+    --line: #0b3d20;
+    --hint: rgba(255, 255, 255, 0.45);
+    --text: #e7efe9;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    min-height: 100%;
+    background: #101613;
+    color: var(--text);
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic UI", Meiryo, system-ui, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    display: flex;
+    justify-content: center;
+    padding: 16px 12px 32px;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  h1 {
+    font-size: clamp(20px, 5vw, 30px);
+    letter-spacing: 0.12em;
+    font-weight: 700;
+  }
+
+  .scoreboard {
+    width: var(--board-size);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    font-size: clamp(14px, 3.6vw, 17px);
+  }
+
+  .score {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #1a241e;
+    border: 1px solid #2b3a30;
+  }
+
+  .score .chip {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    flex: none;
+  }
+
+  .chip.black { background: #161616; border: 1px solid #555; }
+  .chip.white { background: #f2f2f2; border: 1px solid #bbb; }
+
+  #message {
+    min-height: 1.6em;
+    font-size: clamp(14px, 3.8vw, 17px);
+    text-align: center;
+    color: #cfe8d6;
+  }
+
+  #message .win { color: #ffd76a; font-weight: 700; }
+  #message .lose { color: #9db8ff; font-weight: 700; }
+  #message .draw { color: #e0e0e0; font-weight: 700; }
+
+  .board {
+    width: var(--board-size);
+    aspect-ratio: 1 / 1;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    background: var(--line);
+    border: 4px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    touch-action: manipulation;
+  }
+
+  .cell {
+    position: relative;
+    background: var(--green);
+    border: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+  }
+
+  .cell.playable {
+    cursor: pointer;
+    background: var(--green-light);
+  }
+
+  .cell.playable:hover { background: #259152; }
+
+  .cell.playable::after {
+    content: "";
+    width: 26%;
+    height: 26%;
+    border-radius: 50%;
+    background: var(--hint);
+  }
+
+  .stone {
+    width: 78%;
+    height: 78%;
+    border-radius: 50%;
+    animation: pop 0.18s ease-out;
+  }
+
+  .stone.black {
+    background: radial-gradient(circle at 32% 30%, #4a4a4a, #0c0c0c 70%);
+    box-shadow: inset 0 -3px 6px rgba(0,0,0,0.6), 0 2px 4px rgba(0,0,0,0.4);
+  }
+
+  .stone.white {
+    background: radial-gradient(circle at 32% 30%, #ffffff, #d8d8d8 75%);
+    box-shadow: inset 0 -3px 6px rgba(0,0,0,0.18), 0 2px 4px rgba(0,0,0,0.35);
+  }
+
+  .cell.last .stone {
+    outline: 3px solid #ffd76a;
+    outline-offset: -3px;
+  }
+
+  @keyframes pop {
+    from { transform: scale(0.5); }
+    to { transform: scale(1); }
+  }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+  }
+
+  button#reset {
+    font: inherit;
+    font-size: clamp(14px, 3.8vw, 16px);
+    padding: 10px 28px;
+    border-radius: 999px;
+    border: 1px solid #3a4d40;
+    background: #223129;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  button#reset:hover { background: #2c4034; }
+  button#reset:active { transform: translateY(1px); }
+
+  .legend {
+    font-size: 12px;
+    color: #7e917f;
+    text-align: center;
+  }
+
+  @media (max-width: 480px) {
+    :root { --board-size: min(94vw, 94vh - 200px); }
+    body { padding: 10px 8px 24px; }
+    .app { gap: 10px; }
+  }
+</style>
+</head>
+<body>
+<main class="app">
+  <h1>OTHELLO</h1>
+
+  <div class="scoreboard">
+    <div class="score"><span class="chip black"></span><span>あなた（黒）</span><strong id="blackCount">2</strong></div>
+    <div class="score"><span class="chip white"></span><span>CPU（白）</span><strong id="whiteCount">2</strong></div>
+  </div>
+
+  <p id="message"></p>
+
+  <div id="board" class="board" aria-label="オセロ盤"></div>
+
+  <div class="controls">
+    <button id="reset" type="button">リセット</button>
+  </div>
+
+  <p class="legend">角を取ると有利です。置ける場所はハイライトされます。</p>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  var SIZE = 8;
+  var EMPTY = 0, BLACK = 1, WHITE = 2;
+  var DIRS = [
+    [-1, -1], [-1, 0], [-1, 1],
+    [ 0, -1],          [ 0, 1],
+    [ 1, -1], [ 1, 0], [ 1, 1]
+  ];
+
+  // CPU 評価用の位置ウェイト: 角を最優先、辺を加点、角隣接を減点
+  var WEIGHTS = [
+    [120, -25,  20,   8,   8,  20, -25, 120],
+    [-25, -50,  -5,  -5,  -5,  -5, -50, -25],
+    [ 20,  -5,  15,   3,   3,  15,  -5,  20],
+    [  8,  -5,   3,   1,   1,   3,  -5,   8],
+    [  8,  -5,   3,   1,   1,   3,  -5,   8],
+    [ 20,  -5,  15,   3,   3,  15,  -5,  20],
+    [-25, -50,  -5,  -5,  -5,  -5, -50, -25],
+    [120, -25,  20,   8,   8,  20, -25, 120]
+  ];
+
+  var board;
+  var currentPlayer;
+  var gameOver;
+  var cpuThinking;
+  var lastMove = null;
+
+  var boardEl = document.getElementById("board");
+  var messageEl = document.getElementById("message");
+  var blackCountEl = document.getElementById("blackCount");
+  var whiteCountEl = document.getElementById("whiteCount");
+  var resetBtn = document.getElementById("reset");
+
+  var cellEls = [];
+
+  function buildBoardDom() {
+    boardEl.innerHTML = "";
+    cellEls = [];
+    for (var r = 0; r < SIZE; r++) {
+      for (var c = 0; c < SIZE; c++) {
+        (function (r, c) {
+          var cell = document.createElement("div");
+          cell.className = "cell";
+          cell.dataset.r = r;
+          cell.dataset.c = c;
+          cell.addEventListener("click", function () { onCellClick(r, c); });
+          boardEl.appendChild(cell);
+          cellEls.push(cell);
+        })(r, c);
+      }
+    }
+  }
+
+  function initGame() {
+    board = [];
+    for (var r = 0; r < SIZE; r++) {
+      var row = [];
+      for (var c = 0; c < SIZE; c++) row.push(EMPTY);
+      board.push(row);
+    }
+    board[3][3] = WHITE;
+    board[3][4] = BLACK;
+    board[4][3] = BLACK;
+    board[4][4] = WHITE;
+    currentPlayer = BLACK;
+    gameOver = false;
+    cpuThinking = false;
+    lastMove = null;
+    setMessage("あなたの番です（黒）");
+    render();
+  }
+
+  function inBounds(r, c) {
+    return r >= 0 && r < SIZE && c >= 0 && c < SIZE;
+  }
+
+  // (r, c) に player が置いた時に反転する石の一覧を返す
+  function flipsFor(bd, r, c, player) {
+    if (bd[r][c] !== EMPTY) return [];
+    var opp = player === BLACK ? WHITE : BLACK;
+    var flips = [];
+    for (var d = 0; d < DIRS.length; d++) {
+      var dr = DIRS[d][0], dc = DIRS[d][1];
+      var line = [];
+      var nr = r + dr, nc = c + dc;
+      while (inBounds(nr, nc) && bd[nr][nc] === opp) {
+        line.push([nr, nc]);
+        nr += dr;
+        nc += dc;
+      }
+      if (line.length > 0 && inBounds(nr, nc) && bd[nr][nc] === player) {
+        for (var i = 0; i < line.length; i++) flips.push(line[i]);
+      }
+    }
+    return flips;
+  }
+
+  function legalMoves(bd, player) {
+    var moves = [];
+    for (var r = 0; r < SIZE; r++) {
+      for (var c = 0; c < SIZE; c++) {
+        var f = flipsFor(bd, r, c, player);
+        if (f.length > 0) moves.push({ r: r, c: c, flips: f });
+      }
+    }
+    return moves;
+  }
+
+  function applyMove(move, player) {
+    board[move.r][move.c] = player;
+    for (var i = 0; i < move.flips.length; i++) {
+      board[move.flips[i][0]][move.flips[i][1]] = player;
+    }
+    lastMove = [move.r, move.c];
+  }
+
+  function countStones() {
+    var b = 0, w = 0;
+    for (var r = 0; r < SIZE; r++) {
+      for (var c = 0; c < SIZE; c++) {
+        if (board[r][c] === BLACK) b++;
+        else if (board[r][c] === WHITE) w++;
+      }
+    }
+    return { black: b, white: w };
+  }
+
+  function render() {
+    var counts = countStones();
+    blackCountEl.textContent = counts.black;
+    whiteCountEl.textContent = counts.white;
+
+    var hints = {};
+    if (!gameOver && !cpuThinking && currentPlayer === BLACK) {
+      var moves = legalMoves(board, BLACK);
+      for (var i = 0; i < moves.length; i++) {
+        hints[moves[i].r * SIZE + moves[i].c] = true;
+      }
+    }
+
+    for (var r = 0; r < SIZE; r++) {
+      for (var c = 0; c < SIZE; c++) {
+        var idx = r * SIZE + c;
+        var cell = cellEls[idx];
+        var v = board[r][c];
+        cell.classList.toggle("playable", !!hints[idx]);
+        cell.classList.toggle("last", !!lastMove && lastMove[0] === r && lastMove[1] === c);
+        var existing = cell.firstChild;
+        if (v === EMPTY) {
+          if (existing) cell.removeChild(existing);
+        } else {
+          var cls = v === BLACK ? "stone black" : "stone white";
+          if (!existing || existing.className !== cls) {
+            var stone = document.createElement("div");
+            stone.className = cls;
+            if (existing) cell.replaceChild(stone, existing);
+            else cell.appendChild(stone);
+          }
+        }
+      }
+    }
+  }
+
+  function setMessage(html) {
+    messageEl.innerHTML = html;
+  }
+
+  function onCellClick(r, c) {
+    if (gameOver || cpuThinking || currentPlayer !== BLACK) return;
+    var moves = legalMoves(board, BLACK);
+    var target = null;
+    for (var i = 0; i < moves.length; i++) {
+      if (moves[i].r === r && moves[i].c === c) { target = moves[i]; break; }
+    }
+    if (!target) return;
+    applyMove(target, BLACK);
+    currentPlayer = WHITE;
+    render();
+    proceedTurn();
+  }
+
+  // CPU 手番: 角優先・辺加点・反転数加点のヒューリスティックで最善手を選択
+  function cpuMove() {
+    if (gameOver) return;
+    var moves = legalMoves(board, WHITE);
+    if (moves.length === 0) { proceedTurn(); return; }
+
+    var best = -Infinity;
+    var candidates = [];
+    for (var i = 0; i < moves.length; i++) {
+      var m = moves[i];
+      var score = WEIGHTS[m.r][m.c] + m.flips.length * 2;
+      if (score > best) {
+        best = score;
+        candidates = [m];
+      } else if (score === best) {
+        candidates.push(m);
+      }
+    }
+    var chosen = candidates[Math.floor(Math.random() * candidates.length)];
+    applyMove(chosen, WHITE);
+    cpuThinking = false;
+    currentPlayer = BLACK;
+    render();
+    proceedTurn();
+  }
+
+  // 手番の進行: 合法手がなければ自動パス、両者パスなら終局
+  function proceedTurn() {
+    var blackMoves = legalMoves(board, BLACK);
+    var whiteMoves = legalMoves(board, WHITE);
+
+    if (blackMoves.length === 0 && whiteMoves.length === 0) {
+      endGame();
+      return;
+    }
+
+    if (currentPlayer === BLACK) {
+      if (blackMoves.length > 0) {
+        setMessage("あなたの番です（黒）");
+        render();
+      } else {
+        setMessage("黒は置ける場所がないため自動パス。CPU（白）の番です");
+        currentPlayer = WHITE;
+        cpuThinking = true;
+        render();
+        setTimeout(cpuMove, 900);
+      }
+    } else {
+      if (whiteMoves.length > 0) {
+        setMessage("CPU（白）が考えています…");
+        cpuThinking = true;
+        render();
+        setTimeout(cpuMove, 650);
+      } else {
+        setMessage("白（CPU）は置ける場所がないためパス。あなたの番です（黒）");
+        currentPlayer = BLACK;
+        cpuThinking = false;
+        render();
+      }
+    }
+  }
+
+  function endGame() {
+    gameOver = true;
+    cpuThinking = false;
+    var counts = countStones();
+    var result;
+    if (counts.black > counts.white) {
+      result = '<span class="win">あなたの勝ちです</span>';
+    } else if (counts.white > counts.black) {
+      result = '<span class="lose">CPU の勝ちです</span>';
+    } else {
+      result = '<span class="draw">引き分けです</span>';
+    }
+    setMessage("終局： 黒 " + counts.black + " ／ 白 " + counts.white + " — " + result);
+    render();
+  }
+
+  resetBtn.addEventListener("click", initGame);
+
+  buildBoardDom();
+  initGame();
+})();
+</script>
+</body>
+</html>
