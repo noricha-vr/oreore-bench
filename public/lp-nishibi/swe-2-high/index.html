@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NISHIBI — 西日で焼く、天然日焼けスタジオ</title>
+<meta name="description" content="窓から差し込む夕方の西日だけで肌を焼く。光源自体を太陽とする、世界で唯一の天然日焼けスタジオ。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Shippori+Mincho:wght@400;500;600&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --terra: #b45a2d;
+    --terra-deep: #8f421f;
+    --gold: #d9924a;
+    --dusk: #e8c9a0;
+    --beige: #f3ead9;
+    --cream: #faf5ec;
+    --ink: #2b1c12;
+    --brown: #4a3121;
+    --line: rgba(74, 49, 33, 0.18);
+    --serif-en: 'Cormorant Garamond', serif;
+    --serif-jp: 'Shippori Mincho', serif;
+    --sans-jp: 'Noto Sans JP', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans-jp);
+    font-weight: 300;
+    color: var(--ink);
+    background: var(--cream);
+    line-height: 1.9;
+    letter-spacing: 0.06em;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection { background: var(--terra); color: var(--cream); }
+
+  /* ---------- Header ---------- */
+  header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 28px 48px;
+    mix-blend-mode: multiply;
+  }
+  .brand {
+    font-family: var(--serif-en);
+    font-size: 1.5rem;
+    font-weight: 500;
+    letter-spacing: 0.35em;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .brand small {
+    display: block;
+    font-family: var(--serif-jp);
+    font-size: 0.55rem;
+    letter-spacing: 0.6em;
+    color: var(--terra-deep);
+    margin-top: 2px;
+  }
+  nav ul {
+    display: flex;
+    gap: 40px;
+    list-style: none;
+  }
+  nav a {
+    font-family: var(--serif-en);
+    font-size: 0.8rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--brown);
+    text-decoration: none;
+    position: relative;
+    transition: color 0.4s;
+  }
+  nav a::after {
+    content: '';
+    position: absolute;
+    left: 0; bottom: -6px;
+    width: 0; height: 1px;
+    background: var(--terra);
+    transition: width 0.4s;
+  }
+  nav a:hover { color: var(--terra); }
+  nav a:hover::after { width: 100%; }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    min-height: 100vh;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+    background:
+      linear-gradient(115deg, rgba(43,28,18,0.06) 0%, rgba(43,28,18,0) 40%),
+      radial-gradient(ellipse 90% 70% at 78% 30%, rgba(217,146,74,0.35) 0%, rgba(217,146,74,0) 60%),
+      linear-gradient(160deg, #f7edda 0%, #efdcbb 45%, #e3bd88 78%, #c97f45 100%);
+  }
+  .hero::before {
+    /* 窓枠の影 */
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(105deg, transparent 0%, transparent 55%, rgba(43,28,18,0.10) 55.4%, rgba(43,28,18,0.10) 56.2%, transparent 56.6%, transparent 72%, rgba(43,28,18,0.10) 72.4%, rgba(43,28,18,0.10) 73.2%, transparent 73.6%),
+      linear-gradient(15deg, transparent 0%, transparent 62%, rgba(43,28,18,0.08) 62.4%, rgba(43,28,18,0.08) 63%, transparent 63.4%);
+    pointer-events: none;
+  }
+  .hero-sun {
+    position: absolute;
+    top: 18%; right: 14%;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,220,160,0.9) 0%, rgba(217,146,74,0.45) 45%, rgba(217,146,74,0) 72%);
+    filter: blur(2px);
+    animation: sunDrift 14s ease-in-out infinite alternate;
+  }
+  @keyframes sunDrift {
+    from { transform: translateY(0); opacity: 0.9; }
+    to   { transform: translateY(26px); opacity: 0.7; }
+  }
+  .hero-inner { position: relative; z-index: 2; padding: 0 24px; max-width: 880px; }
+  .hero-eyebrow {
+    font-family: var(--serif-en);
+    font-size: 0.78rem;
+    letter-spacing: 0.55em;
+    text-transform: uppercase;
+    color: var(--terra-deep);
+    margin-bottom: 34px;
+  }
+  .hero h1 {
+    font-family: var(--serif-jp);
+    font-weight: 500;
+    font-size: clamp(2.4rem, 6.4vw, 4.6rem);
+    letter-spacing: 0.14em;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+  .hero-sub {
+    margin-top: 38px;
+    font-family: var(--serif-jp);
+    font-size: clamp(0.85rem, 1.6vw, 1.05rem);
+    letter-spacing: 0.2em;
+    line-height: 2.3;
+    color: var(--brown);
+  }
+  .cta {
+    display: inline-block;
+    margin-top: 56px;
+    padding: 20px 64px;
+    border: 1px solid var(--ink);
+    color: var(--ink);
+    font-family: var(--serif-en);
+    font-size: 0.85rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    transition: color 0.5s;
+    background: transparent;
+  }
+  .cta::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--ink);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+    z-index: -1;
+  }
+  .cta:hover { color: var(--cream); }
+  .cta:hover::before { transform: scaleX(1); transform-origin: left; }
+  .scroll-hint {
+    position: absolute;
+    bottom: 40px; left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--serif-en);
+    font-size: 0.65rem;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: var(--brown);
+    z-index: 2;
+  }
+  .scroll-hint::after {
+    content: '';
+    display: block;
+    width: 1px; height: 48px;
+    margin: 14px auto 0;
+    background: linear-gradient(var(--brown), transparent);
+    animation: drip 2.4s ease-in-out infinite;
+  }
+  @keyframes drip {
+    0%   { transform: scaleY(0); transform-origin: top; }
+    45%  { transform: scaleY(1); transform-origin: top; }
+    55%  { transform: scaleY(1); transform-origin: bottom; }
+    100% { transform: scaleY(0); transform-origin: bottom; }
+  }
+
+  /* ---------- Common section ---------- */
+  section { padding: 160px 24px; position: relative; }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  .sec-label {
+    font-family: var(--serif-en);
+    font-size: 0.72rem;
+    letter-spacing: 0.55em;
+    text-transform: uppercase;
+    color: var(--terra);
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .sec-label::before {
+    content: '';
+    width: 44px; height: 1px;
+    background: var(--terra);
+  }
+  .sec-title {
+    font-family: var(--serif-jp);
+    font-weight: 500;
+    font-size: clamp(1.7rem, 3.6vw, 2.6rem);
+    letter-spacing: 0.16em;
+    line-height: 1.7;
+    margin-bottom: 60px;
+    color: var(--ink);
+  }
+
+  /* ---------- Philosophy ---------- */
+  .philosophy { background: var(--cream); }
+  .philosophy .prose {
+    max-width: 640px;
+    font-family: var(--serif-jp);
+    font-size: 1.02rem;
+    line-height: 2.9;
+    letter-spacing: 0.14em;
+    color: var(--brown);
+  }
+  .philosophy .prose + .prose { margin-top: 2.2em; }
+  .philosophy figure {
+    margin-top: 96px;
+    padding-top: 48px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    gap: 48px;
+    align-items: baseline;
+    font-family: var(--serif-en);
+    color: var(--terra-deep);
+  }
+  .philosophy figure .num { font-size: 2.8rem; font-weight: 300; }
+  .philosophy figure figcaption { font-size: 0.8rem; letter-spacing: 0.3em; font-family: var(--sans-jp); color: var(--brown); }
+
+  /* ---------- Plans ---------- */
+  .plans { background: linear-gradient(180deg, var(--beige) 0%, #efdfc4 100%); }
+  .plan-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+  .plan {
+    background: var(--cream);
+    padding: 64px 40px 56px;
+    display: flex;
+    flex-direction: column;
+    transition: background 0.6s;
+    position: relative;
+  }
+  .plan:hover { background: #fdf8ee; }
+  .plan-time {
+    font-family: var(--serif-en);
+    font-size: 0.7rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--terra);
+    margin-bottom: 20px;
+  }
+  .plan h3 {
+    font-family: var(--serif-jp);
+    font-weight: 500;
+    font-size: 1.5rem;
+    letter-spacing: 0.2em;
+    margin-bottom: 8px;
+  }
+  .plan .en {
+    font-family: var(--serif-en);
+    font-style: italic;
+    font-size: 0.85rem;
+    color: var(--brown);
+    opacity: 0.75;
+    margin-bottom: 32px;
+  }
+  .plan .price {
+    font-family: var(--serif-en);
+    font-size: 2.4rem;
+    font-weight: 300;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .plan .price span { font-size: 0.85rem; font-family: var(--sans-jp); color: var(--brown); letter-spacing: 0.1em; }
+  .plan .per { font-size: 0.7rem; letter-spacing: 0.2em; color: var(--brown); opacity: 0.7; margin-bottom: 36px; }
+  .plan ul { list-style: none; margin-top: auto; }
+  .plan li {
+    font-size: 0.82rem;
+    letter-spacing: 0.1em;
+    line-height: 2;
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+    color: var(--brown);
+  }
+  .plan li::before { content: '— '; color: var(--terra); }
+  .plan-note { margin-top: 36px; font-size: 0.72rem; letter-spacing: 0.12em; color: var(--brown); opacity: 0.75; line-height: 2.2; }
+
+  /* ---------- Science ---------- */
+  .science { background: var(--ink); color: var(--beige); }
+  .science .sec-label { color: var(--gold); }
+  .science .sec-label::before { background: var(--gold); }
+  .science .sec-title { color: var(--beige); }
+  .sci-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 80px 96px;
+  }
+  .sci-item { border-top: 1px solid rgba(243,234,217,0.2); padding-top: 32px; }
+  .sci-item .value {
+    font-family: var(--serif-en);
+    font-size: 3.2rem;
+    font-weight: 300;
+    color: var(--gold);
+    line-height: 1.1;
+  }
+  .sci-item .value small { font-size: 1.1rem; margin-left: 6px; letter-spacing: 0.1em; }
+  .sci-item h4 {
+    font-family: var(--serif-jp);
+    font-weight: 500;
+    font-size: 0.95rem;
+    letter-spacing: 0.22em;
+    margin: 18px 0 12px;
+    color: var(--beige);
+  }
+  .sci-item p { font-size: 0.8rem; line-height: 2.2; letter-spacing: 0.08em; color: rgba(243,234,217,0.72); }
+  .science .caveat {
+    margin-top: 80px;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    line-height: 2.2;
+    color: rgba(243,234,217,0.45);
+    max-width: 560px;
+  }
+
+  /* ---------- Studio ---------- */
+  .studio { background: var(--cream); }
+  .studio-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 64px;
+  }
+  .studio-item .idx {
+    font-family: var(--serif-en);
+    font-size: 0.75rem;
+    letter-spacing: 0.4em;
+    color: var(--terra);
+    display: block;
+    margin-bottom: 24px;
+  }
+  .studio-item h4 {
+    font-family: var(--serif-jp);
+    font-weight: 500;
+    font-size: 1.15rem;
+    letter-spacing: 0.18em;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  .studio-item p { font-size: 0.82rem; line-height: 2.3; letter-spacing: 0.08em; color: var(--brown); }
+
+  /* ---------- Testimonial ---------- */
+  .voices { background: var(--beige); }
+  .voice-list { max-width: 760px; }
+  .voice {
+    padding: 48px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .voice:first-child { border-top: 1px solid var(--line); }
+  .voice blockquote {
+    font-family: var(--serif-jp);
+    font-size: 1.05rem;
+    line-height: 2.5;
+    letter-spacing: 0.12em;
+    color: var(--ink);
+    margin-bottom: 20px;
+  }
+  .voice cite {
+    font-style: normal;
+    font-family: var(--serif-en);
+    font-size: 0.78rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--terra-deep);
+  }
+  .voice cite span { font-family: var(--sans-jp); font-size: 0.72rem; letter-spacing: 0.15em; color: var(--brown); margin-left: 14px; }
+
+  /* ---------- Closing ---------- */
+  .closing {
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 100%, rgba(217,146,74,0.3) 0%, rgba(217,146,74,0) 65%),
+      linear-gradient(180deg, var(--beige) 0%, #e2b57f 100%);
+    text-align: center;
+    padding: 180px 24px;
+  }
+  .closing h2 {
+    font-family: var(--serif-jp);
+    font-weight: 500;
+    font-size: clamp(1.6rem, 3.4vw, 2.4rem);
+    letter-spacing: 0.2em;
+    line-height: 2;
+    margin-bottom: 56px;
+  }
+
+  /* ---------- Footer ---------- */
+  footer {
+    background: var(--ink);
+    color: var(--beige);
+    padding: 96px 48px 48px;
+  }
+  .foot-inner { max-width: 1080px; margin: 0 auto; }
+  .foot-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 48px;
+    padding-bottom: 64px;
+    border-bottom: 1px solid rgba(243,234,217,0.15);
+    flex-wrap: wrap;
+  }
+  .foot-brand {
+    font-family: var(--serif-en);
+    font-size: 2rem;
+    letter-spacing: 0.35em;
+    font-weight: 400;
+  }
+  .foot-brand small {
+    display: block;
+    font-family: var(--serif-jp);
+    font-size: 0.6rem;
+    letter-spacing: 0.6em;
+    color: var(--gold);
+    margin-top: 8px;
+  }
+  .foot-info { font-size: 0.75rem; line-height: 2.4; letter-spacing: 0.12em; color: rgba(243,234,217,0.7); }
+  .foot-sns { display: flex; gap: 32px; }
+  .foot-sns a {
+    font-family: var(--serif-en);
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--beige);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(243,234,217,0.3);
+    padding-bottom: 4px;
+    transition: color 0.4s, border-color 0.4s;
+  }
+  .foot-sns a:hover { color: var(--gold); border-color: var(--gold); }
+  .foot-bottom {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 40px;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: rgba(243,234,217,0.4);
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  /* ---------- Reveal animation ---------- */
+  .reveal {
+    opacity: 0;
+    transform: translateY(36px);
+    transition: opacity 1.1s cubic-bezier(0.22, 1, 0.36, 1), transform 1.1s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .reveal.is-visible { opacity: 1; transform: translateY(0); }
+  .reveal[data-delay="1"] { transition-delay: 0.12s; }
+  .reveal[data-delay="2"] { transition-delay: 0.24s; }
+  .reveal[data-delay="3"] { transition-delay: 0.36s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { transition: none; opacity: 1; transform: none; }
+    .hero-sun, .scroll-hint::after { animation: none; }
+    html { scroll-behavior: auto; }
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 860px) {
+    header { padding: 20px 24px; }
+    nav ul { gap: 20px; }
+    nav a { font-size: 0.65rem; letter-spacing: 0.15em; }
+    section { padding: 104px 20px; }
+    .plan-grid { grid-template-columns: 1fr; }
+    .sci-grid { grid-template-columns: 1fr; gap: 56px; }
+    .studio-grid { grid-template-columns: 1fr; gap: 56px; }
+    .philosophy figure { flex-direction: column; gap: 12px; }
+    .hero-sun { width: 120px; height: 120px; right: 8%; }
+    footer { padding: 72px 24px 40px; }
+    .cta { padding: 18px 44px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="brand" href="#top">NISHIBI<small>西 日</small></a>
+  <nav>
+    <ul>
+      <li><a href="#philosophy">Philosophy</a></li>
+      <li><a href="#plans">Plans</a></li>
+      <li><a href="#science">Science</a></li>
+      <li><a href="#studio">Studio</a></li>
+    </ul>
+  </nav>
+</header>
+
+<!-- 1. Hero -->
+<section class="hero" id="top" style="padding:0;">
+  <div class="hero-sun" aria-hidden="true"></div>
+  <div class="hero-inner">
+    <p class="hero-eyebrow reveal">Natural Sunbathing Atelier</p>
+    <h1 class="reveal" data-delay="1">光は、西からしか来ない。</h1>
+    <p class="hero-sub reveal" data-delay="2">夕刻の窓辺に身を横たえ、天然の西日だけで肌を焼く。<br>人工の紫外線を一切用いない、都市のための日焼けスタジオ。</p>
+    <a href="#plans" class="cta reveal" data-delay="3">Reserve the Light</a>
+  </div>
+  <div class="scroll-hint">Scroll</div>
+</section>
+
+<!-- 2. Philosophy -->
+<section class="philosophy" id="philosophy">
+  <div class="wrap">
+    <p class="sec-label reveal">Philosophy</p>
+    <h2 class="sec-title reveal" data-delay="1">なぜ、西日なのか。</h2>
+    <div class="prose reveal" data-delay="2">
+      <p>日焼けマシンが発明されて半世紀。私たちは光を「制御できるもの」と思い違えてきました。しかし肌が本当に求めているのは、均質な人工波長ではなく、大気圏を斜めに長く通過し、黄砂と水蒸気と都市の記憶を帯びた、一日の終わりの太陽です。</p>
+      <p>西日は劣位の光ではありません。可視光と赤外線の比率が最も人肌に近づく、熟成された光です。私たちはその光が差し込む時間だけ営業し、曇天の日は潔く休業します。機械にはない規律を、私たちは太陽から学んでいます。</p>
+    </div>
+    <figure class="reveal" data-delay="3">
+      <span class="num">16:47</span>
+      <figcaption>本日の採光開始時刻。日没までの残量は受付にて日次で公示します。</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- 3. Plans -->
+<section class="plans" id="plans">
+  <div class="wrap">
+    <p class="sec-label reveal">Plans</p>
+    <h2 class="sec-title reveal" data-delay="1">光の時間帯で選ぶ、三つの席。</h2>
+    <div class="plan-grid">
+      <div class="plan reveal" data-delay="1">
+        <p class="plan-time">15:30 – 16:45</p>
+        <h3>黄金時間</h3>
+        <p class="en">The Golden Hour</p>
+        <p class="price">¥8,800<span> / 75分</span></p>
+        <p class="per">初級・西日入門プログラム</p>
+        <ul>
+          <li>南西面 前列シート（仰角 18°）</li>
+          <li>採光カーテンによる濃度調整</li>
+          <li>冷製ほうじ茶と素焼きナッツ</li>
+          <li>焼き具合の観察記録カード</li>
+        </ul>
+      </div>
+      <div class="plan reveal" data-delay="2">
+        <p class="plan-time">16:45 – 17:50</p>
+        <h3>茜時間</h3>
+        <p class="en">The Madder Hour</p>
+        <p class="price">¥14,200<span> / 65分</span></p>
+        <p class="per">中級・発色重視プログラム</p>
+        <ul>
+          <li>窓際特等席（ガラス直近 40cm）</li>
+          <li>雲量に応じた反射板アシスト</li>
+          <li>茜染めリネンの専用寝具</li>
+          <li>夕刻アロマ（沈香・日向夏）</li>
+          <li>翌日の西日予報レポート</li>
+        </ul>
+      </div>
+      <div class="plan reveal" data-delay="3">
+        <p class="plan-time">17:50 – 日没</p>
+        <h3>残光時間</h3>
+        <p class="en">The Afterglow</p>
+        <p class="price">¥21,000<span> / 日没まで</span></p>
+        <p class="per">上級・完全予約制一席のみ</p>
+        <ul>
+          <li>独立ブース「残光の間」を貸切</li>
+          <li>日没と同時に終了する不可逆の施術</li>
+          <li>専属焼き師による角度管理</li>
+          <li>翌朝の肌色採寸・色見本帳交付</li>
+          <li>年間西日カレンダー進呈</li>
+        </ul>
+      </div>
+    </div>
+    <p class="plan-note reveal">※ すべてのプランは天候により成立しない場合があります。曇天時は自動キャンセルとなり、料金は発生いたしません。光を売るのであって、光のない約束は売りません。</p>
+  </div>
+</section>
+
+<!-- 4. Science -->
+<section class="science" id="science">
+  <div class="wrap">
+    <p class="sec-label reveal">Science</p>
+    <h2 class="sec-title reveal" data-delay="1">西日の、真面目な記録。</h2>
+    <div class="sci-grid">
+      <div class="sci-item reveal">
+        <p class="value">−38<small>%</small></p>
+        <h4>UVB 強度の減衰</h4>
+        <p>夕刻の太陽高度低下により、UVB は正午比で約38%減衰。肌への負荷を抑えつつ、緩やかで均質なメラニン生成を促す「低温長時間焼き」を実現します。</p>
+      </div>
+      <div class="sci-item reveal" data-delay="1">
+        <p class="value">1.9<small>倍</small></p>
+        <h4>大気通過距離</h4>
+        <p>西日は正午の光に比べ、大気中の通過距離が約1.9倍。散乱を重ねた光は柔らかく拡散し、筋肉の陰影を立体的に着色する効果が観測されています。</p>
+      </div>
+      <div class="sci-item reveal" data-delay="2">
+        <p class="value">2,200<small>K</small></p>
+        <h4>日没前の色温度</h4>
+        <p>日没30分前の光は約2,200ケルビン。暖色系の波長が視床下部へ作用し、施術後の入眠潜時が平均で14分短縮するという所内データがあります。</p>
+      </div>
+      <div class="sci-item reveal" data-delay="3">
+        <p class="value">97<small>%</small></p>
+        <h4>光源の天然比率</h4>
+        <p>施術に使用する光の97%が窓外の太陽由来。残る3%は退店時の廊下の間接照明であり、肌への寄与はないものと厳密に切り分けています。</p>
+      </div>
+    </div>
+    <p class="caveat reveal">※ 数値は当スタジオ観測室による2021–2024年の独自記録に基づく参考値です。医学的効能を保証するものではありませんが、記録への誠実さだけは保証します。</p>
+  </div>
+</section>
+
+<!-- 5. Studio -->
+<section class="studio" id="studio">
+  <div class="wrap">
+    <p class="sec-label reveal">Studio</p>
+    <h2 class="sec-title reveal" data-delay="1">光のために設計された、何もない部屋。</h2>
+    <div class="studio-grid">
+      <div class="studio-item reveal">
+        <span class="idx">01</span>
+        <h4>南西向き全面窓</h4>
+        <p>建物の南西面を床から天井まで一枚ガラスで構成。西日の入射角を最大化するため、窓面は壁に対して4.5度傾斜しています。曇りガラス、遮光膜、ブラインドは一切設けません。</p>
+      </div>
+      <div class="studio-item reveal" data-delay="1">
+        <span class="idx">02</span>
+        <h4>無垢材の寝台</h4>
+        <p>寝台は築90年の古民家から再生した欅の無垢材。金属部品を用いない組木構造により、光の反射に混濁が生じません。木材自体が西日を吸い、室内を均一な照度に整えます。</p>
+      </div>
+      <div class="studio-item reveal" data-delay="2">
+        <span class="idx">03</span>
+        <h4>無音空間</h4>
+        <p>空調は床下輻射式、時計は全館撤去。壁面は土佐和紙の三重張りで、環境騒音を21デジベルまで低減しています。ここで聞こえるのは、光が角度を変える音だけです。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. Testimonials -->
+<section class="voices" id="voices">
+  <div class="wrap">
+    <p class="sec-label reveal">Voices</p>
+    <h2 class="sec-title reveal" data-delay="1">西日に還った人々。</h2>
+    <div class="voice-list">
+      <div class="voice reveal">
+        <blockquote>「マシンの光は肌を焼きましたが、ここの光は私を焼きます。日没で施術が終わる瞬間の、抗いようのない潔さが好きです。」</blockquote>
+        <cite>Y. Aoyama<span>建築家・茜時間 週2回利用</span></cite>
+      </div>
+      <div class="voice reveal" data-delay="1">
+        <blockquote>「最初は窓際で寝ているだけだと思っていました。三ヶ月後、同僚に“どこのサロン”と聞かれ、“西の空”と答えました。」</blockquote>
+        <cite>R. Kishimoto<span>ワイン輸入業・残光時間 月1回利用</span></cite>
+      </div>
+      <div class="voice reveal" data-delay="2">
+        <blockquote>「曇りでキャンセルになった日、むしろ信頼が増しました。光をごまかさない商売は、この街にこれだけです。」</blockquote>
+        <cite>M. Tachibana<span>装丁家・黄金時間 通算41回利用</span></cite>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Closing -->
+<section class="closing">
+  <div class="wrap">
+    <h2 class="reveal">明日の夕方、<br>あなたの肌は西を向いていますか。</h2>
+    <a href="#top" class="cta reveal" data-delay="1">Reserve the Light</a>
+  </div>
+</section>
+
+<!-- 7. Footer -->
+<footer>
+  <div class="foot-inner">
+    <div class="foot-top">
+      <div>
+        <p class="foot-brand">NISHIBI<small>西 日</small></p>
+      </div>
+      <div class="foot-info">
+        Natural Sunbathing Atelier NISHIBI<br>
+        〒150-0033 東京都渋谷区猿楽町 28-10<br>
+        日没ビル西棟 4F（西側のみ開口）<br>
+        営業時間 — 15:30 より日没まで / 曇天・雨天休業
+      </div>
+      <div class="foot-sns">
+        <a href="#" rel="noopener">Instagram</a>
+        <a href="#" rel="noopener">X</a>
+        <a href="#" rel="noopener">Journal</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <p>© 2025 NISHIBI Co., Ltd. All light reserved.</p>
+      <p>本サイトはフィクションです。実在のスタジオ・日没ビルとは関係ありません。</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var targets = document.querySelectorAll('.reveal');
+  if (!('IntersectionObserver' in window)) {
+    targets.forEach(function (el) { el.classList.add('is-visible'); });
+    return;
+  }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+  targets.forEach(function (el) { io.observe(el); });
+})();
+</script>
+
+</body>
+</html>
