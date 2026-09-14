@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SWE-2 High — pr-triage / OreOre-Bench</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff; --bg-soft: #f7f8fa;
+    --fg: #1a1a1a; --fg-soft: #4a4a4a; --muted-fg: #6b7280;
+    --border: #e5e7eb; --primary: #2563eb;
+    --accent: #3B4BDB; --accent-dark: #2B3AAD;
+    --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+          background: var(--bg-soft); color: var(--fg);
+          line-height: 1.7; font-size: 0.9375rem; -webkit-font-smoothing: antialiased; }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .hero { padding: 28px 24px 32px; color: #fff;
+           background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); }
+  .hero-inner { max-width: 1200px; margin: 0 auto; }
+  .hero a.back { color: #fff; opacity: 0.85; font-size: 0.875rem;
+                  font-weight: 600; display: inline-block; margin-bottom: 12px; }
+  .hero h1 { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.01em;
+              color: #fff; margin-bottom: 4px; }
+  .hero .tag { display: inline-block; font-size: 0.75rem; font-weight: 800;
+                letter-spacing: 0.06em; text-transform: uppercase;
+                background: rgba(255,255,255,0.22); padding: 5px 12px;
+                border-radius: 999px; margin-bottom: 12px; }
+  .hero .sub { font-size: 0.9rem; opacity: 0.9; }
+  .verify-bar { background: var(--bg); border-bottom: 1px solid var(--border);
+                 padding: 14px 24px; font-size: 0.875rem; }
+  .verify-bar-inner { max-width: 1200px; margin: 0 auto;
+                       display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; }
+  .badge { display: inline-flex; align-items: center; gap: 6px;
+            font-weight: 800; padding: 4px 12px; border-radius: 999px;
+            font-size: 0.875rem; }
+  .badge.pass { background: rgba(16,185,129,0.12); color: #047857; }
+  .badge.fail { background: rgba(239,68,68,0.12); color: #b91c1c; }
+  .badge.score { background: rgba(37,99,235,0.10); color: #1d4ed8; }
+  .stat { color: var(--fg-soft); }
+  .stat strong { color: var(--fg); font-weight: 800; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 24px; }
+  .panel { background: var(--bg); border: 1px solid var(--border);
+            border-radius: 14px; overflow: hidden; margin-bottom: 20px; }
+  .panel-head { padding: 16px 20px; border-bottom: 1px solid var(--border);
+                 display: flex; align-items: center; justify-content: space-between;
+                 gap: 12px; background: var(--bg-soft); }
+  .panel-head h2 { font-size: 0.875rem; font-weight: 800; letter-spacing: 0.06em;
+                    text-transform: uppercase; color: var(--fg); }
+  .panel-body { padding: 20px; }
+  .table-scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 980px; }
+  th, td { padding: 10px 12px; border-bottom: 1px solid var(--border);
+            text-align: left; vertical-align: top; }
+  th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+        color: var(--muted-fg); background: var(--bg-soft); white-space: nowrap; }
+  td { font-size: 0.875rem; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .verdict { display: inline-block; padding: 2px 8px; border-radius: 999px;
+              font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700;
+              background: var(--bg-soft); border: 1px solid var(--border); }
+  .match-primary { color: #047857; font-weight: 800; }
+  .match-acceptable { color: #b45309; font-weight: 800; }
+  .match-miss { color: #b91c1c; font-weight: 800; }
+  ul { margin: 0; padding-left: 1.15rem; }
+  li { margin-bottom: 3px; }
+  .summary { white-space: pre-wrap; color: var(--fg-soft); }
+  .priority { display: flex; flex-wrap: wrap; gap: 6px; }
+  .priority span { font-family: 'JetBrains Mono', monospace; font-size: 0.8125rem;
+                    padding: 4px 8px; border-radius: 6px;
+                    background: var(--bg-soft); border: 1px solid var(--border); }
+  .error { border: 1px solid #fecaca; background: #fef2f2; color: #991b1b;
+            padding: 16px 20px; border-radius: 10px; }
+  .raw { margin-top: 12px; background: #1a1a1a; color: #e5e7eb;
+          padding: 12px; border-radius: 6px; font-family: 'JetBrains Mono', monospace;
+          font-size: 0.75rem; line-height: 1.6; overflow-x: auto;
+          max-height: 420px; overflow-y: auto; white-space: pre-wrap; }
+  @media (max-width: 700px) {
+    .hero h1 { font-size: 1.45rem; }
+    .wrap { padding: 16px; }
+    .panel-body { padding: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a href="../../" class="back">← OreOre-Bench に戻る</a>
+    <span class="tag">pr-triage ・ Cognition ・ API LLM</span>
+    <h1>SWE-2 High</h1>
+    <p class="sub">架空リポジトリの Open PR 10 件を、マージ可否・リスク・次アクション込みでトリアージ。</p>
+  </div>
+</header>
+
+<div class="verify-bar">
+  <div class="verify-bar-inner">
+    <span class="badge pass">スキーマ準拠 PASS</span>
+    <span class="badge score">agreement 95%</span>
+    <span class="stat">primary <strong>9</strong> / acceptable <strong>1</strong></span>
+    <span class="stat">出力 <strong>5,117</strong> chars</span>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>PR verdicts</h2>
+      <a href="./output.json" target="_blank">JSON →</a>
+    </div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>PR</th>
+              <th>model verdict</th>
+              <th>primary</th>
+              <th>match</th>
+              <th>reasons</th>
+              <th>actions</th>
+              <th>risk</th>
+            </tr>
+          </thead>
+          <tbody>
+        <tr>
+          <td class="mono">101</td>
+          <td><span class="verdict">merge</span></td>
+          <td><span class="verdict">merge</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>Issue #90（P1・通知メール洪水）への対応で、通知を 1 時間 3 通に制限し超過分を WARNING ログに集約する方針は合理的</li><li>CI 通過・approve 済み・テスト +92 行あり、コンフリクトもない</li><li>通知そのものを止めずログに残すため、異常検知能力を失わない</li></ul></td>
+          <td><ul><li>そのまま main へマージする</li><li>本番でキャッシュ backend が複数ワーカー間で共有されているか（Redis 等）を確認する</li><li>Issue #90 をクローズする</li></ul></td>
+          <td><span class="verdict">low</span></td>
+        </tr>
+        <tr>
+          <td class="mono">102</td>
+          <td><span class="verdict">fix</span></td>
+          <td><span class="verdict">fix</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>レビュー指摘のとおり `filter(id__in=ids)` に owner 絞り込みがなく、他人のタスクをアーカイブできる認可漏れ（IDOR）がある</li><li>新機能なのにテストがなく、テスト必須の方針を満たしていない</li><li>作者が指摘に 9 日間未返信で、このままマージはできない</li></ul></td>
+          <td><ul><li>`filter(id__in=ids, owner=request.user)` のように所有者で絞り込む修正を要求する</li><li>他人のタスク ID を含むリクエストが弾かれることを確認するテストの追加を要求する</li><li>一定期間返信がなければクローズも検討する旨を作者に伝える</li></ul></td>
+          <td><span class="verdict">high</span></td>
+        </tr>
+        <tr>
+          <td class="mono">103</td>
+          <td><span class="verdict">fix</span></td>
+          <td><span class="verdict">close</span></td>
+          <td><span class="match-acceptable">△ acceptable</span></td>
+          <td><ul><li>`except Exception: pass` で全例外を握りつぶす実装は「silent failure を導入しない」方針に明確に違反する</li><li>Issue #91 の課題（Sentry クォータ圧迫）自体は正当なので、PR ごと捨てるより是正する価値がある</li><li>None を返す設計は呼び出し側で原因不明の失敗を招き、障害調査を困難にする</li></ul></td>
+          <td><ul><li>`ConnectionError` 等の対象例外を限定して catch し、INFO/WARNING レベルで記録する実装に修正を要求する</li><li>ログ抑制は例外握りつぶしではなく、Sentry 側のサンプリングやレート制限で実現する方向を提案する</li><li>修正後に例外時の戻り値の扱いを呼び出し側と合わせて確認する</li></ul></td>
+          <td><span class="verdict">high</span></td>
+        </tr>
+        <tr>
+          <td class="mono">104</td>
+          <td><span class="verdict">close</span></td>
+          <td><span class="verdict">close</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>依存パッケージのバージョン固定・ロックファイル管理はリポジトリの明確な方針（サプライチェーン攻撃防止）に反する</li><li>lock 削除によりビルド再現性が失われ、本番環境に不意の破壊的変更が入るリスクがある</li><li>「更新 PR が面倒」という動機は Dependabot 等の自動化で解決すべき課題であり、固定解除の理由にならない</li></ul></td>
+          <td><ul><li>方針違反の旨をコメントしてクローズする</li><li>依存更新の手間削減には Dependabot / Renovate 導入を別途提案する</li></ul></td>
+          <td><span class="verdict">high</span></td>
+        </tr>
+        <tr>
+          <td class="mono">105</td>
+          <td><span class="verdict">merge</span></td>
+          <td><span class="verdict">merge</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>Issue #92 のセキュリティ修正であり最優先対象。トークンを URL クエリから POST body に移し、Referer・アクセスログ経由の漏えいを遮断する設計が妥当</li><li>CI 通過・レビュー approve 済み・テスト +118 行で要件を満たしている</li><li>旧リンクの 24 時間互換ウィンドウで既存ユーザーを壊さない移行設計になっている</li></ul></td>
+          <td><ul><li>そのまま main へマージする</li><li>マージ後、本番で旧リンクの互換期限（24 時間後）に問題が出ないか監視する</li><li>Issue #92 をクローズする</li></ul></td>
+          <td><span class="verdict">low</span></td>
+        </tr>
+        <tr>
+          <td class="mono">106</td>
+          <td><span class="verdict">fix</span></td>
+          <td><span class="verdict">fix</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>42 ファイル・+3,180/-964 でダークモード・通知設定・LP 刷新という独立した 3 機能が混在し、レビュー不能な大きさ</li><li>レビュアーの分割要求に作者が拒否回答しており、このまま品質担保できない</li><li>テストの有無が記載されておらず、新アプリ notifications/ を含むためテスト必須方針の確認も必要</li></ul></td>
+          <td><ul><li>ダークモード・通知設定・LP 刷新の少なくとも 3 PR への分割を改めて要求する</li><li>notifications/ 新アプリ部分にはテストを必須とすることを明示する</li><li>分割に応じない場合はクローズする方針を作者に伝える</li></ul></td>
+          <td><span class="verdict">high</span></td>
+        </tr>
+        <tr>
+          <td class="mono">107</td>
+          <td><span class="verdict">fix</span></td>
+          <td><span class="verdict">fix</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>CI が失敗（test_deadline_dst_boundary）しており、CI 失敗 PR はマージしない方針</li><li>タイムゾーン絡みの修正で DST 境界テストが落ちているのは、flaky ではなく実バグの可能性が高い</li><li>作者の「ローカルでは通る」は環境の TZ 依存を疑わせる状況証拠</li></ul></td>
+          <td><ul><li>CI 環境（TZ=UTC 等）での再現確認と、DST 境界テスト失敗の原因調査を要求する</li><li>テスト内でタイムゾーンを明示的に固定し、環境依存を排除するよう要求する</li><li>CI グリーン化後に再レビューする</li></ul></td>
+          <td><span class="verdict">medium</span></td>
+        </tr>
+        <tr>
+          <td class="mono">108</td>
+          <td><span class="verdict">hold</span></td>
+          <td><span class="verdict">hold</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>Issue #94 での分離の是非の議論が未決着のまま、結論を先取りする形でモデル移動とマイグレーションが実装されている</li><li>JOIN 増加のパフォーマンス懸念への回答がなく、28 ファイル・`db_table` 変更を含む大規模変更を推測で判断できない</li><li>本番稼働中のサービスで `db_table` 変更マイグレーションはデータ移行リスクが大きい</li></ul></td>
+          <td><ul><li>Issue #94 の議論を再開し、分離の結論が出るまで PR を保留にする</li><li>作者にパフォーマンス懸念への定量的な回答（ベンチマーク等）を求める</li><li>結論が「分離しない」になった場合はクローズ、分離する場合はマイグレーション計画を再レビューする</li></ul></td>
+          <td><span class="verdict">high</span></td>
+        </tr>
+        <tr>
+          <td class="mono">109</td>
+          <td><span class="verdict">close</span></td>
+          <td><span class="verdict">close</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>Issue #93 で `docs/setup.md` が全面改訂され main にマージ済みで、目的は既に解決済み</li><li>README には既に `docs/setup.md` へのリンクがあり、本 PR の追記は内容が重複・陳腐化している</li><li>README.md でコンフリクトが発生しており 30 日経過、解消コストに見合わない</li></ul></td>
+          <td><ul><li>docs/setup.md で解決済みである旨をコメントしてクローズする</li><li>README のリンクからの導線に不足があれば別途小さな PR を提案する</li></ul></td>
+          <td><span class="verdict">low</span></td>
+        </tr>
+        <tr>
+          <td class="mono">110</td>
+          <td><span class="verdict">merge</span></td>
+          <td><span class="verdict">merge</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>CI 通過・approve 済みで、残指摘は nit（StreamingHttpResponse 化の提案）のみ。方針上 nit でブロックしない</li><li>エクスポート機能にテスト +66 行が付いておりテスト必須の要件を満たす</li><li>変更規模が小さく影響範囲が限定的</li></ul></td>
+          <td><ul><li>そのまま main へマージする</li><li>nit で指摘された StreamingHttpResponse 化は別 Issue として起票し、件数増加時の改善候補にする</li></ul></td>
+          <td><span class="verdict">low</span></td>
+        </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Priority Order</h2></div>
+    <div class="panel-body"><div class="priority"><span>105</span><span>101</span><span>110</span><span>102</span><span>107</span><span>103</span><span>106</span><span>108</span><span>104</span><span>109</span></div></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Summary</h2></div>
+    <div class="panel-body"><p class="summary">セキュリティ修正の #105 と P1 対応の #101 は即マージ、approve 済みの #110 もマージ可。#102（認可漏れ）・#103（例外握りつぶし）・#107（CI 失敗）・#106（过大な混在変更）は修正要求、#108 は Issue #94 の結論待ちで保留。方針違反の #104 と解決済みの #109 はクローズを推奨。</p></div>
+  </section>
+
+
+</main>
+
+</body>
+</html>

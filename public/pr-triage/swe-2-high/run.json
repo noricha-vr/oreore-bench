@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "theme": "pr-triage",
+  "model": "swe-2-high",
+  "model_id": "swe-2-high",
+  "harness": "devin-subagent",
+  "reasoning_effort": "high",
+  "attempts": 1,
+  "generated_at": "2026-09-15T08:01:20+09:00",
+  "generated_at_source": "measured",
+  "sampling": {
+    "temperature": "default",
+    "max_tokens": "default",
+    "top_p": "default"
+  },
+  "system_prompt": "harness-default",
+  "post_processing": "none",
+  "runtime": {
+    "engine": "devin-cli",
+    "version": "3000.10.21"
+  },
+  "usage": {
+    "estimated": true,
+    "method": "tiktoken-o200k_base-proxy",
+    "prompt_tokens": 2600,
+    "completion_tokens": 2446,
+    "note": "tiktoken o200k_base 推定（Devin subagent は usage 実測を返さない）。reasoning・ハーネス側 system prompt を含まない下限値"
+  },
+  "cost": {
+    "estimated": true,
+    "usd": null,
+    "actual_usd": null,
+    "prompt_usd_per_mtok": null,
+    "completion_usd_per_mtok": null,
+    "pricing_source": "subscription",
+    "pricing_model": null,
+    "pricing_fetched_at": null
+  }
+}
