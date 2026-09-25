@@ -1,0 +1,263 @@
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>はさみ将棋</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Hiragino Kaku Gothic Pro','Meiryo','Yu Gothic',sans-serif;background:linear-gradient(135deg,#1a1a2e,#16213e);color:#ecf0f1;display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:8px;touch-action:manipulation}
+h1{font-size:1.5em;margin:8px 0;text-align:center}
+#turn-indicator{margin:6px 0;padding:6px 20px;background:#34495e;border-radius:20px;font-weight:bold;font-size:1em;min-width:150px;text-align:center;transition:background .3s}
+#turn-indicator.thinking{background:#5d4a1a;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+.info-row{display:flex;gap:12px;margin:6px 0;flex-wrap:wrap;justify-content:center}
+.info-box{background:#34495e;padding:5px 14px;border-radius:8px;text-align:center;min-width:110px}
+.info-label{font-size:.72em;color:#bdc3c7;margin-bottom:2px}
+.info-value{font-size:1.3em;font-weight:bold}
+.captured-row{display:flex;gap:12px;margin:5px 0;flex-wrap:wrap;justify-content:center}
+.captured-box{background:#2c3e50;padding:5px 10px;border-radius:8px;text-align:center;min-width:130px}
+.captured-pieces{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;margin-top:4px;min-height:22px}
+.captured-piece{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold}
+.captured-piece.human-piece{background:#FFF8DC;color:#333;border:1.5px solid #8B4513}
+.captured-piece.cpu-piece{background:#4A2020;color:#FFD700;border:1.5px solid #8B0000}
+#board{display:grid;grid-template-columns:repeat(9,1fr);grid-template-rows:repeat(9,1fr);gap:2px;background:#5D4037;padding:4px;border-radius:6px;width:min(92vw,460px);height:min(92vw,460px);margin:8px 0;box-shadow:0 4px 15px rgba(0,0,0,.3)}
+.cell{background:#DEB887;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:3px;transition:background .12s;position:relative}
+.cell:hover{background:#D2A679}
+.cell.selected{background:#FFD700;box-shadow:inset 0 0 8px rgba(255,215,0,.5)}
+.cell.valid-move{background:#90EE90}
+.cell.valid-move:hover{background:#7CFC00}
+.piece{width:85%;height:85%;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:min(3.5vw,18px);font-weight:bold;user-select:none;pointer-events:none}
+.piece.human{background:radial-gradient(circle at 35% 35%,#FFFDE7,#FFF8DC);color:#3E2723;border:2px solid #8B4513;box-shadow:1px 1px 3px rgba(0,0,0,.3)}
+.piece.cpu{background:radial-gradient(circle at 35% 35%,#5D3A3A,#4A2020);color:#FFD700;border:2px solid #8B0000;box-shadow:1px 1px 3px rgba(0,0,0,.3)}
+#result{display:none;margin:8px 0;padding:10px 25px;background:linear-gradient(135deg,#e74c3c,#c0392b);border-radius:8px;font-size:1.2em;font-weight:bold;text-align:center;box-shadow:0 4px 10px rgba(0,0,0,.3)}
+#reset-btn{margin:8px 0;padding:10px 30px;background:linear-gradient(135deg,#3498db,#2980b9);color:#fff;border:none;border-radius:8px;font-size:1em;cursor:pointer;font-family:inherit;transition:background .2s;box-shadow:0 2px 5px rgba(0,0,0,.2)}
+#reset-btn:hover{background:linear-gradient(135deg,#2980b9,#21618c)}
+@media(max-width:400px){h1{font-size:1.2em}.piece{font-size:min(4vw,16px)}.info-box{min-width:95px;padding:4px 8px}.captured-box{min-width:115px}}
+</style>
+</head>
+<body>
+
+<h1>はさみ将棋</h1>
+<div id="turn-indicator">あなたの番</div>
+
+<div class="info-row">
+  <div class="info-box">
+    <div class="info-label">あなたが取った駒</div>
+    <div class="info-value" id="human-captured-count">0</div>
+  </div>
+  <div class="info-box">
+    <div class="info-label">CPU が取った駒</div>
+    <div class="info-value" id="cpu-captured-count">0</div>
+  </div>
+</div>
+
+<div class="captured-row">
+  <div class="captured-box">
+    <div class="info-label">あなたの取った駒</div>
+    <div class="captured-pieces" id="human-captured-pieces"></div>
+  </div>
+  <div class="captured-box">
+    <div class="info-label">CPU の取った駒</div>
+    <div class="captured-pieces" id="cpu-captured-pieces"></div>
+  </div>
+</div>
+
+<div id="board"></div>
+<div id="result"></div>
+<button id="reset-btn">リセット</button>
+
+<script>
+const HUMAN=1,CPU=2,EMPTY=0;
+let board,humanCaptured,cpuCaptured,selectedPiece,gameOver,cpuThinking,cpuTimeoutId=null;
+
+function initGame(){
+  if(cpuTimeoutId){clearTimeout(cpuTimeoutId);cpuTimeoutId=null}
+  board=Array.from({length:9},()=>Array(9).fill(0));
+  for(let c=0;c<9;c++){board[8][c]=HUMAN;board[0][c]=CPU}
+  humanCaptured=0;cpuCaptured=0;selectedPiece=null;gameOver=false;cpuThinking=false;
+  document.getElementById('result').style.display='none';
+  render();updateTurnIndicator();updateCapturedDisplay();
+}
+
+function getLegalMoves(r,c){
+  const player=board[r][c];
+  if(player===EMPTY)return[];
+  const moves=[];
+  for(const[dr,dc]of[[-1,0],[1,0],[0,-1],[0,1]]){
+    let nr=r+dr,nc=c+dc;
+    while(nr>=0&&nr<9&&nc>=0&&nc<9){
+      if(board[nr][nc]!==EMPTY)break;
+      moves.push([nr,nc]);nr+=dr;nc+=dc;
+    }
+  }
+  return moves;
+}
+
+function getCaptures(r,c,player){
+  const enemy=player===HUMAN?CPU:HUMAN;
+  const captures=new Set();
+  for(const[dr,dc]of[[-1,0],[1,0],[0,-1],[0,1]]){
+    let nr=r+dr,nc=c+dc;
+    const enemyPieces=[];
+    while(nr>=0&&nr<9&&nc>=0&&nc<9){
+      if(board[nr][nc]===enemy){enemyPieces.push([nr,nc]);nr+=dr;nc+=dc}
+      else if(board[nr][nc]===player){enemyPieces.forEach(([er,ec])=>captures.add(er+','+ec));break}
+      else break;
+    }
+  }
+  const corners=[[[0,0],[[0,1],[1,0]]],[[0,8],[[0,7],[1,8]]],[[8,0],[[7,0],[8,1]]],[[8,8],[[7,8],[8,7]]]];
+  for(const[[cr,cc],[a1,a2]]of corners){
+    if(board[cr][cc]===enemy&&board[a1[0]][a1[1]]===player&&board[a2[0]][a2[1]]===player){
+      captures.add(cr+','+cc);
+    }
+  }
+  return[...captures].map(s=>{const p=s.split(',');return[+p[0],+p[1]]});
+}
+
+function hasLegalMoves(player){
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++)
+    if(board[r][c]===player&&getLegalMoves(r,c).length>0)return true;
+  return false;
+}
+
+function makeMove(fr,fc,tr,tc,player){
+  board[fr][fc]=EMPTY;board[tr][tc]=player;
+  const caps=getCaptures(tr,tc,player);
+  caps.forEach(([cr,cc])=>board[cr][cc]=EMPTY);
+  return caps.length;
+}
+
+function handleCellClick(r,c){
+  if(gameOver||cpuThinking)return;
+  const piece=board[r][c];
+  if(selectedPiece){
+    const[sr,sc]=selectedPiece;
+    const legalMoves=getLegalMoves(sr,sc);
+    const isLegal=legalMoves.some(([mr,mc])=>mr===r&&mc===c);
+    if(isLegal){
+      const captured=makeMove(sr,sc,r,c,HUMAN);
+      humanCaptured+=captured;selectedPiece=null;
+      render();updateCapturedDisplay();
+      if(humanCaptured>=5){endGame('あなたの勝ち！');return}
+      if(!hasLegalMoves(CPU)){endGame('あなたの勝ち！（CPU に合法手なし）');return}
+      cpuThinking=true;updateTurnIndicator();
+      cpuTimeoutId=setTimeout(cpuTurn,600);
+      return;
+    }
+    if(piece===HUMAN){
+      if(selectedPiece[0]===r&&selectedPiece[1]===c)selectedPiece=null;
+      else selectedPiece=[r,c];
+      render();return;
+    }
+    selectedPiece=null;render();return;
+  }
+  if(piece===HUMAN){selectedPiece=[r,c];render()}
+}
+
+function cpuTurn(){
+  if(gameOver)return;
+  const move=cpuChooseMove();
+  if(!move){cpuThinking=false;endGame('あなたの勝ち！（CPU に合法手なし）');return}
+  const captured=makeMove(move.from[0],move.from[1],move.to[0],move.to[1],CPU);
+  cpuCaptured+=captured;cpuThinking=false;
+  render();updateCapturedDisplay();
+  if(cpuCaptured>=5){endGame('CPU の勝ち！');return}
+  if(!hasLegalMoves(HUMAN)){endGame('CPU の勝ち！（あなたに合法手なし）');return}
+  updateTurnIndicator();
+}
+
+function cpuChooseMove(){
+  const allMoves=[];
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++)
+    if(board[r][c]===CPU)
+      getLegalMoves(r,c).forEach(([nr,nc])=>allMoves.push({from:[r,c],to:[nr,nc]}));
+  if(!allMoves.length)return null;
+  const scored=allMoves.map(m=>({move:m,score:evaluateCpuMove(m)}));
+  let maxScore=-Infinity;
+  scored.forEach(s=>{if(s.score>maxScore)maxScore=s.score});
+  const best=scored.filter(s=>s.score===maxScore);
+  return best[Math.floor(Math.random()*best.length)].move;
+}
+
+function evaluateCpuMove(move){
+  const saved=board.map(r=>[...r]);
+  try{
+    board[move.from[0]][move.from[1]]=EMPTY;
+    board[move.to[0]][move.to[1]]=CPU;
+    const caps=getCaptures(move.to[0],move.to[1],CPU);
+    let score=caps.length*10;
+    caps.forEach(([cr,cc])=>board[cr][cc]=EMPTY);
+    let humanBest=0;
+    for(let r=0;r<9;r++)for(let c=0;c<9;c++){
+      if(board[r][c]===HUMAN){
+        for(const[nr,nc]of getLegalMoves(r,c)){
+          board[r][c]=EMPTY;board[nr][nc]=HUMAN;
+          const hc=getCaptures(nr,nc,HUMAN);
+          board[nr][nc]=EMPTY;board[r][c]=HUMAN;
+          if(hc.length>humanBest)humanBest=hc.length;
+        }
+      }
+    }
+    score-=humanBest*5;
+    return score;
+  }finally{board=saved}
+}
+
+function render(){
+  const boardEl=document.getElementById('board');
+  boardEl.innerHTML='';
+  let legalSet=null;
+  if(selectedPiece){
+    legalSet=new Set(getLegalMoves(selectedPiece[0],selectedPiece[1]).map(([r,c])=>r+','+c));
+  }
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++){
+    const cell=document.createElement('div');
+    cell.className='cell';
+    if(selectedPiece&&selectedPiece[0]===r&&selectedPiece[1]===c)cell.classList.add('selected');
+    if(legalSet&&legalSet.has(r+','+c))cell.classList.add('valid-move');
+    if(board[r][c]!==EMPTY){
+      const piece=document.createElement('div');
+      piece.className='piece '+(board[r][c]===HUMAN?'human':'cpu');
+      piece.textContent=board[r][c]===HUMAN?'歩':'と';
+      cell.appendChild(piece);
+    }
+    const rr=r,cc=c;
+    cell.addEventListener('click',()=>handleCellClick(rr,cc));
+    boardEl.appendChild(cell);
+  }
+}
+
+function updateTurnIndicator(){
+  const el=document.getElementById('turn-indicator');
+  el.classList.remove('thinking');
+  if(gameOver){el.textContent='ゲーム終了'}
+  else if(cpuThinking){el.textContent='CPU 思考中...';el.classList.add('thinking')}
+  else{el.textContent='あなたの番'}
+}
+
+function updateCapturedDisplay(){
+  document.getElementById('human-captured-count').textContent=humanCaptured;
+  document.getElementById('cpu-captured-count').textContent=cpuCaptured;
+  const hEl=document.getElementById('human-captured-pieces');
+  hEl.innerHTML='';
+  for(let i=0;i<humanCaptured;i++){const d=document.createElement('div');d.className='captured-piece cpu-piece';d.textContent='と';hEl.appendChild(d)}
+  const cEl=document.getElementById('cpu-captured-pieces');
+  cEl.innerHTML='';
+  for(let i=0;i<cpuCaptured;i++){const d=document.createElement('div');d.className='captured-piece human-piece';d.textContent='歩';cEl.appendChild(d)}
+}
+
+function endGame(msg){
+  gameOver=true;selectedPiece=null;
+  const el=document.getElementById('result');
+  el.textContent=msg;el.style.display='block';
+  updateTurnIndicator();render();
+}
+
+document.getElementById('reset-btn').addEventListener('click',initGame);
+initGame();
+</script>
+</body>
+</html>
+```

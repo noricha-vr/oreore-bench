@@ -874,5 +874,6 @@ window.ENTRIES.push(
 // usage.note に TTFT・thinking 秒数・デコード tok/s を記録。生成物は成功・失敗を問わず1ショット出力を無加工で掲載。
 window.ENTRIES.push(
     { theme: "lp-nishibi", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "成功。260.1秒・decode 45.4 tok/s（thinking 1.5秒でほぼ即答）。1,199行/37.5KB。JSエラー0、7セクションを desktop / mobile とも横溢れなく表示。```html フェンス付きで出力。", kind: "html" },
-    { theme: "othello", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "成功。187.5秒（thinking 136.4秒・約6K tokens）・decode 46.0 tok/s。252行/7.2KB。JSエラー0、初期4石・合法手表示・着手→CPU応手・石数表示を確認。```html フェンスが盤面の上下に露出。", kind: "html" }
+    { theme: "othello", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "成功。187.5秒（thinking 136.4秒・約6K tokens）・decode 46.0 tok/s。252行/7.2KB。JSエラー0、初期4石・合法手表示・着手→CPU応手・石数表示を確認。```html フェンスが盤面の上下に露出。", kind: "html" },
+    { theme: "hasami-shogi", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "スモーク検証PASS。歩9/と9・9x9グリッド・選択ハイライト・移動・CPU応答・JSエラー0。652.6秒（thinking 565.1秒・約24K tokens）・decode 44.1 tok/s。262行/10.9KB。```html フェンス付き。", kind: "html" }
 );
