@@ -106,6 +106,7 @@ def make_args(**overrides: object) -> argparse.Namespace:
         "resume": False,
         "runaway_threshold": runner.DEFAULT_RUNAWAY_THRESHOLD,
         "no_runaway_check": False,
+        "temperature": 0.3,
         "version": "0.31.3",
         "framework": "MLX 0.32.0",
         "model_revision": "abc123",
@@ -209,6 +210,80 @@ def test_reasoning_deltas_are_timed_but_never_published(
         assert key in note
     assert "reasoning_chunks=2" in note
     assert "content_chunks=1" in note
+
+
+def test_temperature_option_is_sent_and_recorded(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A retry at the model's recommended temperature is distinguishable in run.json."""
+    public = make_public(tmp_path)
+    monkeypatch.setattr(runner, "PUBLIC", public)
+    monkeypatch.setattr(runner, "parse_args", lambda: make_args(temperature=1.0))
+    sent = install_fake_http(monkeypatch, [{"data": []}, completion()])
+
+    assert runner.main() == 0
+
+    payload = json.loads(sent[1][0].data.decode("utf-8"))
+    assert payload["temperature"] == 1.0
+    run = json.loads((public / "demo" / "hy3-t512" / "run.json").read_text(encoding="utf-8"))
+    assert run["sampling"]["temperature"] == 1.0
+
+
+def test_resume_rejects_a_result_measured_at_another_temperature(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Resume must not pass off a 0.3 result as a 1.0 retry."""
+    public = make_public(tmp_path)
+    monkeypatch.setattr(runner, "PUBLIC", public)
+    monkeypatch.setattr(runner, "parse_args", lambda: make_args())
+    install_fake_http(monkeypatch, [{"data": []}, completion()])
+    assert runner.main() == 0
+
+    monkeypatch.setattr(runner, "parse_args", lambda: make_args(temperature=1.0, resume=True))
+    install_fake_http(monkeypatch, [{"data": []}])
+    assert runner.main() == 1
+
+
+def test_thinking_only_failure_still_reports_timing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Exhausting the budget on thinking publishes nothing but logs how long it thought."""
+    public = make_public(tmp_path)
+    monkeypatch.setattr(runner, "PUBLIC", public)
+    monkeypatch.setattr(runner, "parse_args", lambda: make_args())
+    stream = sse(
+        {"choices": [{"delta": {"reasoning": "hmm"}, "finish_reason": None}]},
+        {"choices": [{"delta": {}, "finish_reason": "length"}]},
+        {"choices": [], "usage": {"prompt_tokens": 12, "completion_tokens": 65000}},
+    )
+    install_fake_http(monkeypatch, [{"data": []}, stream])
+
+    assert runner.main() == 1
+
+    err = capsys.readouterr().err
+    assert "finish_reason=length" in err
+    assert "completion=65000" in err
+    assert "reasoning_chunks=1" in err
+    assert not (public / "demo" / "hy3-t512").exists()
+
+
+def test_thinking_only_failure_log_ignores_unvalidated_server_values(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A hostile finish_reason or string token count must not reach the log verbatim."""
+    public = make_public(tmp_path)
+    monkeypatch.setattr(runner, "PUBLIC", public)
+    monkeypatch.setattr(runner, "parse_args", lambda: make_args())
+    stream = sse(
+        {"choices": [{"delta": {}, "finish_reason": "length\n[ok] forged"}]},
+        {"choices": [], "usage": {"prompt_tokens": "SECRET", "completion_tokens": "THOUGHT"}},
+    )
+    install_fake_http(monkeypatch, [{"data": []}, stream])
+
+    assert runner.main() == 1
+
+    err = capsys.readouterr().err
+    assert "finish_reason=invalid" in err
+    for leaked in ("forged", "SECRET", "THOUGHT"):
+        assert leaked not in err
 
 
 def test_timing_summary_derives_rates_from_milestones() -> None:

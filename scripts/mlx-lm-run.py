@@ -50,6 +50,7 @@ LOCAL_HARNESSES: dict[str, dict[str, str]] = {
 DEFAULT_HARNESS = "mlx-lm-api"
 DEFAULT_BASE_URL = "http://127.0.0.1:18081/v1"
 DEFAULT_MAX_TOKENS = 65000
+DEFAULT_TEMPERATURE = 0.3
 DEFAULT_TIMEOUT_SECONDS = 3600
 MAX_SSE_LINE_BYTES = 1 << 20
 MAX_CHARS_PER_TOKEN = 8
@@ -378,6 +379,23 @@ def stream_completion(
     )
     content = "".join(parts)
     if not content and not allow_empty:
+        # thinking だけで上限を使い切った場合も、どれだけ考えたかは結果として残す
+        # サーバ由来の値は検証してから出す: 未検証の文字列はログ行の偽装や本文の混入に使える
+        counts = usage if isinstance(usage, dict) else {}
+        partial_prompt = counts.get("prompt_tokens")
+        partial_completion = counts.get("completion_tokens")
+        partial_prompt = partial_prompt if type(partial_prompt) is int else 0
+        partial_completion = partial_completion if type(partial_completion) is int else 0
+        reason_label = (
+            finish_reason
+            if isinstance(finish_reason, str) and re.fullmatch(r"[a-z_]{1,32}", finish_reason)
+            else "invalid"
+        )
+        print(
+            f"[timing] finish_reason={reason_label} prompt={partial_prompt} "
+            f"completion={partial_completion} {timing.summary(partial_prompt, partial_completion)}",
+            file=sys.stderr,
+        )
         raise MlxApiError("chat completion stream produced no content")
     if finish_reason is None:
         raise MlxApiError("chat completion stream has no finish_reason")
@@ -446,6 +464,7 @@ def build_run_json(
     finish_reason: str,
     timing: StreamTiming,
     runtime: dict[str, str],
+    temperature: float = DEFAULT_TEMPERATURE,
 ) -> dict[str, Any]:
     """Build schema-versioned metadata for one measured local API generation."""
     return {
@@ -458,7 +477,7 @@ def build_run_json(
         "attempts": 1,
         "generated_at": datetime.now(timezone.utc).astimezone().replace(microsecond=0).isoformat(),
         "generated_at_source": "measured",
-        "sampling": {"temperature": 0.3, "max_tokens": max_tokens, "top_p": "default"},
+        "sampling": {"temperature": temperature, "max_tokens": max_tokens, "top_p": "default"},
         "system_prompt": "none",
         "post_processing": "none",
         "runtime": runtime,
@@ -580,13 +599,15 @@ def validate_resume_identity(
         raise ValueError(f"resume metadata has an invalid public model ID: {run_path}")
 
 
-def validate_resume_sampling_usage(run: dict[str, Any], run_path: Path) -> None:
+def validate_resume_sampling_usage(
+    run: dict[str, Any], run_path: Path, temperature: float = DEFAULT_TEMPERATURE
+) -> None:
     """Validate measured sampling and positive non-boolean token counts."""
     sampling = run.get("sampling")
     if (
         not isinstance(sampling, dict)
         or type(sampling.get("temperature")) is not float
-        or sampling.get("temperature") != 0.3
+        or sampling.get("temperature") != temperature
         or type(sampling.get("max_tokens")) is not int
         or sampling["max_tokens"] <= 0
         or sampling.get("top_p") != "default"
@@ -634,11 +655,12 @@ def validate_resume_output(
     model: str,
     public_model_id: str,
     harness: str,
+    temperature: float = DEFAULT_TEMPERATURE,
 ) -> None:
     """Require a complete, matching prior local API result before resume skips it."""
     run, run_path = load_resume_run(out_dir, output_name)
     validate_resume_identity(run, run_path, theme, model, public_model_id, harness)
-    validate_resume_sampling_usage(run, run_path)
+    validate_resume_sampling_usage(run, run_path, temperature)
     validate_resume_runtime_cost(run, run_path, harness)
 
 
@@ -673,6 +695,7 @@ def call_model(
     timeout: int,
     runaway_threshold: float | None,
     allow_empty: bool = False,
+    temperature: float = DEFAULT_TEMPERATURE,
 ) -> tuple[str, str, int, int, StreamTiming]:
     """Call the chat endpoint once and return validated content, usage, and stream timing."""
     detector = RunawayDetector(runaway_threshold) if runaway_threshold is not None else None
@@ -682,7 +705,7 @@ def call_model(
         {
             "model": api_model_id,
             "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.3,
+            "temperature": temperature,
             "max_tokens": max_tokens,
             "stream": True,
             "stream_options": {"include_usage": True},
@@ -712,6 +735,7 @@ def run_theme(
     runtime: dict[str, str],
     resume: bool,
     runaway_threshold: float | None,
+    temperature: float = DEFAULT_TEMPERATURE,
 ) -> str:
     """Generate and publish one theme, or skip an already complete resumed run."""
     theme_dir = resolve_theme_dir(theme)
@@ -726,13 +750,21 @@ def run_theme(
         raise ValueError(f"model output must not be a symlink: {out_dir}")
     if out_dir.exists():
         if resume:
-            validate_resume_output(out_dir, output_name, theme, model, public_model_id, harness)
+            validate_resume_output(
+                out_dir, output_name, theme, model, public_model_id, harness, temperature
+            )
             return "skipped"
         raise FileExistsError(f"already exists: {out_dir}; use --resume only for a complete run")
 
     prompt = build_theme_prompt(theme_dir, kind)
     content, finish_reason, prompt_tokens, completion_tokens, timing = call_model(
-        api_model_id, prompt, base_url, max_tokens, timeout, runaway_threshold
+        api_model_id,
+        prompt,
+        base_url,
+        max_tokens,
+        timeout,
+        runaway_threshold,
+        temperature=temperature,
     )
     run = build_run_json(
         theme=theme,
@@ -745,6 +777,7 @@ def run_theme(
         finish_reason=finish_reason,
         timing=timing,
         runtime=runtime,
+        temperature=temperature,
     )
     write_atomically(out_dir, output_name, content, run)
     return "written"
@@ -768,6 +801,15 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
     parser.add_argument("--max-tokens", type=int, default=DEFAULT_MAX_TOKENS)
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=DEFAULT_TEMPERATURE,
+        help=(
+            f"sampling temperature (既定: {DEFAULT_TEMPERATURE})。run.json の sampling.temperature に"
+            "記録される。モデル推奨値で追試する時だけ変える"
+        ),
+    )
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT_SECONDS)
     parser.add_argument("--resume", action="store_true", help="skip complete existing theme outputs")
     parser.add_argument(
@@ -797,6 +839,8 @@ def main() -> int:
         validate_public_model_id(args.public_model_id)
         if args.max_tokens <= 0 or args.timeout <= 0:
             raise ValueError("--max-tokens and --timeout must be greater than zero")
+        if not 0.0 <= args.temperature <= 2.0:
+            raise ValueError("--temperature must be between 0 and 2")
         runaway_threshold = None if args.no_runaway_check else args.runaway_threshold
         if runaway_threshold is not None and not 0.0 < runaway_threshold < 1.0:
             raise ValueError("--runaway-threshold must be between 0 and 1")
@@ -832,6 +876,7 @@ def main() -> int:
                 runtime=runtime,
                 resume=args.resume,
                 runaway_threshold=runaway_threshold,
+                temperature=args.temperature,
             )
             print(f"[ok] {theme}/{args.model}: {result}", file=sys.stderr)
     except (MlxApiError, UsageMissingError, ValueError, FileExistsError, OSError) as exc:
