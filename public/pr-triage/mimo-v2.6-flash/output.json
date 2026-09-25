@@ -1,0 +1,160 @@
+```json
+{
+  "triage": [
+    {
+      "pr": 101,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": [
+        "Issue #90（P1）への対応で、未認証リクエストによる通知メール洪水をレートリミットで抑制する正当なバグ修正",
+        "テストあり（+92行）、CI pass、レビュー approve（指摘なし）、コンフリクトなし",
+        "超過分は WARNING ログに集約されており、エラーの握りつぶしには該当しない"
+      ],
+      "actions": [
+        "main へマージ",
+        "マージ後 Issue #90 をクローズ"
+      ],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 102,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": [
+        "新機能（一括アーカイブ API）にテストがない — 方針でテスト必須",
+        "レビューで指摘された owner 絞り込み欠如は IDOR（他者タスク操作）に相当するセキュリティ欠陥で、作者が未返信のまま 9 日放置"
+      ],
+      "actions": [
+        "owner 絞り込み（`Task.objects.filter(id__in=ids, owner=request.user)` 相当）を追加",
+        "正常系・異常系（他人のタスク指定時）のテストを追加",
+        "作者に返信期限を伝達し、対応後に再レビュー依頼"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 103,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": [
+        "`except Exception: pass` は broad except / silent failure であり方針で明示的に禁止",
+        "Issue #91 の本質（ログ量削減）は、例外を握りつぶすのではなくログレベル調整・サンプリング・Sentry フィルタで解決すべき",
+        "テストなし・未レビュー"
+      ],
+      "actions": [
+        "PR をクローズし、方針違反である旨をコメント",
+        "Issue #91 に「ログレベル調整 + Sentry フィルタで解決する」と方針を追記",
+        "代替案として `logger.debug` への降格や `ConnectionError` のみ個別捕捉する修正案を提案"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 104,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": [
+        "「依存パッケージのバージョンは固定する方針（サプライチェーン攻撃防止）」に直接反する",
+        "`requirements.lock` の削除は再現ビルド性を失う"
+      ],
+      "actions": [
+        "PR をクローズし、サプライチェーン攻撃防止の方針をコメントで明記",
+        "依存更新の手間を減らすなら Dependabot / Renovate の導入を提案"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 105,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": [
+        "Issue #92（security）対応の最優先案件",
+        "テストあり（+118行）、CI pass、レビュー approve、コンフリクトなし",
+        "旧リンク 24 時間互換維持の設計が丁寧で、移行リスクも考慮されている"
+      ],
+      "actions": [
+        "main へ即時マージ",
+        "マージ後 Issue #92 をクローズ",
+        "24 時間後（2026-07-02）に互換コードの削除 PR を作成"
+      ],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 106,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": [
+        "42 ファイル・+3,180 行の巨大 PR で、ダークモード・通知設定・LP 刷新という無関係な変更が混在しレビュー不能",
+        "レビューで分割を指摘されたが作者が拒否しており、15 日放置",
+        "新機能（通知設定画面）にテストがない"
+      ],
+      "actions": [
+        "①ダークモード、②通知設定画面、③LP 刷新の 3 つの独立 PR に分割するよう要求",
+        "通知設定画面にはテスト追加を必須条件として伝達",
+        "作者が分割を拒否し続ける場合は方針違反としてクローズを検討"
+      ],
+      "risk_if_merged": "high"
+    },
+    {
+      "pr": 107,
+      "verdict": "fix",
+      "confidence": "high",
+      "reasons": [
+        "CI が失敗中（`test_deadline_dst_boundary`）— 方針で CI 失敗はマージ不可",
+        "作者は「flaky なだけ」と主張しているが、DST 境界テストの失敗は実バグの可能性が高く、握りつぶすべきでない",
+        "レビュー未実施"
+      ],
+      "actions": [
+        "作者に flaky と断定する根拠（複数回の CI 実行結果）を要求",
+        "DST 境界のテストケースを再現条件付きで修正するよう依頼",
+        "CI が安定して pass するまでマージしない"
+      ],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 108,
+      "verdict": "hold",
+      "confidence": "medium",
+      "reasons": [
+        "Issue #94 で分離の是非が未決着のまま、パフォーマンス懸念（JOIN 増加）への回答なしに 28 ファイル・マイグレーション 3 本の大きな変更が来ている",
+        "意図は「将来のために」とのみ説明されており、Issue での議論を先送りした形",
+        "テストの有無が明記されておらず、レビューも未実施"
+      ],
+      "actions": [
+        "Issue #94 の議論を再開し、パフォーマンス懸念への回答を求める",
+        "作者に JOIN 増加の影響測定結果とテスト追加を依頼",
+        "Issue #94 が決着するまで PR を hold にする旨をコメント"
+      ],
+      "risk_if_merged": "medium"
+    },
+    {
+      "pr": 109,
+      "verdict": "close",
+      "confidence": "high",
+      "reasons": [
+        "Issue #93 は `docs/setup.md` の全面改訂（2026-06-20 マージ済み）で解決済みで、README にも既にリンクがある",
+        "コンフリクトありのまま 30 日放置で、内容も陳腐化している"
+      ],
+      "actions": [
+        "PR をクローズし、`docs/setup.md` が最新で README からリンク済みである旨をコメント",
+        "クローズ後 Issue #93 がクローズ済みであることを確認"
+      ],
+      "risk_if_merged": "low"
+    },
+    {
+      "pr": 110,
+      "verdict": "merge",
+      "confidence": "high",
+      "reasons": [
+        "新機能（CSV エクスポート）にテストあり（+66行）、CI pass、レビュー approve、コンフリクトなし",
+        "残指摘は `StreamingHttpResponse` への改善提案だが、レビュアー自身が「nit」「今の規模なら現状で問題なし」と明言しており、nit を理由にブロックしない方針に該当"
+      ],
+      "actions": [
+        "main へマージ",
+        "将来的にデータ量が増えたら StreamingHttpResponse 化する Issue を作成（任意）"
+      ],
+      "risk_if_merged": "low"
+    }
+  ],
+  "priority_order": [105, 101, 110, 103, 104, 109, 107, 102, 106, 108],
+  "summary": "セキュリティ修正（#105）と P1 バグ修正（#110含む #101）が即マージ可能な状態で、まずこれらを処理すべき。方針違反の PR（#103 broad except、#104 バージョン固定解除）と陳腐化した #109 は即クローズ。残りはテスト欠如・CI 失敗・過大変更・未決着議論により修正または保留が必要。"
+}
+```

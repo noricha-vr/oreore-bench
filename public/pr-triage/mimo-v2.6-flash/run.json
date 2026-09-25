@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "theme": "pr-triage",
+  "model": "mimo-v2.6-flash",
+  "model_id": "Vontra/MiMo-V2.6-Flash-RL-MLX-4bit-MTP",
+  "harness": "mlx-lm-api",
+  "reasoning_effort": "unknown",
+  "attempts": 1,
+  "generated_at": "2026-09-25T17:43:22+09:00",
+  "generated_at_source": "measured",
+  "sampling": {
+    "temperature": 0.3,
+    "max_tokens": 65000,
+    "top_p": "default"
+  },
+  "system_prompt": "none",
+  "post_processing": "none",
+  "runtime": {
+    "engine": "mlx-lm",
+    "version": "0.31.3",
+    "framework": "MLX 0.32.2",
+    "model_revision": "183cc1c55e83b4cac526c32b2f53dfe4c02b1517",
+    "quantization": "mxfp4 experts 4bit affine g64",
+    "hardware": "Mac Studio M3 Ultra 512GB",
+    "api": "openai-compat-chat"
+  },
+  "usage": {
+    "estimated": false,
+    "method": "api-usage",
+    "prompt_tokens": 2763,
+    "completion_tokens": 3273,
+    "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=73.333; ttft_seconds=5.430; effective_prefill_tok_s=508.8; decode_tok_s=48.2; time_to_content_seconds=30.085; thinking_seconds=24.655; reasoning_chunks=1164; content_chunks=1957."
+  },
+  "cost": {
+    "estimated": true,
+    "usd": null,
+    "actual_usd": 0,
+    "prompt_usd_per_mtok": null,
+    "completion_usd_per_mtok": null,
+    "pricing_source": "local-no-reference",
+    "pricing_model": null,
+    "pricing_fetched_at": null
+  }
+}
