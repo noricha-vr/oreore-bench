@@ -14,7 +14,7 @@
     "top_p": "default"
   },
   "system_prompt": "none",
-  "post_processing": "json-ladder-5-levels",
+  "post_processing": "json-ladder-6-levels",
   "runtime": {
     "engine": "ollama",
     "api": "openai-compat",
@@ -26,7 +26,7 @@
     "method": "api-usage",
     "prompt_tokens": 11375,
     "completion_tokens": 27017,
-    "note": "Ollama API 実測。5段階を独立リクエストで合算。"
+    "note": "Ollama API 実測。6段階を独立リクエストで合算。"
   },
   "cost": {
     "estimated": true,

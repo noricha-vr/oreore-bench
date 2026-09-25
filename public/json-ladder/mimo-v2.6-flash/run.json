@@ -14,7 +14,7 @@
     "top_p": "default"
   },
   "system_prompt": "none",
-  "post_processing": "json-ladder-5-levels",
+  "post_processing": "json-ladder-6-levels",
   "runtime": {
     "engine": "mlx-lm",
     "api": "openai-compat-chat",
@@ -29,7 +29,7 @@
     "method": "api-usage",
     "prompt_tokens": 12590,
     "completion_tokens": 13569,
-    "note": "ローカル MLX API 実測。5段階を独立リクエストで合算。 計測: L1: elapsed_seconds=5.052; ttft_seconds=3.280; effective_prefill_tok_s=522.3; decode_tok_s=50.5; time_to_content_seconds=4.030; thinking_seconds=0.750; reasoning_chunks=29; content_chunks=43 / L2: elapsed_seconds=16.756; ttft_seconds=3.465; effective_prefill_tok_s=531.5; decode_tok_s=49.2; time_to_content_seconds=14.834; thinking_seconds=11.369; reasoning_chunks=500; content_chunks=84 / L3: elapsed_seconds=14.028; ttft_seconds=3.534; effective_prefill_tok_s=529.4; decode_tok_s=49.3; time_to_content_seconds=11.430; thinking_seconds=7.896; reasoning_chunks=368; content_chunks=120 / L4: elapsed_seconds=22.639; ttft_seconds=3.520; effective_prefill_tok_s=528.4; decode_tok_s=49.1; time_to_content_seconds=19.078; thinking_seconds=15.558; reasoning_chunks=695; content_chunks=163 / L5: elapsed_seconds=62.764; ttft_seconds=4.687; effective_prefill_tok_s=509.5; decode_tok_s=48.4; time_to_content_seconds=48.401; thinking_seconds=43.714; reasoning_chunks=1948; content_chunks=653 / L6: elapsed_seconds=193.661; ttft_seconds=5.547; effective_prefill_tok_s=525.7; decode_tok_s=45.5; time_to_content_seconds=165.778; thinking_seconds=160.231; reasoning_chunks=6875; content_chunks=1221."
+    "note": "ローカル MLX API 実測。6段階を独立リクエストで合算。 計測: L1: elapsed_seconds=5.052; ttft_seconds=3.280; effective_prefill_tok_s=522.3; decode_tok_s=50.5; time_to_content_seconds=4.030; thinking_seconds=0.750; reasoning_chunks=29; content_chunks=43 / L2: elapsed_seconds=16.756; ttft_seconds=3.465; effective_prefill_tok_s=531.5; decode_tok_s=49.2; time_to_content_seconds=14.834; thinking_seconds=11.369; reasoning_chunks=500; content_chunks=84 / L3: elapsed_seconds=14.028; ttft_seconds=3.534; effective_prefill_tok_s=529.4; decode_tok_s=49.3; time_to_content_seconds=11.430; thinking_seconds=7.896; reasoning_chunks=368; content_chunks=120 / L4: elapsed_seconds=22.639; ttft_seconds=3.520; effective_prefill_tok_s=528.4; decode_tok_s=49.1; time_to_content_seconds=19.078; thinking_seconds=15.558; reasoning_chunks=695; content_chunks=163 / L5: elapsed_seconds=62.764; ttft_seconds=4.687; effective_prefill_tok_s=509.5; decode_tok_s=48.4; time_to_content_seconds=48.401; thinking_seconds=43.714; reasoning_chunks=1948; content_chunks=653 / L6: elapsed_seconds=193.661; ttft_seconds=5.547; effective_prefill_tok_s=525.7; decode_tok_s=45.5; time_to_content_seconds=165.778; thinking_seconds=160.231; reasoning_chunks=6875; content_chunks=1221."
   },
   "cost": {
     "estimated": true,

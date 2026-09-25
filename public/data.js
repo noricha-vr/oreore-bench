@@ -203,11 +203,11 @@ window.THEMES = {
             "json-ladder": {
                 title: "JSON ラダー",
                 short: "JSON / 形式遵守",
-                desc: "随筆約1,700字から、複雑さ5段階の JSON スキーマで情報抽出。どの複雑さまで有効な JSON と正確な抜き出しを保てるかを見る",
+                desc: "随筆約1,700字から、複雑さ6段階の JSON スキーマで情報抽出。どの複雑さまで有効な JSON と正確な抜き出しを保てるかを見る",
                 color: "#0e7490",
                 colorDark: "#164e63",
                 icon: "fa-solid fa-layer-group",
-                difficulty: "中〜高（L1 フラット 4 キー → L5 ネスト深さ4・約20キーの文書構造化。レベル別に独立5リクエスト）",
+                difficulty: "中〜高（L1 フラット 4 キー → L5 ネスト深さ4・約20キーの文書構造化 → L6 全文の逐語インデックス。レベル別に独立6リクエスト）",
                 deliverable: "output.json（5レベルの生応答。判定表 HTML で parse N/5 と score % を表示）",
                 criteria: [
                     "各レベルの出力が有効な JSON である（フェンス優先抽出、壊れたフェンスは失敗確定）",
