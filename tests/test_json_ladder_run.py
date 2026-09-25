@@ -372,6 +372,8 @@ def test_ollama_run_records_its_own_engine_and_source(
     assert run["harness"] == "ollama-api"
     assert run["runtime"]["engine"] == "ollama"
     assert "Ollama API 実測" in run["usage"]["note"]
+    assert "L1: elapsed_seconds=" in run["usage"]["note"]
+    assert "L5: elapsed_seconds=" in run["usage"]["note"]
 
 
 def test_runtime_extra_rejects_keys_outside_validator_allowlist(

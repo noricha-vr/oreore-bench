@@ -187,7 +187,7 @@ def run_levels(
 
 def run_local_levels(
     model_id: str, theme_dir: Path, base_url: str, max_tokens: int
-) -> tuple[list[dict[str, Any]], int, int]:
+) -> tuple[list[dict[str, Any]], int, int, list[str]]:
     """Make five sequential loopback requests without rejecting empty responses.
 
     ローカル勢は reasoning を出し切って本文を返さないことがある（Gemma 4 12B QAT の L5 は
@@ -196,9 +196,10 @@ def run_local_levels(
     繰り返し暴走の打ち切りは 1 テーマ経路と同じ既定閾値で効かせる。
     """
     levels: list[dict[str, Any]] = []
+    timings: list[str] = []
     prompt_total = completion_total = 0
     for level in LEVEL_NUMBERS:
-        content, finish_reason, prompt_tokens, completion_tokens, _elapsed = LOCAL.call_model(
+        content, finish_reason, prompt_tokens, completion_tokens, timing = LOCAL.call_model(
             model_id,
             build_level_prompt(theme_dir, level),
             base_url,
@@ -217,7 +218,8 @@ def run_local_levels(
         )
         prompt_total += prompt_tokens
         completion_total += completion_tokens
-    return levels, prompt_total, completion_total
+        timings.append(f"L{level}: {timing.summary(prompt_tokens, completion_tokens)}")
+    return levels, prompt_total, completion_total, timings
 
 
 def build_output(levels: list[dict[str, Any]]) -> dict[str, Any]:
@@ -291,10 +293,12 @@ def build_local_run(
     attempts: int,
     prompt_tokens: int,
     completion_tokens: int,
+    timings: list[str] | None = None,
 ) -> dict[str, Any]:
     """Build validator-compatible aggregate metadata for local inference."""
     profile = LOCAL_HARNESSES[harness]
     runtime = {**profile["runtime"], **runtime_extra}
+    timing_note = f" 計測: {' / '.join(timings)}." if timings else ""
     return {
         "schema_version": 1,
         "theme": THEME,
@@ -314,7 +318,7 @@ def build_local_run(
             "method": "api-usage",
             "prompt_tokens": prompt_tokens,
             "completion_tokens": completion_tokens,
-            "note": f"{profile['source']} 実測。5段階を独立リクエストで合算。",
+            "note": f"{profile['source']} 実測。5段階を独立リクエストで合算。{timing_note}",
         },
         "cost": LOCAL.build_local_cost(),
     }
@@ -511,7 +515,7 @@ def run_local_backend(
     # 公開 run.json にローカル絶対パスを書かない（mlx_lm.server はモデルディレクトリを ID にする）
     published_model_id = args.public_model_id or api_model_id
     check_local_preconditions(base_url)
-    levels, prompt_tokens, completion_tokens = run_local_levels(
+    levels, prompt_tokens, completion_tokens, timings = run_local_levels(
         api_model_id, theme_dir, base_url, args.max_tokens
     )
     run = build_local_run(
@@ -524,6 +528,7 @@ def run_local_backend(
         attempts,
         prompt_tokens,
         completion_tokens,
+        timings,
     )
     return levels, run, 0.0
 

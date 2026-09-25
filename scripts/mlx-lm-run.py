@@ -30,7 +30,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from runaway_detector import THRESHOLD as DEFAULT_RUNAWAY_THRESHOLD  # noqa: E402
@@ -215,20 +215,82 @@ def parse_sse_chunk(line: bytes) -> dict[str, Any] | None:
     return chunk
 
 
-def read_stream_delta(chunk: dict[str, Any]) -> tuple[str, str | None]:
-    """Return the text delta and any finish_reason carried by one SSE chunk."""
+# thinking を本文と別フィールドで返すサーバの delta キー。
+# mlx_lm.server は "reasoning"、oMLX / LM Studio / Ollama は "reasoning_content" を使う。
+REASONING_DELTA_KEYS = ("reasoning_content", "reasoning")
+
+
+class StreamTiming(NamedTuple):
+    """Wall-clock milestones of one streamed generation, measured from request send.
+
+    NamedTuple rather than dataclass: tests and json-ladder-run.py load this file via
+    spec_from_file_location without registering it in sys.modules, which dataclass needs.
+
+    reasoning_chunks / content_chunks are SSE delta counts. Local servers stream about
+    one token per delta, so they approximate token counts but are not tokenizer-exact.
+    """
+
+    elapsed_seconds: float
+    first_token_seconds: float | None = None
+    first_content_seconds: float | None = None
+    last_token_seconds: float | None = None
+    reasoning_chunks: int = 0
+    content_chunks: int = 0
+
+    def summary(self, prompt_tokens: int, completion_tokens: int) -> str:
+        """Render the timing as key=value pairs for the public usage note."""
+        parts = [f"elapsed_seconds={self.elapsed_seconds:.3f}"]
+        # 生成が終わった時刻。usage / [DONE] の到着待ちを速度に含めないため、
+        # SSE の読み終わりではなく最後のトークンの到着時刻を使う。
+        generation_end = (
+            self.last_token_seconds if self.last_token_seconds is not None else self.elapsed_seconds
+        )
+        if self.first_token_seconds is not None:
+            ttft = self.first_token_seconds
+            parts.append(f"ttft_seconds={ttft:.3f}")
+            if ttft > 0:
+                # 通信とキュー待ちも含む実効値（純粋な prefill 速度ではない）
+                parts.append(f"effective_prefill_tok_s={prompt_tokens / ttft:.1f}")
+            decode_seconds = generation_end - ttft
+            if decode_seconds > 0 and completion_tokens > 1:
+                parts.append(f"decode_tok_s={(completion_tokens - 1) / decode_seconds:.1f}")
+        if self.first_content_seconds is not None:
+            parts.append(f"time_to_content_seconds={self.first_content_seconds:.3f}")
+        if self.reasoning_chunks:
+            thinking_end = (
+                self.first_content_seconds
+                if self.first_content_seconds is not None
+                else generation_end
+            )
+            thinking_seconds = thinking_end - (self.first_token_seconds or 0.0)
+            parts.append(f"thinking_seconds={thinking_seconds:.3f}")
+            parts.append(f"reasoning_chunks={self.reasoning_chunks}")
+        parts.append(f"content_chunks={self.content_chunks}")
+        return "; ".join(parts)
+
+
+def read_stream_delta(chunk: dict[str, Any]) -> tuple[str, str | None, str]:
+    """Return the content delta, any finish_reason, and the reasoning delta of one chunk."""
     choices = chunk.get("choices")
     if not isinstance(choices, list) or not choices:
-        return "", None
+        return "", None, ""
     choice = choices[0]
     if not isinstance(choice, dict):
-        return "", None
+        return "", None, ""
     delta = choice.get("delta")
     content = delta.get("content") if isinstance(delta, dict) else None
+    reasoning = ""
+    if isinstance(delta, dict):
+        for key in REASONING_DELTA_KEYS:
+            value = delta.get(key)
+            if isinstance(value, str) and value:
+                reasoning = value
+                break
     finish_reason = choice.get("finish_reason")
     return (
         content if isinstance(content, str) else "",
         finish_reason if isinstance(finish_reason, str) and finish_reason else None,
+        reasoning,
     )
 
 
@@ -239,7 +301,7 @@ def stream_completion(
     detector: RunawayDetector | None,
     max_chars: int,
     allow_empty: bool = False,
-) -> tuple[str, str, int, int]:
+) -> tuple[str, str, int, int, StreamTiming]:
     """Stream one completion, aborting the connection as soon as it starts repeating.
 
     Streaming exists for the abort: a non-streamed request hides the generation
@@ -257,6 +319,11 @@ def stream_completion(
     usage: dict[str, Any] | None = None
     parts: list[str] = []
     produced = 0
+    started = time.monotonic()
+    first_token: float | None = None
+    first_content: float | None = None
+    last_token: float | None = None
+    reasoning_chunks = content_chunks = 0
     try:
         with HTTP_OPENER.open(request, timeout=timeout) as response:
             for line in iter_sse_lines(response):
@@ -265,11 +332,22 @@ def stream_completion(
                     continue
                 if isinstance(chunk.get("usage"), dict):
                     usage = chunk["usage"]
-                content, reason = read_stream_delta(chunk)
+                content, reason, reasoning = read_stream_delta(chunk)
                 if reason is not None:
                     finish_reason = reason
+                if reasoning:
+                    reasoning_chunks += 1
+                    last_token = time.monotonic() - started
+                    if first_token is None:
+                        first_token = last_token
                 if not content:
                     continue
+                content_chunks += 1
+                last_token = time.monotonic() - started
+                if first_content is None:
+                    first_content = last_token
+                    if first_token is None:
+                        first_token = first_content
                 parts.append(content)
                 produced += len(content)
                 if produced > max_chars:
@@ -290,6 +368,14 @@ def stream_completion(
         raise MlxApiError(f"HTTP {exc.code} from local API") from exc
     except (urllib.error.URLError, TimeoutError) as exc:
         raise MlxApiError(f"network error calling local API: {exc}") from exc
+    timing = StreamTiming(
+        elapsed_seconds=time.monotonic() - started,
+        first_token_seconds=first_token,
+        first_content_seconds=first_content,
+        last_token_seconds=last_token,
+        reasoning_chunks=reasoning_chunks,
+        content_chunks=content_chunks,
+    )
     content = "".join(parts)
     if not content and not allow_empty:
         raise MlxApiError("chat completion stream produced no content")
@@ -303,7 +389,7 @@ def stream_completion(
         raise UsageMissingError("usage token counts must be integers")
     if prompt_tokens <= 0 or completion_tokens <= 0:
         raise UsageMissingError("usage token counts must both be greater than zero")
-    return content, finish_reason, prompt_tokens, completion_tokens
+    return content, finish_reason, prompt_tokens, completion_tokens, timing
 
 
 def preflight(base_url: str, timeout: int) -> None:
@@ -317,13 +403,13 @@ def build_usage(
     prompt_tokens: int,
     completion_tokens: int,
     finish_reason: str,
-    elapsed_seconds: float,
+    timing: StreamTiming,
     server: str,
 ) -> dict[str, Any]:
     """Build measured API usage metadata for one generation."""
     note = (
         f"{server} applied the model chat template; "
-        f"finish_reason={finish_reason}; elapsed_seconds={elapsed_seconds:.3f}."
+        f"finish_reason={finish_reason}; {timing.summary(prompt_tokens, completion_tokens)}."
     )
     return {
         "estimated": False,
@@ -358,7 +444,7 @@ def build_run_json(
     prompt_tokens: int,
     completion_tokens: int,
     finish_reason: str,
-    elapsed_seconds: float,
+    timing: StreamTiming,
     runtime: dict[str, str],
 ) -> dict[str, Any]:
     """Build schema-versioned metadata for one measured local API generation."""
@@ -380,7 +466,7 @@ def build_run_json(
             prompt_tokens,
             completion_tokens,
             finish_reason,
-            elapsed_seconds,
+            timing,
             LOCAL_HARNESSES[harness]["server"],
         ),
         "cost": build_local_cost(),
@@ -587,11 +673,10 @@ def call_model(
     timeout: int,
     runaway_threshold: float | None,
     allow_empty: bool = False,
-) -> tuple[str, str, int, int, float]:
-    """Call the chat endpoint once and return validated content, usage, and elapsed time."""
-    started = time.monotonic()
+) -> tuple[str, str, int, int, StreamTiming]:
+    """Call the chat endpoint once and return validated content, usage, and stream timing."""
     detector = RunawayDetector(runaway_threshold) if runaway_threshold is not None else None
-    content, finish_reason, prompt_tokens, completion_tokens = stream_completion(
+    content, finish_reason, prompt_tokens, completion_tokens, timing = stream_completion(
         endpoint(base_url, "chat/completions"),
         timeout,
         {
@@ -606,8 +691,12 @@ def call_model(
         max_tokens * MAX_CHARS_PER_TOKEN,
         allow_empty,
     )
-    elapsed_seconds = time.monotonic() - started
-    return content, finish_reason, prompt_tokens, completion_tokens, elapsed_seconds
+    print(
+        f"[timing] prompt={prompt_tokens} completion={completion_tokens} "
+        f"{timing.summary(prompt_tokens, completion_tokens)}",
+        file=sys.stderr,
+    )
+    return content, finish_reason, prompt_tokens, completion_tokens, timing
 
 
 def run_theme(
@@ -642,7 +731,7 @@ def run_theme(
         raise FileExistsError(f"already exists: {out_dir}; use --resume only for a complete run")
 
     prompt = build_theme_prompt(theme_dir, kind)
-    content, finish_reason, prompt_tokens, completion_tokens, elapsed_seconds = call_model(
+    content, finish_reason, prompt_tokens, completion_tokens, timing = call_model(
         api_model_id, prompt, base_url, max_tokens, timeout, runaway_threshold
     )
     run = build_run_json(
@@ -654,7 +743,7 @@ def run_theme(
         prompt_tokens=prompt_tokens,
         completion_tokens=completion_tokens,
         finish_reason=finish_reason,
-        elapsed_seconds=elapsed_seconds,
+        timing=timing,
         runtime=runtime,
     )
     write_atomically(out_dir, output_name, content, run)

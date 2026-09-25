@@ -181,6 +181,78 @@ def test_main_writes_raw_content_and_measured_metadata(tmp_path: Path, monkeypat
     assert "system" not in json.dumps(payload)
 
 
+@pytest.mark.parametrize("reasoning_key", ["reasoning", "reasoning_content"])
+def test_reasoning_deltas_are_timed_but_never_published(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, reasoning_key: str
+) -> None:
+    """Thinking streamed in a separate delta field is counted and timed, not written to the artifact."""
+    public = make_public(tmp_path)
+    monkeypatch.setattr(runner, "PUBLIC", public)
+    monkeypatch.setattr(runner, "parse_args", lambda: make_args())
+    stream = sse(
+        {"choices": [{"delta": {reasoning_key: "plan "}, "finish_reason": None}]},
+        {"choices": [{"delta": {reasoning_key: "more"}, "finish_reason": None}]},
+        {"choices": [{"delta": {"content": "<html>ok</html>"}, "finish_reason": None}]},
+        {"choices": [{"delta": {}, "finish_reason": "stop"}]},
+        {"choices": [], "usage": {"prompt_tokens": 12, "completion_tokens": 34}},
+    )
+    install_fake_http(monkeypatch, [{"data": []}, stream])
+
+    assert runner.main() == 0
+
+    model_dir = public / "demo" / "hy3-t512"
+    assert (model_dir / "index.html").read_text(encoding="utf-8") == "<html>ok</html>"
+    run_text = (model_dir / "run.json").read_text(encoding="utf-8")
+    assert "plan" not in run_text and "more" not in run_text
+    note = json.loads(run_text)["usage"]["note"]
+    for key in ("ttft_seconds=", "time_to_content_seconds=", "thinking_seconds=", "decode_tok_s="):
+        assert key in note
+    assert "reasoning_chunks=2" in note
+    assert "content_chunks=1" in note
+
+
+def test_timing_summary_derives_rates_from_milestones() -> None:
+    """Prefill and decode rates come from TTFT and the time after it."""
+    timing = runner.StreamTiming(
+        elapsed_seconds=15.0,
+        first_token_seconds=2.0,
+        first_content_seconds=7.0,
+        last_token_seconds=12.0,
+        reasoning_chunks=250,
+        content_chunks=250,
+    )
+
+    summary = timing.summary(prompt_tokens=1000, completion_tokens=501)
+
+    assert "ttft_seconds=2.000" in summary
+    assert "effective_prefill_tok_s=500.0" in summary
+    assert "decode_tok_s=50.0" in summary
+    assert "time_to_content_seconds=7.000" in summary
+    assert "thinking_seconds=5.000" in summary
+
+
+def test_reasoning_only_answer_ends_thinking_at_the_last_token() -> None:
+    """json-ladder keeps reasoning-only replies; waiting for usage is not thinking time."""
+    timing = runner.StreamTiming(
+        elapsed_seconds=20.0, first_token_seconds=1.0, last_token_seconds=11.0, reasoning_chunks=100
+    )
+
+    summary = timing.summary(prompt_tokens=10, completion_tokens=101)
+
+    assert "thinking_seconds=10.000" in summary
+    assert "decode_tok_s=10.0" in summary
+
+
+def test_timing_summary_omits_thinking_without_reasoning_deltas() -> None:
+    """A model that answers directly reports no thinking phase."""
+    timing = runner.StreamTiming(elapsed_seconds=3.0, first_token_seconds=1.0, first_content_seconds=1.0, content_chunks=5)
+
+    summary = timing.summary(prompt_tokens=10, completion_tokens=5)
+
+    assert "thinking_seconds" not in summary
+    assert "reasoning_chunks" not in summary
+
+
 @pytest.mark.parametrize(
     ("harness", "engine", "server"),
     [
