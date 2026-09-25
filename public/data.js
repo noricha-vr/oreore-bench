@@ -877,5 +877,6 @@ window.ENTRIES.push(
     { theme: "othello", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "成功。187.5秒（thinking 136.4秒・約6K tokens）・decode 46.0 tok/s。252行/7.2KB。JSエラー0、初期4石・合法手表示・着手→CPU応手・石数表示を確認。```html フェンスが盤面の上下に露出。", kind: "html" },
     { theme: "hasami-shogi", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "スモーク検証PASS。歩9/と9・9x9グリッド・選択ハイライト・移動・CPU応答・JSエラー0。652.6秒（thinking 565.1秒・約24K tokens）・decode 44.1 tok/s。262行/10.9KB。```html フェンス付き。", kind: "html" },
     { theme: "phoenix-lp", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "スモーク検証PASS。canvas・スクロールで描画変化・JSエラー0。1,623.6秒（thinking 1,163.2秒・約47K tokens）・decode 38.4 tok/s。completion 62,201 tokens で上限 65,000 の直前に着地。775行/33.5KB。", kind: "html" },
-    { theme: "pr-triage", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "✅ スキーマ準拠 PASS。正解キー一致 100%（10 primary）でローカル勢の最高。73.3秒（thinking 24.7秒）・decode 48.2 tok/s。159行/7.3KB。", kind: "json" }
+    { theme: "pr-triage", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "✅ スキーマ準拠 PASS。正解キー一致 100%（10 primary）でローカル勢の最高。73.3秒（thinking 24.7秒）・decode 48.2 tok/s。159行/7.3KB。", kind: "json" },
+    { theme: "json-ladder", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "パース 6/6・score 100%。6レベル計 314.9秒（thinking 計 239.5秒）・decode 45.5〜50.5 tok/s。completion 計 13,569 tokens。L6 だけ thinking 160秒と長い。", kind: "json" }
 );
