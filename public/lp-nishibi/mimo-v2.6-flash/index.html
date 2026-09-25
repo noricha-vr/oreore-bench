@@ -1,0 +1,1200 @@
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NISHIBI — 天然日焼けスタジオ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Noto+Serif+JP:wght@200;300;400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg:        #F5EDE3;
+    --bg-warm:   #EDE0D0;
+    --bg-dark:   #2C1E14;
+    --text:      #3B2A1A;
+    --text-light:#8A7565;
+    --accent:    #C4703A;
+    --accent-dim:#D4956A;
+    --terracotta:#B85C38;
+    --beige:     #F0E6D8;
+    --line:      rgba(59,42,26,0.12);
+    --serif:     'Cormorant Garamond', 'Noto Serif JP', serif;
+    --jp-serif:  'Noto Serif JP', serif;
+    --sans:      'Inter', 'Noto Serif JP', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; font-size: 16px; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--jp-serif);
+    font-weight: 300;
+    line-height: 1.8;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* ── Reveal Animation ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 1s cubic-bezier(.25,.46,.45,.94),
+                transform 1s cubic-bezier(.25,.46,.45,.94);
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .reveal-delay-1 { transition-delay: .15s; }
+  .reveal-delay-2 { transition-delay: .3s; }
+  .reveal-delay-3 { transition-delay: .45s; }
+  .reveal-delay-4 { transition-delay: .6s; }
+
+  /* ── Utility ── */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+  .section-label {
+    font-family: var(--sans);
+    font-size: .7rem;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    color: var(--text-light);
+    margin-bottom: 1.5rem;
+    font-weight: 400;
+  }
+  .section-title {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1.3;
+    margin-bottom: 2rem;
+    color: var(--text);
+  }
+  .section-title-jp {
+    font-family: var(--jp-serif);
+    font-weight: 200;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    line-height: 1.6;
+    margin-bottom: 2rem;
+  }
+
+  /* ══════════════════════════════════
+     NAV
+  ══════════════════════════════════ */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(245,237,227,0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+    transition: padding .3s;
+  }
+  nav.scrolled { padding: 1rem 2rem; }
+  .nav-logo {
+    font-family: var(--serif);
+    font-size: 1.3rem;
+    font-weight: 400;
+    letter-spacing: .15em;
+    color: var(--text);
+    text-decoration: none;
+  }
+  .nav-links {
+    display: flex;
+    gap: 2.5rem;
+    list-style: none;
+  }
+  .nav-links a {
+    font-family: var(--sans);
+    font-size: .75rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text-light);
+    text-decoration: none;
+    transition: color .3s;
+    font-weight: 400;
+  }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-toggle { display: none; background: none; border: none; cursor: pointer; padding: .5rem; }
+  .nav-toggle span {
+    display: block;
+    width: 22px;
+    height: 1px;
+    background: var(--text);
+    margin: 5px 0;
+    transition: .3s;
+  }
+
+  /* ══════════════════════════════════
+     HERO
+  ══════════════════════════════════ */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    padding: 6rem 2rem 4rem;
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg-warm) 100%);
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -20%;
+    right: -15%;
+    width: 70vw;
+    height: 70vw;
+    max-width: 800px;
+    max-height: 800px;
+    background: radial-gradient(ellipse at center, rgba(196,112,58,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    background: linear-gradient(to bottom, transparent, var(--bg));
+    pointer-events: none;
+  }
+  .hero-overline {
+    font-family: var(--sans);
+    font-size: .7rem;
+    letter-spacing: .4em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 2rem;
+    font-weight: 400;
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-size: clamp(3rem, 8vw, 6.5rem);
+    line-height: 1.1;
+    letter-spacing: .04em;
+    color: var(--text);
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .hero-sub {
+    font-family: var(--jp-serif);
+    font-weight: 200;
+    font-size: clamp(.95rem, 2vw, 1.15rem);
+    color: var(--text-light);
+    max-width: 540px;
+    line-height: 2;
+    margin-bottom: 3rem;
+  }
+  .hero-cta {
+    display: inline-block;
+    font-family: var(--sans);
+    font-size: .75rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: #fff;
+    background: var(--text);
+    padding: 1.1rem 3rem;
+    text-decoration: none;
+    border: 1px solid var(--text);
+    transition: all .4s;
+    font-weight: 400;
+  }
+  .hero-cta:hover {
+    background: transparent;
+    color: var(--text);
+  }
+  .hero-scroll {
+    position: absolute;
+    bottom: 2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .5rem;
+    z-index: 2;
+  }
+  .hero-scroll span {
+    font-family: var(--sans);
+    font-size: .6rem;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    color: var(--text-light);
+  }
+  .hero-scroll-line {
+    width: 1px;
+    height: 40px;
+    background: var(--text-light);
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+  @keyframes scrollPulse {
+    0%, 100% { opacity: .3; transform: scaleY(.5); transform-origin: top; }
+    50% { opacity: 1; transform: scaleY(1); }
+  }
+
+  /* ══════════════════════════════════
+     PHILOSOPHY
+  ══════════════════════════════════ */
+  .philosophy {
+    padding: 8rem 0;
+    background: var(--bg);
+    position: relative;
+  }
+  .philosophy-inner {
+    max-width: 680px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .philosophy-text {
+    font-family: var(--jp-serif);
+    font-weight: 200;
+    font-size: clamp(1rem, 2vw, 1.15rem);
+    line-height: 2.4;
+    color: var(--text);
+    margin-bottom: 2rem;
+  }
+  .philosophy-text p + p { margin-top: 1.5rem; }
+  .philosophy-divider {
+    width: 40px;
+    height: 1px;
+    background: var(--accent);
+    margin: 3rem auto;
+  }
+  .philosophy-quote {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+    color: var(--accent);
+    line-height: 1.8;
+  }
+
+  /* ══════════════════════════════════
+     PLANS
+  ══════════════════════════════════ */
+  .plans {
+    padding: 8rem 0;
+    background: var(--bg-warm);
+  }
+  .plans-header {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+  .plans-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+  .plan-card {
+    background: var(--bg);
+    padding: 3rem 2rem;
+    text-align: center;
+    border: 1px solid var(--line);
+    transition: transform .4s, box-shadow .4s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .plan-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 60px rgba(44,30,20,0.08);
+  }
+  .plan-card.featured {
+    background: var(--bg-dark);
+    color: var(--beige);
+    border-color: var(--bg-dark);
+  }
+  .plan-card.featured .plan-name { color: var(--accent-dim); }
+  .plan-card.featured .plan-desc { color: rgba(240,230,216,0.6); }
+  .plan-card.featured .plan-price { color: var(--beige); }
+  .plan-card.featured .plan-price small { color: rgba(240,230,216,0.5); }
+  .plan-card.featured .plan-features li { color: rgba(240,230,216,0.7); border-color: rgba(240,230,216,0.1); }
+  .plan-card.featured .plan-btn {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .plan-card.featured .plan-btn:hover {
+    background: transparent;
+    color: var(--accent);
+  }
+  .plan-badge {
+    position: absolute;
+    top: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--sans);
+    font-size: .6rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    padding: .4rem 1.2rem;
+    font-weight: 500;
+  }
+  .plan-name {
+    font-family: var(--serif);
+    font-size: 1.4rem;
+    font-weight: 400;
+    color: var(--accent);
+    margin-bottom: .5rem;
+    letter-spacing: .05em;
+  }
+  .plan-desc {
+    font-family: var(--jp-serif);
+    font-size: .8rem;
+    color: var(--text-light);
+    margin-bottom: 2rem;
+    line-height: 1.7;
+  }
+  .plan-price {
+    font-family: var(--serif);
+    font-size: 2.5rem;
+    font-weight: 300;
+    color: var(--text);
+    margin-bottom: .3rem;
+  }
+  .plan-price small {
+    font-size: .85rem;
+    color: var(--text-light);
+    font-family: var(--sans);
+    font-weight: 400;
+  }
+  .plan-period {
+    font-family: var(--sans);
+    font-size: .7rem;
+    color: var(--text-light);
+    letter-spacing: .1em;
+    margin-bottom: 2rem;
+  }
+  .plan-features {
+    list-style: none;
+    margin-bottom: 2.5rem;
+    flex: 1;
+  }
+  .plan-features li {
+    font-family: var(--jp-serif);
+    font-size: .85rem;
+    padding: .7rem 0;
+    border-bottom: 1px solid var(--line);
+    color: var(--text-light);
+    line-height: 1.6;
+  }
+  .plan-features li:last-child { border-bottom: none; }
+  .plan-btn {
+    display: block;
+    width: 100%;
+    font-family: var(--sans);
+    font-size: .7rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    padding: 1rem;
+    text-align: center;
+    text-decoration: none;
+    color: var(--text);
+    background: transparent;
+    border: 1px solid var(--text);
+    transition: all .4s;
+    font-weight: 400;
+    cursor: pointer;
+  }
+  .plan-btn:hover {
+    background: var(--text);
+    color: var(--bg);
+  }
+
+  /* ══════════════════════════════════
+     SCIENCE
+  ══════════════════════════════════ */
+  .science {
+    padding: 8rem 0;
+    background: var(--bg);
+  }
+  .science-header {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+  .science-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+  .science-item {
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+    border-top: 1px solid var(--line);
+    position: relative;
+  }
+  .science-item::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 1px;
+    background: var(--accent);
+  }
+  .science-number {
+    font-family: var(--serif);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 300;
+    color: var(--accent);
+    line-height: 1.2;
+    margin-bottom: .5rem;
+  }
+  .science-number small {
+    font-size: .5em;
+    color: var(--text-light);
+  }
+  .science-label {
+    font-family: var(--sans);
+    font-size: .65rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--text-light);
+    margin-bottom: 1rem;
+    font-weight: 400;
+  }
+  .science-desc {
+    font-family: var(--jp-serif);
+    font-size: .8rem;
+    color: var(--text-light);
+    line-height: 1.8;
+  }
+
+  /* ══════════════════════════════════
+     STUDIO
+  ══════════════════════════════════ */
+  .studio {
+    padding: 8rem 0;
+    background: var(--bg-dark);
+    color: var(--beige);
+    position: relative;
+    overflow: hidden;
+  }
+  .studio::before {
+    content: '';
+    position: absolute;
+    top: -30%;
+    right: -10%;
+    width: 50vw;
+    height: 50vw;
+    background: radial-gradient(ellipse, rgba(196,112,58,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .studio .section-label { color: rgba(240,230,216,0.4); }
+  .studio .section-title { color: var(--beige); }
+  .studio-header {
+    text-align: center;
+    margin-bottom: 4rem;
+    position: relative;
+    z-index: 1;
+  }
+  .studio-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3rem;
+    position: relative;
+    z-index: 1;
+  }
+  .studio-item {
+    text-align: center;
+    padding: 2rem 1rem;
+  }
+  .studio-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 1.5rem;
+    border: 1px solid rgba(240,230,216,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color .4s;
+  }
+  .studio-item:hover .studio-icon { border-color: var(--accent); }
+  .studio-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke: var(--accent-dim);
+    fill: none;
+    stroke-width: 1.2;
+  }
+  .studio-item h3 {
+    font-family: var(--serif);
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: var(--beige);
+    margin-bottom: 1rem;
+    letter-spacing: .05em;
+  }
+  .studio-item p {
+    font-family: var(--jp-serif);
+    font-size: .85rem;
+    color: rgba(240,230,216,0.55);
+    line-height: 1.9;
+  }
+
+  /* ══════════════════════════════════
+     TESTIMONIALS
+  ══════════════════════════════════ */
+  .testimonials {
+    padding: 8rem 0;
+    background: var(--bg-warm);
+  }
+  .testimonials-header {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+  .testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+  .testimonial-card {
+    background: var(--bg);
+    padding: 2.5rem 2rem;
+    border: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    transition: transform .4s;
+  }
+  .testimonial-card:hover { transform: translateY(-4px); }
+  .testimonial-mark {
+    font-family: var(--serif);
+    font-size: 3rem;
+    line-height: 1;
+    color: var(--accent);
+    opacity: .4;
+    margin-bottom: 1rem;
+  }
+  .testimonial-text {
+    font-family: var(--jp-serif);
+    font-size: .9rem;
+    line-height: 2;
+    color: var(--text);
+    flex: 1;
+    margin-bottom: 2rem;
+    font-weight: 300;
+  }
+  .testimonial-author {
+    border-top: 1px solid var(--line);
+    padding-top: 1.5rem;
+  }
+  .testimonial-name {
+    font-family: var(--serif);
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--text);
+    letter-spacing: .05em;
+  }
+  .testimonial-role {
+    font-family: var(--sans);
+    font-size: .7rem;
+    letter-spacing: .1em;
+    color: var(--text-light);
+    margin-top: .3rem;
+    text-transform: uppercase;
+    font-weight: 400;
+  }
+
+  /* ══════════════════════════════════
+     CTA BAND
+  ══════════════════════════════════ */
+  .cta-band {
+    padding: 6rem 0;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--terracotta) 100%);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-band::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  .cta-band h2 {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    color: #fff;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
+  }
+  .cta-band p {
+    font-family: var(--jp-serif);
+    font-weight: 200;
+    font-size: .95rem;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 2.5rem;
+    position: relative;
+    z-index: 1;
+    line-height: 2;
+  }
+  .cta-band-btn {
+    display: inline-block;
+    font-family: var(--sans);
+    font-size: .75rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: #fff;
+    padding: 1.1rem 3rem;
+    text-decoration: none;
+    border: 1px solid #fff;
+    transition: all .4s;
+    position: relative;
+    z-index: 1;
+    font-weight: 500;
+  }
+  .cta-band-btn:hover {
+    background: transparent;
+    color: #fff;
+  }
+
+  /* ══════════════════════════════════
+     FOOTER
+  ══════════════════════════════════ */
+  footer {
+    background: var(--bg-dark);
+    color: var(--beige);
+    padding: 5rem 0 3rem;
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 3rem;
+    margin-bottom: 4rem;
+  }
+  .footer-brand {
+    font-family: var(--serif);
+    font-size: 1.8rem;
+    font-weight: 300;
+    letter-spacing: .1em;
+    color: var(--beige);
+    margin-bottom: 1rem;
+  }
+  .footer-brand-desc {
+    font-family: var(--jp-serif);
+    font-size: .8rem;
+    color: rgba(240,230,216,0.4);
+    line-height: 1.9;
+    max-width: 300px;
+  }
+  .footer-col h4 {
+    font-family: var(--sans);
+    font-size: .65rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: rgba(240,230,216,0.4);
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+  }
+  .footer-col ul { list-style: none; }
+  .footer-col li { margin-bottom: .8rem; }
+  .footer-col a {
+    font-family: var(--jp-serif);
+    font-size: .85rem;
+    color: rgba(240,230,216,0.6);
+    text-decoration: none;
+    transition: color .3s;
+    font-weight: 300;
+  }
+  .footer-col a:hover { color: var(--accent-dim); }
+  .footer-bottom {
+    border-top: 1px solid rgba(240,230,216,0.1);
+    padding-top: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .footer-copy {
+    font-family: var(--sans);
+    font-size: .7rem;
+    color: rgba(240,230,216,0.3);
+    letter-spacing: .05em;
+    font-weight: 400;
+  }
+  .footer-social {
+    display: flex;
+    gap: 1.5rem;
+  }
+  .footer-social a {
+    font-family: var(--sans);
+    font-size: .7rem;
+    color: rgba(240,230,216,0.4);
+    text-decoration: none;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    transition: color .3s;
+    font-weight: 400;
+  }
+  .footer-social a:hover { color: var(--accent-dim); }
+
+  /* ══════════════════════════════════
+     RESPONSIVE
+  ══════════════════════════════════ */
+  @media (max-width: 900px) {
+    .plans-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
+    .science-grid { grid-template-columns: repeat(2, 1fr); }
+    .studio-grid { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
+    .testimonials-grid { grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; }
+    .footer-grid { grid-template-columns: 1fr; gap: 2rem; }
+  }
+
+  @media (max-width: 768px) {
+    .nav-links {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: rgba(245,237,227,0.97);
+      backdrop-filter: blur(12px);
+      flex-direction: column;
+      padding: 2rem;
+      gap: 1.5rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-links.open { display: flex; }
+    .nav-toggle { display: block; }
+    .science-grid { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
+    .hero h1 { font-size: clamp(2.5rem, 10vw, 4rem); }
+    .philosophy, .plans, .science, .studio, .testimonials { padding: 5rem 0; }
+    .footer-bottom { flex-direction: column; text-align: center; }
+  }
+
+  @media (max-width: 480px) {
+    .container { padding: 0 1.25rem; }
+    .plan-card { padding: 2.5rem 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════
+     NAV
+══════════════════════════════════ -->
+<nav id="navbar">
+  <a href="#" class="nav-logo">NISHIBI</a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#philosophy">Philosophy</a></li>
+    <li><a href="#plans">Plan</a></li>
+    <li><a href="#science">Science</a></li>
+    <li><a href="#studio">Studio</a></li>
+    <li><a href="#testimonials">Voices</a></li>
+  </ul>
+  <button class="nav-toggle" id="navToggle" aria-label="メニュー">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- ══════════════════════════════════
+     HERO
+══════════════════════════════════ -->
+<section class="hero" id="hero">
+  <div class="hero-overline reveal">Natural Sunset Tanning Studio</div>
+  <h1 class="reveal reveal-delay-1">The Light<br><em>of Dusk.</em></h1>
+  <p class="hero-sub reveal reveal-delay-2">
+    人工の光を用いない。<br>
+    ただ、西日が差し込む時間帯に、<br>
+    肌は本来の色へと還る。
+  </p>
+  <a href="#plans" class="hero-cta reveal reveal-delay-3">Reserve a Session</a>
+  <div class="hero-scroll">
+    <span>Scroll</span>
+    <div class="hero-scroll-line"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     PHILOSOPHY
+══════════════════════════════════ -->
+<section class="philosophy" id="philosophy">
+  <div class="container">
+    <div class="philosophy-inner">
+      <div class="section-label reveal">Philosophy</div>
+      <div class="philosophy-divider reveal reveal-delay-1"></div>
+      <div class="philosophy-text reveal reveal-delay-2">
+        <p>
+          日は、東から昇り、西へ沈む。その移ろいのなかに、
+          一日で最も濃密な光が含まれている——それが西日である。
+        </p>
+        <p>
+          NISHIBI は、この一瞬の光を浴びる行為を、
+          肌のための儀式として再定義する。
+          人工の紫外線を一切用いず、
+          窓越しに差し込む夕方の光だけを頼りに、
+          肌は静かに、しかし確かに、色を深めていく。
+        </p>
+        <p>
+          これは日焼けではない。光の記憶を、
+          肌に刻むことである。
+        </p>
+      </div>
+      <div class="philosophy-divider reveal reveal-delay-3"></div>
+      <div class="philosophy-quote reveal reveal-delay-4">
+        "The sun does not hurry.<br>Neither should your skin."
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     PLANS
+══════════════════════════════════ -->
+<section class="plans" id="plans">
+  <div class="container">
+    <div class="plans-header">
+      <div class="section-label reveal">Plan</div>
+      <h2 class="section-title reveal reveal-delay-1">時間帯で選ぶ、<br>三つの光の濃度。</h2>
+    </div>
+    <div class="plans-grid">
+      <!-- Plan 1 -->
+      <div class="plan-card reveal">
+        <div class="plan-name">残光時間</div>
+        <div class="plan-desc">日没直前の微光。<br>最も穏やかなトーンを求める方へ。</div>
+        <div class="plan-price">¥8,800<small> / 回</small></div>
+        <div class="plan-period">17:30 — 18:00</div>
+        <ul class="plan-features">
+          <li>30分の個室セッション</li>
+          <li>オーガニック UV プロテクトクリーム</li>
+          <li>セッション後、ハーブティー一品</li>
+          <li>初回カウンセリング込み</li>
+        </ul>
+        <a href="#" class="plan-btn">Select</a>
+      </div>
+      <!-- Plan 2 -->
+      <div class="plan-card featured reveal reveal-delay-1">
+        <div class="plan-badge">Recommended</div>
+        <div class="plan-name">黄金時間</div>
+        <div class="plan-desc">西日が最も濃く差し込む時間帯。<br>NISHIBI の中核体験。</div>
+        <div class="plan-price">¥14,300<small> / 回</small></div>
+        <div class="plan-period">16:30 — 17:30</div>
+        <ul class="plan-features">
+          <li>60分の個室セッション</li>
+          <li>専用フェイスマスク（西日反射用）</li>
+          <li>有機植物オイルによる前処理・後処理</li>
+          <li>セッション後、季節のハーブティーと焼き菓子</li>
+          <li>肌トーン診断レポート（PDF）</li>
+        </ul>
+        <a href="#" class="plan-btn">Select</a>
+      </div>
+      <!-- Plan 3 -->
+      <div class="plan-card reveal reveal-delay-2">
+        <div class="plan-name">茜時間</div>
+        <div class="plan-desc">赤みを帯びた光が残る時間帯。<br>深い色調を追求する方へ。</div>
+        <div class="plan-price">¥19,800<small> / 回</small></div>
+        <div class="plan-period">17:00 — 18:30</div>
+        <ul class="plan-features">
+          <li>90分の個室セッション</li>
+          <li>二層照射プロトコル（残光 × 黄金）</li>
+          <li>専属アテンダントによる姿勢サポート</li>
+          <li>アロマテラピー併用</li>
+          <li>次回セッション 20% オフ</li>
+        </ul>
+        <a href="#" class="plan-btn">Select</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     SCIENCE
+══════════════════════════════════ -->
+<section class="science" id="science">
+  <div class="container">
+    <div class="science-header">
+      <div class="section-label reveal">Science</div>
+      <h2 class="section-title reveal reveal-delay-1">西日という、<br>計測された光。</h2>
+    </div>
+    <div class="science-grid">
+      <div class="science-item reveal">
+        <div class="science-number">3,200<small>K</small></div>
+        <div class="science-label">Color Temperature</div>
+        <div class="science-desc">
+          夕方の西日は約3,200ケルビン。肌のトーンを最も自然に引き出す色温度帯として知られる。
+        </div>
+      </div>
+      <div class="science-item reveal reveal-delay-1">
+        <div class="science-number">62<small>%</small></div>
+        <div class="science-label">UV Reduction</div>
+        <div class="science-desc">
+          大気通過距離の増大により、日没前の紫外線量は正午比で約62%低減。灼けずに、色だけが残る。
+        </div>
+      </div>
+      <div class="science-item reveal reveal-delay-2">
+        <div class="science-number">478<small>nm</small></div>
+        <div class="science-label">Peak Wavelength</div>
+        <div class="science-desc">
+          西日の可視光スペクトルは478nm付近にピークを持つ。皮膚の微細な凹凸を柔らかく照らし、陰影を均す。
+        </div>
+      </div>
+      <div class="science-item reveal reveal-delay-3">
+        <div class="science-number">+31<small>%</small></div>
+        <div class="science-label">Melatonin Shift</div>
+        <div class="science-desc">
+          夕方の低角度光への短時間曝露は、メラトニン分泌の位相を約31%前移させ、就眠リズムを整えるとされる。
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     STUDIO
+══════════════════════════════════ -->
+<section class="studio" id="studio">
+  <div class="container">
+    <div class="studio-header">
+      <div class="section-label reveal">Studio</div>
+      <h2 class="section-title reveal reveal-delay-1">光を設計する、<br>空間。</h2>
+    </div>
+    <div class="studio-grid">
+      <div class="studio-item reveal">
+        <div class="studio-icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+        </div>
+        <h3>南西向全面窓</h3>
+        <p>
+          スタジオは南西方向に開いた全面ガラス窓で構成。西日が最も長く差し込む角度を、建築段階から計算している。
+        </p>
+      </div>
+      <div class="studio-item reveal reveal-delay-1">
+        <div class="studio-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <h3>無垢材の床</h3>
+        <p>
+          北米産ホワイトオークの無垢材を敷設。素足で立つと、木の温度が足裏から伝わる。人工的な感触は一切排除。
+        </p>
+      </div>
+      <div class="studio-item reveal reveal-delay-2">
+        <div class="studio-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <h3>無音空間</h3>
+        <p>
+          音響設計により、外部ノイズを35dB以下に抑制。セッション中は、光の移動と自分の呼吸だけが聞こえる。
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     TESTIMONIALS
+══════════════════════════════════ -->
+<section class="testimonials" id="testimonials">
+  <div class="container">
+    <div class="testimonials-header">
+      <div class="section-label reveal">Voices</div>
+      <h2 class="section-title reveal reveal-delay-1">光を浴びた者の声。</h2>
+    </div>
+    <div class="testimonials-grid">
+      <div class="testimonial-card reveal">
+        <div class="testimonial-mark">"</div>
+        <p class="testimonial-text">
+          翌朝、鏡を見たときに、肌が「整っている」のではなく「生きている」と感じた。マシンで焼いたときとは、明らかに違う何かがある。
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-name">高橋 綾</div>
+          <div class="testimonial-role">建築デザイナー</div>
+        </div>
+      </div>
+      <div class="testimonial-card reveal reveal-delay-1">
+        <div class="testimonial-mark">"</div>
+        <p class="testimonial-text">
+          UVライトを使わないという事実に、まず安心した。そしてセッション中に、西日が壁をゆっくり移動していくのを見ていると、時間そのものが薬のように感じられた。
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-name">森本 一志</div>
+          <div class="testimonial-role">オーガニックコスメ研究員</div>
+        </div>
+      </div>
+      <div class="testimonial-card reveal reveal-delay-2">
+        <div class="testimonial-mark">"</div>
+        <p class="testimonial-text">
+          毎週金曜の黄金時間に通っている。仕事の終わりに西日を浴びるという行為が、私の一週間の区切りになっている。日焼けよりも、この儀式性に価値を感じる。
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-name">佐藤 美咲</div>
+          <div class="testimonial-role">フリーランス編集者</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     CTA BAND
+══════════════════════════════════ -->
+<section class="cta-band">
+  <div class="container">
+    <h2 class="reveal">今日の西日は、<br>あなたのためだけに沈む。</h2>
+    <p class="reveal reveal-delay-1">
+      セッションは完全予約制。光の角度と季節により、<br>
+      最適な時間帯を個別にご提案いたします。
+    </p>
+    <a href="#" class="cta-band-btn reveal reveal-delay-2">Book Your Session</a>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     FOOTER
+══════════════════════════════════ -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <div class="footer-brand">NISHIBI</div>
+        <p class="footer-brand-desc">
+          天然日焼けスタジオ NISHIBI。<br>
+          人工の紫外線を用いず、<br>
+          夕方の西日のみで肌を整える。<br><br>
+          〒150-0001<br>
+          東京都渋谷区神宮前 4-12-8<br>
+          西日ビル 3F
+        </p>
+      </div>
+      <div class="footer-col">
+        <h4>Navigate</h4>
+        <ul>
+          <li><a href="#philosophy">Philosophy</a></li>
+          <li><a href="#plans">Plan</a></li>
+          <li><a href="#science">Science</a></li>
+          <li><a href="#studio">Studio</a></li>
+          <li><a href="#testimonials">Voices</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="#">info@nishibi.jp</a></li>
+          <li><a href="#">03-6427-1890</a></li>
+          <li><a href="#">営業時間 16:00 — 18:30</a></li>
+          <li><a href="#">定休日 水曜・雨天</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copy">&copy; 2025 NISHIBI. All rights reserved.</div>
+      <div class="footer-social">
+        <a href="#">Instagram</a>
+        <a href="#">X</a>
+        <a href="#">Note</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ══════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════ -->
+<script>
+  // ── Scroll Reveal (IntersectionObserver) ──
+  const revealElements = document.querySelectorAll('.reveal');
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, {
+    threshold: 0.12,
+    rootMargin: '0px 0px -40px 0px'
+  });
+  revealElements.forEach(el => revealObserver.observe(el));
+
+  // ── Navbar scroll effect ──
+  const navbar = document.getElementById('navbar');
+  let lastScroll = 0;
+  window.addEventListener('scroll', () => {
+    const currentScroll = window.pageYOffset;
+    if (currentScroll > 50) {
+      navbar.classList.add('scrolled');
+    } else {
+      navbar.classList.remove('scrolled');
+    }
+    lastScroll = currentScroll;
+  }, { passive: true });
+
+  // ── Mobile nav toggle ──
+  const navToggle = document.getElementById('navToggle');
+  const navLinks = document.getElementById('navLinks');
+  navToggle.addEventListener('click', () => {
+    navLinks.classList.toggle('open');
+  });
+  // Close mobile nav on link click
+  navLinks.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      navLinks.classList.remove('open');
+    });
+  });
+
+  // ── Smooth scroll for anchor links ──
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        const navHeight = navbar.offsetHeight;
+        const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - navHeight;
+        window.scrollTo({
+          top: targetPosition,
+          behavior: 'smooth'
+        });
+      }
+    });
+  });
+
+  // ── Hero parallax (subtle) ──
+  const hero = document.querySelector('.hero');
+  window.addEventListener('scroll', () => {
+    const scrolled = window.pageYOffset;
+    if (scrolled < window.innerHeight) {
+      const heroContent = hero.querySelector('h1');
+      const heroSub = hero.querySelector('.hero-sub');
+      if (heroContent) {
+        heroContent.style.transform = `translateY(${scrolled * 0.15}px)`;
+        heroContent.style.opacity = 1 - (scrolled / window.innerHeight) * 0.8;
+      }
+      if (heroSub) {
+        heroSub.style.transform = `translateY(${scrolled * 0.1}px)`;
+        heroSub.style.opacity = 1 - (scrolled / window.innerHeight) * 0.8;
+      }
+    }
+  }, { passive: true });
+</script>
+
+</body>
+</html>
+```

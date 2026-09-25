@@ -868,3 +868,10 @@ window.ENTRIES.push(
     { theme: "pr-triage", model: "swe-2-high", runner: "Devin subagent (effort high)", note: "✅ スキーマ準拠 PASS。正解キー一致 95%（9 primary・1 acceptable）。前置き・フェンスなしの純粋 JSON。", kind: "json" },
     { theme: "json-ladder", model: "swe-2-high", runner: "Devin subagent (effort high)", note: "パース 6/6・score 100%（レベル別平均 99.7% の丸め、L5 のみ 98%）。全レベル schema_pass。completion 計 2,490 tokens（推定）と最少級。", kind: "json" }
 );
+
+// mimo-v2.6-flash（Vontra MLX 4bit / mlx_lm.server。thinking は既定で有効）
+// 既定は temperature 0.3。0.3 で本文を出せなかったテーマは公式推奨の 1.0 で追試し、run.json の sampling.temperature で区別する。
+// usage.note に TTFT・thinking 秒数・デコード tok/s を記録。生成物は成功・失敗を問わず1ショット出力を無加工で掲載。
+window.ENTRIES.push(
+    { theme: "lp-nishibi", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "成功。260.1秒・decode 45.4 tok/s（thinking 1.5秒でほぼ即答）。1,199行/37.5KB。JSエラー0、7セクションを desktop / mobile とも横溢れなく表示。```html フェンス付きで出力。", kind: "html" }
+);
