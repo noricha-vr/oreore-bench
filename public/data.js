@@ -643,6 +643,32 @@ window.MODELS = {
                     { label: "unsloth GGUF", href: "https://huggingface.co/unsloth/Qwen3.8-27B-GGUF" }
                 ]
             },
+            "mimo-v2.6-flash": {
+                label: "MiMo V2.6 Flash MLX",
+                provider: "Vontra / Xiaomi",
+                type: "local",
+                color: "#FF6900",
+                colorDark: "#C75200",
+                release: "2026-09-21",
+                size: "309B 総パラメータ / 15B active（MoE・256 experts 中 8）/ MLX 配布約160GB",
+                context: "1M tokens",
+                output: "128K tokens（公式 API 値。今回の実測上限は 65K）",
+                quantization: "Vontra/MiMo-V2.6-Flash-RL-MLX-4bit-MTP（MoE expert は MXFP4 g32、その他は 4-bit affine g64）",
+                runtime: "mlx-lm 0.31.3 / MLX 0.32.2（Mac Studio M3 Ultra 512GB）",
+                stats: [
+                    { value: "309B", label: "パラメータ", note: "MoE / 活性 15B" },
+                    { value: "約160GB", label: "MLX 配布サイズ", note: "MXFP4 + 4-bit" },
+                    { value: "1M", label: "コンテキスト", note: "公式モデルカード" },
+                    { value: "40.7 tok/s", label: "今回の実測", note: "8テーマ加重平均（thinking 込み）" }
+                ],
+                strengths: "デコード 38〜50 tok/s（thinking が短いほど速い）で、今回測ったローカル勢では最速級。thinking を本文と分けて返す。pr-triage は正解キー一致 100%（10 primary）、json-ladder はパース 6/6・score 100% で、どちらもローカル勢の最高に並ぶ。はさみ将棋・Phoenix LP はスモーク検証 PASS、オセロも着手と CPU 応手まで動く。",
+                weaknesses: "thinking が非常に長い。temperature 0.3（本ベンチ既定）では roguelike・lp-fable5・墨流しの 3 テーマが thinking だけで 65,000 上限に達し、本文を 1 文字も出さなかった（1 本約 28 分）。公式推奨の temperature 1.0 で追試すると roguelike と lp-fable5 は完走したが、roguelike は構文エラーで動かず、墨流しは 46K tokens 考えた末に本文なしで stop した（成果物なし）。HTML は全テーマで ```html フェンス付き。MTP の重みは同梱だが MLX では投機デコードに使われない。",
+                links: [
+                    { label: "Xiaomi 公式モデル", href: "https://huggingface.co/XiaomiMiMo/MiMo-V2.6-Flash-RL" },
+                    { label: "Vontra MLX版", href: "https://huggingface.co/Vontra/MiMo-V2.6-Flash-RL-MLX-4bit-MTP" },
+                    { label: "公式ページ", href: "https://mimo.mi.com/models/en-US/mimo-v2.6-flash" }
+                ]
+            },
             "swe-2-high": {
                 label: "SWE-2 High",
                 provider: "Cognition",
