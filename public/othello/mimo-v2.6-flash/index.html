@@ -1,0 +1,253 @@
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Othello</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Segoe UI',system-ui,sans-serif;
+  display:flex;flex-direction:column;align-items:center;
+  min-height:100vh;background:#0f0f1a;color:#e0e0e0;
+  padding:12px 8px;
+}
+h1{
+  font-size:clamp(1.2rem,4vw,1.8rem);
+  margin:8px 0 6px;letter-spacing:4px;
+  color:#f0f0f0;
+}
+.scores{
+  display:flex;gap:clamp(16px,5vw,40px);
+  margin-bottom:6px;font-size:clamp(.85rem,3vw,1.05rem);
+}
+.scores .label{display:flex;align-items:center;gap:6px}
+.dot{
+  width:14px;height:14px;border-radius:50%;display:inline-block;flex-shrink:0;
+}
+.dot.b{background:radial-gradient(circle at 35% 35%,#666,#111);border:1px solid #555}
+.dot.w{background:radial-gradient(circle at 35% 35%,#fff,#bbb);border:1px solid #999}
+.scores strong{font-size:1.1em;min-width:1.2em;text-align:center}
+#status{
+  min-height:1.4em;margin-bottom:8px;
+  font-size:clamp(.85rem,3vw,1rem);
+  text-align:center;color:#a0c4ff;
+}
+#status.gameover{color:#ffd700;font-weight:bold}
+.board{
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  grid-template-rows:repeat(8,1fr);
+  width:min(92vw,460px);
+  aspect-ratio:1;
+  border:3px solid #1a4a1a;
+  background:#2d8a2d;
+  border-radius:6px;
+  box-shadow:0 4px 20px rgba(0,0,0,.5);
+  overflow:hidden;
+}
+.cell{
+  border:1px solid rgba(0,0,0,.25);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+.cell.legal{cursor:pointer}
+.cell.legal:hover{background:rgba(255,255,255,.12)}
+.piece{
+  width:78%;height:78%;border-radius:50%;
+  transition:transform .25s ease;
+}
+.piece.black{
+  background:radial-gradient(circle at 35% 35%,#777,#111);
+  box-shadow:inset -2px -2px 4px rgba(0,0,0,.6),1px 1px 3px rgba(0,0,0,.5);
+}
+.piece.white{
+  background:radial-gradient(circle at 35% 35%,#fff,#ccc);
+  box-shadow:inset -2px -2px 4px rgba(0,0,0,.15),1px 1px 3px rgba(0,0,0,.3);
+}
+.legal-dot{
+  width:28%;height:28%;border-radius:50%;
+  background:rgba(255,255,255,.45);
+  pointer-events:none;
+}
+button{
+  margin-top:14px;padding:10px 32px;
+  font-size:clamp(.9rem,3vw,1rem);
+  border:none;border-radius:6px;
+  background:#c0392b;color:#fff;
+  cursor:pointer;letter-spacing:1px;
+  transition:background .2s;
+}
+button:hover{background:#a93226}
+button:active{transform:scale(.97)}
+</style>
+</head>
+<body>
+
+<h1>OTHELLO</h1>
+
+<div class="scores">
+  <span class="label"><span class="dot b"></span>あなた <strong id="bs">2</strong></span>
+  <span class="label"><span class="dot w"></span>CPU <strong id="ws">2</strong></span>
+</div>
+
+<div id="status">あなたの番です</div>
+<div class="board" id="board"></div>
+<button id="resetBtn">リセット</button>
+
+<script>
+(function(){
+  const SIZE=8, EMPTY=0, BLACK=1, WHITE=2;
+  const DIRS=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+  const HUMAN=BLACK, CPU=WHITE;
+
+  let board, current, over;
+
+  function init(){
+    board=Array.from({length:SIZE},()=>Array(SIZE).fill(EMPTY));
+    board[3][3]=WHITE; board[3][4]=BLACK;
+    board[4][3]=BLACK; board[4][4]=WHITE;
+    current=BLACK; over=false;
+    render(); updateStatus();
+  }
+
+  function inB(r,c){return r>=0&&r<SIZE&&c>=0&&c<SIZE}
+
+  function getFlips(r,c,player){
+    if(board[r][c]!==EMPTY) return [];
+    const opp=player===BLACK?WHITE:BLACK;
+    const all=[];
+    for(const[dr,dc]of DIRS){
+      const seq=[];
+      let nr=r+dr,nc=c+dc;
+      while(inB(nr,nc)&&board[nr][nc]===opp){seq.push([nr,nc]);nr+=dr;nc+=dc}
+      if(inB(nr,nc)&&board[nr][nc]===player) all.push(...seq);
+    }
+    return all;
+  }
+
+  function legalMoves(player){
+    const moves=[];
+    for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
+      const f=getFlips(r,c,player);
+      if(f.length) moves.push({row:r,col:c,flips:f});
+    }
+    return moves;
+  }
+
+  function place(r,c,player,flips){
+    board[r][c]=player;
+    for(const[fr,fc]of flips) board[fr][fc]=player;
+  }
+
+  function count(){
+    let b=0,w=0;
+    for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
+      if(board[r][c]===BLACK)b++;else if(board[r][c]===WHITE)w++;
+    }
+    return{b,w};
+  }
+
+  function full(){
+    for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)
+      if(board[r][c]===EMPTY)return false;
+    return true;
+  }
+
+  function cpuPick(moves){
+    let best=moves[0],bs=-Infinity;
+    for(const m of moves){
+      let s=0;
+      const{row,col}=m;
+      if((row===0||row===7)&&(col===0||col===7)) s+=100;
+      else if(row===0||row===7||col===0||col===7) s+=10;
+      s+=m.flips.length;
+      if(s>bs){bs=s;best=m}
+    }
+    return best;
+  }
+
+  function render(){
+    const el=document.getElementById('board');
+    const moves=over?[]:legalMoves(current);
+    const set=new Set(moves.map(m=>m.row+','+m.col));
+    el.innerHTML='';
+    for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
+      const cell=document.createElement('div');
+      cell.className='cell';
+      if(board[r][c]===BLACK){
+        const p=document.createElement('div');p.className='piece black';cell.appendChild(p);
+      }else if(board[r][c]===WHITE){
+        const p=document.createElement('div');p.className='piece white';cell.appendChild(p);
+      }else if(set.has(r+','+c)){
+        cell.classList.add('legal');
+        const d=document.createElement('div');d.className='legal-dot';cell.appendChild(d);
+        if(current===HUMAN) cell.addEventListener('click',()=>humanClick(r,c));
+      }
+      el.appendChild(cell);
+    }
+    const{b,w}=count();
+    document.getElementById('bs').textContent=b;
+    document.getElementById('ws').textContent=w;
+  }
+
+  function updateStatus(msg){
+    const el=document.getElementById('status');
+    el.classList.remove('gameover');
+    if(msg){el.textContent=msg;return}
+    if(over){
+      const{b,w}=count();
+      el.classList.add('gameover');
+      if(b>w) el.textContent='ゲーム終了 — あなたの勝ち ('+b+'対'+w+')';
+      else if(w>b) el.textContent='ゲーム終了 — CPUの勝ち ('+w+'対'+b+')';
+      else el.textContent='ゲーム終了 — 引き分け ('+b+'対'+w+')';
+    }else if(current===HUMAN) el.textContent='あなたの番です';
+    else el.textContent='CPUの番です';
+  }
+
+  function humanClick(r,c){
+    if(over||current!==HUMAN) return;
+    const f=getFlips(r,c,HUMAN);
+    if(!f.length) return;
+    place(r,c,HUMAN,f);
+    current=CPU;
+    render();
+    setTimeout(cpuTurn,500);
+  }
+
+  function cpuTurn(){
+    if(over) return;
+    const cpuMoves=legalMoves(CPU);
+    if(!cpuMoves.length){
+      const hMoves=legalMoves(HUMAN);
+      if(!hMoves.length){over=true;render();updateStatus();return}
+      current=HUMAN;
+      render();
+      updateStatus('CPUがパスしました。あなたの番です');
+      return;
+    }
+    const m=cpuPick(cpuMoves);
+    place(m.row,m.col,CPU,m.flips);
+    current=HUMAN;
+    render();
+    const hMoves=legalMoves(HUMAN);
+    if(!hMoves.length){
+      const cpuMoves2=legalMoves(CPU);
+      if(!cpuMoves2.length){over=true;render();updateStatus();return}
+      current=CPU;
+      render();
+      updateStatus('あなたはパスしました。CPUの番です');
+      setTimeout(cpuTurn,500);
+      return;
+    }
+    updateStatus();
+  }
+
+  document.getElementById('resetBtn').addEventListener('click',init);
+  init();
+})();
+</script>
+</body>
+</html>
+```
