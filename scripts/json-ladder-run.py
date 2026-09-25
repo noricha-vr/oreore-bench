@@ -91,7 +91,7 @@ _REQUIRED_OPENROUTER = (
 )
 _REQUIRED_LOCAL = (
     "DEFAULT_BASE_URL", "DEFAULT_RUNAWAY_THRESHOLD", "DEFAULT_TIMEOUT_SECONDS",
-    "MlxApiError", "UsageMissingError", "PUBLIC_MODEL_ID_RE", "build_local_cost",
+    "MlxApiError", "UsageMissingError", "PUBLIC_MODEL_ID_RE", "RUNTIME_VALUE_RE", "build_local_cost",
     "call_model", "endpoint", "preflight", "request_json", "resolve_base_url",
 )
 for _module, _names in ((OPENROUTER, _REQUIRED_OPENROUTER), (LOCAL, _REQUIRED_LOCAL)):
@@ -250,14 +250,16 @@ def build_run(
         completion_tokens=completion_tokens,
         reasoning_tokens=reasoning_tokens,
         pricing=pricing,
-        post_processing="json-ladder-5-levels",
+        post_processing=f"json-ladder-{len(LEVEL_NUMBERS)}-levels",
     )
     reasoning_note = (
         f"completion に reasoning {reasoning_tokens} tokens を含む"
         if reasoning_tokens
         else "reasoning トークンの内訳は API 未提供"
     )
-    run["usage"]["note"] = f"OpenRouter API 実測。5段階を独立リクエストで合算。{reasoning_note}"
+    run["usage"]["note"] = (
+        f"OpenRouter API 実測。{len(LEVEL_NUMBERS)}段階を独立リクエストで合算。{reasoning_note}"
+    )
     return run
 
 
@@ -280,6 +282,12 @@ def parse_runtime_extra(raw: str | None) -> dict[str, str]:
     non_string = sorted(key for key, value in parsed.items() if not isinstance(value, str))
     if non_string:
         raise ValueError(f"--runtime-extra values must be strings: {', '.join(non_string)}")
+    # 値も mlx-lm-run.py の runtime と同じ字種・長さに絞る（ローカルパス等を公開 run.json に載せない）
+    unsafe = sorted(key for key, value in parsed.items() if not LOCAL.RUNTIME_VALUE_RE.fullmatch(value))
+    if unsafe:
+        raise ValueError(
+            f"--runtime-extra values must match {LOCAL.RUNTIME_VALUE_RE.pattern}: {', '.join(unsafe)}"
+        )
     return parsed
 
 
@@ -311,14 +319,16 @@ def build_local_run(
         "generated_at_source": "unknown",
         "sampling": {"temperature": 0.3, "max_tokens": max_tokens, "top_p": "default"},
         "system_prompt": "none",
-        "post_processing": "json-ladder-5-levels",
+        "post_processing": f"json-ladder-{len(LEVEL_NUMBERS)}-levels",
         "runtime": runtime,
         "usage": {
             "estimated": False,
             "method": "api-usage",
             "prompt_tokens": prompt_tokens,
             "completion_tokens": completion_tokens,
-            "note": f"{profile['source']} 実測。5段階を独立リクエストで合算。{timing_note}",
+            "note": (
+                f"{profile['source']} 実測。{len(LEVEL_NUMBERS)}段階を独立リクエストで合算。{timing_note}"
+            ),
         },
         "cost": LOCAL.build_local_cost(),
     }
@@ -436,17 +446,19 @@ def validate_published_model_id(args: argparse.Namespace) -> None:
         if not LOCAL.PUBLIC_MODEL_ID_RE.fullmatch(args.public_model_id):
             raise ValueError("--public-model-id must use the public registry form owner/name")
         return
-    candidate = args.model_id or args.model
-    if candidate.startswith("/") or candidate.startswith("~"):
+    # --model-id は API 用の値で、`models/private` のような相対パスも owner/name と
+    # 形では区別できない。流用せず、公開値は必ず --public-model-id で明示させる。
+    # 省略時に載る --model は prepare_run でパス部品として検証済みのスラッグ。
+    if args.model_id is not None:
         raise ValueError(
-            f"--model-id looks like a local path ({candidate}); "
-            "pass --public-model-id owner/name so run.json stays publishable"
+            "--model-id is sent to the local API only; "
+            "pass --public-model-id owner/name for the published run.json"
         )
 
 
 def prepare_run(args: argparse.Namespace) -> tuple[Path, Path, int, str | None]:
     """Validate common inputs and resolve the target before requests start."""
-    if not OPENROUTER.NAME_RE.fullmatch(args.model):
+    if args.model in {".", ".."} or not OPENROUTER.NAME_RE.fullmatch(args.model):
         raise ValueError(
             f"--model must match {OPENROUTER.NAME_RE.pattern}; it is used as a directory name"
         )
@@ -562,7 +574,7 @@ def main() -> int:
         print(f"[ERROR] {exc}", file=sys.stderr)
         return 1
     print(
-        f"[ok] wrote {out_dir} (5 levels, prompt={run['usage']['prompt_tokens']}, "
+        f"[ok] wrote {out_dir} ({len(levels)} levels, prompt={run['usage']['prompt_tokens']}, "
         f"completion={run['usage']['completion_tokens']}, "
         f"openrouter_reported=${actual_cost:.6f})",
         file=sys.stderr,

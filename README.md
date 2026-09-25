@@ -29,7 +29,7 @@ LLM を「業務タスクの一発再現性」で評価する場。現実の制�
 | `suminagashi` | HTML | 実装方式名指しのプロンプト → WebGL 流体マーブリングアート | GPU シェーダーの一発実装・減法混色・和のミニマル UI |
 | `phoenix-lp` | HTML | 不死鳥の6シーン仕様 → Canvas 2D の没入型スクロール LP | シーン遷移・描画変化・長尺構成の一発実装 |
 | `pr-triage` | JSON | リポジトリのスナップショット → Open PR 10 件のトリアージ判断 JSON | 判断の妥当性（正解キー一致率）・グレーケースの慎重さ・理由の具体性 |
-| `json-ladder` | JSON | 随筆約1,700字 → 複雑さ5段階（L1〜L5）の抽出 JSON ×5 | フォーマット遵守の限界複雑度（パース可否 + 正解キー一致率）・型忠実性・null 規律 |
+| `json-ladder` | JSON | 随筆約1,700字 → 複雑さ6段階（L1〜L6）の抽出 JSON ×6 | フォーマット遵守の限界複雑度（パース可否 + 正解キー一致率）・型忠実性・null 規律 |
 
 ## 比較対象モデル（2026-08 時点）
 
@@ -71,11 +71,11 @@ oreore-bench/
 │   │   ├── PROMPT.md                    ← 凍結プロンプト（再現用、人間用）
 │   │   ├── prompt.html                  ← 凍結プロンプト整形ビュー
 │   │   ├── input.md / input.html        ← JSON 系テーマの共通入力
-│   │   ├── levels/l1..l5.md             ← json-ladder のみ: レベル別設問（1 レベル = 1 リクエスト）
+│   │   ├── levels/l1..l6.md             ← json-ladder のみ: レベル別設問（1 レベル = 1 リクエスト）
 │   │   └── <model>/
 │   │       ├── index.html               ← HTML 系テーマの 1 ショット出力
 │   │       ├── output.json              ← JSON 系テーマの 1 ショット出力
-│   │       ├── raw-l1..l5.txt           ← json-ladder のみ: 各レベルの生応答
+│   │       ├── raw-l1..l6.txt           ← json-ladder のみ: 各レベルの生応答
 │   │       ├── output.html              ← 上記を左右 2 カラムで描画
 │   │       ├── meta.json                ← スキーマ検証結果（事前計算）
 │   │       └── run.json                 ← 生成条件の正本（後述）
@@ -293,7 +293,7 @@ OpenRouter に無いモデルは、Claude Code 上で `Agent` ツール（`subag
 
 ### 2a. json-ladder テーマの場合
 
-`json-ladder` は 1 テーマ = 5 リクエスト（L1〜L5 をレベル別の独立リクエストで投げる）なので、
+`json-ladder` は 1 テーマ = 6 リクエスト（L1〜L6 をレベル別の独立リクエストで投げる）なので、
 `add-model.sh` ではなく専用の `json-ladder-run.py` を使う。
 
 ```bash
@@ -314,7 +314,7 @@ node scripts/validate-runs.mjs
 ```
 
 openrouter 経路は打ち切り（truncation）を検出した時点で中止し、公開ファイルを一切書かない。
-5 レベル全部が実測 usage 付きで完走した場合だけ `output.json` / `raw-l1..l5.txt` / `run.json` を書く。
+6 レベル全部が実測 usage 付きで完走した場合だけ `output.json` / `raw-l1..l6.txt` / `run.json` を書く。
 
 ### 3. 新規モデル定数の追加
 

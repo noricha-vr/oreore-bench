@@ -126,7 +126,7 @@ def response(level: int, *, finish_reason: str = "stop", usage: bool = True) -> 
 
 
 def make_theme(tmp_path: Path) -> Path:
-    """Create a small frozen source fixture with all five level files."""
+    """Create a small frozen source fixture with every level file."""
     theme = tmp_path / "json-ladder"
     (theme / "levels").mkdir(parents=True)
     (theme / "PROMPT.md").write_text(
@@ -180,9 +180,10 @@ def test_main_makes_five_sequential_requests_and_publishes_all_artifacts(
     run = json.loads((out_dir / "run.json").read_text(encoding="utf-8"))
     assert [entry["level"] for entry in output["levels"]] == list(ladder.LEVEL_NUMBERS)
     assert run["attempts"] == 1
+    assert run["post_processing"] == f"json-ladder-{len(ladder.LEVEL_NUMBERS)}-levels"
     assert run["usage"]["prompt_tokens"] == sum(10 * level for level in ladder.LEVEL_NUMBERS)
     assert run["usage"]["completion_tokens"] == sum(20 * level for level in ladder.LEVEL_NUMBERS)
-    assert "段階を独立リクエストで合算" in run["usage"]["note"]
+    assert f"{len(ladder.LEVEL_NUMBERS)}段階を独立リクエストで合算" in run["usage"]["note"]
 
 
 def test_local_length_response_is_saved(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -280,6 +281,28 @@ def test_local_path_model_id_requires_a_public_model_id(
     assert not (tmp_path / "json-ladder" / "hy3-t512").exists()
 
 
+@pytest.mark.parametrize(
+    "model_id", ["../private/model", "models/../../secret", "models/private", "google/gemma-4-12b-qat"]
+)
+def test_non_registry_model_id_requires_a_public_model_id(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, model_id: str
+) -> None:
+    """API 用の --model-id は形が owner/name でも流用せず、公開 ID の明示を求める。"""
+    make_theme(tmp_path)
+    with StubServer([]) as server:
+        base_url = server.url.removesuffix("/chat/completions") + "/v1"
+        assert invoke(
+            monkeypatch,
+            tmp_path,
+            "--model", "local-model",
+            "--backend", "local",
+            "--base-url", base_url,
+            "--model-id", model_id,
+        ) == 1
+        assert server.requests == []
+    assert not (tmp_path / "json-ladder" / "local-model").exists()
+
+
 def test_public_model_id_is_published_instead_of_the_api_path(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -320,6 +343,7 @@ def test_lmstudio_run_records_harness_model_id_and_runtime(
             "--base-url", base_url,
             "--harness", "lmstudio-api",
             "--model-id", "google/gemma-4-12b-qat",
+            "--public-model-id", "google/gemma-4-12b-qat",
             "--runtime-extra", '{"quantization": "mlx-4bit", "hardware": "Mac Studio M3 Ultra 512GB"}',
             "--reasoning-label", "none",
         ) == 0
@@ -373,6 +397,7 @@ def test_ollama_run_records_its_own_engine_and_source(
     assert run["runtime"]["engine"] == "ollama"
     assert "Ollama API 実測" in run["usage"]["note"]
     assert "L1: elapsed_seconds=" in run["usage"]["note"]
+    assert f"{len(ladder.LEVEL_NUMBERS)}段階を独立リクエストで合算" in run["usage"]["note"]
     assert "L5: elapsed_seconds=" in run["usage"]["note"]
 
 
@@ -391,6 +416,40 @@ def test_runtime_extra_rejects_keys_outside_validator_allowlist(
     ) == 1
 
     assert "engine_notes" in capsys.readouterr().err
+    assert not (tmp_path / "json-ladder" / "local-model").exists()
+
+
+@pytest.mark.parametrize("model", [".", ".."])
+def test_dot_segment_model_is_rejected_before_any_write(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str], model: str
+) -> None:
+    """--model はディレクトリ名になるので、. と .. で出力先を外へ逃がさない。"""
+    make_theme(tmp_path)
+
+    assert invoke(monkeypatch, tmp_path, "--model", model, "--backend", "local", "--dry-run") == 1
+
+    assert "--model must match" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    "value", ["/Users/someone/models/x", "../x", "a\nb", "x" * 41, "q;rm -rf"]
+)
+def test_runtime_extra_rejects_unsafe_values(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str], value: str
+) -> None:
+    """runtime の値もローカルパスや制御文字を公開 run.json に載せない。"""
+    make_theme(tmp_path)
+
+    assert invoke(
+        monkeypatch,
+        tmp_path,
+        "--model", "local-model",
+        "--backend", "local",
+        "--base-url", "http://127.0.0.1:9/v1",
+        "--runtime-extra", json.dumps({"hardware": value}),
+    ) == 1
+
+    assert "hardware" in capsys.readouterr().err
     assert not (tmp_path / "json-ladder" / "local-model").exists()
 
 
