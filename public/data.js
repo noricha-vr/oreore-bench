@@ -878,5 +878,6 @@ window.ENTRIES.push(
     { theme: "hasami-shogi", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "スモーク検証PASS。歩9/と9・9x9グリッド・選択ハイライト・移動・CPU応答・JSエラー0。652.6秒（thinking 565.1秒・約24K tokens）・decode 44.1 tok/s。262行/10.9KB。```html フェンス付き。", kind: "html" },
     { theme: "phoenix-lp", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "スモーク検証PASS。canvas・スクロールで描画変化・JSエラー0。1,623.6秒（thinking 1,163.2秒・約47K tokens）・decode 38.4 tok/s。completion 62,201 tokens で上限 65,000 の直前に着地。775行/33.5KB。", kind: "html" },
     { theme: "pr-triage", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "✅ スキーマ準拠 PASS。正解キー一致 100%（10 primary）でローカル勢の最高。73.3秒（thinking 24.7秒）・decode 48.2 tok/s。159行/7.3KB。", kind: "json" },
-    { theme: "json-ladder", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "パース 6/6・score 100%。6レベル計 314.9秒（thinking 計 239.5秒）・decode 45.5〜50.5 tok/s。completion 計 13,569 tokens。L6 だけ thinking 160秒と長い。", kind: "json" }
+    { theme: "json-ladder", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "パース 6/6・score 100%。6レベル計 314.9秒（thinking 計 239.5秒）・decode 45.5〜50.5 tok/s。completion 計 13,569 tokens。L6 だけ thinking 160秒と長い。", kind: "json" },
+    { theme: "roguelike", model: "mimo-v2.6-flash", runner: "MLX-LM API (temperature 1.0)", note: "FAIL。temperature 0.3 では thinking だけで 65,000 上限に達し本文0（約27分）。1.0 で追試し 645.6秒（thinking 506.7秒・約21K tokens）・decode 42.3 tok/s で完走したが、`r<1-->0` の構文エラーでスクリプト全体が読み込めず、移動もマップ再生成も動かない。413行/14.5KB。", kind: "html" }
 );

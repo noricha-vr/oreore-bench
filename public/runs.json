@@ -4196,6 +4196,50 @@
       "pricing_fetched_at": "2026-07-22"
     }
   },
+  "roguelike/mimo-v2.6-flash": {
+    "schema_version": 1,
+    "theme": "roguelike",
+    "model": "mimo-v2.6-flash",
+    "model_id": "Vontra/MiMo-V2.6-Flash-RL-MLX-4bit-MTP",
+    "harness": "mlx-lm-api",
+    "reasoning_effort": "unknown",
+    "attempts": 1,
+    "generated_at": "2026-09-25T16:58:24+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": 1.0,
+      "max_tokens": 65000,
+      "top_p": "default"
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "mlx-lm",
+      "version": "0.31.3",
+      "framework": "MLX 0.32.2",
+      "model_revision": "183cc1c55e83b4cac526c32b2f53dfe4c02b1517",
+      "quantization": "mxfp4 experts 4bit affine g64",
+      "hardware": "Mac Studio M3 Ultra 512GB",
+      "api": "openai-compat-chat"
+    },
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 1072,
+      "completion_tokens": 26876,
+      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=645.646; ttft_seconds=9.842; effective_prefill_tok_s=108.9; decode_tok_s=42.3; time_to_content_seconds=516.517; thinking_seconds=506.675; reasoning_chunks=20780; content_chunks=5214."
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
   "roguelike/qwen3-8-27b": {
     "schema_version": 1,
     "theme": "roguelike",
