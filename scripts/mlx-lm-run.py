@@ -40,12 +40,13 @@ ROOT = Path(__file__).resolve().parent.parent
 PUBLIC = ROOT / "public"
 # harness ごとの runtime 既定値と usage.note の実測元表記。
 # scripts/json-ladder-run.py の LOCAL_HARNESSES と同じ対応表で、
-# validate-runs.mjs の HARNESS_ENUM のうち、この runner が扱うローカル 4 種のみを持つ。
+# validate-runs.mjs の HARNESS_ENUM のうち、この runner が扱うローカル 5 種のみを持つ。
 LOCAL_HARNESSES: dict[str, dict[str, str]] = {
     "mlx-lm-api": {"engine": "mlx-lm", "api": "openai-compat-chat", "server": "mlx_lm.server"},
     "lmstudio-api": {"engine": "lmstudio", "api": "openai-compat", "server": "LM Studio API"},
     "omlx-api": {"engine": "omlx", "api": "openai-compat", "server": "oMLX API"},
     "ollama-api": {"engine": "ollama", "api": "openai-compat", "server": "Ollama API"},
+    "llamacpp-api": {"engine": "llama.cpp", "api": "openai-compat", "server": "llama-server API"},
 }
 DEFAULT_HARNESS = "mlx-lm-api"
 DEFAULT_BASE_URL = "http://127.0.0.1:18081/v1"

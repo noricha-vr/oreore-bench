@@ -27,7 +27,7 @@ THEME = "json-ladder"
 LEVEL_NUMBERS = (1, 2, 3, 4, 5, 6)
 
 # harness ごとの runtime 既定値と usage.note の実測元表記。
-# validate-runs.mjs の HARNESS_ENUM のうち、この runner が扱うローカル 3 種のみを持つ。
+# validate-runs.mjs の HARNESS_ENUM のうち、この runner が扱うローカル 5 種のみを持つ。
 LOCAL_HARNESSES: dict[str, dict[str, Any]] = {
     "mlx-lm-api": {
         "runtime": {"engine": "mlx-lm", "api": "openai-compat-chat"},
@@ -44,6 +44,10 @@ LOCAL_HARNESSES: dict[str, dict[str, Any]] = {
     "ollama-api": {
         "runtime": {"engine": "ollama", "api": "openai-compat"},
         "source": "Ollama API",
+    },
+    "llamacpp-api": {
+        "runtime": {"engine": "llama.cpp", "api": "openai-compat"},
+        "source": "llama-server API",
     },
 }
 # validate-runs.mjs の RUNTIME_ALLOWED と同じ集合。範囲外キーは公開前に弾く

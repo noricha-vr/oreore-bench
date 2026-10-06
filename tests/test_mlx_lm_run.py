@@ -334,6 +334,7 @@ def test_timing_summary_omits_thinking_without_reasoning_deltas() -> None:
         ("ollama-api", "ollama", "Ollama API"),
         ("lmstudio-api", "lmstudio", "LM Studio API"),
         ("omlx-api", "omlx", "oMLX API"),
+        ("llamacpp-api", "llama.cpp", "llama-server API"),
     ],
 )
 def test_non_mlx_harness_is_recorded_as_its_own_backend(
