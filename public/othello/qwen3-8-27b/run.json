@@ -3,22 +3,25 @@
   "theme": "othello",
   "model": "qwen3-8-27b",
   "model_id": "Qwen/Qwen3.8-27B",
-  "harness": "ollama-api",
+  "harness": "llamacpp-api",
   "reasoning_effort": "unknown",
   "attempts": 1,
-  "generated_at": "2026-08-15T05:42:20+09:00",
+  "generated_at": "2026-10-07T06:32:47+09:00",
   "generated_at_source": "measured",
   "sampling": {
-    "temperature": 0.3,
+    "temperature": 1.0,
     "max_tokens": 65000,
-    "top_p": "default"
+    "top_p": 0.95,
+    "top_k": 20,
+    "min_p": 0.0,
+    "presence_penalty": 0.0
   },
   "system_prompt": "none",
-  "post_processing": "none",
+  "post_processing": "extract-fenced-html",
   "runtime": {
-    "engine": "ollama",
-    "version": "0.30.6",
-    "framework": "llama.cpp (ollama 0.30.6)",
+    "engine": "llama.cpp",
+    "version": "0.6.0",
+    "framework": "llama.cpp b11429",
     "model_revision": "fdd03b8bbd279c1694563650e79d85a2373d9934",
     "quantization": "Q8_0",
     "hardware": "Mac Studio M3 Ultra 512GB",
@@ -28,8 +31,8 @@
     "estimated": false,
     "method": "api-usage",
     "prompt_tokens": 273,
-    "completion_tokens": 38563,
-    "note": "Ollama API applied the model chat template; finish_reason=stop; elapsed_seconds=2012.085."
+    "completion_tokens": 45909,
+    "note": "llama-server API applied the model chat template; finish_reason=stop; elapsed_seconds=2329.780; ttft_seconds=0.877; effective_prefill_tok_s=311.2; decode_tok_s=19.7; time_to_content_seconds=1699.572; thinking_seconds=1698.695; reasoning_chunks=34009; content_chunks=11832."
   },
   "cost": {
     "estimated": true,
