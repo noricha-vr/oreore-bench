@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Qwen3.8 Flash-Next — pr-triage / OreOre-Bench</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff; --bg-soft: #f7f8fa;
+    --fg: #1a1a1a; --fg-soft: #4a4a4a; --muted-fg: #6b7280;
+    --border: #e5e7eb; --primary: #2563eb;
+    --accent: #008B8B; --accent-dark: #006B70;
+    --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+          background: var(--bg-soft); color: var(--fg);
+          line-height: 1.7; font-size: 0.9375rem; -webkit-font-smoothing: antialiased; }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .hero { padding: 28px 24px 32px; color: #fff;
+           background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); }
+  .hero-inner { max-width: 1200px; margin: 0 auto; }
+  .hero a.back { color: #fff; opacity: 0.85; font-size: 0.875rem;
+                  font-weight: 600; display: inline-block; margin-bottom: 12px; }
+  .hero h1 { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.01em;
+              color: #fff; margin-bottom: 4px; }
+  .hero .tag { display: inline-block; font-size: 0.75rem; font-weight: 800;
+                letter-spacing: 0.06em; text-transform: uppercase;
+                background: rgba(255,255,255,0.22); padding: 5px 12px;
+                border-radius: 999px; margin-bottom: 12px; }
+  .hero .sub { font-size: 0.9rem; opacity: 0.9; }
+  .verify-bar { background: var(--bg); border-bottom: 1px solid var(--border);
+                 padding: 14px 24px; font-size: 0.875rem; }
+  .verify-bar-inner { max-width: 1200px; margin: 0 auto;
+                       display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; }
+  .badge { display: inline-flex; align-items: center; gap: 6px;
+            font-weight: 800; padding: 4px 12px; border-radius: 999px;
+            font-size: 0.875rem; }
+  .badge.pass { background: rgba(16,185,129,0.12); color: #047857; }
+  .badge.fail { background: rgba(239,68,68,0.12); color: #b91c1c; }
+  .badge.score { background: rgba(37,99,235,0.10); color: #1d4ed8; }
+  .stat { color: var(--fg-soft); }
+  .stat strong { color: var(--fg); font-weight: 800; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 24px; }
+  .panel { background: var(--bg); border: 1px solid var(--border);
+            border-radius: 14px; overflow: hidden; margin-bottom: 20px; }
+  .panel-head { padding: 16px 20px; border-bottom: 1px solid var(--border);
+                 display: flex; align-items: center; justify-content: space-between;
+                 gap: 12px; background: var(--bg-soft); }
+  .panel-head h2 { font-size: 0.875rem; font-weight: 800; letter-spacing: 0.06em;
+                    text-transform: uppercase; color: var(--fg); }
+  .panel-body { padding: 20px; }
+  .table-scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 980px; }
+  th, td { padding: 10px 12px; border-bottom: 1px solid var(--border);
+            text-align: left; vertical-align: top; }
+  th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+        color: var(--muted-fg); background: var(--bg-soft); white-space: nowrap; }
+  td { font-size: 0.875rem; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .verdict { display: inline-block; padding: 2px 8px; border-radius: 999px;
+              font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700;
+              background: var(--bg-soft); border: 1px solid var(--border); }
+  .match-primary { color: #047857; font-weight: 800; }
+  .match-acceptable { color: #b45309; font-weight: 800; }
+  .match-miss { color: #b91c1c; font-weight: 800; }
+  ul { margin: 0; padding-left: 1.15rem; }
+  li { margin-bottom: 3px; }
+  .summary { white-space: pre-wrap; color: var(--fg-soft); }
+  .priority { display: flex; flex-wrap: wrap; gap: 6px; }
+  .priority span { font-family: 'JetBrains Mono', monospace; font-size: 0.8125rem;
+                    padding: 4px 8px; border-radius: 6px;
+                    background: var(--bg-soft); border: 1px solid var(--border); }
+  .error { border: 1px solid #fecaca; background: #fef2f2; color: #991b1b;
+            padding: 16px 20px; border-radius: 10px; }
+  .raw { margin-top: 12px; background: #1a1a1a; color: #e5e7eb;
+          padding: 12px; border-radius: 6px; font-family: 'JetBrains Mono', monospace;
+          font-size: 0.75rem; line-height: 1.6; overflow-x: auto;
+          max-height: 420px; overflow-y: auto; white-space: pre-wrap; }
+  @media (max-width: 700px) {
+    .hero h1 { font-size: 1.45rem; }
+    .wrap { padding: 16px; }
+    .panel-body { padding: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a href="../../" class="back">← OreOre-Bench に戻る</a>
+    <span class="tag">pr-triage ・ Alibaba ・ ローカル LLM</span>
+    <h1>Qwen3.8 Flash-Next</h1>
+    <p class="sub">架空リポジトリの Open PR 10 件を、マージ可否・リスク・次アクション込みでトリアージ。</p>
+  </div>
+</header>
+
+<div class="verify-bar">
+  <div class="verify-bar-inner">
+    <span class="badge pass">スキーマ準拠 PASS</span>
+    <span class="badge score">agreement 90%</span>
+    <span class="stat">primary <strong>9</strong> / acceptable <strong>0</strong></span>
+    <span class="stat">出力 <strong>4,741</strong> chars</span>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>PR verdicts</h2>
+      <a href="./output.json" target="_blank">JSON →</a>
+    </div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>PR</th>
+              <th>model verdict</th>
+              <th>primary</th>
+              <th>match</th>
+              <th>reasons</th>
+              <th>actions</th>
+              <th>risk</th>
+            </tr>
+          </thead>
+          <tbody>
+        <tr>
+          <td class="mono">101</td>
+          <td><span class="verdict">merge</span></td>
+          <td><span class="verdict">merge</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>Issue #90 の本番メール洪水への P1 対応で、影響が明確</li><li>未認証/不正ペイロードの通知を 1 時間 3 通に抑制し、超過は WARNING に集約する設計</li><li>テストが追加され、CI 成功・レビュー承認済み・コンフリクトなし</li></ul></td>
+          <td><ul><li>本番の Sentry とメール送信ログを監視しながらマージする</li><li>警告ログの件数や内容が追跡可能か確認する</li><li>必要なら別 Issue でアラート集約の詳細化を検討する</li></ul></td>
+          <td><span class="verdict">low</span></td>
+        </tr>
+        <tr>
+          <td class="mono">102</td>
+          <td><span class="verdict">fix</span></td>
+          <td><span class="verdict">fix</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>他人のタスクをアーカイブできる可能性がある owner 絞り込み欠如の指摘が未解消</li><li>新機能なのにテストがなく、セキュリティ境界を検証できない</li><li>CI 成功だけでは IDOR/権限抜けの危険を除外できない</li></ul></td>
+          <td><ul><li>作者に owner 絞り込みの要否と想定権限モデルを質問する</li><li>他人のタスクを操作できないことを示す API テスト追加を要求する</li><li>修正とテスト追加が確認できるまでマージブロックする</li></ul></td>
+          <td><span class="verdict">high</span></td>
+        </tr>
+        <tr>
+          <td class="mono">103</td>
+          <td><span class="verdict">close</span></td>
+          <td><span class="verdict">close</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>except Exception で握りつぶす silent failure を導入しており、方針に違反</li><li>Issue #91 のログ多発には、特定例外のログレベル調整や Sentry 除外など別の対策が必要</li><li>変更後に障害を隠蔽する恐れが大きく、このままレビュー・マージは不適切</li></ul></td>
+          <td><ul><li>PR を方針違反としてクローズする</li><li>requests 例外などに限定して WARNING 化する別 PR を依頼する</li><li>Sentry 除外やログサンプリング方針を Issue #91 で決める</li></ul></td>
+          <td><span class="verdict">high</span></td>
+        </tr>
+        <tr>
+          <td class="mono">104</td>
+          <td><span class="verdict">close</span></td>
+          <td><span class="verdict">close</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>依存バージョン固定を解除し、requirements.lock を削除するためサプライチェーン攻撃リスクを高める</li><li>リポジトリ方針の「依存パッケージは固定する」に明確に反する</li><li>CI 成功は方針違反の判断を上書きしない</li></ul></td>
+          <td><ul><li>PR をクローズして依存固定を維持する</li><li>Renovate や Dependabot で安全に更新する運用を Issue で整理する</li><li>lock ファイル削除を元に戻す方針を作者に説明する</li></ul></td>
+          <td><span class="verdict">high</span></td>
+        </tr>
+        <tr>
+          <td class="mono">105</td>
+          <td><span class="verdict">merge</span></td>
+          <td><span class="verdict">merge</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>Issue #92 のセキュリティ修正で、パスワードリセットトークンの URL 漏えいリスクを低減</li><li>トークンを POST body に移し、テストが追加されている</li><li>CI 成功・レビュー承認済み・コンフリクトなしで、互換ウィンドウも妥当</li></ul></td>
+          <td><ul><li>優先的にマージして本番のトークン漏えい経路を早急に減らす</li><li>マージ後にリセット失敗率と Sentry の URL 漏えい傾向を監視する</li><li>残存する旧 URL トークンは短期互換として許容できるか確認する</li></ul></td>
+          <td><span class="verdict">low</span></td>
+        </tr>
+        <tr>
+          <td class="mono">106</td>
+          <td><span class="verdict">hold</span></td>
+          <td><span class="verdict">fix</span></td>
+          <td><span class="match-miss">✗ miss</span></td>
+          <td><ul><li>ダークモード、通知設定、LP 刷新が混在する 42 ファイルの巨大変更でレビュー不能</li><li>レビュー側から分割依頼が出ているが作者が応答していない</li><li>新アプリ・新機能を含むためテスト要件や変更範囲を明確に確認する必要がある</li></ul></td>
+          <td><ul><li>ダークモード、通知設定、LP 刷新に PR 分割するよう作者に質問する</li><li>分割後に各 PR でスモークテストや必要なテスト追加を依頼する</li><li>作者応答があるまでマージ・クローズを保留する</li></ul></td>
+          <td><span class="verdict">medium</span></td>
+        </tr>
+        <tr>
+          <td class="mono">107</td>
+          <td><span class="verdict">fix</span></td>
+          <td><span class="verdict">fix</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>期限日バグ修正の意図は妥当だが CI が失敗しており、マージ条件を満たさない</li><li>test_deadline_dst_boundary の失敗は DST 境界の実装・テスト不備の可能性がある</li><li>作者の「flaky」推定だけでは安全に判断できない</li></ul></td>
+          <td><ul><li>CI と同じタイムゾーン設定でテストを再現し、失敗原因を特定させる</li><li>UTC とユーザー TZ の境界で期限日が正しいことを検証するテストを要求する</li><li>CI 失敗が解消されるまでマージブロックする</li></ul></td>
+          <td><span class="verdict">high</span></td>
+        </tr>
+        <tr>
+          <td class="mono">108</td>
+          <td><span class="verdict">hold</span></td>
+          <td><span class="verdict">hold</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>Issue #94 で分離の是非が未決着であり、方針が確定していない</li><li>Task モデル移動とマイグレーション、db_table 変更を含む大きな構造変更で本番リスクが高い</li><li>JOIN 増加懸念への回答やパフォーマンス検証が示されていない</li></ul></td>
+          <td><ul><li>Issue #94 の合意形成を待つよう作者に伝える</li><li>JOIN 増加やクエリ性能へのベンチマーク結果を要求する</li><li>マイグレーションの本番影響とロールバック計画を要求する</li></ul></td>
+          <td><span class="verdict">high</span></td>
+        </tr>
+        <tr>
+          <td class="mono">109</td>
+          <td><span class="verdict">close</span></td>
+          <td><span class="verdict">close</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>Issue #93 は docs/setup.md の全面改訂で既に main で解決済み</li><li>README には docs/setup.md へのリンクがあり、本 PR は内容が重複する可能性が高い</li><li>README にコンフリクトがあり、そのまま取り込むとドキュメントが混乱する</li></ul></td>
+          <td><ul><li>既存 docs/setup.md 解決済みとして PR をクローズする</li><li>README 側に追加すべき差分が残るなら、必要最小限の別 PR にさせる</li><li>セットアップ手順の参照先は docs/setup.md に統一する</li></ul></td>
+          <td><span class="verdict">low</span></td>
+        </tr>
+        <tr>
+          <td class="mono">110</td>
+          <td><span class="verdict">merge</span></td>
+          <td><span class="verdict">merge</span></td>
+          <td><span class="match-primary">✓ primary</span></td>
+          <td><ul><li>テストが追加され、CI 成功・レビュー承認済みで残指摘は nit のみ</li><li>件数増加時の StreamingHttpResponse 化は将来の改善提案であり現状マージの妨げにならない</li><li>変更範囲が小さく、CSV エクスポートの機能追加として受け入れ可能</li></ul></td>
+          <td><ul><li>レビュー承認済みなのでマージする</li><li>必要なら StreamingHttpResponse 化を follow-up Issue で管理する</li><li>マージ後にダウンロードが壊れていないか軽く確認する</li></ul></td>
+          <td><span class="verdict">low</span></td>
+        </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Priority Order</h2></div>
+    <div class="panel-body"><div class="priority"><span>105</span><span>101</span><span>102</span><span>107</span><span>103</span><span>104</span><span>110</span><span>106</span><span>108</span><span>109</span></div></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Summary</h2></div>
+    <div class="panel-body"><p class="summary">セキュリティ修正と P1 障害対応を最優先でマージし、方針違反や CI 失敗の PR は速やかに差戻しまたはクローズする。巨大 UI 変更と未決のモデル分離は作者回答待ちで保留し、リポジトリの安全性とレビュー可能性を回復させる。</p></div>
+  </section>
+
+
+</main>
+
+</body>
+</html>
