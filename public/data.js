@@ -618,28 +618,54 @@ window.MODELS = {
                     { label: "ベンチマーク記事", href: "https://zenn.dev/noricha/articles/hy3-t512-m3-ultra-benchmark" }
                 ]
             },
+            "qwen3-8-flash-next": {
+                label: "Qwen3.8 Flash-Next",
+                provider: "Alibaba",
+                type: "local",
+                color: "#008B8B",
+                colorDark: "#006B70",
+                release: "2026-08-26",
+                size: "125B 総パラメータ / 6B active（MoE・512 experts 中 10 routed + 1 shared）、別に n-gram embeddings 51B と MTP 4B",
+                context: "262,144 tokens（ネイティブ。最大 1M へ拡張可）",
+                output: "65K tokens（今回の実測上限。公式の最大出力値は未確認）",
+                quantization: "unsloth GGUF Q8_0（本体 6 分割・約188GB）+ MTP Q8_0（4.14GB）/ Qwen Community License 1.0",
+                runtime: "llama.cpp 0.6.0（b11429）/ llama-server・draft-mtp（Mac Studio M3 Ultra 512GB）",
+                stats: [
+                    { value: "125B / 6B", label: "パラメータ", note: "MoE / 別に n-gram 51B・MTP 4B" },
+                    { value: "48層", label: "構造", note: "Gated DeltaNet 36 + Qwen Sparse Attention 12" },
+                    { value: "262K", label: "コンテキスト", note: "ネイティブ / 1M まで拡張可" },
+                    { value: "52.9 tok/s", label: "今回の実測", note: "9テーマ・completion / elapsed 加重平均" }
+                ],
+                strengths: "公式推奨の thinking サンプリング（1.0 / 0.95 / 20 / 0 / 0）で 9 テーマすべてを finish_reason=stop で完走し、生成ループや thinking 打ち切りは 0 件。墨流しは WebGL2 で実際にインクが描画され、ローカル勢で初めてスモーク検証を PASS した。lp-nishibi・lp-fable5 は JSエラー0 で作り込みも高水準。pr-triage は正解キー一致 90%、json-ladder はパース 6/6・score 100%。MTP 込みで加重平均 52.9 tok/s とローカル勢最速で、1 テーマ 3〜19 分。",
+                weaknesses: "完走はするが JS の細部で崩れる。オセロは日本語の混入（nameOf(G.turn)の番）で SyntaxError となり起動不可、ローグライクは全角括弧混入で JSエラー2件（描画と移動は動く）、はさみ将棋は盤面生成中の undefined 参照で盤が組まれず、Phoenix LP は毎フレーム JSエラーが出続ける。lp-nishibi は時計が小数をそのまま表示する。HTML は全テーマで ```html フェンス付きで返る（公開物は抽出済み）。65K tokens は計測上限で、公式の最大出力値は未確認。",
+                links: [
+                    { label: "Qwen 公式モデル・推奨サンプリング", href: "https://huggingface.co/Qwen/Qwen3.8-Flash-Next" },
+                    { label: "Qwen 公式発表", href: "https://qwen.ai/blog?id=qwen3.8-flash-next" },
+                    { label: "unsloth GGUF Q8_0", href: "https://huggingface.co/unsloth/Qwen3.8-Flash-Next-GGUF/tree/main/Q8_0" }
+                ]
+            },
             "qwen3-8-27b": {
                 label: "Qwen3.8 27B",
                 provider: "Alibaba",
                 type: "local",
                 color: "#0A2EFE",
                 colorDark: "#0A1FB8",
-                release: "2026-08-05",
+                release: "2026-08-14",
                 size: "27B パラメータ（dense / Gated DeltaNet 3 層 + Gated Attention 1 層 を 16 回反復）",
                 context: "262,144 tokens（YaRN で最大 1M）",
                 output: "131K tokens（公式推奨。推論内容は別枠で最大 262K）",
                 quantization: "unsloth GGUF Q8_0（29GB）",
-                runtime: "Ollama 0.30.6 / llama.cpp（Mac Studio M3 Ultra 512GB）",
+                runtime: "lp-nishibi・othello: llama.cpp 0.6.0（b11429）/ llama-server。残り 7 テーマ: Ollama 0.30.6（Mac Studio M3 Ultra 512GB）",
                 stats: [
                     { value: "27B", label: "パラメータ", note: "dense / ハイブリッド注意機構" },
                     { value: "Q8_0", label: "量子化", note: "unsloth GGUF 29GB" },
                     { value: "262K", label: "コンテキスト", note: "YaRN で 1M" },
-                    { value: "18.5 tok/s", label: "今回の実測", note: "9テーマ加重平均" }
+                    { value: "19.9 tok/s", label: "再測定 2 テーマ", note: "completion / elapsed 加重平均" }
                 ],
-                strengths: "json-ladder はパース 6/6・score 100%（レベル別平均 99.5% の丸め）でローカル勢の最高スコア。全 191 採点項目のうち取りこぼしは 2 件だけで、既存最高の Gemma 4 31B（99%）を上回った。pr-triage も正解キー一致 90% で Gemma 4 勢の 85% を上回る。HTML では lp-fable5・lp-nishibi・othello の作り込みがローカル最高水準で、9 テーマ中 8 テーマを finish_reason=stop で完走した。Apache 2.0 で重みが公開されている。",
-                weaknesses: "thinking が長く 1 テーマ 32〜59 分（completion 合計 370,866 tokens・加重平均 18.5 tok/s）。HTML 一括生成では全テーマで前置き文・コードフェンス・末尾解説が混入し、phoenix-lp は 65,000 tokens の上限に達して末尾が切れた。roguelike はゲーム開始後に JS エラー 6 件、墨流しはフラグメントシェーダーがコンパイル不能でローカル勢の全滅傾向を踏襲。mlx_lm.server では長文生成中に Metal のバッファ数上限に達してクラッシュするため、測定は llama.cpp（Ollama）経由で行った。",
+                strengths: "lp-nishibi・othello を公式推奨の thinking サンプリング（1.0 / 0.95 / 20 / 0 / 0）と llama-server で再測定し、どちらも JSエラー0、オセロは着手→CPU 応手まで動作。旧条件の json-ladder はパース 6/6・score 100%（ローカル勢最高）、pr-triage は正解キー一致 90%。Apache 2.0 で重みが公開されている。",
+                weaknesses: "dense 27B を Q8 で回すため遅く、再測定 2 テーマは 19.9 tok/s・1 テーマ 26〜39 分。残り 7 テーマは Ollama・temperature 0.3 の旧条件のままで、同じモデル内でも条件が混在する。旧結果の roguelike は JS エラー、墨流しはシェーダーコンパイル失敗、phoenix-lp は生成上限に到達した。",
                 links: [
-                    { label: "Qwen 公式モデル", href: "https://huggingface.co/Qwen/Qwen3.8-27B" },
+                    { label: "Qwen 公式モデル・推奨サンプリング", href: "https://huggingface.co/Qwen/Qwen3.8-27B" },
                     { label: "unsloth GGUF", href: "https://huggingface.co/unsloth/Qwen3.8-27B-GGUF" }
                 ]
             },
@@ -659,10 +685,10 @@ window.MODELS = {
                     { value: "309B", label: "パラメータ", note: "MoE / 活性 15B" },
                     { value: "約160GB", label: "MLX 配布サイズ", note: "MXFP4 + 4-bit" },
                     { value: "1M", label: "コンテキスト", note: "公式モデルカード" },
-                    { value: "40.7 tok/s", label: "今回の実測", note: "8テーマ加重平均（thinking 込み）" }
+                    { value: "42.8 tok/s", label: "再測定の実測", note: "8テーマ・completion / elapsed 加重平均" }
                 ],
-                strengths: "デコード 38〜50 tok/s（thinking が短いほど速い）で、今回測ったローカル勢では最速級。thinking を本文と分けて返す。pr-triage は正解キー一致 100%（10 primary）、json-ladder はパース 6/6・score 100% で、どちらもローカル勢の最高に並ぶ。はさみ将棋・Phoenix LP はスモーク検証 PASS、オセロも着手と CPU 応手まで動く。",
-                weaknesses: "thinking が非常に長い。temperature 0.3（本ベンチ既定）では roguelike・lp-fable5・墨流しの 3 テーマが thinking だけで 65,000 上限に達し、本文を 1 文字も出さなかった（1 本約 28 分）。公式推奨の temperature 1.0 で追試すると roguelike と lp-fable5 は完走したが、roguelike は構文エラーで動かず、墨流しは 46K tokens 考えた末に本文なしで stop した（成果物なし）。HTML は全テーマで ```html フェンス付き。MTP の重みは同梱だが MLX では投機デコードに使われない。",
+                strengths: "公式推奨の temperature 1.0 / top_p 0.95 で 8 テーマを再測定し、すべて完走。旧既定 0.3 で本文を出せなかった roguelike・lp-fable5 も完走し、roguelike・はさみ将棋・Phoenix LP はスモーク検証 PASS、オセロは着手→CPU 応手まで動作、LP 2 テーマも JSエラー0 と、検証した HTML 7 テーマで JS エラーは 0 件。pr-triage は正解キー一致 100%（10 primary）、json-ladder はパース 6/6・score 100%。加重平均 42.8 tok/s。",
+                weaknesses: "thinking が長く、roguelike は 63,369 tokens・約 26 分かかった。墨流しは推奨値でも thinking だけで 65,000 tokens に達して本文を出さず（0.3 でも同じ）、エントリなし。top_k / min_p / presence_penalty は公式カードに推奨値がなく run.json 上は default。MTP の重みは同梱だが MLX では投機デコードに使われない。",
                 links: [
                     { label: "Xiaomi 公式モデル", href: "https://huggingface.co/XiaomiMiMo/MiMo-V2.6-Flash-RL" },
                     { label: "Vontra MLX版", href: "https://huggingface.co/Vontra/MiMo-V2.6-Flash-RL-MLX-4bit-MTP" },
@@ -698,13 +724,13 @@ window.MODELS = {
 window.ENTRIES = [
             { theme: "lp-nishibi", model: "gemma-4-12b-qat",     runner: "LM Studio API",       note: "最軽量 12B での 1 ショット LP。約 13KB。31B と比較して選択肢。", kind: "html" },
             { theme: "lp-nishibi", model: "gemma-4-31b",         runner: "gptme (LM Studio)",   note: "ローカルLLM単体の1ショットLP。418行/14KB。", kind: "html" },
-            { theme: "lp-nishibi", model: "qwen3-8-27b",         runner: "Ollama API",          note: "JSエラー0。セリフ体+明朝の余白設計・時刻連動の表示まで作り込み完成度は高い。ただし写真に picsum.photos の外部ダミー画像を使っており（他モデルは Google Fonts のみ）オフラインでは崩れる。前置き文が混入。974行/54KB・38,734 tokens・33.7分。", kind: "html" },
+    { theme: "lp-nishibi", model: "qwen3-8-27b", runner: "llama.cpp API", note: "JSエラー0（Playwright で表示確認）。935行/38.8KiB。completion 31,370 tokens・1562.6秒。HTMLフェンス抽出済み。", kind: "html" },
             { theme: "lp-nishibi", model: "claude-opus-4-8",     runner: "Claude Agent SDK",    note: "ローマ数字章番号、SVG西日アーク、メタジョーク3つ。1342行/40KB。", kind: "html" },
             { theme: "lp-nishibi", model: "grok-4-5",            runner: "grok CLI (single-turn)", note: "全7セクション準拠。生成グラデ背景+細身セリフで上品にまとまる。714行/26KB。", kind: "html" },
             { theme: "othello",    model: "gemma-4-12b-qat",     runner: "LM Studio API",       note: "最軽量 12B での 1 ショットオセロ。約 10KB。", kind: "html" },
             { theme: "othello",    model: "gemma-4-26b-a4b-qat", runner: "gptme (LM Studio)",   note: "ライトテーマ。CPU AIランダムに圧勝(53-10)。Reset挙動が一度だけ不安定。", kind: "html" },
             { theme: "othello",    model: "gemma-4-31b",         runner: "gptme (LM Studio)",   note: "ダークBG+鮮緑盤+赤Reset。CPU AIが強く逆転勝利(34-30)。", kind: "html" },
-            { theme: "othello",    model: "qwen3-8-27b",         runner: "Ollama API",          note: "JSエラー0。8x8盤+座標軸・合法手の金リング表示・3Dフリップ反転・スコアボード・パス処理まで備え、着手とCPU応答を確認。前置き文と末尾の実装解説が混入。551行/26KB・38,563 tokens・33.5分。", kind: "html" },
+    { theme: "othello", model: "qwen3-8-27b", runner: "llama.cpp API", note: "JSエラー0。着手→CPU 応手まで動作を確認。631行/29.1KiB。completion 45,909 tokens・2329.8秒。HTMLフェンス抽出済み。", kind: "html" },
             { theme: "othello",    model: "grok-4-5",            runner: "grok CLI (single-turn)", note: "ダークUI+石数バッジ。合法手ハイライト・反転・CPU応答をJSエラーなしで確認。520行/13KB。", kind: "html" },
 
             // hasami-shogi（公開実装が極めて少ない題材。スモーク検証: 初期配置/選択ハイライト/移動/CPU応答/JSエラー0 を全モデルで機械確認）
@@ -870,15 +896,28 @@ window.ENTRIES.push(
 );
 
 // mimo-v2.6-flash（Vontra MLX 4bit / mlx_lm.server。thinking は既定で有効）
-// 既定は temperature 0.3。0.3 で本文を出せなかったテーマは公式推奨の 1.0 で追試し、run.json の sampling.temperature で区別する。
-// usage.note に TTFT・thinking 秒数・デコード tok/s を記録。生成物は成功・失敗を問わず1ショット出力を無加工で掲載。
+// 今回の8テーマは公式推奨 temperature 1.0 / top_p 0.95 で再測定。墨流しは本文なしでエントリなし。
+// usage.note に TTFT・thinking 秒数・デコード tok/s を記録。生成物は run.json の post_processing に従い HTML フェンスを抽出。
 window.ENTRIES.push(
-    { theme: "lp-nishibi", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "成功。260.1秒・decode 45.4 tok/s（thinking 1.5秒でほぼ即答）。1,199行/37.5KB。JSエラー0、7セクションを desktop / mobile とも横溢れなく表示。```html フェンス付きで出力。", kind: "html" },
-    { theme: "othello", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "成功。187.5秒（thinking 136.4秒・約6K tokens）・decode 46.0 tok/s。252行/7.2KB。JSエラー0、初期4石・合法手表示・着手→CPU応手・石数表示を確認。```html フェンスが盤面の上下に露出。", kind: "html" },
-    { theme: "hasami-shogi", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "スモーク検証PASS。歩9/と9・9x9グリッド・選択ハイライト・移動・CPU応答・JSエラー0。652.6秒（thinking 565.1秒・約24K tokens）・decode 44.1 tok/s。262行/10.9KB。```html フェンス付き。", kind: "html" },
-    { theme: "phoenix-lp", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "スモーク検証PASS。canvas・スクロールで描画変化・JSエラー0。1,623.6秒（thinking 1,163.2秒・約47K tokens）・decode 38.4 tok/s。completion 62,201 tokens で上限 65,000 の直前に着地。775行/33.5KB。", kind: "html" },
-    { theme: "pr-triage", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "✅ スキーマ準拠 PASS。正解キー一致 100%（10 primary）でローカル勢の最高。73.3秒（thinking 24.7秒）・decode 48.2 tok/s。159行/7.3KB。", kind: "json" },
-    { theme: "json-ladder", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "パース 6/6・score 100%。6レベル計 314.9秒（thinking 計 239.5秒）・decode 45.5〜50.5 tok/s。completion 計 13,569 tokens。L6 だけ thinking 160秒と長い。", kind: "json" },
-    { theme: "roguelike", model: "mimo-v2.6-flash", runner: "MLX-LM API (temperature 1.0)", note: "FAIL。temperature 0.3 では thinking だけで 65,000 上限に達し本文0（約27分）。1.0 で追試し 645.6秒（thinking 506.7秒・約21K tokens）・decode 42.3 tok/s で完走したが、`r<1-->0` の構文エラーでスクリプト全体が読み込めず、移動もマップ再生成も動かない。413行/14.5KB。", kind: "html" },
-    { theme: "lp-fable5", model: "mimo-v2.6-flash", runner: "MLX-LM API (temperature 1.0)", note: "成功（temperature 1.0 追試）。0.3 では thinking だけで 65,000 上限に達し本文0。1.0 で 1,498.2秒（thinking 997.2秒・約40K tokens）・decode 39.8 tok/s。660行/41.0KB。JSエラー0、7セクションを横溢れなく表示。能力曲線グラフの右端ラベルが見切れる。", kind: "html" }
+    { theme: "lp-nishibi", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "JSエラー0（Playwright で表示確認）。580行/25.0KiB。completion 37,564 tokens・879.9秒。HTMLフェンス抽出済み。", kind: "html" },
+    { theme: "othello", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "JSエラー0。着手→CPU 応手まで動作を確認。329行/7.4KiB。completion 27,968 tokens・618.7秒。HTMLフェンス抽出済み。", kind: "html" },
+    { theme: "hasami-shogi", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "スモーク検証PASS（盤面9x9・歩9/と9、選択→ハイライト→移動、CPU 応手、JSエラー0）。200行/7.4KiB。completion 40,884 tokens・941.1秒。HTMLフェンス抽出済み。", kind: "html" },
+    { theme: "phoenix-lp", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "verify PASS（canvas描画・スクロール演出・JSエラー0）。697行/32.1KiB。completion 42,235 tokens・982.4秒。HTMLフェンス抽出済み。", kind: "html" },
+    { theme: "pr-triage", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "検証PASS。スキーマ準拠、正解キー一致100%（10 primary）。completion 3,915 tokens・86.5秒。", kind: "json" },
+    { theme: "json-ladder", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "検証PASS。パース6/6・score 100%。6レベル合計 completion 22,143 tokens・497.5秒。", kind: "json" },
+    { theme: "roguelike", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "verify PASS（canvas描画・移動・入力・リロードでマップ変化・JSエラー0）。temperature 0.3 では本文を出せず、旧 1.0 追試は構文エラーだったテーマ。394行/11.9KiB。completion 63,369 tokens・1559.6秒。HTMLフェンス抽出済み。", kind: "html" },
+    { theme: "lp-fable5", model: "mimo-v2.6-flash", runner: "MLX-LM API", note: "JSエラー0（Playwright で表示確認）。698行/39.5KiB。completion 44,117 tokens・1028.5秒。HTMLフェンス抽出済み。", kind: "html" },
+);
+
+// qwen3-8-flash-next（unsloth GGUF Q8_0 + MTP Q8_0 / llama-server）
+window.ENTRIES.push(
+    { theme: "lp-nishibi", model: "qwen3-8-flash-next", runner: "llama.cpp API", note: "JSエラー0。グラフ・時刻連動まで作り込む。ただしヘッダの時計が「06:49.2666…」と小数をそのまま表示する軽微なバグあり。1,168行/67.3KiB。completion 33,254 tokens・587.3秒。HTMLフェンス抽出済み。", kind: "html" },
+    { theme: "othello", model: "qwen3-8-flash-next", runner: "llama.cpp API", note: "FAIL。JS の `nameOf(G.turn)の番` が SyntaxError（ブラウザでも同エラー）で盤面が描画されず起動不可。899行/44.6KiB。completion 33,865 tokens・613.5秒。HTMLフェンス抽出済み。", kind: "html" },
+    { theme: "hasami-shogi", model: "qwen3-8-flash-next", runner: "llama.cpp API", note: "スモーク検証FAIL。盤面生成中に classList の undefined 参照エラー（JSエラー1）で、歩2/と2しか置かれず盤が組まれない。906行/44.2KiB。completion 43,444 tokens・844.4秒。HTMLフェンス抽出済み。", kind: "html" },
+    { theme: "roguelike", model: "qwen3-8-flash-next", runner: "llama.cpp API", note: "verify FAIL（JSエラー2: 全角括弧「（」混入の SyntaxError）。ただし canvas 描画・移動・リロードでのマップ変化は動く。1,177行/51.4KiB。completion 37,508 tokens・683.5秒。", kind: "html" },
+    { theme: "lp-fable5", model: "qwen3-8-flash-next", runner: "llama.cpp API", note: "JSエラー0。水彩トーンの SVG イラストと数値入りカードで世界観を再現。1,253行/74.8KiB。completion 46,769 tokens・832.8秒。HTMLフェンス抽出済み。", kind: "html" },
+    { theme: "suminagashi", model: "qwen3-8-flash-next", runner: "llama.cpp API", note: "スモーク検証PASS（WebGL2 で実際にインクが描画される・JSエラー0）。ローカル勢で初めて流体描画まで動いた。908行/42.9KiB。completion 58,248 tokens・1141.6秒。HTMLフェンス抽出済み。", kind: "html" },
+    { theme: "phoenix-lp", model: "qwen3-8-flash-next", runner: "llama.cpp API", note: "verify FAIL。canvas 描画とスクロール演出は動くが、毎フレーム undefined の free 参照エラーが出続ける（JSエラー20件以上）。1,096行/56.1KiB。completion 48,369 tokens・915.3秒。HTMLフェンス抽出済み。", kind: "html" },
+    { theme: "pr-triage", model: "qwen3-8-flash-next", runner: "llama.cpp API", note: "検証PASS。スキーマ準拠、正解キー一致90%（9 primary、0 acceptable）。completion 8,529 tokens・194.4秒。", kind: "json" },
+    { theme: "json-ladder", model: "qwen3-8-flash-next", runner: "llama.cpp API", note: "検証PASS。パース6/6・score 100%。6レベル合計 completion 35,754 tokens・718.5秒。", kind: "json" },
 );

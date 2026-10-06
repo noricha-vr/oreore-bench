@@ -64,6 +64,20 @@ MODEL_INFO = {
         "color": "#0A2EFE",
         "color_dark": "#0A1FB8",
     },
+    "qwen3-8-flash-next": {
+        "label": "Qwen3.8 Flash-Next",
+        "provider": "Alibaba",
+        "type": "ローカル LLM",
+        "color": "#008B8B",
+        "color_dark": "#006B70",
+    },
+    "mimo-v2.6-flash": {
+        "label": "MiMo V2.6 Flash MLX",
+        "provider": "Vontra / Xiaomi",
+        "type": "ローカル LLM",
+        "color": "#FF6900",
+        "color_dark": "#C75200",
+    },
     "swe-2-high": {
         "label": "SWE-2 High",
         "provider": "Cognition",
