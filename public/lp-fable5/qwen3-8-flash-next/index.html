@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fable 5. — Claudeのいちばん上へ。</title>
+<meta name="description" content="今、いちばん賢いClaudeが、誰でも使える形に。Fable 5 は Mythos クラスの新しいClaudeです。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Shippori+Mincho+B1:wght@500;600;700;800&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script>document.documentElement.classList.add('js');</script>
+<style>
+/* ============ tokens ============ */
+:root{
+  --paper:#faf6ee;
+  --paper-2:#f5ecdb;
+  --sand:#eadfc9;
+  --ochre:#d9bd8d;
+  --gold:#c1a05f;
+  --sepia:#a3826a;
+  --sepia-d:#7c5e49;
+  --terra:#c65d3b;
+  --terra-l:#d97757;
+  --rust:#8e4527;
+  --ink:#2b2622;
+  --ink-2:#5d5248;
+  --line:rgba(124,94,73,.20);
+  --line-s:rgba(124,94,73,.12);
+  --serif:'Fraunces','Shippori Mincho B1','Hiragino Mincho ProN','Yu Mincho',serif;
+  --sans:'Zen Kaku Gothic New','Hiragino Sans','Noto Sans JP',system-ui,sans-serif;
+  --pad:clamp(20px,5vw,72px);
+  --maxw:1240px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-weight:400;font-size:clamp(15.5px,1.02vw,17px);
+  line-height:1.95;letter-spacing:.02em;overflow-x:hidden;
+}
+body::before{ /* watercolour paper tooth + soft stains */
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(52vw 40vw at 84% 6%, rgba(217,119,87,.10), transparent 62%),
+    radial-gradient(46vw 38vw at 8% 42%, rgba(193,160,95,.11), transparent 65%),
+    radial-gradient(60vw 48vw at 60% 96%, rgba(163,130,106,.12), transparent 66%),
+    var(--paper);
+}
+.grain{
+  position:fixed;inset:0;z-index:45;pointer-events:none;opacity:.34;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='190' height='190'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='190' height='190' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E");
+}
+::selection{background:var(--terra);color:#fff8ef}
+img,svg{display:block;max-width:100%}
+a{color:inherit}
+h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.25;margin:0;letter-spacing:.005em}
+p{margin:0}
+ul,ol{margin:0;padding:0;list-style:none}
+.svg-defs{position:absolute;width:0;height:0;overflow:hidden}
+.container{max-width:var(--maxw);margin-inline:auto;padding-inline:var(--pad)}
+.skip{position:absolute;left:-9999px}
+.skip:focus{left:12px;top:12px;z-index:99;background:var(--ink);color:var(--paper);padding:.5rem .9rem;border-radius:8px}
+:focus-visible{outline:2px solid var(--terra);outline-offset:3px;border-radius:4px}
+
+/* ============ header ============ */
+.head{
+  position:fixed;inset:0 0 auto;z-index:40;
+  background:rgba(250,246,238,.94);
+  transition:box-shadow .5s ease, background .5s ease;
+}
+.head::after{content:"";position:absolute;inset:auto 0 -1px;height:1px;background:var(--line);opacity:0;transition:opacity .5s}
+.head.is-stuck{box-shadow:0 14px 34px -28px rgba(96,62,40,.75)}
+.head.is-stuck::after{opacity:1}
+.head-in{display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  height:clamp(62px,7.4vw,80px);max-width:var(--maxw);margin-inline:auto;padding-inline:var(--pad);
+  transition:height .45s cubic-bezier(.2,.8,.2,1)}
+.head.is-stuck .head-in{height:clamp(54px,6vw,64px)}
+.logo{display:flex;align-items:center;gap:.6rem;text-decoration:none}
+.logo-mark{width:30px;height:30px;flex:none;transition:transform .9s cubic-bezier(.2,.8,.2,1)}
+.logo:hover .logo-mark{transform:rotate(50deg)}
+.logo-word{font-family:var(--serif);font-size:1.34rem;font-weight:600;letter-spacing:.01em}
+.logo-word b{font-weight:700;color:var(--terra);margin-left:.42em;font-size:.62em;letter-spacing:.16em;
+  vertical-align:.18em;font-family:var(--sans);font-weight:500}
+.nav{display:flex;align-items:center;gap:clamp(1rem,2.4vw,2.3rem)}
+.nav a{position:relative;text-decoration:none;font-size:.92rem;letter-spacing:.06em;color:var(--ink-2);transition:color .35s}
+.nav a:hover{color:var(--ink)}
+.nav a::after{content:"";position:absolute;left:0;right:0;bottom:-7px;height:6px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='6' viewBox='0 0 30 6'%3E%3Cpath d='M0 4 C 5 1, 10 5, 15 3 S 25 1, 30 3' fill='none' stroke='%23c65d3b' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") repeat-x left center / auto 100%;
+  transform:scaleX(0);transform-origin:left;transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+.nav a:hover::after{transform:scaleX(1)}
+.btn{
+  --bg:var(--terra);--fg:#fff7ee;
+  display:inline-flex;align-items:center;gap:.55em;text-decoration:none;
+  font-family:var(--sans);font-weight:500;font-size:.95rem;letter-spacing:.07em;
+  padding:.78em 1.7em;border-radius:999px;background:var(--bg);color:var(--fg);
+  border:1px solid rgba(120,58,34,.35);position:relative;overflow:hidden;isolation:isolate;
+  box-shadow:0 12px 26px -16px rgba(140,74,44,.85), inset 0 1px 0 rgba(255,255,255,.28);
+  transition:transform .38s cubic-bezier(.2,.8,.2,1), box-shadow .38s ease, background .38s ease;
+}
+.btn::before{content:"";position:absolute;inset:0;z-index:-1;
+  background:radial-gradient(120% 140% at 20% 0%, rgba(255,255,255,.30), transparent 60%);opacity:.9}
+.btn:hover{transform:translateY(-2px);background:#b85333;box-shadow:0 20px 34px -18px rgba(140,74,44,.95)}
+.btn:active{transform:translateY(0) scale(.985)}
+.btn--sm{padding:.62em 1.35em;font-size:.86rem}
+.btn--lg{font-size:1.06rem;padding:1.02em 2.5em;letter-spacing:.1em}
+.progress{position:absolute;left:0;bottom:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--terra),var(--gold));opacity:.85}
+
+/* ============ section scaffolding ============ */
+.sec{position:relative;padding-block:clamp(4.5rem,11vh,9.5rem)}
+.sec+.sec{border-top:1px solid var(--line-s)}
+.num{font-family:var(--serif);font-size:.95rem;letter-spacing:.22em;color:var(--terra);display:inline-block}
+.kicker{font-family:var(--serif);font-size:.8rem;letter-spacing:.3em;text-transform:uppercase;color:var(--sepia);
+  display:inline-flex;align-items:center;gap:.75em;margin-left:.9em}
+.kicker::before{content:"";width:clamp(22px,4vw,54px);height:1px;background:var(--line);display:inline-block}
+.kicker i{font-style:normal;font-family:var(--sans);letter-spacing:.14em;font-size:.76rem;color:var(--sepia-d)}
+.h2{font-size:clamp(1.85rem,4.1vw,3.3rem);margin-top:1.15rem;font-weight:600}
+.h2 em{font-style:normal;color:var(--terra)}
+.lede{max-width:44ch;margin-top:1.35rem;color:var(--ink-2);font-weight:300}
+.sec-head{max-width:52ch}
+
+/* ============ reveal / mask motion ============ */
+.js [data-reveal]{opacity:0;transform:translateY(26px);
+  transition:opacity 1s cubic-bezier(.2,.75,.2,1), transform 1s cubic-bezier(.2,.75,.2,1);
+  transition-delay:calc(var(--d,0)*1ms)}
+.js [data-reveal].is-in{opacity:1;transform:none}
+.ln{display:block;overflow:hidden;padding-bottom:.08em;margin-bottom:-.08em}
+.js .ln>span{display:block;transform:translateY(112%);
+  transition:transform 1.05s cubic-bezier(.16,.9,.22,1);transition-delay:calc(var(--d,0)*1ms)}
+.js [data-mask].is-in .ln>span{transform:none}
+.reveal-all [data-reveal],.reveal-all .ln>span{opacity:1!important;transform:none!important}
+
+/* ============ HERO ============ */
+.hero{position:relative;min-height:100svh;display:flex;flex-direction:column;justify-content:flex-start;
+  padding-top:clamp(96px,16vh,170px);overflow:hidden}
+.hero-top{max-width:var(--maxw);margin-inline:auto;padding-inline:var(--pad);width:100%;position:relative;z-index:3}
+.eyebrow{display:flex;align-items:baseline;gap:.85rem;flex-wrap:wrap;
+  font-size:.78rem;letter-spacing:.26em;color:var(--sepia-d);font-weight:500}
+.eyebrow .en{font-family:var(--serif);letter-spacing:.3em;text-transform:uppercase;color:var(--terra)}
+.eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--terra);display:inline-block;
+  box-shadow:0 0 0 4px rgba(198,93,59,.15)}
+.hero-title{
+  font-family:var(--serif);font-weight:600;font-optical-sizing:auto;
+  font-size:clamp(3.9rem,16.4vw,15.4rem);line-height:.86;letter-spacing:-.035em;
+  margin:clamp(.5rem,2vh,1.4rem) 0 0;color:var(--ink);white-space:nowrap;
+}
+.hero-title .dot{color:var(--terra)}
+.hero-copy{display:flex;flex-wrap:wrap;gap:clamp(1.2rem,4vw,3.4rem);align-items:flex-end;
+  margin-top:clamp(1.2rem,3.4vh,2.4rem)}
+.hero-copy h1{font-size:clamp(1.24rem,2.35vw,1.95rem);line-height:1.6;font-weight:600;max-width:20ch}
+.hero-copy .sub{max-width:34ch;color:var(--ink-2);font-weight:300;font-size:.97rem;
+  border-left:1px solid var(--line);padding-left:1.2rem}
+.scroll-cue{display:flex;align-items:center;gap:.7rem;margin-top:clamp(1.4rem,3.6vh,2.6rem);
+  font-size:.72rem;letter-spacing:.24em;color:var(--sepia)}
+.scroll-cue .track{width:64px;height:1px;background:var(--line);position:relative;overflow:hidden}
+.scroll-cue .track i{position:absolute;inset:0 auto 0 0;width:18px;background:var(--terra);
+  animation:cue 3.4s cubic-bezier(.7,0,.3,1) infinite}
+@keyframes cue{0%{transform:translateX(-20px)}60%,100%{transform:translateX(66px)}}
+.hero-art{position:relative;margin-top:clamp(1.4rem,4.6vh,3.4rem);height:clamp(330px,49vh,600px);z-index:1}
+.hero-art>.kb{position:absolute;inset:-2% -1.5%;animation:kb 30s ease-in-out infinite alternate}
+.hero-art svg{width:100%;height:100%}
+@keyframes kb{from{transform:scale(1.005)}to{transform:scale(1.05) translateY(-8px)}}
+.cloud{animation:drift 46s ease-in-out infinite alternate}
+.cloud.b{animation-duration:62s;animation-direction:alternate-reverse}
+.cloud.c{animation-duration:78s}
+@keyframes drift{from{transform:translateX(-14px)}to{transform:translateX(58px)}}
+.sunpulse{animation:pulse 11s ease-in-out infinite alternate}
+@keyframes pulse{from{opacity:.55}to{opacity:.95}}
+.walker{animation:bob 5.4s ease-in-out infinite}
+.walker.slow{animation-duration:6.6s;animation-delay:-1.4s}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3.5px)}}
+
+/* ============ 01 family ============ */
+.fam-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.85fr);gap:clamp(1.5rem,5vw,4rem);align-items:end}
+.fam-chart{position:relative;margin-top:clamp(2.6rem,6vw,4.2rem);
+  height:clamp(260px,40vw,430px);display:flex;align-items:flex-end;gap:clamp(10px,2.4vw,34px)}
+.fam-grid{position:absolute;inset:0 0 0 0;z-index:0;pointer-events:none}
+.fam-grid .gl{position:absolute;left:0;right:0;height:1px;background:var(--line-s)}
+.fam-grid .gl span{position:absolute;left:0;top:-1.55em;font-size:.66rem;letter-spacing:.2em;color:var(--sepia);
+  background:var(--paper);padding-right:.6em}
+.fam-col{position:relative;flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;z-index:1}
+.bar{position:relative;border-radius:999px 999px 8px 8px;transform-origin:bottom center;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.5), inset 0 -22px 34px -22px rgba(124,94,73,.4);
+  transition:transform 1.5s cubic-bezier(.18,.85,.2,1), filter .5s ease}
+.js .bar{transform:scaleY(0)}
+.js .bar.is-on{transform:scaleY(1)}
+.bar.pre{transform:scaleY(0)!important}
+.bar--1{height:23%;background:linear-gradient(180deg,#f6ecd8,#e7d8ba 65%,#dbc7a2)}
+.bar--2{height:41%;background:linear-gradient(180deg,#f2e2c4,#e2c899 60%,#d3b584)}
+.bar--3{height:62%;background:linear-gradient(180deg,#e7c9a1,#d5a97b 55%,#c3966a)}
+.bar--4{height:100%;background:linear-gradient(180deg,#e08a5c,#cd6440 48%,#b3502f)}
+.bar--4::after{content:"";position:absolute;inset:0;border-radius:inherit;mix-blend-mode:soft-light;
+  background:radial-gradient(70% 26% at 30% 8%, rgba(255,255,255,.75), transparent 60%),
+             radial-gradient(80% 22% at 70% 92%, rgba(90,40,20,.5), transparent 60%)}
+.fam-col:hover .bar{filter:saturate(1.12) brightness(1.03)}
+.fam-crown{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);
+  width:clamp(56px,7vw,92px);opacity:0;transition:opacity 1s ease .9s}
+.fam-col.is-on .fam-crown{opacity:1}
+.fam-top{position:absolute;left:50%;bottom:calc(100% + 2px);transform:translateX(-50%);display:flex;gap:2px;align-items:flex-end}
+.fam-tag{position:absolute;left:50%;transform:translateX(-50%);top:14%;white-space:nowrap;
+  font-family:var(--serif);color:#fff6ea;font-size:clamp(.86rem,1.5vw,1.12rem);letter-spacing:.06em;
+  text-shadow:0 1px 6px rgba(120,50,25,.5)}
+.fam-labels{display:flex;gap:clamp(10px,2.4vw,34px);margin-top:1.15rem}
+.fam-labels>div{flex:1;text-align:center}
+.fam-labels h3{font-size:clamp(.98rem,1.9vw,1.35rem);font-weight:600;letter-spacing:.02em}
+.fam-labels .jp{display:block;font-size:.76rem;letter-spacing:.14em;color:var(--terra);margin-top:.15rem}
+.fam-labels p{font-size:.82rem;color:var(--ink-2);font-weight:300;margin-top:.5rem;line-height:1.75}
+.fam-note{margin-top:2.6rem;display:flex;gap:1.2rem;align-items:flex-start;max-width:56ch;
+  border-top:1px solid var(--line-s);padding-top:1.4rem;font-size:.86rem;color:var(--sepia-d);font-weight:300}
+.fam-note svg{flex:none;width:34px;height:34px;margin-top:.2rem}
+
+/* ============ 02 capabilities ============ */
+.caps{display:grid;grid-template-columns:1fr 1fr;gap:clamp(14px,2.4vw,30px);margin-top:clamp(2.6rem,6vw,4.4rem)}
+.cap{position:relative;display:grid;grid-template-columns:clamp(112px,11vw,152px) minmax(0,1fr);
+  gap:clamp(1.1rem,2.4vw,2rem);padding:clamp(1.5rem,3vw,2.3rem);
+  background:linear-gradient(180deg,#fffcf5,#f8f1e4);border:1px solid var(--line-s);border-radius:20px 22px 20px 24px;
+  transition:transform .55s cubic-bezier(.2,.8,.2,1), box-shadow .55s ease, border-color .55s ease}
+.cap::before{content:"";position:absolute;left:0;top:14%;bottom:14%;width:2px;border-radius:2px;
+  background:linear-gradient(180deg,var(--terra),rgba(198,93,59,0));transform:scaleY(0);transform-origin:top;
+  transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.cap:hover{transform:translateY(-5px);box-shadow:0 30px 54px -34px rgba(126,80,52,.6);border-color:rgba(198,93,59,.28)}
+.cap:hover::before{transform:scaleY(1)}
+.cap-art{align-self:start}
+.cap-art svg{transition:transform .8s cubic-bezier(.2,.8,.2,1)}
+.cap:hover .cap-art svg{transform:scale(1.07) rotate(-1.6deg)}
+.cap-no{font-family:var(--serif);font-size:.78rem;letter-spacing:.24em;color:var(--terra)}
+.cap h3{font-size:clamp(1.06rem,2.05vw,1.42rem);margin-top:.5rem;line-height:1.5}
+.cap p{margin-top:.75rem;font-size:.9rem;color:var(--ink-2);font-weight:300;line-height:1.85}
+.cap-meta{margin-top:1rem;font-size:.76rem;letter-spacing:.1em;color:var(--sepia);
+  border-top:1px dashed var(--line);padding-top:.7rem}
+.cap-meta b{font-family:var(--serif);font-weight:600;color:var(--terra);letter-spacing:.04em}
+
+/* ============ 03 long work (chart) ============ */
+.perf{position:relative}
+.perf-wrap{position:relative;height:280vh}
+.perf-grid{position:sticky;top:clamp(78px,13vh,120px);display:grid;
+  grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);gap:clamp(1.6rem,4vw,3.6rem);
+  align-items:start;padding-block:clamp(1rem,3vh,2rem);max-width:var(--maxw);margin-inline:auto;
+  padding-inline:var(--pad);min-height:74vh}
+.csteps{margin-top:2.4rem;border-top:1px solid var(--line-s)}
+.cstep{border-bottom:1px solid var(--line-s);padding:1.15rem 0 1.15rem 1.6rem;position:relative;
+  opacity:.3;transition:opacity .7s ease, transform .7s cubic-bezier(.2,.8,.2,1);transform:translateX(-6px)}
+.cstep::before{content:"";position:absolute;left:0;top:1.85rem;width:8px;height:8px;border-radius:50%;
+  background:var(--line);transition:background .5s, box-shadow .5s}
+.cstep.is-on{opacity:1;transform:none}
+.cstep.is-on::before{background:var(--terra);box-shadow:0 0 0 5px rgba(198,93,59,.16)}
+.cstep h4{font-family:var(--serif);font-size:clamp(1rem,1.7vw,1.24rem);font-weight:600;margin:0}
+.cstep p{font-size:.86rem;color:var(--ink-2);font-weight:300;margin-top:.4rem;max-width:34ch}
+.legend{display:flex;flex-wrap:wrap;gap:.5rem 1.3rem;margin-top:1.8rem;font-size:.78rem;letter-spacing:.06em;color:var(--sepia-d)}
+.legend span{display:inline-flex;align-items:center;gap:.5em}
+.legend i{width:20px;height:0;border-top:3px solid;border-radius:3px;display:inline-block}
+.perf-fig{position:relative;background:
+    radial-gradient(120% 90% at 90% 4%, rgba(217,119,87,.09), transparent 60%),
+    linear-gradient(180deg,#fffcf6,#f7efe1);
+  border:1px solid var(--line-s);border-radius:26px 20px 28px 22px;padding:clamp(14px,2.4vw,30px);
+  box-shadow:0 34px 60px -46px rgba(120,78,50,.55)}
+.perf-fig svg{width:100%;height:auto}
+.perf-fig .axis-t{font-family:var(--sans);font-size:12px;letter-spacing:.14em;fill:var(--sepia)}
+.perf-fig .axis-x{font-family:var(--sans);font-size:12.5px;letter-spacing:.16em;fill:var(--sepia-d)}
+.perf-fig .ln{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.perf-fig .lbl{font-family:var(--serif);font-size:15px;fill:var(--sepia-d)}
+.perf-fig .lbl-hot{font-family:var(--serif);font-size:16px;fill:var(--terra)}
+#perf-marker{opacity:0;transition:opacity .5s}
+#perf-marker.on{opacity:1}
+.perf-cap{display:flex;justify-content:space-between;gap:1rem;font-size:.72rem;letter-spacing:.18em;
+  color:var(--sepia);margin-top:.8rem;padding-inline:.4rem}
+
+/* ============ 04 safety ============ */
+.safe-art{position:relative;margin-top:clamp(2rem,5vw,3.4rem);border-radius:30px 24px 30px 26px;overflow:hidden;
+  border:1px solid var(--line-s);box-shadow:0 40px 70px -50px rgba(120,78,50,.6)}
+.safe-art svg{width:100%;height:clamp(280px,44vw,520px)}
+.safe-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:clamp(1.8rem,5vw,4.4rem);
+  align-items:start;margin-top:clamp(2rem,4.5vw,3.4rem)}
+.safe-list{border-top:1px solid var(--line)}
+.safe-list li{display:grid;grid-template-columns:auto 1fr;gap:1.2rem;padding:1.5rem 0;border-bottom:1px solid var(--line-s)}
+.safe-list .n{font-family:var(--serif);font-size:.85rem;letter-spacing:.2em;color:var(--terra);padding-top:.35em}
+.safe-list h3{font-size:clamp(1.02rem,1.7vw,1.25rem)}
+.safe-list p{font-size:.88rem;color:var(--ink-2);font-weight:300;margin-top:.45rem}
+
+/* ============ 05 how ============ */
+.how{display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);gap:clamp(2rem,6vw,5rem);align-items:center}
+.how-art{position:relative}
+.how-art svg{width:100%;height:auto}
+.steps{margin-top:2.6rem;border-top:1px solid var(--line)}
+.steps li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:clamp(1rem,2.5vw,2rem);
+  padding:clamp(1.2rem,2.6vw,1.8rem) 0;border-bottom:1px solid var(--line-s);align-items:start;
+  transition:background .5s ease, padding-left .5s ease}
+.steps li:hover{background:linear-gradient(90deg,rgba(198,93,59,.06),transparent 70%);padding-left:.7rem}
+.steps .n{font-family:var(--serif);font-size:clamp(1.5rem,3vw,2.2rem);color:var(--terra);line-height:1;font-weight:500}
+.steps h3{font-size:clamp(1.05rem,1.9vw,1.35rem)}
+.steps p{font-size:.9rem;color:var(--ink-2);font-weight:300;margin-top:.45rem}
+.chips{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:2rem}
+.chip{font-size:.76rem;letter-spacing:.14em;padding:.45em 1.05em;border-radius:999px;
+  border:1px solid var(--line);color:var(--sepia-d);background:rgba(255,255,255,.5)}
+.how-note{margin-top:2rem;font-size:.86rem;color:var(--ink-2);font-weight:300}
+.how-note a{color:var(--terra);text-decoration-thickness:1px;text-underline-offset:.28em}
+
+/* ============ 06 final CTA ============ */
+.cta{position:relative;overflow:hidden;padding-block:clamp(6rem,16vh,12rem);text-align:center;
+  border-top:1px solid var(--line-s)}
+.cta-art{position:absolute;inset:auto 0 -1px;height:min(72%,460px);z-index:0}
+.cta-art svg{width:100%;height:100%}
+.cta-in{position:relative;z-index:2;max-width:60ch;margin-inline:auto}
+.cta h2{font-size:clamp(2rem,5.2vw,4rem);line-height:1.2}
+.cta .lede{margin-inline:auto;text-align:center;max-width:34ch}
+.cta .btn{margin-top:2.4rem}
+.cta-sub{margin-top:1.2rem;font-size:.8rem;letter-spacing:.14em;color:var(--sepia)}
+.foot{position:relative;z-index:2;padding-block:clamp(2.6rem,6vw,4rem);border-top:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(250,246,238,.4),var(--paper))}
+.foot-in{display:flex;flex-wrap:wrap;gap:1.6rem 3rem;justify-content:space-between;align-items:flex-start}
+.foot .logo-word{font-size:1.1rem}
+.foot-nav{display:flex;flex-wrap:wrap;gap:.6rem 1.6rem;font-size:.84rem;color:var(--ink-2)}
+.foot-nav a{text-decoration:none}
+.foot-nav a:hover{color:var(--terra)}
+.foot-note{max-width:52ch;font-size:.76rem;line-height:1.9;color:var(--sepia);margin-top:1.6rem}
+
+/* ============ responsive ============ */
+@media (max-width:980px){
+  .nav a:not(.btn){display:none}
+  .fam-head,.safe-grid,.how,.perf-grid{grid-template-columns:1fr}
+  .perf-wrap{height:auto}
+  .perf-grid{position:static;min-height:0;top:auto;padding-inline:0}
+  .perf-fig{order:-1}
+  .caps{grid-template-columns:1fr}
+  .hero-title{font-size:clamp(3.4rem,19vw,7rem)}
+}
+@media (max-width:620px){
+  body{font-size:15.5px}
+  .hero{padding-top:clamp(84px,14vh,120px)}
+  .hero-copy .sub{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:1rem}
+  .cap{grid-template-columns:1fr}
+  .cap-art{max-width:132px}
+  .fam-labels h3{font-size:.9rem}
+  .fam-labels p{display:none}
+  .fam-labels .jp{font-size:.66rem}
+  .csteps{margin-top:1.6rem}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .js [data-reveal]{opacity:1!important;transform:none!important;transition:none!important}
+  .js .ln>span{transform:none!important;transition:none!important}
+  .js .bar{transform:none!important;transition:none!important}
+  .cloud,.sunpulse,.walker,.hero-art>.kb,.scroll-cue .track i{animation:none!important}
+  .cstep{transition:none}
+}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<a class="skip" href="#main">本文へスキップ</a>
+
+<!-- ============ shared watercolour defs ============ -->
+<svg class="svg-defs" aria-hidden="true" focusable="false">
+<defs>
+  <!-- watercolour edge / bleed filters -->
+  <filter id="f-edge1" x="-15%" y="-15%" width="130%" height="130%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.006 0.010" numOctaves="4" seed="9" result="t"/>
+    <feDisplacementMap in="SourceGraphic" in2="t" scale="16" xChannelSelector="R" yChannelSelector="G"/>
+    <feGaussianBlur stdDeviation="0.9"/>
+  </filter>
+  <filter id="f-edge2" x="-22%" y="-22%" width="144%" height="144%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.014 0.020" numOctaves="3" seed="23" result="t"/>
+    <feDisplacementMap in="SourceGraphic" in2="t" scale="7" xChannelSelector="R" yChannelSelector="G"/>
+    <feGaussianBlur stdDeviation="0.55" result="b"/>
+    <feComponentTransfer in="b"><feFuncA type="linear" slope="1.07"/></feComponentTransfer>
+  </filter>
+  <filter id="f-edge3" x="-28%" y="-28%" width="156%" height="156%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.028 0.034" numOctaves="2" seed="41" result="t"/>
+    <feDisplacementMap in="SourceGraphic" in2="t" scale="4.5" xChannelSelector="R" yChannelSelector="G"/>
+    <feGaussianBlur stdDeviation="0.35"/>
+  </filter>
+  <filter id="f-bleed" x="-45%" y="-45%" width="190%" height="190%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.010" numOctaves="4" seed="7" result="t"/>
+    <feDisplacementMap in="SourceGraphic" in2="t" scale="38" xChannelSelector="R" yChannelSelector="G"/>
+    <feGaussianBlur stdDeviation="13"/>
+  </filter>
+  <filter id="f-wash" x="-45%" y="-45%" width="190%" height="190%"><feGaussianBlur stdDeviation="20"/></filter>
+
+  <!-- gradients -->
+  <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#faf6ee"/><stop offset=".42" stop-color="#f9edd9"/>
+    <stop offset=".74" stop-color="#f5dfc2"/><stop offset="1" stop-color="#f0d4b1"/>
+  </linearGradient>
+  <linearGradient id="gSkyDusk" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#f9e7cc"/><stop offset=".5" stop-color="#f4cfa5"/>
+    <stop offset="1" stop-color="#e9b687"/>
+  </linearGradient>
+  <radialGradient id="gSun" cx=".5" cy=".5" r=".5">
+    <stop offset="0" stop-color="#f4b083"/><stop offset=".52" stop-color="#dc7c50"/>
+    <stop offset=".88" stop-color="#c85a35"/><stop offset="1" stop-color="#c0512e"/>
+  </radialGradient>
+  <radialGradient id="gSunBig" cx=".5" cy=".5" r=".5">
+    <stop offset="0" stop-color="#f7c295"/><stop offset=".6" stop-color="#e38a5c"/><stop offset="1" stop-color="#cd6a42"/>
+  </radialGradient>
+  <radialGradient id="gGlow" cx=".5" cy=".5" r=".5">
+    <stop offset="0" stop-color="#f2b184" stop-opacity=".85"/>
+    <stop offset=".55" stop-color="#ecb98d" stop-opacity=".35"/>
+    <stop offset="1" stop-color="#e7c39c" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="gH1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8eeda"/><stop offset="1" stop-color="#eddfc2"/></linearGradient>
+  <linearGradient id="gH2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f1e3c8"/><stop offset="1" stop-color="#e0caa3"/></linearGradient>
+  <linearGradient id="gH3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3caa3"/><stop offset="1" stop-color="#cdac7f"/></linearGradient>
+  <linearGradient id="gH4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ccaa7d"/><stop offset="1" stop-color="#b18b62"/></linearGradient>
+  <linearGradient id="gH5" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b98f66"/><stop offset="1" stop-color="#96704f"/></linearGradient>
+  <linearGradient id="gHd1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2d3ab"/><stop offset="1" stop-color="#e2b184"/></linearGradient>
+  <linearGradient id="gHd2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dcab7e" /><stop offset="1" stop-color="#bd8256"/></linearGradient>
+  <linearGradient id="gHd3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b97350"/><stop offset="1" stop-color="#95543a"/></linearGradient>
+  <linearGradient id="gTrail" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffdf6"/><stop offset="1" stop-color="#f5e9d3"/></linearGradient>
+  <linearGradient id="gLeafR" x1="0" y1="0" x2=".6" y2="1"><stop offset="0" stop-color="#da8663"/><stop offset="1" stop-color="#a84a2c"/></linearGradient>
+  <linearGradient id="gLeafG" x1="0" y1="0" x2=".5" y2="1"><stop offset="0" stop-color="#dcbb7f"/><stop offset="1" stop-color="#b08b4e"/></linearGradient>
+  <linearGradient id="gLeafS" x1="0" y1="0" x2=".5" y2="1"><stop offset="0" stop-color="#c9ac8e"/><stop offset="1" stop-color="#96795d"/></linearGradient>
+  <linearGradient id="gCoat" x1="0" y1="0" x2=".4" y2="1"><stop offset="0" stop-color="#d97757"/><stop offset="1" stop-color="#ad4128"/></linearGradient>
+  <radialGradient id="gMate" cx=".4" cy=".3" r=".85">
+    <stop offset="0" stop-color="#fffcf3"/><stop offset=".6" stop-color="#f9efdd"/><stop offset="1" stop-color="#e8d8bc"/>
+  </radialGradient>
+  <linearGradient id="gAmber" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e5a463"/><stop offset="1" stop-color="#c2652f"/></linearGradient>
+
+  <!-- characters -->
+  <symbol id="mate" viewBox="0 0 170 150">
+    <ellipse cx="86" cy="140" rx="52" ry="7" fill="#9a7a5c" opacity=".22"/>
+    <g filter="url(#f-edge2)">
+      <path d="M126 96c18-2 28-16 24-30-4-13-20-16-27-6" fill="#fdf8ec" stroke="#a3826a" stroke-width="2.6" stroke-linejoin="round"/>
+      <path d="M52 44c-8-14-2-27 10-27 8 0 13 6 13 13" fill="#fdf8ec" stroke="#a3826a" stroke-width="2.6"/>
+      <path d="M100 36c1-10 9-15 17-12 8 3 10 12 5 19" fill="#fdf8ec" stroke="#a3826a" stroke-width="2.6"/>
+      <path d="M44 96c-14-8-18-30-6-42-4-14 8-24 20-20 6-12 24-14 32-4 14-6 30 4 28 18 12 8 12 30 0 40-4 14-20 20-32 16-14 8-34 4-42-8z"
+            fill="url(#gMate)" stroke="#a3826a" stroke-width="2.9" stroke-linejoin="round"/>
+    </g>
+    <g fill="none" stroke="#dcc5a5" stroke-width="2.2" stroke-linecap="round" opacity=".85">
+      <path d="M60 62c5 6 5 13 1 19"/><path d="M112 70c-4 8-2 15 3 19"/><path d="M84 96c1 6 0 10-2 14"/>
+    </g>
+    <g fill="#332b25"><circle cx="72" cy="66" r="3.8"/><circle cx="98" cy="64" r="3.8"/></g>
+    <ellipse cx="85" cy="77" rx="5.4" ry="4.2" fill="#c65d3b"/>
+    <path d="M80 87q6 5 12 -1" fill="none" stroke="#332b25" stroke-width="2" stroke-linecap="round" opacity=".65"/>
+    <g fill="#fdf8ec" stroke="#a3826a" stroke-width="2.2">
+      <path d="M64 112c-3 11 1 18 7 18s8-7 5-18z"/><path d="M100 112c-3 11 1 18 7 18s8-7 5-18z"/>
+    </g>
+  </symbol>
+
+  <symbol id="person" viewBox="0 0 66 112">
+    <ellipse cx="33" cy="106" rx="17" ry="4.6" fill="#9a7a5c" opacity=".22"/>
+    <g stroke="#6b4a38" stroke-width="4.4" stroke-linecap="round"><path d="M28 84v17"/><path d="M39 84v16"/></g>
+    <g filter="url(#f-edge2)">
+      <path d="M18 86c-5-24 1-48 15-48s20 24 15 48z" fill="url(#gCoat)" stroke="#9c3f26" stroke-width="2" stroke-opacity=".55"/>
+      <path d="M25 38c-2-10 3-18 8-18s11 7 9 17z" fill="#f0dcc0" stroke="#b08c63" stroke-width="1.5" stroke-opacity=".6"/>
+    </g>
+    <path d="M23 25c1-8 5-12 10-12s9 5 10 11c-7-5-14-4-20 1z" fill="#4b3527"/>
+    <path d="M24 42q10 8 19 -1" fill="none" stroke="#a8402b" stroke-width="6.4" stroke-linecap="round"/>
+    <path d="M33 50c7 6 11 11 14 18" fill="none" stroke="#c65d3b" stroke-width="5.4" stroke-linecap="round"/>
+    <path d="M48 48l7 52" fill="none" stroke="#7d5f4b" stroke-width="2.8" stroke-linecap="round"/>
+  </symbol>
+
+  <symbol id="personSit" viewBox="0 0 74 92">
+    <ellipse cx="34" cy="86" rx="24" ry="5.4" fill="#8c6a4e" opacity=".2"/>
+    <g filter="url(#f-edge2)">
+      <path d="M12 84c-3-24 6-44 24-44s25 22 22 44z" fill="url(#gCoat)" stroke="#9c3f26" stroke-width="2" stroke-opacity=".5"/>
+      <circle cx="35" cy="34" r="13" fill="#f0dcc0" stroke="#b08c63" stroke-width="1.5" stroke-opacity=".55"/>
+    </g>
+    <path d="M23 30c0-9 5-14 12-14s12 6 12 13c-8-6-17-5-24 1z" fill="#4b3527"/>
+    <path d="M22 74h32" stroke="#8e4527" stroke-width="4.6" stroke-linecap="round" opacity=".75"/>
+    <path d="M52 52c6 4 9 10 9 18" fill="none" stroke="#c65d3b" stroke-width="5" stroke-linecap="round"/>
+  </symbol>
+
+  <symbol id="mateSit" viewBox="0 0 196 136">
+    <ellipse cx="96" cy="128" rx="66" ry="7.5" fill="#8c6a4e" opacity=".2"/>
+    <g filter="url(#f-edge2)">
+      <path d="M30 122c-16-26-6-62 22-76 10-18 38-22 52-8 24-6 48 12 48 40 0 28-18 46-44 46z"
+            fill="url(#gMate)" stroke="#a3826a" stroke-width="2.9" stroke-linejoin="round"/>
+      <path d="M152 104c14 2 22-6 22-16" fill="none" stroke="#a3826a" stroke-width="2.6" stroke-linecap="round"/>
+    </g>
+    <g fill="none" stroke="#dcc5a5" stroke-width="2.2" stroke-linecap="round" opacity=".8">
+      <path d="M62 66c6 6 7 14 3 20"/><path d="M118 74c-5 8-3 16 2 21"/>
+    </g>
+    <g fill="#332b25"><circle cx="96" cy="62" r="3.9"/><circle cx="120" cy="60" r="3.9"/></g>
+    <ellipse cx="108" cy="72" rx="5.2" ry="4" fill="#c65d3b"/>
+    <path d="M52 40c-2-9 3-15 11-15" fill="none" stroke="#a3826a" stroke-width="2.5" stroke-linecap="round"/>
+  </symbol>
+
+  <!-- flora -->
+  <symbol id="bushR" viewBox="0 0 130 92">
+    <g filter="url(#f-edge2)">
+      <path d="M14 78C2 64 12 42 32 45 34 24 62 15 74 32c18-11 40 6 33 27 13 6 8 22-6 22H25c-8 0-13-1-11-3z"
+            fill="url(#gLeafR)" stroke="#7e3d26" stroke-width="2.2" stroke-opacity=".45"/>
+    </g>
+    <g fill="none" stroke="#6d3a24" stroke-width="1.8" opacity=".34" stroke-linecap="round">
+      <path d="M36 74c1-11 7-17 15-19"/><path d="M68 72c-1-12 5-19 13-21"/>
+    </g>
+    <g fill="#e88a5e" opacity=".8"><circle cx="30" cy="52" r="3.2"/><circle cx="66" cy="38" r="2.6"/><circle cx="94" cy="60" r="2.3"/></g>
+  </symbol>
+  <symbol id="bushG" viewBox="0 0 120 86">
+    <g filter="url(#f-edge2)">
+      <path d="M12 72C4 58 16 40 32 44 36 26 60 20 70 34c16-8 34 6 28 24 10 6 4 18-8 18H22c-8 0-12-2-10-4z"
+            fill="url(#gLeafG)" stroke="#8b6a3d" stroke-width="2" stroke-opacity=".45"/>
+    </g>
+    <g fill="#f2e2c1" opacity=".7"><circle cx="40" cy="46" r="2.2"/><circle cx="70" cy="38" r="2"/><circle cx="86" cy="56" r="1.9"/></g>
+  </symbol>
+  <symbol id="bushS" viewBox="0 0 116 80">
+    <g filter="url(#f-edge2)">
+      <path d="M10 66C2 52 16 34 30 38 34 22 58 16 68 30c14-6 30 6 24 22 8 6 2 16-8 16H20c-8 0-12-1-10-2z"
+            fill="url(#gLeafS)" stroke="#6f5942" stroke-width="2" stroke-opacity=".4"/>
+    </g>
+  </symbol>
+  <symbol id="tuft" viewBox="0 0 70 92">
+    <g fill="none" stroke="#9c7b5c" stroke-width="2.6" stroke-linecap="round" opacity=".72">
+      <path d="M35 92c-2-26-8-40-18-52"/><path d="M35 92c0-28 4-42 14-54"/>
+      <path d="M35 92c-8-20-18-28-27-33"/><path d="M35 92c6-22 16-30 25-35"/>
+    </g>
+  </symbol>
+  <symbol id="reeds" viewBox="0 0 96 150">
+    <g fill="none" stroke="#8b6a4d" stroke-width="2.6" stroke-linecap="round" opacity=".8">
+      <path d="M28 150c-2-42-6-64-12-84"/><path d="M52 150c2-46 6-70 14-92"/><path d="M74 150c0-38 4-58 10-74"/>
+    </g>
+    <g filter="url(#f-edge3)">
+      <ellipse cx="15" cy="60" rx="5.5" ry="14" fill="#c2895c" transform="rotate(-10 15 60)"/>
+      <ellipse cx="67" cy="54" rx="5.5" ry="15" fill="#b98a55" transform="rotate(10 67 54)"/>
+      <ellipse cx="85" cy="72" rx="4.6" ry="12" fill="#a97c55" transform="rotate(7 85 72)"/>
+    </g>
+  </symbol>
+  <symbol id="birds" viewBox="0 0 90 40">
+    <g fill="none" stroke="#7d5f4b" stroke-width="2" stroke-linecap="round" opacity=".65">
+      <path d="M6 22q9-11 18 0"/><path d="M32 12q8-9 16 0"/><path d="M56 26q7-8 14 0"/>
+    </g>
+  </symbol>
+</defs>
+</svg>
+
+<!-- ============ header ============ -->
+<header class="head" id="head">
+  <div class="head-in">
+    <a class="logo" href="#top" aria-label="Claude トップ">
+      <svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true">
+        <g filter="url(#f-edge3)" fill="#c65d3b">
+          <circle cx="20" cy="20" r="9.4"/>
+          <g stroke="#c65d3b" stroke-width="2.6" stroke-linecap="round">
+            <path d="M20 2.5v5"/><path d="M20 32.5v5"/><path d="M2.5 20h5"/><path d="M32.5 20h5"/>
+            <path d="M7.5 7.5l3.6 3.6"/><path d="M28.9 28.9l3.6 3.6"/><path d="M32.5 7.5l-3.6 3.6"/><path d="M11.1 28.9l-3.6 3.6"/>
+          </g>
+        </g>
+      </svg>
+      <span class="logo-word">Claude<b>Fable 5</b></span>
+    </a>
+    <nav class="nav">
+      <a href="#family">モデル</a>
+      <a href="#caps">できること</a>
+      <a href="#safety">安全性</a>
+      <a class="btn btn--sm" href="#start">使ってみる</a>
+    </nav>
+  </div>
+  <div class="progress" id="progress"></div>
+</header>
+
+<main id="main">
+
+<!-- ============ 00 hero ============ -->
+<section class="hero" id="top">
+  <div class="hero-top">
+    <p class="eyebrow" data-reveal>
+      <span class="en">Mythos-class</span><span class="dot" aria-hidden="true"></span><span>一般提供モデル</span>
+    </p>
+    <h2 class="hero-title" data-mask>
+      <span class="ln"><span>Fable&nbsp;5<span class="dot">.</span></span></span>
+    </h2>
+    <div class="hero-copy">
+      <h1 data-reveal style="--d:180">今、いちばん賢いClaudeが、<br>誰でも使える形に。</h1>
+      <p class="sub" data-reveal style="--d:340">長い仕事ほど強くなる、新しい最上位クラス。画像も、コードも、何日分の調査も、同じひとつの対話のなかに置けます。</p>
+    </div>
+    <div class="scroll-cue" data-reveal style="--d:520"><span class="track"><i></i></span>SCROLL / 丘を越えて</div>
+  </div>
+
+  <div class="hero-art">
+    <div class="kb">
+    <svg viewBox="0 0 1600 760" preserveAspectRatio="xMidYMax slice" role="img"
+         aria-label="秋の草原の丘陵。白い小道を、赤い服の人物とクリーム色のふわふわした相棒が歩いていく水彩イラスト">
+      <!-- sky -->
+      <g data-depth="-.10">
+        <rect x="0" y="0" width="1600" height="760" fill="url(#gSky)"/>
+        <ellipse cx="380" cy="120" rx="620" ry="130" fill="#f7dcb8" opacity=".5" filter="url(#f-wash)"/>
+        <ellipse cx="1290" cy="250" rx="500" ry="110" fill="#eecfae" opacity=".4" filter="url(#f-wash)"/>
+        <ellipse cx="900" cy="70" rx="420" ry="80" fill="#fff6e6" opacity=".7" filter="url(#f-wash)"/>
+        <!-- sun -->
+        <g transform="translate(1216 200)">
+          <circle class="sunpulse" r="255" fill="url(#gGlow)"/>
+          <g class="sunpulse" filter="url(#f-edge3)" fill="#c65d3b" opacity=".28">
+            <g stroke="#c65d3b" stroke-width="4" stroke-linecap="round">
+              <path d="M-132 0h-26"/><path d="M132 0h26"/><path d="M0 -132v-26"/><path d="M0 132v26"/>
+              <path d="M-96 -96l-19-19"/><path d="M96 96l19 19"/><path d="M96 -96l19-19"/><path d="M-96 96l-19 19"/>
+            </g>
+          </g>
+          <g filter="url(#f-edge2)"><circle r="88" fill="url(#gSun)" opacity=".95"/></g>
+          <circle r="104" fill="none" stroke="#d3805a" stroke-width="2" opacity=".4" filter="url(#f-edge3)"/>
+        </g>
+        <!-- clouds -->
+        <g class="cloud" filter="url(#f-edge2)">
+          <path d="M150 152c8-26 34-32 56-20 14-26 52-28 68-6 26-12 54 4 52 28 18 6 14 26-6 26H180c-26 0-40-10-30-28z"
+                fill="#fffaf0" stroke="#e3cbaa" stroke-width="2.2" stroke-opacity=".7"/>
+          <g stroke="#e6d0b2" stroke-width="2.4" stroke-linecap="round" opacity=".55" fill="none">
+            <path d="M186 190h168"/><path d="M214 204h112"/></g>
+        </g>
+        <g class="cloud b" filter="url(#f-edge2)">
+          <path d="M690 96c6-20 28-26 46-16 12-20 44-22 56-4 22-10 46 4 44 24 14 5 10 20-6 20H714c-22 0-32-8-24-24z"
+                fill="#fffaf0" stroke="#e3cbaa" stroke-width="2" stroke-opacity=".6"/>
+        </g>
+        <g class="cloud c" filter="url(#f-edge2)">
+          <path d="M1370 410c6-18 26-22 42-14 10-18 40-18 50-2 20-8 42 4 40 22 12 4 8 16-6 16h-112c-18 0-26-6-14-22z"
+                fill="#fff8ea" stroke="#e0c6a4" stroke-width="2" stroke-opacity=".5"/>
+        </g>
+        <use href="#birds" x="420" y="250" width="96" height="42"/>
+        <use href="#birds" x="980" y="150" width="66" height="30" opacity=".7"/>
+      </g>
+
+      <!-- far hills -->
+      <g data-depth=".04">
+        <path d="M0 436C176 392 318 458 470 424 638 386 758 448 918 416 1080 384 1240 442 1400 410 1478 394 1552 410 1600 402V760H0Z"
+              fill="url(#gH1)" filter="url(#f-edge1)"/>
+        <path d="M0 502C214 452 380 524 560 490 762 452 900 516 1102 482 1290 450 1452 508 1600 480V760H0Z"
+              fill="url(#gH2)" filter="url(#f-edge1)"/>
+        <path d="M300 470C430 436 560 494 700 466 850 436 960 492 1092 466V560H300Z" fill="#c4a178" opacity=".2" filter="url(#f-bleed)"/>
+        <use href="#bushS" x="212" y="452" width="74" height="52"/>
+        <use href="#bushS" x="620" y="440" width="60" height="42"/>
+        <use href="#bushG" x="982" y="454" width="66" height="46"/>
+        <use href="#bushS" x="1368" y="448" width="58" height="40"/>
+      </g>
+
+      <!-- mid hills + trail -->
+      <g data-depth=".10">
+        <path d="M860 566C1032 514 1180 572 1348 538 1462 514 1540 552 1600 542V760H860Z" fill="url(#gH3)" filter="url(#f-edge1)"/>
+        <path d="M0 592C160 552 300 604 452 578 604 552 720 596 860 584V760H0Z" fill="url(#gH3)" opacity=".92" filter="url(#f-edge1)"/>
+        <path d="M1000 560C1140 528 1260 578 1400 556V640H1000Z" fill="#a9835c" opacity=".2" filter="url(#f-bleed)"/>
+        <!-- white trail weaving away -->
+        <g>
+          <path d="M712 762C680 706 738 672 738 636 738 596 674 578 690 548 704 522 746 514 756 492 766 468 742 452 752 430 760 412 754 402 750 392"
+                fill="none" stroke="#efe1c8" stroke-width="70" stroke-linecap="round" opacity=".6" filter="url(#f-edge1)"/>
+          <path d="M712 762C680 706 738 672 738 636 738 596 674 578 690 548 704 522 746 514 756 492 766 468 742 452 752 430 760 412 754 402 750 392"
+                fill="none" stroke="url(#gTrail)" stroke-width="52" stroke-linecap="round" filter="url(#f-edge1)"/>
+          <path d="M712 762C680 706 738 672 738 636 738 596 674 578 690 548 704 522 746 514 756 492 766 468 742 452 752 430 760 412 754 402 750 392"
+                fill="none" stroke="#e4d3b6" stroke-width="2.6" stroke-dasharray="2 30" opacity=".9"/>
+        </g>
+        <!-- the two, walking -->
+        <g class="walker slow"><use href="#mate" x="740" y="398" width="26" height="23"/></g>
+        <g class="walker"><use href="#person" x="726" y="404" width="15" height="26"/></g>
+        <use href="#bushG" x="790" y="470" width="104" height="76"/>
+        <use href="#bushR" x="596" y="514" width="120" height="86"/>
+        <use href="#reeds" x="900" y="470" width="66" height="104"/>
+        <use href="#tuft" x="1230" y="518" width="52" height="68"/>
+        <use href="#tuft" x="524" y="530" width="44" height="58"/>
+      </g>
+
+      <!-- near hills -->
+      <g data-depth=".22">
+        <path d="M0 656C190 606 356 674 520 646 626 628 706 664 812 654V762H0Z" fill="url(#gH4)" filter="url(#f-edge1)"/>
+        <path d="M740 706C962 654 1170 722 1372 682 1476 662 1556 706 1600 696V762H740Z" fill="url(#gH4)" filter="url(#f-edge1)"/>
+        <path d="M120 660C260 630 380 682 520 660V760H120Z" fill="#8d6a49" opacity=".2" filter="url(#f-bleed)"/>
+        <use href="#bushR" x="150" y="590" width="230" height="168"/>
+        <use href="#bushG" x="368" y="632" width="150" height="110"/>
+        <use href="#reeds" x="60" y="540" width="104" height="164"/>
+        <use href="#reeds" x="640" y="592" width="88" height="140" opacity=".9"/>
+        <use href="#tuft" x="470" y="620" width="90" height="118"/>
+        <use href="#tuft" x="700" y="650" width="76" height="100"/>
+        <use href="#bushS" x="1010" y="626" width="170" height="122"/>
+        <use href="#bushR" x="1290" y="606" width="200" height="146"/>
+        <use href="#reeds" x="1470" y="540" width="98" height="156"/>
+        <use href="#tuft" x="1180" y="650" width="72" height="96"/>
+        <use href="#tuft" x="1380" y="668" width="66" height="88"/>
+        <!-- foreground pair -->
+        <g class="walker"><use href="#mate" x="628" y="600" width="150" height="132"/></g>
+        <g class="walker slow"><use href="#person" x="756" y="628" width="60" height="102"/></g>
+        <use href="#bushG" x="520" y="700" width="150" height="108" opacity=".95"/>
+        <use href="#tuft" x="836" y="672" width="88" height="112"/>
+      </g>
+    </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 01 family ============ -->
+<section class="sec" id="family">
+  <div class="container">
+    <div class="fam-head">
+      <div class="sec-head">
+        <p><span class="num">01</span><span class="kicker">The Family <i>・ クラス</i></span></p>
+        <h2 class="h2" data-mask>
+          <span class="ln"><span>Claudeの、いちばん上へ。</span></span>
+        </h2>
+        <p class="lede" data-reveal>Claudeには4つのクラスがあります。軽やかな順に並べると、Fable 5 がどの高さから景色を見ているかが見えてきます。</p>
+      </div>
+      <p data-reveal style="--d:200;color:var(--ink-2);font-weight:300;font-size:.92rem;max-width:38ch">
+        同じ対話画面のまま、頭の中だけが入れ替わります。買い替えも、新しい癖を覚える必要もありません。
+      </p>
+    </div>
+
+    <div class="fam-chart" id="famChart" data-bars>
+      <div class="fam-grid" aria-hidden="true">
+        <div class="gl" style="bottom:23%"><span>日常</span></div>
+        <div class="gl" style="bottom:41%"><span>実務</span></div>
+        <div class="gl" style="bottom:62%"><span>熟練</span></div>
+        <div class="gl" style="bottom:100%"><span>未知域</span></div>
+      </div>
+      <div class="fam-col"><div class="bar bar--1"></div></div>
+      <div class="fam-col"><div class="bar bar--2"></div></div>
+      <div class="fam-col"><div class="bar bar--3"></div></div>
+      <div class="fam-col">
+        <div class="fam-crown" aria-hidden="true">
+          <svg viewBox="0 0 120 120">
+            <circle cx="60" cy="58" r="40" fill="url(#gGlow)"/>
+            <g filter="url(#f-edge2)"><circle cx="60" cy="58" r="20" fill="url(#gSun)" opacity=".9"/></g>
+            <g stroke="#c65d3b" stroke-width="2.4" stroke-linecap="round" opacity=".5" fill="none">
+              <path d="M60 22v-9"/><path d="M24 58h-9"/><path d="M96 58h9"/>
+              <path d="M36 34l-6-6"/><path d="M84 34l6-6"/>
+            </g>
+          </svg>
+        </div>
+        <div class="bar bar--4">
+          <span class="fam-tag">Fable 5</span>
+          <span class="fam-top" aria-hidden="true">
+            <svg viewBox="0 0 90 56" width="74" height="46">
+              <use href="#mate" x="26" y="4" width="46" height="41"/>
+              <use href="#person" x="66" y="18" width="17" height="28"/>
+            </svg>
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="fam-labels">
+      <div data-reveal><h3>Haiku</h3><span class="jp">はやい</span><p>ひらめきと、短い用事。そばに置く速さ。</p></div>
+      <div data-reveal style="--d:120"><h3>Sonnet</h3><span class="jp">せいかつ</span><p>毎日の仕事相手。迷わず選べる中核。</p></div>
+      <div data-reveal style="--d:240"><h3>Opus</h3><span class="jp">こたえ</span><p>難しい相談を、根気よく付き合うクラス。</p></div>
+      <div data-reveal style="--d:360"><h3>Mythos</h3><span class="jp">まったく、新的</span><p>何日分もの仕事を、まかせるためのクラス。</p></div>
+    </div>
+    <div class="fam-note" data-reveal>
+      <svg viewBox="0 0 60 60" aria-hidden="true">
+        <g filter="url(#f-edge2)"><path d="M6 52c6-22 16-34 26-34s16 8 20 20" fill="none" stroke="#d97757" stroke-width="4" stroke-linecap="round"/></g>
+        <g filter="url(#f-edge3)"><circle cx="52" cy="16" r="7" fill="#c65d3b"/></g>
+      </svg>
+      <p>同じプロンプトを、4つのクラスに同時に投げて比べることもできます。図はできることの幅を示すイメージで、実測値ではありません。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 capabilities ============ -->
+<section class="sec" id="caps">
+  <div class="container">
+    <div class="sec-head">
+      <p><span class="num">02</span><span class="kicker">What it does <i>・ できること</i></span></p>
+      <h2 class="h2" data-mask>
+        <span class="ln"><span>頼れる仕事の、</span></span>
+        <span class="ln"><span style="--d:140">その先まで。</span></span>
+      </h2>
+      <p class="lede" data-reveal>テストで良い点をとるための能力ではなく、現実の机の上で役に立つ能力を伸ばしました。</p>
+    </div>
+
+    <div class="caps">
+      <!-- 1 game -->
+      <article class="cap" data-reveal>
+        <div class="cap-art">
+          <svg viewBox="0 0 170 168" role="img" aria-label="ゲーム画面の小さな水彩画">
+            <g filter="url(#f-edge2)">
+              <rect x="14" y="22" width="142" height="106" rx="16" fill="#f3e6d0" stroke="#a3826a" stroke-width="3"/>
+              <rect x="26" y="34" width="118" height="82" rx="9" fill="url(#gSky)"/>
+            </g>
+            <g clip-path="none">
+              <path d="M26 92c22-14 40 6 62-4s34 8 56-2v30H26z" fill="#dcc094" filter="url(#f-edge3)"/>
+              <path d="M26 104c26-10 46 8 68 0s30 6 50 0v12H26z" fill="#c19a6d" filter="url(#f-edge3)"/>
+              <g filter="url(#f-edge3)"><circle cx="116" cy="52" r="11" fill="url(#gSun)"/></g>
+              <use href="#person" x="48" y="72" width="16" height="28"/>
+              <use href="#mate" x="66" y="76" width="30" height="26"/>
+              <g filter="url(#f-edge3)" fill="#c9a44f"><circle cx="92" cy="70" r="4.4"/><circle cx="104" cy="62" r="3.4"/></g>
+              <g stroke="#c65d3b" stroke-width="2" opacity=".45" fill="none"><path d="M32 42h14"/><path d="M32 48h9"/></g>
+            </g>
+            <g filter="url(#f-edge3)" fill="#e6d5b8" stroke="#a3826a" stroke-width="2">
+              <path d="M56 128h58v8c0 8-7 12-16 12H72c-9 0-16-4-16-12z"/>
+            </g>
+            <use href="#tuft" x="118" y="106" width="40" height="52"/>
+            <use href="#bushR" x="6" y="104" width="60" height="42"/>
+          </svg>
+        </div>
+        <div class="cap-body">
+          <span class="cap-no">01</span>
+          <h3>画面を見るだけで、<br>ゲームを最後まで。</h3>
+          <p>ピクセルの揺れからルールを推測し、説明書もAPIもなしに、画面だけを頼りにクリアまで進めます。</p>
+          <p class="cap-meta">レトロゲーム25本 · 平均 <b>4.2時間</b> で目的地へ</p>
+        </div>
+      </article>
+
+      <!-- 2 code migration -->
+      <article class="cap" data-reveal style="--d:120">
+        <div class="cap-art">
+          <svg viewBox="0 0 170 168" role="img" aria-label="コードを書いた紙の束の水彩画">
+            <g filter="url(#f-edge2)">
+              <path d="M30 148l6-84 66-6 6 84z" fill="#fbf3e3" stroke="#a3826a" stroke-width="2.6"/>
+              <path d="M38 108l4-52 52-4 4 52z" fill="#fffbf0" stroke="#a3826a" stroke-width="2.4"/>
+              <path d="M46 74l3-34 38-3 3 34z" fill="#fffdf6" stroke="#a3826a" stroke-width="2.2"/>
+            </g>
+            <g stroke-linecap="round" opacity=".75">
+              <g stroke="#a3826a" stroke-width="2.4"><path d="M52 52h20"/><path d="M52 58h30"/><path d="M52 64h16"/></g>
+              <g stroke="#c65d3b" stroke-width="2.4"><path d="M44 92h34"/><path d="M44 100h48"/><path d="M44 108h26"/></g>
+              <g stroke="#b08c63" stroke-width="2.4"><path d="M36 120h56"/><path d="M36 128h40"/><path d="M36 136h62"/></g>
+            </g>
+            <g filter="url(#f-edge3)" fill="#c9a44f" opacity=".8"><rect x="98" y="40" width="44" height="20" rx="6" transform="rotate(-7 120 50)"/></g>
+            <g fill="none" stroke="#8e4527" stroke-width="2.6" stroke-linecap="round" opacity=".8">
+              <path d="M126 62c14 10 18 26 12 44" stroke-dasharray="7 7"/>
+              <path d="M136 104l-4 12-9-8"/>
+            </g>
+            <use href="#mate" x="4" y="18" width="52" height="46"/>
+            <use href="#person" x="128" y="112" width="24" height="40"/>
+          </svg>
+        </div>
+        <div class="cap-body">
+          <span class="cap-no">02</span>
+          <h3>5,000万行のコードを、<br>1日で移行。</h3>
+          <p>古い言語から今のコードベースへ。テストを動かしながら、人が見直せる粒度でまとめていきます。</p>
+          <p class="cap-meta">テスト通過率 <b>99.1%</b> · 差分はまとめて1本の枝に</p>
+        </div>
+      </article>
+
+      <!-- 3 molecule -->
+      <article class="cap" data-reveal style="--d:200">
+        <div class="cap-art">
+          <svg viewBox="0 0 170 168" role="img" aria-label="フラスコと分子の水彩画">
+            <g filter="url(#f-edge2)">
+              <path d="M72 22h26v30l26 58c6 14-3 26-18 26H64c-15 0-24-12-18-26l26-58z"
+                    fill="#fdf8ec" stroke="#a3826a" stroke-width="3"/>
+              <path d="M56 94h58l10 22c4 10-2 18-12 18H58c-10 0-16-8-12-18z" fill="url(#gAmber)" opacity=".85"/>
+            </g>
+            <g fill="#fff6e4" opacity=".8"><circle cx="72" cy="112" r="4"/><circle cx="88" cy="120" r="3"/><circle cx="98" cy="108" r="2.4"/></g>
+            <g stroke="#c65d3b" stroke-width="2.6" fill="none" opacity=".75"><path d="M66 86h38"/></g>
+            <g filter="url(#f-edge3)" fill="none" stroke="#8e4527" stroke-width="2.6">
+              <path d="M124 46l18 11v21l-18 11-18-11V57z"/>
+              <path d="M34 40l14 9v17l-14 9-14-9V49z"/>
+              <path d="M142 78l12 8"/>
+            </g>
+            <g fill="#c9a44f"><circle cx="124" cy="46" r="4.4"/><circle cx="142" cy="78" r="3.6"/><circle cx="34" cy="40" r="3.8"/></g>
+            <g fill="none" stroke="#c65d3b" stroke-width="2.2" stroke-dasharray="4 6" opacity=".7"><path d="M48 76c8 14 10 22 8 34"/></g>
+            <use href="#reeds" x="122" y="96" width="52" height="82"/>
+            <use href="#tuft" x="4" y="96" width="46" height="60"/>
+          </svg>
+        </div>
+        <div class="cap-body">
+          <span class="cap-no">03</span>
+          <h3>新薬の設計を、<br>およそ10倍の速さで。</h3>
+          <p>分子の形と文献を行き来し、試作の順番まで提案します。「次は何番目?」に、その場で答えが返ります。</p>
+          <p class="cap-meta">仮説立案 <b>10.4倍</b> · 根拠の頁まで自動で添付</p>
+        </div>
+      </article>
+
+      <!-- 4 long road + clock -->
+      <article class="cap" data-reveal style="--d:280">
+        <div class="cap-art">
+          <svg viewBox="0 0 170 168" role="img" aria-label="長く続く道と時計の水彩画">
+            <g filter="url(#f-edge2)"><circle cx="118" cy="50" r="32" fill="#fdf8ec" stroke="#a3826a" stroke-width="3"/></g>
+            <g stroke="#8e4527" stroke-width="3" stroke-linecap="round">
+              <path d="M118 50V32"/><path d="M118 50l14 10"/>
+            </g>
+            <g stroke="#c65d3b" stroke-width="2.2" stroke-linecap="round" opacity=".7">
+              <path d="M118 24v-5"/><path d="M118 81v5"/><path d="M92 50h-5"/><path d="M149 50h5"/>
+            </g>
+            <path d="M14 162c10-30 44-30 56-52s-10-32 6-48" fill="none" stroke="#efe1c8" stroke-width="30" stroke-linecap="round" filter="url(#f-edge1)"/>
+            <path d="M14 162c10-30 44-30 56-52s-10-32 6-48" fill="none" stroke="#fffdf6" stroke-width="22" stroke-linecap="round" filter="url(#f-edge1)"/>
+            <path d="M14 162c10-30 44-30 56-52s-10-32 6-48" fill="none" stroke="#e4d3b6" stroke-width="2" stroke-dasharray="2 16" opacity=".9"/>
+            <path d="M0 150c34-14 66 6 96-6s56 2 74-6v32H0z" fill="#ccaa7d" opacity=".7" filter="url(#f-edge1)"/>
+            <use href="#person" x="36" y="96" width="24" height="40"/>
+            <use href="#mate" x="60" y="96" width="44" height="38"/>
+            <use href="#bushR" x="0" y="106" width="56" height="40"/>
+            <use href="#tuft" x="92" y="112" width="44" height="56"/>
+          </svg>
+        </div>
+        <div class="cap-body">
+          <span class="cap-no">04</span>
+          <h3>長い作業も、<br>休まず走りきる。</h3>
+          <p>数日にわたる調査でも、目的地と手順を忘れません。立ち止まった場所から、そのまま再開できます。</p>
+          <p class="cap-meta">連続稼働 <b>26時間</b> · 手離し後も自己点検を継続</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 03 long work ============ -->
+<section class="sec perf" id="perf">
+  <div class="perf-wrap" id="perfWrap">
+    <div class="perf-grid">
+      <div>
+        <p><span class="num">03</span><span class="kicker">Endurance <i>・ いちばんの強み</i></span></p>
+        <h2 class="h2" data-mask>
+          <span class="ln"><span>長く複雑な仕事ほど、</span></span>
+          <span class="ln"><span style="--d:150">差は<em>開いていく</em>。</span></span>
+        </h2>
+        <div class="csteps">
+          <div class="cstep is-on" data-at="0"><h4>短い用事なら、どこも同じ。</h4><p>要約も翻訳も、たいていのモデルは得意です。ここは差がありません。</p></div>
+          <div class="cstep" data-at=".26"><h4>数時間分になると、段取りが変わる。</h4><p>途中の忘れ物や、同じ箇所のやり直しが出はじめます。Fable 5 は計画を立て直します。</p></div>
+          <div class="cstep" data-at=".54"><h4>数日分では、息が切れる。</h4><p>他のモデルが失速する場所で、Fable 5 は自分の成果物を確かめながら進みます。</p></div>
+          <div class="cstep" data-at=".8"><h4>数週間分は、まだ誰も歩いた道。</h4><p>完走できるモデルが限られる領域で、Fable 5 は目的地まで歩ききります。</p></div>
+        </div>
+        <div class="legend">
+          <span><i style="border-color:#c65d3b"></i>Fable 5</span>
+          <span><i style="border-color:#a3826a"></i>Claude Opus 4.5</span>
+          <span><i style="border-color:#b6ab9c"></i>ほかの最上位モデル</span>
+          <span><i style="border-color:#cbc1b3"></i>平均的なモデル</span>
+        </div>
+      </div>
+
+      <div>
+        <figure class="perf-fig" data-reveal>
+          <svg viewBox="0 0 860 560" role="img" aria-label="仕事の長さと複雑さに対して、Fable 5だけが指数関数的に成果を伸ばす折れ線グラフ">
+            <g stroke="rgba(124,94,73,.16)" stroke-width="1">
+              <path d="M70 495h770"/><path d="M70 396h770"/><path d="M70 297h770"/><path d="M70 198h770"/><path d="M70 99h770"/>
+            </g>
+            <g stroke="rgba(124,94,73,.3)" stroke-width="1.4">
+              <path d="M70 99v396"/><path d="M70 495h770"/>
+            </g>
+            <g class="axis-t">
+              <text x="58" y="499" text-anchor="end">0</text>
+              <text x="58" y="301" text-anchor="end">中</text>
+              <text x="58" y="103" text-anchor="end">高</text>
+            </g>
+            <text class="axis-t" transform="rotate(-90 30 300)" x="30" y="300" text-anchor="middle">成 果</text>
+            <g class="axis-t">
+              <text x="96" y="524">1タスク</text>
+              <text x="330" y="524">1日</text>
+              <text x="560" y="524">1週間</text>
+              <text x="742" y="524">1か月</text>
+            </g>
+            <text class="axis-x" x="828" y="553" text-anchor="end">仕事の長さ・複雑さ →</text>
+
+            <path class="ln" data-speed="1.7" d="M70 494C300 486 560 480 800 470" stroke="#cbc1b3" stroke-width="3"/>
+            <path class="ln" data-speed="1.7" d="M70 493C320 481 570 470 800 452" stroke="#b6ab9c" stroke-width="3"/>
+            <path class="ln" data-speed="1.5" d="M70 492C300 474 560 456 800 418" stroke="#a3826a" stroke-width="3.4"/>
+            <path class="ln" data-speed="1" id="fableLine"
+                  d="M70 494C300 490 500 480 620 424 700 386 736 300 764 214 776 178 786 138 800 96"
+                  stroke="#c65d3b" stroke-width="5"/>
+            <path class="ln" d="M70 494C300 490 500 480 620 424 700 386 736 300 764 214 776 178 786 138 800 96"
+                  stroke="#c65d3b" stroke-width="14" opacity=".13" filter="url(#f-edge3)"/>
+
+            <g id="perf-gap" opacity="0">
+              <path d="M700 250v140" stroke="#c65d3b" stroke-width="1.6" stroke-dasharray="5 6"/>
+              <text class="lbl-hot" x="686" y="238" text-anchor="end">+26時間分の</text>
+              <text class="lbl-hot" x="686" y="258" text-anchor="end">自律作業</text>
+            </g>
+            <text class="lbl" x="808" y="424" text-anchor="end" fill="#a3826a">Opus 4.5</text>
+            <g id="perf-marker">
+              <circle r="18" fill="#c65d3b" opacity=".14"/>
+              <circle r="7" fill="#c65d3b" stroke="#fff8ef" stroke-width="2.4"/>
+              <text class="lbl-hot" x="16" y="-14">Fable 5</text>
+            </g>
+          </svg>
+          <figcaption class="perf-cap"><span>SWE-LONG / 架空ベンチマーク</span><span>成果 100%</span></figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 safety ============ -->
+<section class="sec" id="safety">
+  <div class="container">
+    <div class="sec-head">
+      <p><span class="num">04</span><span class="kicker">Gentle brakes <i>・ 安全性</i></span></p>
+      <h2 class="h2" data-mask>
+        <span class="ln"><span>強い力には、</span></span>
+        <span class="ln"><span style="--d:150">やさしいブレーキを。</span></span>
+      </h2>
+    </div>
+
+    <div class="safe-art" data-reveal>
+      <svg viewBox="0 0 1400 560" preserveAspectRatio="xMidYMax slice" role="img"
+           aria-label="夕日を並んで眺める、赤い服の人物とクリーム色の相棒の後ろ姿の水彩画">
+        <rect x="0" y="0" width="1400" height="560" fill="url(#gSkyDusk)"/>
+        <ellipse cx="880" cy="330" rx="620" ry="180" fill="#f6d0a2" opacity=".6" filter="url(#f-wash)"/>
+        <ellipse cx="300" cy="120" rx="420" ry="90" fill="#fbeed8" opacity=".7" filter="url(#f-wash)"/>
+        <g data-depth=".06">
+          <circle cx="880" cy="336" r="290" fill="url(#gGlow)" class="sunpulse"/>
+          <g filter="url(#f-edge2)"><circle cx="880" cy="336" r="118" fill="url(#gSunBig)" opacity=".96"/></g>
+          <circle cx="880" cy="336" r="146" fill="none" stroke="#d3805a" stroke-width="2" opacity=".35" filter="url(#f-edge3)"/>
+        </g>
+        <use href="#birds" x="1060" y="200" width="120" height="52"/>
+        <g data-depth=".08">
+          <path d="M0 352c160-22 300 26 456 8s280 20 420 6 340 18 524 4v200H0Z" fill="url(#gHd1)" opacity=".9" filter="url(#f-edge1)"/>
+          <path d="M0 400c180-26 320 22 500 6s330 16 480 2 260 12 420 4v148H0Z" fill="url(#gHd2)" filter="url(#f-edge1)"/>
+        </g>
+        <g data-depth=".16">
+          <path d="M0 462c180-34 360 22 560 4s360 14 520 2 200 10 320 4v88H0Z" fill="url(#gHd3)" filter="url(#f-edge1)"/>
+          <path d="M300 470C480 440 660 486 840 470v90H300Z" fill="#7a4630" opacity=".18" filter="url(#f-bleed)"/>
+          <!-- the two, sitting, watching the sun -->
+          <g class="walker slow"><use href="#mateSit" x="520" y="378" width="240" height="166"/></g>
+          <g class="walker"><use href="#personSit" x="736" y="418" width="96" height="120"/></g>
+          <use href="#reeds" x="404" y="342" width="118" height="190"/>
+          <use href="#tuft" x="686" y="452" width="86" height="112"/>
+          <use href="#bushR" x="140" y="400" width="216" height="150"/>
+          <use href="#reeds" x="900" y="372" width="96" height="164"/>
+          <use href="#bushG" x="1030" y="406" width="200" height="140"/>
+          <use href="#tuft" x="1250" y="446" width="96" height="124"/>
+          <use href="#tuft" x="24" y="430" width="82" height="106"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="safe-grid">
+      <div>
+        <p class="lede" data-reveal style="max-width:38ch">
+          どんなに急いでいても、危うい場所では一度立ち止まる。その理由は、いつもいちばんやさしい言葉で、横にそえて置きます。
+        </p>
+        <p data-reveal style="--d:140;color:var(--ink-2);font-weight:300;font-size:.92rem;margin-top:1.2rem;max-width:38ch">
+          力があるほど、やめ方も同時に覚えさせました。止まるときは、黙って消えません。
+        </p>
+      </div>
+      <ul class="safe-list">
+        <li data-reveal><span class="n">i</span><div><h3>ためらう設計</h3><p>影響の大きい操作では、進む前に立ち止まり、確認の言葉を出します。</p></div></li>
+        <li data-reveal style="--d:120"><span class="n">ii</span><div><h3>理由のことば</h3><p>断るときも、どこが気になったのかを日本語で、具体的に残します。</p></div></li>
+        <li data-reveal style="--d:240"><span class="n">iii</span><div><h3>距離の保ち方</h3><p>長い作業の途中でも、合図すればいつでもハンドルを取り戻せます。</p></div></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 how ============ -->
+<section class="sec" id="start">
+  <div class="container">
+    <div class="how">
+      <div class="how-art" data-reveal>
+        <svg viewBox="0 0 420 330" role="img" aria-label="ノートPCの画面に丘が映っている水彩画">
+          <ellipse cx="210" cy="296" rx="168" ry="18" fill="#9a7a5c" opacity=".18"/>
+          <g filter="url(#f-edge2)">
+            <path d="M84 78h252c10 0 16 6 16 16v136H68V94c0-10 6-16 16-16z" fill="#f6ecd9" stroke="#a3826a" stroke-width="3"/>
+            <path d="M98 100h224v112H98z" fill="url(#gSky)"/>
+            <path d="M42 230h336c14 0 22 10 22 20s-8 16-22 16H42c-14 0-22-6-22-16s8-20 22-20z" fill="#efe2ca" stroke="#a3826a" stroke-width="3"/>
+          </g>
+          <g>
+            <path d="M98 178c34-22 60 10 92-4s52 12 132-6v44H98z" fill="url(#gH2)" filter="url(#f-edge3)"/>
+            <path d="M98 206c46-16 84 12 128 0s60 8 96 0v10H98z" fill="url(#gH4)" filter="url(#f-edge3)"/>
+            <g filter="url(#f-edge3)"><circle cx="268" cy="132" r="18" fill="url(#gSun)"/></g>
+            <path d="M186 218c14-16 6-28 20-40s4-18 14-28" fill="none" stroke="#fffdf6" stroke-width="12" stroke-linecap="round" filter="url(#f-edge3)"/>
+            <use href="#mate" x="146" y="172" width="52" height="46"/>
+            <use href="#person" x="196" y="180" width="20" height="34"/>
+            <use href="#bushR" x="102" y="180" width="56" height="38"/>
+          </g>
+          <g filter="url(#f-edge3)" fill="#c65d3b" opacity=".8">
+            <circle cx="212" cy="242" r="4"/>
+          </g>
+          <use href="#mate" x="292" y="24" width="104" height="92"/>
+          <g fill="none" stroke="#d97757" stroke-width="2.4" stroke-linecap="round" opacity=".7">
+            <path d="M56 60c-2-10 4-18 12-20"/><path d="M348 52c4-10 12-12 20-8"/>
+          </g>
+          <use href="#reeds" x="6" y="196" width="72" height="114"/>
+          <use href="#tuft" x="352" y="216" width="62" height="80"/>
+        </svg>
+      </div>
+      <div>
+        <p><span class="num">05</span><span class="kicker">How to start <i>・ はじめかた</i></span></p>
+        <h2 class="h2" data-mask>
+          <span class="ln"><span>はじめかたは、</span></span>
+          <span class="ln"><span style="--d:150">かんたん。</span></span>
+        </h2>
+        <ol class="steps">
+          <li data-reveal><span class="n">1</span><div><h3>claude.ai を開く</h3><p>ブラウザだけで十分です。インストールも、難しい設定もありません。</p></div></li>
+          <li data-reveal style="--d:120"><span class="n">2</span><div><h3>「Fable 5」を選ぶ</h3><p>モデルの一覧の、いちばん上にいます。迷ったらここで大丈夫です。</p></div></li>
+          <li data-reveal style="--d:240"><span class="n">3</span><div><h3>いつもどおり話しかける</h3><p>画像も表も長文も、そのまま貼りつけて構いません。あとは任せてください。</p></div></li>
+        </ol>
+        <div class="chips" data-reveal>
+          <span class="chip">Web</span><span class="chip">iOS</span><span class="chip">Android</span><span class="chip">API</span><span class="chip">日本語 OK</span>
+        </div>
+        <p class="how-note" data-reveal style="--d:140">
+          無料プランでは Haiku が自動で選ばれます。長い仕事をさせるなら、有料プランで本領を発揮します。
+          <a href="#start">料金を見る →</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 06 final CTA ============ -->
+<section class="cta">
+  <div class="cta-art" aria-hidden="true">
+    <svg viewBox="0 0 1600 460" preserveAspectRatio="xMidYMax slice">
+      <rect x="0" y="0" width="1600" height="460" fill="url(#gSkyDusk)" opacity=".85"/>
+      <ellipse cx="820" cy="380" rx="700" ry="200" fill="#f2c596" opacity=".55" filter="url(#f-wash)"/>
+      <g data-depth=".05">
+        <circle cx="820" cy="360" r="230" fill="url(#gGlow)" class="sunpulse"/>
+        <g filter="url(#f-edge2)"><circle cx="820" cy="360" r="92" fill="url(#gSunBig)" opacity=".92"/></g>
+      </g>
+      <g data-depth=".08">
+        <path d="M0 330c200-26 340 24 520 6s300 18 460 4 420 16 620 6v124H0Z" fill="url(#gHd1)" filter="url(#f-edge1)"/>
+        <path d="M0 372c220-30 380 20 580 4s380 12 560 2 280 8 460 2v80H0Z" fill="url(#gHd2)" filter="url(#f-edge1)"/>
+      </g>
+      <g data-depth=".14">
+        <path d="M770 462c-8-40 26-58 20-88s-26-38-14-62" fill="none" stroke="#f6e6cc" stroke-width="46" stroke-linecap="round" opacity=".75" filter="url(#f-edge1)"/>
+        <path d="M770 462c-8-40 26-58 20-88s-26-38-14-62" fill="none" stroke="#fffdf6" stroke-width="30" stroke-linecap="round" filter="url(#f-edge1)"/>
+        <use href="#mate" x="700" y="330" width="70" height="62"/>
+        <use href="#person" x="762" y="344" width="26" height="44"/>
+        <use href="#bushR" x="120" y="330" width="240" height="150"/>
+        <use href="#reeds" x="400" y="286" width="104" height="172"/>
+        <use href="#bushG" x="1180" y="336" width="220" height="146"/>
+        <use href="#reeds" x="1030" y="300" width="90" height="150"/>
+        <use href="#tuft" x="900" y="360" width="90" height="116"/>
+        <use href="#tuft" x="560" y="374" width="76" height="98"/>
+      </g>
+      <use href="#birds" x="1240" y="150" width="130" height="56"/>
+    </svg>
+  </div>
+  <div class="cta-in container">
+    <p><span class="num">06</span><span class="kicker">Walk together <i>・ 最終案内</i></span></p>
+    <h2 data-mask>
+      <span class="ln"><span>いちばん遠くまで、</span></span>
+      <span class="ln"><span style="--d:150">いっしょに。</span></span>
+    </h2>
+    <p class="lede" data-reveal>長い道ほど、相棒は大切です。今日から、あなたの一番遠い仕事を置いてみてください。</p>
+    <div data-reveal style="--d:140"><a class="btn btn--lg" href="#top">Claudeを使ってみる</a></div>
+    <p class="cta-sub" data-reveal style="--d:240">クレジットカードなしで、今日から。</p>
+  </div>
+
+  <footer class="foot">
+    <div class="container foot-in">
+      <div>
+        <a class="logo" href="#top" aria-label="Claude トップ">
+          <svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true">
+            <g filter="url(#f-edge3)" fill="#c65d3b">
+              <circle cx="20" cy="20" r="9.4"/>
+              <g stroke="#c65d3b" stroke-width="2.6" stroke-linecap="round">
+                <path d="M20 2.5v5"/><path d="M20 32.5v5"/><path d="M2.5 20h5"/><path d="M32.5 20h5"/>
+                <path d="M7.5 7.5l3.6 3.6"/><path d="M28.9 28.9l3.6 3.6"/><path d="M32.5 7.5l-3.6 3.6"/><path d="M11.1 28.9l-3.6 3.6"/>
+              </g>
+            </g>
+          </svg>
+          <span class="logo-word">Claude</span>
+        </a>
+        <p class="foot-note">Fable 5 は、架空のモデルとして描いたデザインコンセプトのページです。掲載している図表・数値（ゲーム実績、コード移行、連続稼働、ベンチマーク）はすべてサンプルであり、実測値ではありません。イラストはすべて水彩風インラインSVGで描画しています。</p>
+      </div>
+      <nav class="foot-nav" aria-label="フッター">
+        <a href="#family">モデル</a><a href="#caps">できること</a><a href="#safety">安全性</a>
+        <a href="#start">はじめかた</a><a href="#top">料金</a><a href="#top">プライバシー</a><a href="#top">利用規約</a>
+      </nav>
+    </div>
+    <div class="container"><p class="foot-note">© 2025 Claude Labs（架空） — 絵本の丘は、まだ続きいている。</p></div>
+  </footer>
+</section>
+
+</main>
+
+<script>
+(function(){
+  var RM = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var html = document.documentElement;
+
+  /* ---------- reveal (fade + slide, mask lines) ---------- */
+  var revealSel = '[data-reveal],[data-mask],[data-bars]';
+  var items = Array.prototype.slice.call(document.querySelectorAll(revealSel));
+  function show(el){
+    el.classList.add('is-in');
+    if(el.hasAttribute('data-bars')) Array.prototype.forEach.call(el.querySelectorAll('.bar'), function(b,i){
+      setTimeout(function(){ b.classList.add('is-on'); }, i*160);
+    });
+  }
+  var fired = false;
+  if(!('IntersectionObserver' in window) || RM){
+    html.classList.add('reveal-all'); items.forEach(show);
+  }else{
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){ fired = true; show(e.target); io.unobserve(e.target); }
+      });
+    }, {threshold:.12, rootMargin:'0px 0px -5% 0px'});
+    items.forEach(function(el){ io.observe(el); });
+    /* safety net: never leave content hidden */
+    setTimeout(function(){ if(!fired){ html.classList.add('reveal-all'); items.forEach(show); } }, 1800);
+  }
+
+  /* ---------- header state + scroll progress ---------- */
+  var head = document.getElementById('head'), bar = document.getElementById('progress');
+
+  /* ---------- hero / art parallax ---------- */
+  var layers = Array.prototype.slice.call(document.querySelectorAll('[data-depth]'));
+  var heroArt = document.querySelector('.hero-art');
+
+  /* ---------- long-work chart ---------- */
+  var wrap = document.getElementById('perfWrap');
+  var lines = Array.prototype.slice.call(document.querySelectorAll('.perf-fig .ln[data-speed]'));
+  var marker = document.getElementById('perf-marker');
+  var gap = document.getElementById('perf-gap');
+  var steps = Array.prototype.slice.call(document.querySelectorAll('.cstep'));
+  var fable = document.getElementById('fableLine');
+  var lens = [];
+  lines.forEach(function(p){
+    var L = p.getTotalLength(); lens.push(L);
+    if(!RM){ p.style.strokeDasharray = L; p.style.strokeDashoffset = L; }
+  });
+  var fLen = fable ? fable.getTotalLength() : 0;
+
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+  function setChart(p){
+    lines.forEach(function(p2,i){
+      var sp = parseFloat(p2.getAttribute('data-speed')) || 1;
+      var q = RM ? 1 : clamp(p*sp, 0, 1);
+      p2.style.strokeDashoffset = lens[i]*(1-q);
+    });
+    if(fable && marker){
+      var q = RM ? 1 : clamp(p, 0, 1);
+      var pt = fable.getPointAtLength(fLen*q);
+      marker.setAttribute('transform','translate('+pt.x.toFixed(1)+' '+pt.y.toFixed(1)+')');
+      if(p > 0.06 || RM) marker.classList.add('on'); else marker.classList.remove('on');
+      if(gap) gap.setAttribute('opacity', RM ? 1 : clamp((p-0.78)/0.14, 0, 1));
+    }
+    steps.forEach(function(s){
+      var at = parseFloat(s.getAttribute('data-at')) || 0;
+      s.classList.toggle('is-on', RM ? true : (p >= at && p < at + 0.26 || (at===0 && p < 0.26)));
+    });
+  }
+
+  var lastY = -1, ticking = false;
+  function frame(){
+    ticking = false;
+    var y = window.pageYOffset || html.scrollTop;
+    var vh = window.innerHeight;
+    var max = Math.max(1, document.body.scrollHeight - vh);
+    if(bar) bar.style.width = (clamp(y/max,0,1)*100)+'%';
+    if(head) head.classList.toggle('is-stuck', y > 24);
+
+    if(!RM){
+      if(heroArt){
+        var hr = heroArt.getBoundingClientRect();
+        if(hr.bottom > -200 && hr.top < vh + 200){
+          var base = hr.top + hr.height; /* distance scrolled since art bottom hit viewport bottom */
+          var shift = (vh - hr.bottom);
+          layers.forEach(function(l){
+            var d = parseFloat(l.getAttribute('data-depth')) || 0;
+            l.style.transform = 'translate3d(0,' + (shift*d).toFixed(2) + 'px,0)';
+          });
+        }
+      } else {
+        layers.forEach(function(l){
+          var d = parseFloat(l.getAttribute('data-depth')) || 0;
+          var r = l.ownerSVGElement.getBoundingClientRect();
+          if(r.bottom < -300 || r.top > vh + 300) return;
+          var rel = (vh/2 - (r.top + r.height/2)) * d;
+          l.style.transform = 'translate3d(0,' + rel.toFixed(2) + 'px,0)';
+        });
+      }
+    }
+
+    if(wrap && fable){
+      var r = wrap.getBoundingClientRect();
+      var total = Math.max(1, r.height - vh);
+      var p = RM ? 1 : clamp(-r.top/total, 0, 1);
+      if(RM || r.bottom > 0 && r.top < vh*1.2) setChart(p);
+    }
+  }
+  function onScroll(){ if(!ticking){ ticking = true; requestAnimationFrame(frame); } }
+
+  window.addEventListener('scroll', onScroll, {passive:true});
+  window.addEventListener('resize', onScroll);
+  if(RM){ setChart(1); frame(); } else { onScroll(); }
+  window.addEventListener('load', onScroll);
+})();
+</script>
+</body>
+</html>
