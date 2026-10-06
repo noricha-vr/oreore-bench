@@ -95,11 +95,31 @@
     }
   ],
   "stated_facts": [
-    { "id": "melting_temperature_c", "value": 1400, "stated": true },
-    { "id": "workshop_founded_year", "value": 1961, "stated": true },
-    { "id": "workshop_closed_year", "value": null, "stated": false },
-    { "id": "grandfather_years_at_the_kiln", "value": 40, "stated": true },
-    { "id": "sister_age_gap_to_narrator", "value": 3, "stated": true }
+    {
+      "id": "melting_temperature_c",
+      "value": 1400,
+      "stated": true
+    },
+    {
+      "id": "workshop_founded_year",
+      "value": 1961,
+      "stated": true
+    },
+    {
+      "id": "workshop_closed_year",
+      "value": null,
+      "stated": false
+    },
+    {
+      "id": "grandfather_years_at_the_kiln",
+      "value": 40,
+      "stated": true
+    },
+    {
+      "id": "sister_age_gap_to_narrator",
+      "value": 3,
+      "stated": true
+    }
   ],
   "counts": {
     "sections": 4,

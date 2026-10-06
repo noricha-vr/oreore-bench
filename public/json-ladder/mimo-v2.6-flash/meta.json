@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-25T08:49:19.555Z",
+  "generated_at": "2026-10-06T21:50:58.589Z",
   "levels_total": 6,
   "parse_pass_count": 6,
   "score_pct": 100,
@@ -310,7 +310,7 @@
       "primary_match": 53,
       "acceptable_match": 0,
       "accuracy_pct": 98,
-      "raw_length": 1665,
+      "raw_length": 1653,
       "issues": [],
       "verdicts": [
         {
@@ -647,7 +647,7 @@
       "primary_match": 95,
       "acceptable_match": 0,
       "accuracy_pct": 99,
-      "raw_length": 3095,
+      "raw_length": 3205,
       "issues": [],
       "verdicts": [
         {

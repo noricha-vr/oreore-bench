@@ -1,4 +1,3 @@
-```json
 {
   "meta": {
     "title": "硝子の記憶",
@@ -66,4 +65,3 @@
     "narrator_became_glassblower": false
   }
 }
-```
