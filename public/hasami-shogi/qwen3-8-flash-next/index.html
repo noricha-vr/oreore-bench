@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>挟将棋 — Hasami Shogi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============ tokens ============ */
+:root{
+  --cell: clamp(26px, min(9.2vw, 7.5vh), 60px);
+  --pad: calc(var(--cell) * .42);
+  --board-w: calc(var(--cell) * 9 + var(--pad) * 2);
+  --line: #4b2d17;
+  --ink: #0c0a09;
+  --paper: #ece1cc;
+  --paper-2: #b3a48c;
+  --gold: #d6a94b;
+  --verm: #c8402f;
+  --verm-lo: #8f2b1f;
+  --indigo: #46608a;
+  --face-kami: linear-gradient(172deg,#fbebc9 0%,#eccb96 48%,#d9ac6f 100%);
+  --face-shimo: linear-gradient(172deg,#e7e0d1 0%,#cbc0aa 48%,#b0a48c 100%);
+  --shadow: 0 26px 50px -12px rgba(0,0,0,.8), 0 60px 90px -40px rgba(0,0,0,.75);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  min-height:100svh; background:var(--ink); color:var(--paper);
+  font-family:"Zen Kaku Gothic New", system-ui, sans-serif;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+/* ambient: 麻の葉文様 + 行灯の光 + 塵 */
+.ambient{position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden}
+.ambient .pattern{
+  position:absolute; inset:-12%;
+  background-image:
+    repeating-linear-gradient(60deg, rgba(226,196,150,.055) 0 1px, transparent 1px 46px),
+    repeating-linear-gradient(-60deg, rgba(226,196,150,.045) 0 1px, transparent 1px 46px),
+    repeating-linear-gradient(0deg, rgba(226,196,150,.03) 0 1px, transparent 1px 46px);
+  -webkit-mask-image: radial-gradient(78% 66% at 26% 14%, #000 0%, transparent 76%);
+          mask-image: radial-gradient(78% 66% at 26% 14%, #000 0%, transparent 76%);
+}
+.ambient .glow{position:absolute; border-radius:50%; filter:blur(10px)}
+.ambient .g1{width:78vmax;height:78vmax;left:-22vmax;top:-26vmax;
+  background:radial-gradient(circle,rgba(220,158,74,.17),rgba(220,158,74,0) 63%);
+  animation:breathe 21s ease-in-out infinite alternate}
+.ambient .g2{width:62vmax;height:62vmax;right:-24vmax;bottom:-28vmax;
+  background:radial-gradient(circle,rgba(70,96,138,.20),rgba(70,96,138,0) 64%);
+  animation:breathe 27s 3s ease-in-out infinite alternate-reverse}
+.ambient .mote{position:absolute; width:2px;height:2px;border-radius:50%;
+  background:rgba(240,206,150,.75); box-shadow:0 0 8px rgba(230,180,110,.7)}
+.ambient .m1{left:18%;top:66%;animation:drift 34s linear infinite}
+.ambient .m2{left:62%;top:22%;animation:drift 46s 6s linear infinite}
+.ambient .m3{left:84%;top:74%;animation:drift 40s 14s linear infinite}
+.ambient .m4{left:38%;top:12%;animation:drift 52s 22s linear infinite}
+@keyframes breathe{from{transform:translate3d(0,0,0) scale(1);opacity:.7}to{transform:translate3d(4vmax,3vmax,0) scale(1.14);opacity:1}}
+@keyframes drift{
+  0%{transform:translate(0,0);opacity:0}
+  12%{opacity:.9}
+  50%{transform:translate(6vw,-14vh)}
+  88%{opacity:.5}
+  100%{transform:translate(-2vw,-30vh);opacity:0}
+}
+
+/* ============ layout ============ */
+.wrap{position:relative; z-index:1; max-width:1220px; margin:0 auto;
+  padding:clamp(16px,3vw,40px) clamp(12px,3vw,32px) 60px;
+  display:grid; grid-template-columns:minmax(0,auto) minmax(292px,352px);
+  gap:clamp(18px,3vw,44px); justify-content:center; align-items:start}
+
+/* ---- masthead ---- */
+.masthead{grid-column:1/-1; display:grid; grid-template-columns:auto 1fr auto;
+  align-items:center; gap:clamp(14px,2.6vw,34px);
+  padding-bottom:clamp(14px,2vw,22px); margin-bottom:clamp(14px,2.4vw,26px);
+  border-bottom:1px solid rgba(214,169,75,.24)}
+.masthead .rule{width:2px; align-self:stretch;
+  background:linear-gradient(180deg,transparent,var(--verm) 22%,var(--verm) 78%,transparent)}
+.title{margin:0; writing-mode:vertical-rl; text-orientation:upright;
+  font-family:"Shippori Mincho B1",serif; font-weight:800;
+  font-size:clamp(30px,4.1vw,50px); letter-spacing:.12em; line-height:1;
+  color:#f6e8cc; text-shadow:0 3px 0 rgba(0,0,0,.55), 0 0 34px rgba(214,169,75,.22)}
+.mast-body{min-width:0}
+.romaji{margin:0 0 .5em; font-size:clamp(10px,1.1vw,12px); letter-spacing:.42em;
+  text-transform:uppercase; color:var(--gold)}
+.lede{margin:0; font-family:"Shippori Mincho B1",serif; font-weight:600;
+  font-size:clamp(15px,1.9vw,22px); line-height:1.75; color:#f0e4cd; max-width:34ch}
+.lede em{font-style:normal; color:var(--verm); position:relative}
+.lede em::after{content:""; position:absolute; left:0; right:0; bottom:-.12em; height:2px;
+  background:linear-gradient(90deg,var(--verm),transparent)}
+.chips{display:flex; flex-wrap:wrap; gap:7px; margin:1.1em 0 0; padding:0; list-style:none}
+.chips li{font-size:10.5px; letter-spacing:.18em; padding:5px 10px 4px; color:var(--paper-2);
+  border:1px solid rgba(214,169,75,.3); border-radius:1px; transition:.25s;
+  background:rgba(255,240,215,.03)}
+.chips li:hover{color:#141009; background:var(--gold); border-color:var(--gold); transform:translateY(-2px)}
+.seal{width:clamp(46px,5vw,62px); aspect-ratio:1; display:grid; place-items:center;
+  font-family:"Shippori Mincho B1",serif; font-weight:800; font-size:clamp(22px,2.6vw,32px);
+  color:#f7e9d6; background:linear-gradient(160deg,#c8402f,#8f2b1f);
+  border-radius:6% 4% 8% 3%; transform:rotate(-5deg);
+  box-shadow:0 8px 20px -6px rgba(200,64,47,.6), inset 0 0 0 2px rgba(255,225,205,.28)}
+
+/* ---- stage ---- */
+.stage{display:flex; flex-direction:column; align-items:center; gap:10px; min-width:0}
+
+/* 駒台 /  plaque */
+.plaque{width:var(--board-w); display:grid;
+  grid-template-columns:auto 1fr auto; align-items:center; gap:14px;
+  padding:9px 12px; border:1px solid rgba(214,169,75,.16); border-radius:2px;
+  background:linear-gradient(180deg,rgba(255,238,214,.06),rgba(255,238,214,.015));
+  transition:border-color .35s, background .35s, transform .35s}
+.plaque.is-turn{border-color:rgba(214,169,75,.6);
+  background:linear-gradient(180deg,rgba(214,169,75,.14),rgba(214,169,75,.02));
+  box-shadow:inset 3px 0 0 var(--gold)}
+.plaque.think{animation:think 1.2s ease-in-out infinite}
+@keyframes think{0%,100%{box-shadow:inset 3px 0 0 var(--gold)}50%{box-shadow:inset 3px 0 0 var(--verm), 0 0 22px -6px rgba(200,64,47,.8)}}
+.who{display:flex; align-items:baseline; gap:8px; white-space:nowrap}
+.who b{font-family:"Shippori Mincho B1",serif; font-size:clamp(14px,1.6vw,18px); font-weight:700; letter-spacing:.06em}
+.who span{font-size:10px; letter-spacing:.24em; color:var(--paper-2)}
+.who i{font-family:"Shippori Mincho B1",serif; font-style:normal; font-weight:700;
+  font-size:15px; color:#1c130a; background:var(--face-kami); padding:1px 4px; border-radius:1px;
+  box-shadow:0 1px 0 rgba(0,0,0,.5)}
+.plaque--gote .who i{background:var(--face-shimo)}
+.left{font-size:10px; letter-spacing:.16em; color:var(--paper-2); white-space:nowrap; text-align:right}
+.left b{font-family:"Shippori Mincho B1",serif; font-size:14px; color:var(--paper)}
+.tally{display:flex; align-items:baseline; gap:2px; font-family:"Shippori Mincho B1",serif}
+.tally b{font-size:clamp(22px,3vw,30px); font-weight:800; line-height:1; color:var(--gold); min-width:1.1ch; text-align:right}
+.tally span{font-size:11px; color:var(--paper-2); letter-spacing:.08em}
+.stand{display:flex; gap:3px; min-height:calc(var(--cell)*.5); flex-wrap:wrap; align-items:center}
+.stand i{font-family:"Shippori Mincho B1",serif; font-style:normal; font-weight:700;
+  font-size:calc(var(--cell)*.36); color:#241708; background:var(--face-shimo);
+  padding:2px 3px; border-radius:1px; box-shadow:0 1px 3px rgba(0,0,0,.5);
+  animation:pop .42s cubic-bezier(.16,1.4,.3,1) backwards}
+.plaque--kami .stand i{background:var(--face-kami)}
+@keyframes pop{from{transform:scale(.2) translateY(-16px) rotate(-25deg); opacity:0}}
+
+/* ---- board ---- */
+.board{position:relative; width:var(--board-w); padding:var(--pad); isolation:isolate;
+  background:
+    linear-gradient(158deg,rgba(255,255,255,.3),rgba(255,255,255,0) 34%),
+    repeating-linear-gradient(93deg,rgba(110,62,20,.08) 0 2px,transparent 2px 27px),
+    linear-gradient(155deg,#f2d3a0 0%,#e0b279 52%,#c9944f 100%);
+  border-radius:2px; box-shadow:
+    inset 0 1px 0 rgba(255,240,214,.5), inset 0 -22px 44px rgba(96,50,12,.26),
+    0 7px 0 -1px #6b4116, 0 10px 0 -1px rgba(0,0,0,.35), var(--shadow)}
+.board::after{content:""; position:absolute; inset:0; pointer-events:none; border-radius:2px;
+  background:linear-gradient(104deg,transparent 38%,rgba(255,255,255,.3) 47%,transparent 56%);
+  mix-blend-mode:soft-light; animation:sheen 14s 2s ease-in-out infinite}
+@keyframes sheen{0%,72%,100%{transform:translateX(-120%)}88%{transform:translateX(120%)}}
+.mark{position:absolute; pointer-events:none; color:rgba(74,44,20,.42);
+  font-family:"Shippori Mincho B1",serif; font-weight:700}
+.mark--tl{top:calc(var(--pad)*.16); left:calc(var(--pad)*.2); font-size:calc(var(--cell)*.36)}
+.mark--br{bottom:calc(var(--pad)*.14); right:calc(var(--pad)*.18);
+  font-family:"Zen Kaku Gothic New",sans-serif; font-weight:700;
+  font-size:clamp(7px,.9vw,9.5px); letter-spacing:.3em}
+.grid{position:relative; display:grid;
+  grid-template-columns:repeat(9,var(--cell)); grid-template-rows:repeat(9,var(--cell));
+  box-shadow:inset 0 0 0 2px var(--line)}
+.grid::before{content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
+  background-image:
+    repeating-linear-gradient(90deg,var(--line) 0 1.4px,transparent 1.4px var(--cell)),
+    repeating-linear-gradient(0deg,var(--line) 0 1.4px,transparent 1.4px var(--cell))}
+
+/* cells */
+.cell{position:relative; display:grid; place-items:center; padding:0; border:0;
+  background:transparent; font:inherit; color:inherit; cursor:default;
+  -webkit-tap-highlight-color:transparent; touch-action:manipulation}
+.cell.is-move{cursor:pointer}
+.cell:focus{outline:none}
+.cell:focus-visible{outline:2px solid var(--gold); outline-offset:-3px; z-index:4}
+.cell.is-move::after{content:""; width:27%; aspect-ratio:1; border-radius:50%;
+  background:var(--gold); box-shadow:0 0 12px rgba(214,169,75,.85);
+  animation:pp 1.8s ease-in-out infinite}
+.cell.is-move:hover::after{width:66%; aspect-ratio:auto; height:66%; border-radius:3px;
+  background:rgba(214,169,75,.2); box-shadow:inset 0 0 0 2.5px var(--gold); animation:none}
+@keyframes pp{0%,100%{transform:scale(.8);opacity:.62}50%{transform:scale(1.12);opacity:1}}
+.cell.is-sel{background:radial-gradient(circle at 50% 55%,rgba(200,64,47,.34),transparent 72%)}
+.cell.is-doomed::before{content:""; position:absolute; inset:7%; border:2px dashed var(--verm);
+  border-radius:3px; animation:doom .9s steps(2) infinite; z-index:1}
+@keyframes doom{0%{opacity:.5}50%{opacity:1}100%{opacity:.5}}
+
+/* 駒 */
+.koma,.ghost{width:86%; height:90%; position:relative; display:grid; place-items:center;
+  transition:transform .17s cubic-bezier(.2,.8,.25,1), filter .17s}
+.ghost{width:auto; height:auto}
+.koma__in{position:absolute; inset:0; display:grid; place-items:center;
+  clip-path:polygon(50% 0%,82% 14%,97% 100%,3% 100%,18% 14%);
+  background:linear-gradient(#2a1a0a,#120c06); transition:transform .2s}
+.koma__in::before{content:""; position:absolute; inset:1.6px; clip-path:inherit;
+  background:var(--face-kami)}
+.koma__in b{position:relative; z-index:2; font-family:"Shippori Mincho B1",serif;
+  font-weight:700; font-size:calc(var(--cell)*.52); line-height:1; color:#25180a;
+  transition:color .2s}
+[data-side="2"] .koma__in{transform:rotate(180deg)}
+[data-side="2"] .koma__in::before{background:var(--face-shimo)}
+[data-side="2"] .koma__in b{color:#23242b}
+[data-side="1"] .koma{filter:drop-shadow(0 3px 3px rgba(70,35,8,.55))}
+[data-side="2"] .koma{filter:drop-shadow(0 3px 3px rgba(0,0,0,.5))}
+.cell.mine:hover .koma,[data-side="1"] .koma:hover{transform:translateY(-3px) scale(1.06);
+  filter:drop-shadow(0 7px 7px rgba(60,30,6,.55)) drop-shadow(0 0 12px rgba(214,169,75,.45))}
+.cell.is-sel .koma{transform:translateY(-5px) scale(1.1);
+  filter:drop-shadow(0 9px 8px rgba(0,0,0,.55)) drop-shadow(0 0 16px rgba(200,64,47,.7))}
+.cell.is-sel .koma__in b{color:var(--verm)}
+.cell.is-doomed .koma__in b{color:var(--verm)}
+.koma.is-taken{animation:taken .34s cubic-bezier(.4,0,.7,.2) forwards}
+@keyframes taken{
+  40%{transform:scale(1.14) rotate(-8deg); filter:brightness(1.5) drop-shadow(0 0 16px rgba(200,64,47,.9))}
+  100%{transform:scale(.15) rotate(28deg); opacity:0}}
+.koma.is-gone{visibility:hidden}
+.mk{position:absolute; z-index:5; pointer-events:none}
+.mk--from,.mk--to{width:9px; height:9px; top:3px; right:3px; opacity:.75}
+.mk--from{border-top:2px solid rgba(70,42,18,.85); border-left:2px solid rgba(70,42,18,.85); right:auto; left:3px}
+.mk--to{border-top:2px solid rgba(200,64,47,.9); border-right:2px solid rgba(200,64,47,.9)}
+.mk--risk{top:-1px; left:-1px; font-family:"Shippori Mincho B1",serif; font-weight:700;
+  font-size:clamp(8px,1vw,11px); color:var(--verm); background:rgba(247,236,216,.92);
+  padding:1px 3px; border-radius:1px; box-shadow:0 0 0 1px rgba(200,64,47,.55);
+  animation:breathe 1.6s ease-in-out infinite alternate}
+
+/* fx layers */
+.fly,.fx{position:absolute; inset:0; pointer-events:none; z-index:6}
+.fx{z-index:7}
+.ghost{transition:transform .25s cubic-bezier(.3,.7,.25,1);
+  filter:drop-shadow(0 12px 10px rgba(0,0,0,.55)); animation:lift .25s backwards}
+@keyframes lift{from{transform:scale(1)}to{transform:scale(1)}}
+.burst{position:absolute; border:2px solid var(--verm); border-radius:50%;
+  animation:burst .55s cubic-bezier(.1,.7,.3,1) forwards}
+@keyframes burst{from{transform:scale(.25);opacity:1}to{transform:scale(1.7);opacity:0}}
+
+/* result */
+.result{position:absolute; inset:0; z-index:9; display:grid; place-content:center;
+  gap:clamp(10px,2vw,18px); justify-items:center; text-align:center; padding:8%;
+  background:radial-gradient(circle at 50% 44%,rgba(10,8,6,.82),rgba(10,8,6,.95));
+  opacity:0; pointer-events:none; transition:opacity .45s}
+.result.show{opacity:1; pointer-events:auto}
+.verdict{position:relative; display:inline-block; padding:.14em .42em;
+  font-family:"Shippori Mincho B1",serif; font-weight:800; letter-spacing:.08em;
+  font-size:clamp(28px,5.2vw,54px); line-height:1.15; color:#f8ecd6}
+.verdict::after{content:""; position:absolute; inset:-.1em -.16em;
+  border:5px solid var(--verm); border-radius:48% 52% 46% 54%/54% 44% 56% 46%;
+  transform:rotate(-4deg); animation:draw .6s .08s cubic-bezier(.2,.9,.2,1) backwards}
+.result.lose .verdict::after{border-color:var(--indigo)}
+@keyframes draw{from{transform:rotate(-4deg) scale(.8);opacity:0}}
+.result .why{margin:0; font-size:clamp(12px,1.5vw,15px); color:var(--paper-2); letter-spacing:.1em}
+.result .btn{margin-top:.4em}
+
+/* ---- panel ---- */
+.panel{display:flex; flex-direction:column; gap:12px; align-self:start;
+  position:sticky; top:20px; max-height:calc(100svh - 40px); overflow-y:auto;
+  padding-right:4px; scrollbar-width:thin; scrollbar-color:rgba(214,169,75,.4) transparent}
+.panel::-webkit-scrollbar{width:5px}
+.panel::-webkit-scrollbar-thumb{background:rgba(214,169,75,.35)}
+.card{border:1px solid rgba(214,169,75,.17); border-radius:2px; padding:14px 15px;
+  background:linear-gradient(180deg,rgba(255,240,215,.06),rgba(255,240,215,.018))}
+.label{margin:0 0 8px; font-size:9.5px; letter-spacing:.34em; color:var(--gold);
+  display:flex; align-items:center; gap:8px}
+.label::after{content:""; flex:1; height:1px; background:linear-gradient(90deg,rgba(214,169,75,.35),transparent)}
+.status{margin:0; font-family:"Shippori Mincho B1",serif; font-weight:800;
+  font-size:clamp(21px,2.5vw,29px); line-height:1.25; letter-spacing:.02em}
+.status[data-s="you"]{color:#f6e8cc}
+.status[data-s="cpu"]{color:var(--verm-lo); background:linear-gradient(94deg,#8f2b1f,#e08a5f 40%,#8f2b1f 80%);
+  -webkit-background-clip:text; background-clip:text; color:transparent}
+.sub{margin:7px 0 0; font-size:10.5px; letter-spacing:.14em; color:var(--paper-2)}
+.dot{width:7px; height:7px; border-radius:50%; background:var(--gold); box-shadow:0 0 0 0 rgba(214,169,75,.7)}
+.dot.on{animation:ping 1.6s ease-out infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(214,169,75,.6)}70%{box-shadow:0 0 0 10px rgba(214,169,75,0)}100%{box-shadow:0 0 0 0 rgba(214,169,75,0)}}
+
+.score{display:grid; gap:11px}
+.scorerow{display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px}
+.scorerow i{font-family:"Shippori Mincho B1",serif; font-style:normal; font-weight:700;
+  font-size:14px; color:#241708; background:var(--face-kami); padding:2px 5px; border-radius:1px}
+.scorerow.g i{background:var(--face-shimo)}
+.scorerow em{font-style:normal; font-size:11px; letter-spacing:.14em; color:var(--paper-2)}
+.pips{display:flex; gap:5px}
+.pips u{width:11px; height:11px; border:1.5px solid rgba(214,169,75,.45);
+  transform:rotate(45deg); border-radius:1px; transition:.3s}
+.pips u.on{background:var(--verm); border-color:var(--verm);
+  box-shadow:0 0 12px rgba(200,64,47,.75); animation:pipin .45s cubic-bezier(.2,1.5,.3,1) backwards}
+@keyframes pipin{from{transform:rotate(45deg) scale(2.4);opacity:0}}
+.scorerow b{font-family:"Shippori Mincho B1",serif; font-size:20px; min-width:1.2ch; text-align:right}
+
+.log{margin:0; padding:0; list-style:none; max-height:210px; overflow-y:auto;
+  display:flex; flex-direction:column; gap:1px; font-size:12px; scrollbar-width:thin}
+.log li{display:grid; grid-template-columns:2.4em 1.5em 1fr auto; align-items:center; gap:7px;
+  padding:5px 6px; border-bottom:1px solid rgba(214,169,75,.08);
+  animation:slidein .3s ease backwards}
+@keyframes slidein{from{opacity:0; transform:translateX(-10px)}}
+.log .no{font-size:9.5px; color:#7d7261; letter-spacing:.08em}
+.log .km{font-family:"Shippori Mincho B1",serif; font-weight:700; font-size:13px;
+  color:#241708; background:var(--face-kami); text-align:center; border-radius:1px}
+.log li.g .km{background:var(--face-shimo)}
+.log .sq{font-family:"Shippori Mincho B1",serif; letter-spacing:.04em; color:#e3d6bd}
+.log .tk{font-size:10px; letter-spacing:.1em; color:var(--verm);
+  border:1px solid rgba(200,64,47,.5); padding:1px 5px; border-radius:1px}
+.log .empty{display:block; padding:10px 4px; color:#7d7261; font-size:11px; letter-spacing:.1em; border:0}
+
+details.rule{border:0}
+details.rule summary{cursor:pointer; list-style:none; display:flex; align-items:center; gap:8px;
+  font-size:9.5px; letter-spacing:.34em; color:var(--gold)}
+details.rule summary::-webkit-details-marker{display:none}
+details.rule summary::before{content:"+"; font-size:15px; letter-spacing:0; transition:.25s; color:var(--paper)}
+details.rule[open] summary::before{transform:rotate(45deg)}
+details.rule summary::after{content:""; flex:1; height:1px; background:linear-gradient(90deg,rgba(214,169,75,.35),transparent)}
+.rulebody{margin:12px 0 0; font-size:11.5px; line-height:1.85; color:#cdc0a9}
+.rulebody h3{margin:12px 0 3px; font-size:11px; letter-spacing:.2em; color:var(--gold); font-weight:700}
+.rulebody h3:first-child{margin-top:0}
+.rulebody ul{margin:0; padding-left:1.1em}
+.rulebody li{margin-bottom:3px}
+.rulebody b{color:#f4e7cd}
+.note{font-size:10px; line-height:1.7; color:#7d7261; letter-spacing:.04em}
+
+/* buttons */
+.btns{display:flex; flex-wrap:wrap; gap:8px}
+.btn{position:relative; overflow:hidden; cursor:pointer; font:inherit; font-weight:700;
+  font-size:12px; letter-spacing:.14em; color:var(--paper); padding:10px 15px 9px;
+  background:rgba(255,240,215,.05); border:1px solid rgba(214,169,75,.4); border-radius:2px;
+  transition:color .25s, border-color .25s, transform .12s}
+.btn::before{content:""; position:absolute; inset:0; background:var(--gold);
+  transform:translateY(101%); transition:transform .3s cubic-bezier(.3,.8,.2,1); z-index:-1}
+.btn>*{position:relative}
+.btn:hover{color:#140f08; border-color:var(--gold)}
+.btn:hover::before{transform:translateY(0)}
+.btn:active{transform:translateY(1px)}
+.btn--go{border-color:var(--verm); color:#ffd9d0}
+.btn--go::before{background:var(--verm)}
+.btn--go:hover{color:#fff4ee; border-color:var(--verm)}
+.btn[aria-pressed="true"]{color:#140f08; border-color:var(--gold)}
+.btn[aria-pressed="true"]::before{transform:translateY(0)}
+.btn.tog{font-size:11px; padding:8px 12px}
+.btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+
+/* reveal */
+.reveal{opacity:0; transform:translateY(16px); transition:opacity .7s, transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1; transform:none}
+
+@media (max-width:1040px){
+  .wrap{grid-template-columns:minmax(0,1fr); justify-items:center}
+  .panel{position:static; max-height:none; width:100%; max-width:560px; overflow:visible}
+  .masthead{grid-template-columns:auto 1fr; gap:14px}
+  .seal{position:absolute; right:clamp(12px,4vw,24px); top:clamp(16px,4vw,26px)}
+  .masthead{position:relative}
+}
+@media (max-width:520px){
+  .title{font-size:clamp(26px,7.6vw,34px)}
+  .lede{font-size:14.5px}
+  .plaque{gap:9px; padding:7px 9px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important; animation-iteration-count:1!important;
+    transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="ambient" aria-hidden="true">
+  <span class="pattern"></span><span class="glow g1"></span><span class="glow g2"></span>
+  <span class="mote m1"></span><span class="mote m2"></span><span class="mote m3"></span><span class="mote m4"></span>
+</div>
+
+<main class="wrap">
+  <header class="masthead">
+    <h1 class="title">挟将棋</h1>
+    <span class="rule" aria-hidden="true"></span>
+    <div class="mast-body">
+      <p class="romaji">Hasami Shogi &nbsp;/&nbsp; nine by nine</p>
+      <p class="lede">駒は飛車のごとく走り、<em>挟んだ駒を奪う。</em>先に五枚を宙へ上げた方が勝ち。</p>
+      <ul class="chips">
+        <li>9 × 9 盤</li><li>歩 vs と</li><li>飛車型の移動</li><li>5 枚先取</li><li>CPU 対戦</li>
+      </ul>
+    </div>
+    <div class="seal" aria-hidden="true">挟</div>
+  </header>
+
+  <section class="stage" aria-label="対局">
+    <div class="plaque plaque--gote" id="plaqueGote">
+      <div class="who"><i>と</i><b>後手</b><span>CPU</span></div>
+      <div class="stand" id="standGote" aria-label="CPU が取った駒"></div>
+      <div class="left">残り <b id="leftGote">9</b></div>
+      <div class="tally"><b id="numGote">0</b><span>/ 5</span></div>
+    </div>
+
+    <div class="board" id="board">
+      <span class="mark mark--tl" aria-hidden="true">挟</span>
+      <span class="mark mark--br" aria-hidden="true">HASAMI</span>
+      <div class="grid" id="grid"></div>
+      <div class="fly" id="fly" aria-hidden="true"></div>
+      <div class="fx" id="fx" aria-hidden="true"></div>
+      <div class="result" id="result" role="alertdialog" aria-live="assertive">
+        <p class="verdict" id="verdict">あなたの勝ち</p>
+        <p class="why" id="why"></p>
+        <button class="btn btn--go" id="again"><span>もう一局</span></button>
+      </div>
+    </div>
+
+    <div class="plaque plaque--kami is-turn" id="plaqueKami">
+      <div class="who"><i>歩</i><b>先手</b><span>YOU</span></div>
+      <div class="stand" id="standKami" aria-label="あなたが取った駒"></div>
+      <div class="left">残り <b id="leftKami">9</b></div>
+      <div class="tally"><b id="numKami">0</b><span>/ 5</span></div>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="card reveal">
+      <p class="label">TURN <span class="dot on" id="turnDot"></span></p>
+      <p class="status" id="statusText" data-s="you" role="status">あなたの番</p>
+      <p class="sub"><span id="plyText">0 手目</span> ・ あなた 先手（歩）／ CPU 後手（と）</p>
+    </div>
+
+    <div class="card reveal">
+      <p class="label">TAKEN &nbsp;取った駒数</p>
+      <div class="score">
+        <div class="scorerow"><i>歩</i><em>あなた</em><span class="pips" id="pipKami"></span><b id="bigKami">0</b></div>
+        <div class="scorerow g"><i>と</i><em>CPU</em><span class="pips" id="pipGote"></span><b id="bigGote">0</b></div>
+      </div>
+    </div>
+
+    <div class="card reveal">
+      <p class="label">RECORD &nbsp;対局記録</p>
+      <ol class="log" id="log"><li class="empty">まだ着手がありません</li></ol>
+    </div>
+
+    <div class="card reveal">
+      <p class="label">CONTROLS</p>
+      <div class="btns">
+        <button class="btn btn--go" id="reset"><span>盤面を戻す</span></button>
+        <button class="btn tog" id="hint" aria-pressed="false"><span>危ない駒</span></button>
+        <button class="btn tog" id="sfx" aria-pressed="true"><span>打音</span></button>
+      </div>
+    </div>
+
+    <div class="card reveal">
+      <details class="rule" open>
+        <summary>RULES &nbsp;ルール</summary>
+        <div class="rulebody">
+          <h3>移動</h3>
+          <ul><li>すべての駒は<b>飛車と同じ</b>。縦横に任意の距離、駒は飛び越えられず、置けるのは空きマスだけ。</li>
+              <li>相手の駒の上へは動けない。<b>取るときは「挟む」</b>。</li></ul>
+          <h3>挟み取り</h3>
+          <ul><li>着手の結果、縦または横の列で<b>相手の駒の両端を自分の二枚</b>で挟めば、挟んだ相手の駒をすべて取る。</li>
+              <li>一图で縦・横複数方向に成立した場合は、<b>すべて</b>取る。</li></ul>
+          <h3>隅の取り方</h3>
+          <ul><li>四隅の相手の駒は、<b>縦横に隣接する二マス</b>を自分の駒で塞ぐと取れる。</li></ul>
+          <h3>自爆はなし</h3>
+          <ul><li>相手の二駒の間や塞がれる位置へ<b>自分の意思で</b>動いても、すぐには取られない。取られるのは相手の着手で挟み・隅塞ぎが<b>成立した瞬間</b>だけ。</li></ul>
+          <h3>勝敗</h3>
+          <ul><li>先に<b>五枚</b>取った側の勝ち。自分の手番で行き先が一つもなくなったら負け。</li></ul>
+          <p class="note">はさみ将棋のルールは地域や出版物によって細部が異なります。本実装は上記に統一しています。</p>
+        </div>
+      </details>
+    </div>
+  </aside>
+</main>
+
+<script>
+(() => {
+"use strict";
+/* ================= 定数・盤前計算 ================= */
+const N = 9, CELLS = 81, WIN = 5, DEPTH = 3, BUDGET = 30000, W = 1000;
+const DIRS = [
+  (r,c)=>[r+1,c], (r,c)=>[r-1,c], (r,c)=>[r,c+1], (r,c)=>[r,c-1]
+];
+const LINE = [[],[],[],[]];            // LINE[d][i] : i から方向 d へ伸びる升番列（近い順）
+for (let r=0;r<N;r++) for (let c=0;c<N;c++){
+  const i = r*N+c;
+  LINE[0][i]=[]; for(let k=r+1;k<N;k++) LINE[0][i].push(k*N+c);
+  LINE[1][i]=[]; for(let k=r-1;k>=0;k--) LINE[1][i].push(k*N+c);
+  LINE[2][i]=[]; for(let k=c+1;k<N;k++) LINE[2][i].push(r*N+k);
+  LINE[3][i]=[]; for(let k=c-1;k>=0;k--) LINE[3][i].push(r*N+k);
+}
+const CORNERS = [0, N-1, (N-1)*N, CELLS-1];
+const CORNER_NB = {};
+CORNERS.forEach(k=>{
+  const r=(k/N)|0, c=k%N, nb=[];
+  if (r===0) nb.push(k+N); else nb.push(k-N);
+  if (c===0) nb.push(k+1); else nb.push(k-1);
+  CORNER_NB[k] = nb;
+});
+const KANJI_ROW = "一二三四五六七八九";
+const glyph = s => s===1 ? "歩" : "と";
+const other = s => 3 - s;
+const sq = i => (N - (i % N)) + KANJI_ROW[(i/N)|0];
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const FLY = REDUCED ? 30 : 250;
+
+/* ================= 状態 ================= */
+const state = {
+  grid: new Int8Array(CELLS), turn: 1, taken: {1:0, 2:0},
+  over: false, busy: true, sel: null, gen: 0,
+  dests: new Set(), doomed: new Set(), risk: new Set(),
+  last: null, moves: [], hint: false, sound: true
+};
+const timers = new Set();
+const later = (fn, ms) => { const t = setTimeout(()=>{ timers.delete(t); fn(); }, ms); timers.add(t); return t; };
+const clearTimers = () => { timers.forEach(clearTimeout); timers.clear(); };
+
+/* ================= 指し手生成・挟み判定 ================= */
+function capturesAt(g, side, i){
+  // 駒 i（=side）を中心に、挟みと隅塞ぎを洗う
+  const opp = other(side), out = [];
+  for (let d=0; d<4; d++){
+    const line = LINE[d][i]; let run = null;
+    for (const j of line){
+      const v = g[j];
+      if (v === opp){ (run || (run = [])).push(j); }
+      else { if (run && v === side) for (const k of run) out.push(k); break; }
+    }
+  }
+  if (CORNER_NB[i]){                     // 四隅の相手駒は縦横二升を塞げば取れる
+    const nb = CORNER_NB[i];
+    if (g[nb[0]] === side && g[nb[1]] === side) out.push(i);
+  }
+  return out.length > 1 ? [...new Set(out)] : out;
+}
+function genMoves(g, side){
+  const out = [];
+  for (let i=0;i<CELLS;i++){
+    if (g[i] !== side) continue;
+    for (let d=0; d<4; d++){
+      const line = LINE[d][i];
+      for (const j of line){ if (g[j] !== 0) break; out.push(i*CELLS + j); }
+    }
+  }
+  return out;
+}
+const fromOf = mv => (mv / CELLS) | 0;
+const toOf   = mv => mv % CELLS;
+function doMove(g, mv, side){ const f = fromOf(mv), t = toOf(mv); g[f] = 0; g[t] = side; return capturesAt(g, side, t); }
+function undoMove(g, mv, side, caps){ const f = fromOf(mv), t = toOf(mv); g[t] = 0; g[f] = side; const o = other(side); for (const c of caps) g[c] = o; }
+const capsOf = (g, mv, side) => { const c = doMove(g, mv, side); undoMove(g, mv, side, c); return c; };
+function count(g, side){ let n = 0; for (let i=0;i<CELLS;i++) if (g[i] === side) n++; return n; }
+
+/* ================= CPU ================= */
+function mobility(g, i){
+  let m = 0;
+  for (let d=0; d<4; d++){ const line = LINE[d][i];
+    for (const j of line){ if (g[j] !== 0) break; m++; } }
+  return m;
+}
+function evaluate(g, side){
+  const opp = other(side);
+  let s = (count(g, side) - count(g, opp)) * 100;
+  for (let i=0;i<CELLS;i++){
+    const v = g[i]; if (!v) continue;
+    const r = (i/N)|0, c = i%N;
+    const own = v === side, sg = own ? 1 : -1;
+    const adv = side === 1 ? (own ? N-1-r : r) : (own ? r : N-1-r);
+    let t = adv*7 - (Math.abs(c-4)+Math.abs(r-4))*3 + mobility(g,i)*3;
+    if (CORNER_NB[i]) t -= 8;
+    s += sg * t;
+  }
+  return s;
+}
+function negamax(g, side, depth, alpha, beta, nodes){
+  nodes.n++;
+  const opp = other(side);
+  if (count(g, opp) <= N - WIN) return  1e6 + depth;
+  if (count(g, side) <= N - WIN) return -1e6 - depth;
+  if (depth === 0 || nodes.n > BUDGET) return evaluate(g, side);
+  const moves = genMoves(g, side);
+  if (!moves.length) return -1e6 + depth;
+  const bag = [];
+  for (const mv of moves){ const n = capsOf(g, mv, side).length; bag.push({mv, n}); }
+  bag.sort((a,b) => b.n - a.n);
+  let best = -Infinity;
+  for (const {mv} of bag){
+    const caps = doMove(g, mv, side);
+    const v = caps.length * W - negamax(g, opp, depth-1, -beta, -alpha, nodes);
+    undoMove(g, mv, side, caps);
+    if (v > best) best = v;
+    if (v > alpha) alpha = v;
+    if (alpha >= beta) break;
+  }
+  return best;
+}
+function chooseCpu(){
+  const g = state.grid, side = 2;
+  const moves = genMoves(g, side);
+  if (!moves.length) return null;
+  const nodes = {n:0};
+  const bag = moves.map(mv => ({mv, n: capsOf(g, mv, side).length}));
+  bag.sort((a,b) => b.n - a.n);
+  const scored = [];
+  let max = -Infinity;
+  for (const {mv} of bag){
+    const caps = doMove(g, mv, side);
+    const v = caps.length * W - negamax(g, other(side), DEPTH-1, -Infinity, Infinity, nodes);
+    undoMove(g, mv, side, caps);
+    scored.push({mv, v}); if (v > max) max = v;
+  }
+  const tied = scored.filter(s => s.v > max - 1.0);      // 同着はランダムに (=引き込み回避)
+  return tied[(Math.random()*tied.length)|0].mv;
+}
+
+/* ================= DOM ================= */
+const $ = s => document.querySelector(s);
+const gridEl = $("#grid"), boardEl = $("#board"), flyEl = $("#fly"), fxEl = $("#fx");
+const cells = [];
+for (let i=0;i<CELLS;i++){
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "cell"; b.dataset.i = i; b.tabIndex = -1;
+  gridEl.appendChild(b); cells.push(b);
+}
+const el = {
+  kami: $("#plaqueKami"), gote: $("#plaqueGote"),
+  standKami: $("#standKama" /* typo guard */), // fallback, replaced below
+};
+const dom = {
+  standKami: $("#standKami"), standGote: $("#standGote"),
+  numKami: $("#numKami"), numGote: $("#numGote"),
+  leftKami: $("#leftKami"), leftGote: $("#leftGote"),
+  bigKami: $("#bigKami"), bigGote: $("#bigGote"),
+  pipKami: $("#pipKami"), pipGote: $("#pipGote"),
+  status: $("#statusText"), ply: $("#plyText"), dot: $("#turnDot"),
+  log: $("#log"), result: $("#result"), verdict: $("#verdict"), why: $("#why")
+};
+for (let k=0;k<WIN;k++){
+  dom.pipKami.appendChild(document.createElement("u"));
+  dom.pipGote.appendChild(document.createElement("u"));
+}
+const paintPips = (wrap, n) => [...wrap.children].forEach((u,i) => {
+  const on = i < n;
+  if (on && !u.classList.contains("on")){ u.classList.add("on"); u.style.animationDelay = (i*.04)+"s"; }
+  else if (!on) u.classList.remove("on");
+});
+
+/* ================= 描画 ================= */
+function komaNode(side){
+  const k = document.createElement("span");
+  k.className = "koma"; k.dataset.side = side;
+  const inn = document.createElement("span"); inn.className = "koma__in";
+  const b = document.createElement("b"); b.textContent = glyph(side);
+  inn.appendChild(b); k.appendChild(inn);
+  return k;
+}
+function paint(){
+  const turn = state.turn, live = !state.over && !state.busy && turn === 1;
+  for (let i=0;i<CELLS;i++){
+    const cell = cells[i], v = state.grid[i];
+    cell.className = "cell";
+    cell.textContent = "";
+    if (v){
+      cell.appendChild(komaNode(v));
+      if (v === 1) cell.classList.add("mine");
+      cell.tabIndex = (v === 1) ? 0 : -1;
+      if (state.risk.has(i) && v === 1 && state.hint && !state.over){
+        const m = document.createElement("i"); m.className = "mk mk--risk"; m.textContent = "危";
+        cell.appendChild(m);
+      }
+    } else cell.tabIndex = -1;
+    if (state.last){
+      if (state.last.from === i) { const m = document.createElement("i"); m.className = "mk mk--from"; cell.appendChild(m); }
+      if (state.last.to   === i) { const m = document.createElement("i"); m.className = "mk mk--to";   cell.appendChild(m); }
+    }
+    if (live && state.dests.has(i)){ cell.classList.add("is-move"); cell.tabIndex = 0; }
+    if (state.sel === i) cell.classList.add("is-sel");
+    if (state.doomed.has(i)) cell.classList.add("is-doomed");
+    cell.setAttribute("aria-label", sq(i) + " " + (v ? glyph(v) : "空きマス"));
+  }
+  const standHtml = (node, side) => {          // side が取った駒
+    const taken = state.taken[side], glyph2 = glyph(other(side));
+    if (node.childElementCount === taken) return;
+    node.textContent = "";
+    for (let k=0;k<taken;k++){
+      const i2 = document.createElement("i"); i2.textContent = glyph2;
+      i2.style.animationDelay = (k*.05)+"s";
+      node.appendChild(i2);
+    }
+  };
+  standHtml(dom.standKami, 1); standHtml(dom.standGote, 2);
+  dom.numKami.textContent = state.taken[1]; dom.numGote.textContent = state.taken[2];
+  dom.bigKami.textContent = state.taken[1]; dom.bigGote.textContent = state.taken[2];
+  dom.leftKami.textContent = count(state.grid, 1); dom.leftGote.textContent = count(state.grid, 2);
+  paintPips(dom.pipKami, state.taken[1]); paintPips(dom.pipGote, state.taken[2]);
+  dom.ply.textContent = (state.moves.length + (state.over ? 0 : 1)) + " 手目";
+  dom.kami.classList.toggle("is-turn", !state.over && state.turn === 1);
+  dom.gote.classList.toggle("is-turn", !state.over && state.turn === 2);
+}
+
+/* ================= 音 ================= */
+let AC = null;
+const ac = () => { try { return AC || (AC = new (window.AudioContext || window.webkitAudioContext)()); } catch(e){ return null; } };
+function knock(c, at, f, dur, vol){
+  const len = Math.max(1, Math.floor(c.sampleRate * dur));
+  const buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+  for (let i=0;i<len;i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 4.5);
+  const s = c.createBufferSource(); s.buffer = buf;
+  const bp = c.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = f; bp.Q.value = 1.5;
+  const g = c.createGain(); g.gain.value = vol;
+  s.connect(bp).connect(g).connect(c.destination); s.start(at);
+}
+function sfx(kind, n){
+  if (!state.sound) return;
+  const c = ac(); if (!c) return;
+  if (c.state === "suspended") c.resume();
+  const t = c.currentTime + .005;
+  if (kind === "move") knock(c, t, 1150, .07, .22);
+  else if (kind === "select") knock(c, t, 2100, .035, .1);
+  else if (kind === "take"){
+    for (let k=0;k<Math.min(3, n||1);k++) knock(c, t + k*.075, 1500 - k*180, .08, .26);
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = "sine"; o.frequency.setValueAtTime(300, t); o.frequency.exponentialRampToValueAtTime(110, t+.22);
+    g.gain.setValueAtTime(.16, t); g.gain.exponentialRampToValueAtTime(.001, t+.24);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t+.26);
+  } else if (kind === "win" || kind === "lose"){
+    const seq = kind === "win" ? [980, 1240, 1660] : [620, 520, 400];
+    seq.forEach((f,k) => knock(c, t + k*.14, f, .12, .3));
+  }
+}
+
+/* ================= アニメーション ================= */
+function flyPiece(from, to, side){
+  return new Promise(res => {
+    const src = cells[from].querySelector(".koma");
+    if (!src) return res();
+    const host = boardEl.getBoundingClientRect(), a = src.getBoundingClientRect(), b = cells[to].getBoundingClientRect();
+    const g = document.createElement("div");
+    g.className = "ghost"; g.dataset.side = side;
+    g.style.cssText = `position:absolute;left:${a.left-host.left}px;top:${a.top-host.top}px;width:${a.width}px;height:${a.height}px`;
+    g.dataset.side = side;
+    const inn = document.createElement("span"); inn.className = "koma__in";
+    const t2 = document.createElement("b"); t2.textContent = glyph(side);
+    inn.appendChild(t2); g.appendChild(inn);
+    src.classList.add("is-gone");
+    flyEl.appendChild(g);
+    requestAnimationFrame(() => {
+      g.style.transform = `translate(${b.left - a.left}px, ${b.top - a.top}px)`;
+    });
+    later(() => { g.remove(); res(); }, FLY + 20);
+  });
+}
+function fxTake(indices){
+  const host = boardEl.getBoundingClientRect();
+  indices.forEach((i, k) => {
+    const piece = cells[i].querySelector(".koma");
+    if (piece) piece.classList.add("is-taken");
+    const r = cells[i].getBoundingClientRect();
+    const bu = document.createElement("i"); bu.className = "burst";
+    const s = r.width * .9;
+    bu.style.cssText = `width:${s}px;height:${s}px;left:${r.left-host.left + r.width/2 - s/2}px;top:${r.top-host.top + r.height/2 - s/2}px;animation-delay:${k*.05}s`;
+    fxEl.appendChild(bu);
+    later(() => bu.remove(), 700);
+  });
+}
+
+/* ================= 手番・対局進行 ================= */
+function setStatus(kind, text){
+  dom.status.dataset.s = kind;
+  dom.status.textContent = text;
+  dom.dot.classList.toggle("on", kind === "you");
+  dom.gote.classList.toggle("think", kind === "cpu");
+}
+function select(i){
+  state.sel = i; state.doomed.clear();
+  const dests = new Set();
+  for (let d=0; d<4; d++){ const line = LINE[d][i];
+    for (const j of line){ if (state.grid[j] !== 0) break; dests.add(j); } }
+  state.dests = dests;
+  sfx("select"); paint();
+}
+function clearSel(){ state.sel = null; state.dests.clear(); state.doomed.clear(); paint(); }
+function preview(i){
+  state.doomed.clear();
+  if (state.sel === null || !state.dests.has(i)) { paint(); return; }
+  capsOf(state.grid, state.sel*CELLS + i, 1).forEach(k => state.doomed.add(k));
+  paint();
+}
+async function playMove(mv, side){
+  const myGen = state.gen;
+  state.busy = true; state.sel = null; state.dests.clear(); state.doomed.clear(); state.risk.clear();
+  const from = fromOf(mv), to = toOf(mv);
+  const caps = doMove(state.grid, mv, side);
+  sfx("move");
+  const flight = flyPiece(from, to, side);
+  if (caps.length) later(() => { fxTake(caps); sfx("take", caps.length); }, REDUCED ? 5 : 110);
+  await flight;
+  if (myGen !== state.gen) return;
+  state.taken[side] += caps.length;
+  state.last = {from, to};
+  state.moves.push({p: side, from, to, n: caps.length});
+  addLog(state.moves.length, side, from, to, caps.length);
+  state.turn = other(side);
+  paint();
+  if (state.taken[side] >= WIN) return endGame(side, "five");
+  beginTurn();
+}
+function beginTurn(){
+  if (state.over) return;
+  if (!genMoves(state.grid, state.turn).length){ endGame(other(state.turn), "stuck"); return; }
+  if (state.turn === 2){
+    setStatus("cpu", "CPU 思考中");
+    paint();
+    later(() => {
+      if (state.over || state.gen !== state.turn) {}
+      if (state.over) return;
+      const mv = chooseCpu();
+      if (!mv){ endGame(1, "stuck"); return; }
+      playMove(mv, 2);
+    }, 420 + Math.random()*300);
+  } else {
+    state.busy = false;
+    setStatus("you", "あなたの番");
+    computeRisk();
+    paint();
+  }
+}
+function computeRisk(){
+  state.risk.clear();
+  if (!state.hint || state.over || state.turn !== 1) return;
+  for (const mv of genMoves(state.grid, 2))
+    doMove(state.grid, mv, 2).forEach(k => state.risk.add(k)),
+    undoMove(state.grid, mv, 2, capsOf(state.grid, mv, 2));
+}
+function addLog(no, side, from, to, n){
+  if (state.moves.length === 1) dom.log.textContent = "";
+  const li = document.createElement("li");
+  if (side === 2) li.className = "g";
+  li.innerHTML =
+    `<span class="no">${no}</span><span class="km">${glyph(side)}</span>` +
+    `<span class="sq">${sq(from)} → ${sq(to)}</span>` +
+    (n ? `<span class="tk">${n} 枚</span>` : `<span></span>`);
+  dom.log.appendChild(li);
+  dom.log.scrollTop = dom.log.scrollHeight;
+}
+function endGame(winner, reason){
+  state.over = true; state.busy = true;
+  state.sel = null; state.dests.clear(); state.doomed.clear(); state.risk.clear();
+  clearSel();
+  const youWin = winner === 1;
+  dom.verdict.textContent = youWin ? "あなたの勝ち" : "CPU の勝ち";
+  dom.result.classList.toggle("lose", !youWin);
+  dom.why.textContent = reason === "five"
+    ? (youWin ? "五枚を取り切った。見事な挟みだった。" : "五枚を挟み取られた。")
+    : (youWin ? "CPU に指す手がない。" : "あなたに指す手がない。");
+  dom.result.classList.add("show");
+  setStatus(youWin ? "you" : "cpu", youWin ? "勝利" : "敗北");
+  dom.gote.classList.remove("think");
+  dom.ply.textContent = state.moves.length + " 手で終局";
+  sfx(youWin ? "win" : "lose");
+}
+function newGame(){
+  clearTimers();
+  state.gen++;
+  state.grid = new Int8Array(CELLS);
+  for (let c=0;c<N;c++){ state.grid[c] = 2; state.grid[(N-1)*N + c] = 1; }
+  state.turn = 1; state.taken = {1:0, 2:0}; state.over = false; state.busy = true;
+  state.sel = null; state.dests.clear(); state.doomed.clear(); state.risk.clear();
+  state.last = null; state.moves = [];
+  dom.result.classList.remove("show");
+  dom.log.innerHTML = '<li class="empty">まだ着手がありません</li>';
+  setStatus("you", "あなたの番");
+  paint();
+}
+
+/* ================= 入力 ================= */
+function activate(i){
+  if (state.busy || state.over || state.turn !== 1) return;
+  if (state.dests.has(i)){ const mv = state.sel*CELLS + i; playMove(mv, 1); return; }
+  if (state.grid[i] === 1){ if (state.sel === i) clearSel(); else select(i); return; }
+  if (state.sel !== null) clearSel();
+}
+gridEl.addEventListener("click", e => {
+  const c = e.target.closest(".cell"); if (!c) return;
+  activate(+c.dataset.i);
+});
+gridEl.addEventListener("pointerover", e => {
+  if (state.turn !== 1 || state.busy || state.over) return;
+  const c = e.target.closest(".cell"); if (!c) return;
+  if (c.classList.contains("is-move") && +c.dataset.i !== state.sel) preview(+c.dataset.i);
+});
+gridEl.addEventListener("pointerleave", () => { if (state.doomed.size){ state.doomed.clear(); paint(); } });
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape"){ clearSel(); return; }
+  const cur = document.activeElement;
+  if (!cur || !cur.classList || !cur.classList.contains("cell")) return;
+  const d = {ArrowUp:[-1,0], ArrowDown:[1,0], ArrowLeft:[0,-1], ArrowRight:[0,1]}[e.key];
+  if (!d) return;
+  e.preventDefault();
+  const r = ((+cur.dataset.i)/N)|0, c = +cur.dataset.i % N;
+  const nr = Math.min(N-1, Math.max(0, r + d[0])), nc = Math.min(N-1, Math.max(0, c + d[1]));
+  cells[nr*N + nc].tabIndex = 0;
+  cells[nr*N + nc].focus();
+  if (e.key === "Enter" || e.key === " ") { /* native button click */ }
+});
+$("#reset").addEventListener("click", newGame);
+$("#again").addEventListener("click", newGame);
+$("#hint").addEventListener("click", e => {
+  state.hint = !state.hint;
+  e.currentTarget.setAttribute("aria-pressed", String(state.hint));
+  computeRisk(); paint();
+});
+$("#sfx").addEventListener("click", e => {
+  state.sound = !state.sound;
+  e.currentTarget.setAttribute("aria-pressed", String(state.sound));
+  if (state.sound) sfx("select");
+});
+
+/* ================= reveal ================= */
+const io = new IntersectionObserver(es => es.forEach(x => { if (x.isIntersecting){ x.target.classList.add("in"); io.unobserve(x.target); } }), {threshold:.12});
+document.querySelectorAll(".reveal").forEach((n,i) => { n.style.transitionDelay = (i*.07)+"s"; io.observe(n); });
+
+newGame();
+})();
+</script>
+</body>
+</html>
