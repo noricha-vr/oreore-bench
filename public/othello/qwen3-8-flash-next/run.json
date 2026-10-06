@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "theme": "othello",
+  "model": "qwen3-8-flash-next",
+  "model_id": "unsloth/Qwen3.8-Flash-Next-GGUF",
+  "harness": "llamacpp-api",
+  "reasoning_effort": "unknown",
+  "attempts": 1,
+  "generated_at": "2026-10-07T01:40:50+09:00",
+  "generated_at_source": "measured",
+  "sampling": {
+    "temperature": 1.0,
+    "max_tokens": 65000,
+    "top_p": 0.95,
+    "top_k": 20,
+    "min_p": 0.0,
+    "presence_penalty": 0.0
+  },
+  "system_prompt": "none",
+  "post_processing": "extract-fenced-html",
+  "runtime": {
+    "engine": "llama.cpp",
+    "version": "0.6.0",
+    "framework": "llama.cpp b11429",
+    "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+    "quantization": "Q8_0 (MTP Q8_0)",
+    "hardware": "Mac Studio M3 Ultra 512GB",
+    "api": "openai-compat"
+  },
+  "usage": {
+    "estimated": false,
+    "method": "api-usage",
+    "prompt_tokens": 273,
+    "completion_tokens": 33865,
+    "note": "llama-server API applied the model chat template; finish_reason=stop; elapsed_seconds=613.535; ttft_seconds=0.610; effective_prefill_tok_s=447.6; decode_tok_s=55.2; time_to_content_seconds=341.002; thinking_seconds=340.392; reasoning_chunks=16812; content_chunks=16994."
+  },
+  "cost": {
+    "estimated": true,
+    "usd": null,
+    "actual_usd": 0,
+    "prompt_usd_per_mtok": null,
+    "completion_usd_per_mtok": null,
+    "pricing_source": "local-no-reference",
+    "pricing_model": null,
+    "pricing_fetched_at": null
+  }
+}
