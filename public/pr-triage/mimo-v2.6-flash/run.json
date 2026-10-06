@@ -6,12 +6,15 @@
   "harness": "mlx-lm-api",
   "reasoning_effort": "unknown",
   "attempts": 1,
-  "generated_at": "2026-09-25T17:43:22+09:00",
+  "generated_at": "2026-10-07T05:19:14+09:00",
   "generated_at_source": "measured",
   "sampling": {
-    "temperature": 0.3,
+    "temperature": 1.0,
     "max_tokens": 65000,
-    "top_p": "default"
+    "top_p": 0.95,
+    "top_k": "default",
+    "min_p": "default",
+    "presence_penalty": "default"
   },
   "system_prompt": "none",
   "post_processing": "none",
@@ -28,8 +31,8 @@
     "estimated": false,
     "method": "api-usage",
     "prompt_tokens": 2763,
-    "completion_tokens": 3273,
-    "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=73.333; ttft_seconds=5.430; effective_prefill_tok_s=508.8; decode_tok_s=48.2; time_to_content_seconds=30.085; thinking_seconds=24.655; reasoning_chunks=1164; content_chunks=1957."
+    "completion_tokens": 3915,
+    "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=86.506; ttft_seconds=5.424; effective_prefill_tok_s=509.4; decode_tok_s=48.3; time_to_content_seconds=46.519; thinking_seconds=41.095; reasoning_chunks=1849; content_chunks=1776."
   },
   "cost": {
     "estimated": true,
