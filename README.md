@@ -258,6 +258,8 @@ uv run scripts/mlx-lm-run.py \
   --hardware "Mac Studio M3 Ultra 512GB"
 ```
 
+HTML テーマで「前置き文 + ```` ```html ```` フェンス」形式の応答が返った時は、`openrouter-run.py` と同じ規則でフェンス内の HTML だけを公開し、run.json に `post_processing: "extract-fenced-html"` を記録する（フェンスが無ければ生の応答のまま）。
+
 `--theme all` で `PROMPT.md` のある全テーマを対象にできる。完了済みの出力を検証して
 スキップする場合は `--resume` を付ける。ただし backend を切り替えた再実行では
 `--resume` が既存テーマの harness 不一致で停止するため、未測定テーマを `--theme` で個別に指定する。
