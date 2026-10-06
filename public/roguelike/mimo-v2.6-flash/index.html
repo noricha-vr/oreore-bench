@@ -1,414 +1,394 @@
-```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>冥闇ラビリンス</title>
+<title>深淵の回廊</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#000;font-family:'Courier New',monospace;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden}
-#wrap{display:flex;border:2px solid #333}
-canvas{display:block;background:#000}
-#sb{width:230px;background:#111;padding:8px;display:flex;flex-direction:column;color:#ccc;font-size:13px}
-h2{color:#ff0;font-size:16px;margin-bottom:6px;text-align:center;border-bottom:1px solid #444;padding-bottom:4px}
-.stat{margin-bottom:5px}
-.stat label{color:#888;display:inline-block;width:55px}
-.bar{height:12px;background:#222;border:1px solid #444;position:relative;margin-top:1px}
-.bar i{display:block;height:100%;transition:width .3s}
-.bar span{position:absolute;top:0;left:4px;color:#fff;font-size:11px;line-height:12px;text-shadow:1px 1px #000}
-#inv{border-top:1px solid #333;padding-top:5px;margin-top:5px}
-#inv div{color:#aaa;padding:1px 2px}
-#inv div .key{color:#0ff;display:inline-block;width:18px}
-#msgs{border-top:1px solid #333;padding-top:5px;margin-top:5px;flex:1;overflow:hidden}
-#msgs div{padding:1px 0;border-bottom:1px solid #1a1a1a;font-size:11px;color:#999}
-#msgs div:last-child{color:#fff;border-color:#444}
-#msgs div:first-child{color:#ff8}
+body{background:#08080f;color:#bbb;font-family:'Courier New',Consolas,monospace;display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:15px}
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10}
+#overlay.hide{display:none}
+#overlay h1{color:#66aaff;font-size:34px;margin-bottom:22px}
+#overlay h1.d{color:#f44}
+#overlay h1.w{color:#ff0}
+#overlay p{color:#aaa;font-size:14px;line-height:2.2;text-align:center}
+#overlay .k{color:#ff0}
+#wrap{display:flex;gap:14px;align-items:flex-start}
+canvas#map{border:1px solid #334;display:block}
+#panel{width:250px;display:flex;flex-direction:column;gap:10px}
+#stats,#inv,#log{background:#0d0d14;border:1px solid #2a2a3a;border-radius:4px;padding:8px}
+#stats{color:#aaf;font-size:14px;line-height:1.7}
+#stats .lo{color:#f44}
+#stats .hi{color:#4f4}
+#inv{color:#ffa;font-size:13px;line-height:1.6}
+#log{color:#777;font-size:12px;line-height:1.5;min-height:130px}
+#log .c{color:#f88}
+#log .i{color:#8f8}
+#log .n{color:#88f}
+#log .latest{color:#eee}
 </style>
 </head>
 <body>
-<div id="wrap">
-<canvas id="c" width="640" height="400"></canvas>
-<div id="sb">
-<h2>冥闇ラビリンス</h2>
-<div class="stat"><label>階</label><span id="floorinfo">1 / 3</span></div>
-<div class="stat"><label>HP</label><span id="hpinfo"></span></div>
-<div class="bar"><i id="hpbar"></i><span id="hpbartxt"></span></div>
-<div class="stat"><label>レベル</label><span id="lvinfo">1</span></div>
-<div class="stat"><label>経験値</label><span id="xpinfo">0 / 10</span></div>
-<div class="bar"><i id="xpbar"></i><span id="xpbartxt">0%</span></div>
-<div class="stat"><label>攻撃</label><span id="atkinfo">3</span></div>
-<div id="inv"><strong style="color:#888">インベントリ</strong><div id="invitems">-</div></div>
-<div id="msgs"></div>
+<div id="overlay">
+  <h1>深淵の回廊</h1>
+  <p>
+    <span class="k">↑↓←→ / WASD</span> 移動（1ターン）<br>
+    <span class="k">1-9</span> インベントリ使用<br>
+    <span class="k">Enter / &gt;</span> 階段降りる<br>
+    <span class="k">R</span> リスタート<br><br>
+    <span class="k">Enter</span> で開始
+  </p>
 </div>
+<div id="wrap">
+  <canvas id="map"></canvas>
+  <div id="panel">
+    <div id="stats"></div>
+    <div id="inv"></div>
+    <div id="log"></div>
+  </div>
 </div>
 <script>
-const COLS=40,ROWS=25,MAXF=3,TS=16,SIGHT=8,TW=0,TF=1,TS_up=2;
-const cvs=document.getElementById('c'),ctx=cvs.getContext('2d');
-let phase='title',floor=0,gm=[],en=[],tim=[],inv=[],ms=[],fov=[],seen=[],pl=null,rngState=0;
+(function(){
+'use strict';
 
-function initRng(){rngState=(Date.now()^(Math.random()*0xffffffff))>>>0}
-function rd(){rngState=(rngState*1664525+1013904223)>>>0;return rngState/4294967296}
-function ri(lo,hi){return lo+Math.floor(rd()*(hi-lo+1))}
-function pick(a){return a[ri(0,a.length-1)]}
+var MW=42,MH=25,TS=16,FOV=8,MAXF=3;
+var WALL=0,FLOOR=1,STAIRS=2;
 
-function hLOS(sx,sy,ex,ey){
-  if(sx===ex&&sy===ey)return true;
-  let dx=Math.abs(ex-sx),dy=Math.abs(ey-sy);
-  let ssx=sx<ex?1:-1,ssy=sy<ey?1:-1;
-  let err=dx-dy,x=sx,y=sy;
-  for(let i=0;i<COLS+ROWS;i++){
-    let e2=2*err,nx=x,ny=y;
-    if(e2>-dy){err-=dy;nx+=ssx}
-    if(e2<dx){err+=dx;ny+=ssy}
-    if(nx===ex&&ny===ey)return true;
-    x=nx;y=ny;
-    if(x<0||x>=COLS||y<0||y>=ROWS)return false;
-    if(gm[y][x]===TW)return false;
-  }
-  return false;
-}
+var $c=document.getElementById('map'),ctx=$c.getContext('2d');
+$c.width=MW*TS;$c.height=MH*TS;
+var $ov=document.getElementById('overlay');
+var $h1=$ov.querySelector('h1');
+var $p=$ov.querySelector('p');
+var $st=document.getElementById('stats');
+var $iv=document.getElementById('inv');
+var $lg=document.getElementById('log');
 
-function carveH(x1,x2,y){for(let x=Math.min(x1,x2);x<=Math.max(x1,x2);x++)if(y>=0&&y<ROWS&&x>=0&&x<COLS)gm[y][x]=TF}
-function carveV(y1,y2,x){for(let y=Math.min(y1,y2);y<=Math.max(y1,y2);y++)if(y>=0&&y<ROWS&&x>=0&&x<COLS)gm[y][x]=TF}
+var ENT=[
+{n:'スライム',c:'s',col:'#4d4',hp:8,a:2,xp:5,ch:1},
+{n:'コウモリ',c:'b',col:'#48f',hp:6,a:3,xp:6,ch:1},
+{n:'ゴブリン',c:'g',col:'#ca4',hp:12,a:4,xp:8,ch:0},
+{n:'スケルトン',c:'k',col:'#ccc',hp:15,a:5,xp:10,ch:0},
+{n:'オーガ',c:'O',col:'#f84',hp:25,a:7,xp:18,ch:1}
+];
+var ITT=[
+{n:'回復薬',c:'!',col:'#f44',t:'p',h:15,b:0},
+{n:'回復薬(大)',c:'!',col:'#f88',t:'p',h:30,b:0},
+{n:'短剣',c:'/',col:'#8af',t:'w',h:0,b:3},
+{n:'長剣',c:'/',col:'#aff',t:'w',h:0,b:5}
+];
 
-function initFOV(){fov=[];seen=[];for(let y=0;y<ROWS;y++){fov[y]=[];seen[y]=[];for(let x=0;x<COLS;x++){fov[y][x]=false;seen[y][x]=false}}}
-function updateFOV(){
-  for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++)fov[y][x]=false;
-  fov[pl.y][pl.x]=true;seen[pl.y][pl.x]=true;
-  for(let dy=-SIGHT;dy<=SIGHT;dy++)for(let dx=-SIGHT;dx<=SIGHT;dx++){
-    if(dx===0&&dy===0)continue;
-    let tx=pl.x+dx,ty=pl.y+dy;
-    if(tx<0||tx>=COLS||ty<0||ty>=ROWS)continue;
-    if(dx*dx+dy*dy>SIGHT*SIGHT)continue;
-    if(hLOS(pl.x,pl.y,tx,ty)){fov[ty][tx]=true;seen[ty][tx]=true}
-  }
-}
+var st,mp,vw,ex,pl,en,it,ms,fl;
 
-function spawnEnemy(x,y){
-  let f=floor,r=rd(),e;
-  if(f===1){r<0.5?0:r<1-->0:0} // dummy
-  let tp;
-  if(f===1)tp=r<0.55?'slime':'bat';
-  else if(f===2)tp=r<0.3?'slime':r<0.65?'bat':'orc';
-  else tp=r<0.2?'slime':r<0.5?'bat':'orc';
+function ri(a,b){return a+Math.floor(Math.random()*(b-a))}
+function pk(a){return a[Math.floor(Math.random()*a.length)]}
 
-  if(tp==='slime')e={x,y,type:'slime',name:'スライム',char:'s',hp:5+2*f,mhp:5+2*f,atk:1+f,chase:true,xp:3+f};
-  else if(tp==='bat')e={x,y,type:'bat',name:'コウモリ',char:'b',hp:3+2*f,mhp:3+2*f,atk:2+f,chase:false,xp:4+f};
-  else e={x,y,type:'orc',name:'オーク',char:'O',hp:10+4*f,mhp:10+4*f,atk:3+f,chase:true,xp:8+f};
-  en.push(e);
-}
-
-function genDungeon(){
-  gm=[];for(let y=0;y<ROWS;y++){gm[y]=[];for(let x=0;x<COLS;x++)gm[y][x]=TW}
-  initFOV();en=[];tim=[];
-
-  const rooms=[],target=ri(7,9);
-  let tries=0;
-  while(rooms.length<target&&tries<800){
-    tries++;
-    let w=ri(5,10),h=ri(4,7),x=ri(1,COLS-w-2),y=ri(1,ROWS-h-2);
-    let room={x,y,w,h,cx:x+(w>>1),cy:y+(h>>1)};
-    let ok=true;
-    for(let r of rooms){
-      if(x<r.x+r.w+2&&x+w+2>r.x&&y<r.y+r.h+2&&y+h+2>r.y){ok=false;break}
+function genD(){
+  var y,x;
+  mp=[];
+  for(y=0;y<MH;y++){mp[y]=[];for(x=0;x<MW;x++)mp[y][x]=WALL}
+  var rm=[],n=ri(7,11),i,j,r,w,h,rx,ry,ok;
+  for(i=0;i<500&&rm.length<n;i++){
+    w=ri(4,10);h=ri(4,9);rx=ri(1,MW-w-1);ry=ri(1,MH-h-1);
+    ok=true;
+    for(j=0;j<rm.length;j++){
+      r=rm[j];
+      if(rx<r.x+r.w+1&&rx+w+1>r.x&&ry<r.y+r.h+1&&ry+h+1>r.y){ok=false;break}
     }
     if(!ok)continue;
-    for(let ry=y;ry<y+h;ry++)for(let rx=x;rx<x+w;rx++)gm[ry][rx]=TF;
-    rooms.push(room);
+    for(y=ry;y<ry+h;y++)for(x=rx;x<rx+w;x++)mp[y][x]=FLOOR;
+    rm.push({x:rx,y:ry,w:w,h:h,cx:rx+(w>>1),cy:ry+(h>>1)});
   }
-
-  for(let i=1;i<rooms.length;i++){
-    let a=rooms[i-1],b=rooms[i];
-    if(rd()<0.5){carveH(a.cx,b.cx,a.cy);carveV(a.cy,b.cy,b.cx)}
-    else{carveV(a.cy,b.cy,a.cx);carveH(a.cx,b.cx,b.cy)}
+  for(i=1;i<rm.length;i++){
+    var a=rm[i-1],b=rm[i];
+    if(Math.random()<.5){cvH(a.cx,b.cx,a.cy);cvV(a.cy,b.cy,b.cx)}
+    else{cvV(a.cy,b.cy,a.cx);cvH(a.cx,b.cx,b.cy)}
   }
-
-  let fr=rooms[0],lr=rooms[rooms.length-1];
-  gm[lr.cy][lr.cx]=TS_up;
-  pl.x=fr.cx;pl.y=fr.cy;
-
-  let nEn=ri(5,7);
-  for(let i=0;i<nEn;i++){
-    let room=pick(rooms.slice(1));
-    let ex=ri(room.x,room.x+room.w-1),ey=ri(room.y,room.y+room.h-1);
-    if(gm[ey][ex]!==TF)continue;
-    if((ex===pl.x&&ey===pl.y)&&(gm[ey][ex]===TS_up))continue;
-    if(en.some(e=>e.x===ex&&e.y===ey))continue;
-    spawnEnemy(ex,ey);
+  var ext=ri(1,3);
+  for(i=0;i<ext;i++){
+    var p=pk(rm),q=pk(rm);
+    if(p===q)continue;
+    if(Math.random()<.5){cvH(p.cx,q.cx,p.cy);cvV(p.cy,q.cy,q.cx)}
+    else{cvV(p.cy,q.cy,p.cx);cvH(p.cx,q.cx,q.cy)}
   }
+  return rm;
+}
+function cvH(x0,x1,y){for(var x=Math.min(x0,x1);x<=Math.max(x0,x1);x++)mp[y][x]=FLOOR}
+function cvV(y0,y1,x){for(var y=Math.min(y0,y1);y<=Math.max(y0,y1);y++)mp[y][x]=FLOOR}
 
-  let nIt=ri(3,5);
-  for(let i=0;i<nIt;i++){
-    let room=pick(rooms.slice(1));
-    let ix=ri(room.x,room.x+room.w-1),iy=ri(room.y,room.y+room.h-1);
-    if(gm[iy][ix]!==TF)continue;
-    if(en.some(e=>e.x===ix&&e.y===iy))continue;
-    if(tim.some(it=>it.x===ix&&it.y===iy))continue;
-    if(ix===pl.x&&iy===pl.y)continue;
-    if(rd()<0.5)tim.push({x:ix,y:iy,type:'potion',name:'回復薬',char:'!'});
-    else tim.push({x:ix,y:iy,type:'weapon',name:'武器',char:'/'});
+function los(x0,y0,x1,y1){
+  if(x0===x1&&y0===y1)return 1;
+  var dx=Math.abs(x1-x0),dy=Math.abs(y1-y0);
+  var sx=x0<x1?1:-1,sy=y0<y1?1:-1;
+  var er=dx-dy,x=x0,y=y0;
+  while(x!==x1||y!==y1){
+    if(!(x===x0&&y===y0)&&mp[y][x]===WALL)return 0;
+    var e2=2*er;
+    if(e2>-dy){er-=dy;x+=sx}
+    if(e2<dx){er+=dx;y+=sy}
   }
-
-  updateFOV();
-  addMsg(floor+'階に入った。');
+  return 1;
+}
+function fov(px,py){
+  var y,x;
+  for(y=0;y<MH;y++)for(x=0;x<MW;x++)vw[y][x]=0;
+  vw[py][px]=1;ex[py][px]=1;
+  for(var dy=-FOV;dy<=FOV;dy++)for(var dx=-FOV;dx<=FOV;dx++){
+    var tx=px+dx,ty=py+dy;
+    if(tx<0||tx>=MW||ty<0||ty>=MH)continue;
+    if(dx*dx+dy*dy>FOV*FOV)continue;
+    if(los(px,py,tx,ty)){vw[ty][tx]=1;ex[ty][tx]=1}
+  }
 }
 
-function addMsg(t){ms.push(t);if(ms.length>30)ms.shift();renderMsgs()}
+function walk(x,y){return x>=0&&x<MW&&y>=0&&y<MH&&mp[y][x]!==WALL}
+function eOn(x,y){for(var i=0;i<en.length;i++)if(en[i].hp>0&&en[i].x===x&&en[i].y===y)return en[i];return null}
+function iOn(x,y){for(var i=0;i<it.length;i++)if(it[i].x===x&&it[i].y===y)return it[i];return null}
+function eFree(e,x,y){
+  if(!walk(x,y))return 0;
+  if(x===pl.x&&y===pl.y)return 0;
+  for(var i=0;i<en.length;i++)if(en[i]!==e&&en[i].x===x&&en[i].y===y)return 0;
+  return 1;
+}
 
-function playerAttack(e){
-  let dmg=Math.max(1,ri(1,pl.atk));
-  e.hp-=dmg;addMsg(e.name+'に '+dmg+' ダメージを与えた');
+function msg(t,cls){ms.push({t:t,c:cls||'n'});if(ms.length>60)ms.shift()}
+
+function fSpot(){
+  var cs=[],y,x,i,f;
+  for(y=0;y<MH;y++)for(x=0;x<MW;x++){
+    if(mp[y][x]!==FLOOR)continue;
+    if(Math.abs(x-pl.x)+Math.abs(y-pl.y)<5)continue;
+    f=1;
+    for(i=0;i<en.length;i++)if(en[i].x===x&&en[i].y===y)f=0;
+    for(i=0;i<it.length;i++)if(it[i].x===x&&it[i].y===y)f=0;
+    if(f)cs.push({x:x,y:y});
+  }
+  return cs.length?pk(cs):null;
+}
+function initF(){
+  var rm=genD(),y;
+  vw=[];ex=[];
+  for(y=0;y<MH;y++){vw[y]=new Array(MW).fill(0);ex[y]=new Array(MW).fill(0)}
+  pl.x=rm[0].cx;pl.y=rm[0].cy;
+  mp[rm[rm.length-1].cy][rm[rm.length-1].cx]=STAIRS;
+  en=[];
+  var nE=ri(5,9),bn=fl-1,i,p,t;
+  for(i=0;i<nE;i++){
+    p=fSpot();if(!p)break;
+    t=pk(ENT);
+    en.push({x:p.x,y:p.y,n:t.n,c:t.c,col:t.col,hp:t.hp+bn*5,mhp:t.hp+bn*5,a:t.a+bn*2,xp:t.xp,ch:t.ch});
+  }
+  it=[];
+  var nI=ri(3,7);
+  for(i=0;i<nI;i++){
+    p=fSpot();if(!p)break;
+    t=pk(ITT);
+    it.push({x:p.x,y:p.y,n:t.n,c:t.c,col:t.col,ty:t.t,h:t.h,b:t.b});
+  }
+  fov(pl.x,pl.y);
+}
+
+function pAtk(e){
+  var d=pl.a+ri(0,4);
+  e.hp-=d;
+  msg(pl.name+'は'+e.n+'に'+d+'ダメージ','c');
   if(e.hp<=0){
-    en.splice(en.indexOf(e),1);
-    pl.xp+=e.xp;addMsg(e.name+'を倒した　'+e.xp+'EXP獲得');
-    while(pl.xp>=pl.nextLvl){
-      pl.xp-=pl.nextLvl;pl.level++;
-      pl.nextLvl=pl.level*10+5;
-      pl.mhp+=5;pl.hp=pl.mhp;pl.atk++;
-      addMsg('レベル'+pl.level+'に上がった！HP・攻撃力+');
+    msg(e.n+'を倒した！','c');
+    pl.xp+=e.xp;
+    msg('経験値 +'+e.xp,'n');
+    while(pl.xp>=pl.xn){
+      pl.xp-=pl.xn;pl.lvl++;pl.mhp+=5;
+      pl.hp=Math.min(pl.hp+5,pl.mhp);
+      pl.a+=2;pl.xn=Math.floor(pl.xn*1.5);
+      msg('レベルアップ！ Lv'+pl.lvl,'n');
     }
   }
 }
-
-function enemyMoveTo(e,x,y){
-  if(x<0||x>=COLS||y<0||y>=ROWS)return false;
-  if(gm[y][x]===TW||gm[y][x]===TS_up)return false;
-  if(en.some(o=>o!==e&&o.x===x&&o.y===y))return false;
-  return true;
+function eAtk(e){
+  var d=Math.max(1,e.a+ri(0,3));
+  pl.hp-=d;
+  msg(e.n+'の攻撃！ '+d+'ダメージ','c');
 }
 
-function moveEnemyToward(e){
-  let dx=Math.sign(pl.x-e.x),dy=Math.sign(pl.y-e.y);
-  let tries=[[dx,0],[0,dy],[dx,dy]];
-  for(let[mx,my]of tries){
-    if(mx===0&&my===0)continue;
-    let nx=e.x+mx,ny=e.y+my;
-    if(nx===pl.x&&ny===pl.y){
-      let dmg=Math.max(1,ri(1,e.atk));
-      pl.hp-=dmg;addMsg(e.name+'の攻撃で '+dmg+' ダメージ');
-      if(pl.hp<=0){pl.hp=0;phase='gameover';addMsg('あなたは倒れた...')}
-      return;
+function pMv(dx,dy){
+  var nx=pl.x+dx,ny=pl.y+dy;
+  if(!walk(nx,ny))return;
+  var e=eOn(nx,ny);
+  if(e){pAtk(e);endT();return}
+  pl.x=nx;pl.y=ny;
+  var i=iOn(nx,ny);
+  if(i)pickup(i);
+  endT();
+}
+function pickup(i){
+  if(pl.inv.length>=9){msg('インベントリ満杯','n');return}
+  var cp={};for(var k in i)cp[k]=i[k];
+  pl.inv.push(cp);
+  it=it.filter(function(t){return t!==i});
+  msg(i.n+'を拾った','i');
+}
+function useInv(n){
+  if(n<0||n>=pl.inv.length)return;
+  var i=pl.inv[n];
+  if(i.ty==='p'){
+    var b=pl.hp;
+    pl.hp=Math.min(pl.hp+i.h,pl.mhp);
+    msg(i.n+'使用: '+(pl.hp-b)+'回復','i');
+    pl.inv.splice(n,1);endT();
+  }else if(i.ty==='w'){
+    pl.a+=i.b;
+    msg(i.n+'装備！ ATK+'+i.b,'i');
+    pl.inv.splice(n,1);endT();
+  }
+}
+function trySt(){
+  if(mp[pl.y][pl.x]!==STAIRS){msg('ここに階段はない','n');return}
+  if(fl>=MAXF){
+    st='win';
+    msg('クリア！地下'+MAXF+'階を踏破！','n');
+    return;
+  }
+  fl++;initF();
+  msg('地下'+fl+'階に降りた','n');
+}
+
+function endT(){
+  en=en.filter(function(e){return e.hp>0});
+  var i,e,dx,dy,ad,ax,ay,am,my,d;
+  for(i=0;i<en.length;i++){
+    if(pl.hp<=0)break;
+    e=en[i];
+    dx=pl.x-e.x;dy=pl.y-e.y;
+    ad=Math.abs(dx)+Math.abs(dy);
+    if(ad<=1){eAtk(e);continue}
+    if(e.ch&&ad<=12&&los(e.x,e.y,pl.x,pl.y)){
+      ax=Math.abs(dx);ay=Math.abs(dy);
+      am=ax>0?Math.sign(dx):0;
+      my=ay>0?Math.sign(dy):0;
+      if(ax>=ay&&am!==0){
+        if(eFree(e,e.x+am,e.y))e.x+=am;
+        else if(my!==0&&eFree(e,e.x,e.y+my))e.y+=my;
+      }else if(my!==0){
+        if(eFree(e,e.x,e.y+my))e.y+=my;
+        else if(am!==0&&eFree(e,e.x+am,e.y))e.x+=am;
+      }
+    }else if(!e.ch&&Math.random()<0.25){
+      d=[[-1,0],[1,0],[0,-1],[0,1]][ri(0,4)];
+      if(eFree(e,e.x+d[0],e.y+d[1])){e.x+=d[0];e.y+=d[1]}
     }
-    if(enemyMoveTo(e,nx,ny)){e.x=nx;e.y=ny;return}
   }
-}
-
-function enemyTurn(){
-  let snapshot=[...en];
-  for(let e of snapshot){
-    if(phase!=='playing')break;
-    if(en.indexOf(e)===-1)continue;
-    let ch=Math.max(Math.abs(e.x-pl.x),Math.abs(e.y-pl.y));
-    if(ch===1){
-      let dmg=Math.max(1,ri(1,e.atk));
-      pl.hp-=dmg;addMsg(e.name+'の攻撃で '+dmg+' ダメージ');
-      if(pl.hp<=0){pl.hp=0;phase='gameover';addMsg('あなたは倒れた...')}
-      continue;
-    }
-    let sees=ch<=SIGHT&&hLOS(e.x,e.y,pl.x,pl.y);
-    if(sees&&e.chase){moveEnemyToward(e)}
-    else if(sees&&!e.chase){if(rd()<0.3)moveEnemyToward(e);else wander(e)}
-    else{if(rd()<0.5)wander(e)}
+  if(pl.hp<=0&&st==='play'){
+    pl.hp=0;st='dead';
+    msg('…力尽きてしまった。','n');
+    return;
   }
-  if(phase==='gameover')return;
+  fov(pl.x,pl.y);
 }
 
-function wander(e){
-  let d=pick([[0,-1],[0,1],[-1,0],[1,0]]);
-  let nx=e.x+d[0],ny=e.y+d[1];
-  if(enemyMoveTo(e,nx,ny)&&!(nx===pl.x&&ny===pl.y)){e.x=nx;e.y=ny}
-}
-
-function playerMove(dx,dy){
-  let tx=pl.x+dx,ty=pl.y+dy;
-  if(tx<0||tx>=COLS||ty<0||ty>=ROWS)return false;
-  if(gm[ty][tx]===TW)return false;
-  let target=en.find(e=>e.x===tx&&e.y===ty);
-  if(target){playerAttack(target);return true}
-  pl.x=tx;pl.y=ty;
-  let item=tim.find(i=>i.x===tx&&i.y===ty);
-  if(item){
-    if(inv.length<9){
-      inv.push(item);tim.splice(tim.indexOf(item),1);
-      addMsg(item.name+'を拾った');
-    }else addMsg('インベントリが満杯！');
-  }
-  if(gm[ty][tx]===TS_up)addMsg('階段を見つけた。Enterで降りる');
-  return true;
-}
-
-function useItem(slot){
-  let i=slot-1;
-  if(i<0||i>=inv.length)return false;
-  let it=inv[i];inv.splice(i,1);
-  if(it.type==='potion'){
-    let heal=Math.min(10+2*floor,pl.mhp-pl.hp);
-    pl.hp+=heal;addMsg('回復薬を使った　'+heal+'HP回復');
-  }else{
-    let boost=1+(floor>=3?1:0);
-    pl.atk+=boost;addMsg('武器を使った　攻撃力+'+boost+' (現在:'+pl.atk+')');
-  }
-  return true;
-}
-
-function descend(){
-  if(gm[pl.y][pl.x]!==TS_up)return;
-  if(floor===MAXF){phase='clear'}
-  else{floor++;genDungeon()}
-}
-
-function newGame(){
-  initRng();floor=1;
-  pl={x:0,y:0,hp:20,mhp:20,atk:3,level:1,xp:0,nextLvl:10};
-  inv=[];ms=[];phase='playing';
-  genDungeon();render();renderSB();
-}
-
-let dX=TS,dY=TS;
-function drawCh(ch,x,y,color){
-  ctx.fillStyle=color;ctx.font=dY+'px Courier New,monospace';
+function dc(x,y,ch,col){
+  ctx.fillStyle=col;
+  ctx.font='bold '+(TS-4)+'px monospace';
   ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText(ch,x*dX+dX/2,y*dY+dY/2);
+  ctx.fillText(ch,x*TS+TS/2,y*TS+TS/2);
 }
-
 function render(){
-  ctx.fillStyle='#000';ctx.fillRect(0,0,cvs.width,cvs.height);
-  for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
-    let vis=fov[y][x],exp=seen[y][x];
-    if(!exp)continue;
-    let px=x*dX,py=y*dY,t=gm[y][x];
-    if(t===TW){
-      ctx.fillStyle=vis?'#444':'#1a1a1a';ctx.fillRect(px,py,dX,dY);
-      drawCh('#',x,y,vis?'#777':'#444');
-    }else if(t===TF){
-      ctx.fillStyle=vis?'#111d2e':'#0d0d11';ctx.fillRect(px,py,dX,dY);
-      if(vis)drawCh('.',x,y,'#334455');
-    }else if(t===TS_up){
-      ctx.fillStyle=vis?'#2a2a11':'#1a1a0d';ctx.fillRect(px,py,dX,dY);
-      drawCh('>',x,y,vis?'#ff0':'#880');
+  ctx.fillStyle='#000';
+  ctx.fillRect(0,0,$c.width,$c.height);
+  if(!mp)return;
+  var y,x,v,px,py;
+  for(y=0;y<MH;y++)for(x=0;x<MW;x++){
+    if(!ex[y][x])continue;
+    v=vw[y][x];px=x*TS;py=y*TS;
+    if(mp[y][x]===WALL){
+      ctx.fillStyle=v?'#444':'#1a1a1a';ctx.fillRect(px,py,TS,TS);
+      dc(x,y,'#',v?'#666':'#2a2a2a');
+    }else if(mp[y][x]===FLOOR){
+      ctx.fillStyle=v?'#1e1e1e':'#0d0d0d';ctx.fillRect(px,py,TS,TS);
+    }else if(mp[y][x]===STAIRS){
+      ctx.fillStyle=v?'#332200':'#0d0d0d';ctx.fillRect(px,py,TS,TS);
+      dc(x,y,'>',v?'#ff0':'#664');
     }
-    if(vis){
-      let item=tim.find(i=>i.x===x&&i.y===y);
-      if(item)drawCh(item.char,x,y,item.type==='potion'?'#f55':'#5bf');
-      let enemy=en.find(e=>e.x===x&&e.y===y);
-      if(enemy){
-        let col=enemy.type==='slime'?'#0f0':enemy.type==='bat'?'#0ff':'#f83';
-        drawCh(enemy.char,x,y,col);
+  }
+  var i;
+  for(i=0;i<it.length;i++){if(vw[it[i].y][it[i].x])dc(it[i].x,it[i].y,it[i].c,it[i].col)}
+  for(i=0;i<en.length;i++){
+    var e=en[i];
+    if(vw[e.y][e.x]){
+      dc(e.x,e.y,e.c,e.col);
+      if(e.hp<e.mhp){
+        var bw=TS-4,bh=3,by=Math.max(0,e.y*TS-bh);
+        ctx.fillStyle='#800';ctx.fillRect(e.x*TS+2,by,bw,bh);
+        ctx.fillStyle='#0f0';ctx.fillRect(e.x*TS+2,by,Math.max(1,Math.round(bw*e.hp/e.mhp)),bh);
       }
     }
   }
-  drawCh('@',pl.x,pl.y,'#fff');
-
-  if(phase==='title')renderTitle();
-  else if(phase==='gameover')renderOver();
-  else if(phase==='clear')renderClear();
+  dc(pl.x,pl.y,'@','#fff');
+  hud();
 }
-
-function renderTitle(){
-  ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillRect(0,0,cvs.width,cvs.height);
-  ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillStyle='#ff0';ctx.font='bold 48px Courier New';
-  ctx.fillText('冥闇ラビリンス',320,140);
-  ctx.fillStyle='#888';ctx.font='16px Courier New';
-  ctx.fillText('深淵の地下牢を見破る者',320,190);
-  ctx.fillStyle='#0ff';ctx.font='18px Courier New';
-  ctx.fillText('Enter / Space で開始',320,250);
-  ctx.fillStyle='#666';ctx.font='13px Courier New';
-  ctx.fillText('移動: 矢印キー / WASD',320,290);
-  ctx.fillText('アイテム使用: 1〜9  階段: Enter / >  リスタート: R',320,312);
-}
-
-function renderOver(){
-  ctx.fillStyle='rgba(0,0,0,0.7)';ctx.fillRect(0,0,cvs.width,cvs.height);
-  ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillStyle='#f00';ctx.font='bold 44px Courier New';
-  ctx.fillText('GAME OVER',320,160);
-  ctx.fillStyle='#aaa';ctx.font='16px Courier New';
-  ctx.fillText('階数: '+floor+'   レベル: '+pl.level,320,210);
-  ctx.fillStyle='#0ff';ctx.font='18px Courier New';
-  ctx.fillText('R でリスタート',320,270);
-}
-
-function renderClear(){
-  ctx.fillStyle='rgba(0,0,0,0.7)';ctx.fillRect(0,0,cvs.width,cvs.height);
-  ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillStyle='#0f0';ctx.font='bold 44px Courier New';
-  ctx.fillText('CLEAR!',320,140);
-  ctx.fillStyle='#ff0';ctx.font='20px Courier New';
-  ctx.fillText('深淵の最下層を踏破した！',320,185);
-  ctx.fillStyle='#aaa';ctx.font='16px Courier New';
-  ctx.fillText('レベル: '+pl.level+'   攻撃力: '+pl.atk+'   HP: '+pl.hp+'/'+pl.mhp,320,225);
-  ctx.fillStyle='#0ff';ctx.font='18px Courier New';
-  ctx.fillText('R で再挑戦',320,280);
-}
-
-function renderSB(){
-  document.getElementById('floorinfo').textContent=floor+' / '+MAXF;
-  document.getElementById('hpinfo').textContent=pl.hp+' / '+pl.mhp;
-  let pct=Math.max(0,pl.hp/pl.mhp*100);
-  let bar=document.getElementById('hpbar');
-  bar.style.width=pct+'%';
-  bar.style.background=pct>60?'#0a0':pct>30?'#cc0':'#c00';
-  document.getElementById('hpbartxt').textContent=pl.hp+'/'+pl.mhp;
-  document.getElementById('lvinfo').textContent='Lv.'+pl.level;
-  document.getElementById('xpinfo').textContent=pl.xp+' / '+pl.nextLvl;
-  let xpPct=pl.xp/pl.nextLvl*100;
-  document.getElementById('xpbar').style.width=xpPct+'%';
-  document.getElementById('xpbar').style.background='#06a';
-  document.getElementById('xpbartxt').textContent=Math.floor(xpPct)+'%';
-  document.getElementById('atkinfo').textContent=pl.atk;
-
-  let invDiv=document.getElementById('invitems');
-  if(inv.length===0){invDiv.innerHTML='<span style="color:#444">(なし)</span>'}
-  else{
-    invDiv.innerHTML=inv.map((s,i)=>'<div><span class="key">'+(i+1)+'.</span> ['+(s.type==='potion'?'!':'/')+'] '+s.name+'</div>').join('');
+function hud(){
+  var hpc=pl.hp>pl.mhp*0.3?'hi':'lo';
+  $st.innerHTML='<b>'+pl.name+'</b><br>HP: <span class="'+hpc+'">'+pl.hp+'/'+pl.mhp+'</span><br>ATK: '+pl.a+'<br>Lv: '+pl.lvl+'　XP: '+pl.xp+'/'+pl.xn+'<br>階数: 地下 '+fl+' / '+MAXF;
+  var ih='<b>インベントリ</b><br>',i;
+  if(!pl.inv.length){ih+='<span style="color:#555">(空)</span>'}
+  else for(i=0;i<pl.inv.length;i++){
+    var t=pl.inv[i];
+    ih+=(i+1)+'. <span style="color:'+t.col+'">'+t.c+'</span> '+t.n;
+    if(t.ty==='p')ih+=' (+'+t.h+'HP)';
+    if(t.ty==='w')ih+=' (+'+t.b+'ATK)';
+    ih+='<br>';
   }
-}
-
-function renderMsgs(){
-  let el=document.getElementById('msgs');
-  let start=Math.max(0,ms.length-7);
-  el.innerHTML='';
-  for(let i=start;i<ms.length;i++){
-    let d=document.createElement('div');
-    d.textContent=ms[i];
-    el.appendChild(d);
+  $iv.innerHTML=ih;
+  var lh='',s=ms.slice(-8),cls;
+  for(i=0;i<s.length;i++){
+    cls=s[i].c+(i===s.length-1?' latest':'');
+    lh+='<div class="'+cls+'">'+s[i].t+'</div>';
   }
+  $lg.innerHTML=lh;
 }
 
-document.addEventListener('keydown',e=>{
-  e.preventDefault();
-  let k=e.key;
+function showOv(title,html,cls){
+  $h1.textContent=title;$h1.className=cls||'';
+  $p.innerHTML=html;
+  $ov.classList.remove('hide');
+}
+function hideOv(){$ov.classList.add('hide')}
 
-  if(k==='r'||k==='R'){newGame();return}
+function startGame(){
+  hideOv();st='play';fl=1;ms=[];
+  pl={name:'冒険者',x:0,y:0,hp:30,mhp:30,a:5,lvl:1,xp:0,xn:20,inv:[]};
+  initF();
+  msg('地下'+fl+'階に到着。探索を始めよう','n');
+  render();
+}
 
-  if(phase==='title'){
-    if(k==='Enter'||k===' ')newGame();
+document.addEventListener('keydown',function(e){
+  var k=e.key;
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','>','Enter'].indexOf(k)>=0)e.preventDefault();
+  if(st==='title'){
+    if(k==='Enter'||k===' ')startGame();
     return;
   }
-  if(phase!=='playing')return;
-
-  let acted=false;
-
-  if(k==='ArrowUp'||k==='w'||k==='W')acted=playerMove(0,-1);
-  else if(k==='ArrowDown'||k==='s'||k==='S')acted=playerMove(0,1);
-  else if(k==='ArrowLeft'||k==='a'||k==='A')acted=playerMove(-1,0);
-  else if(k==='ArrowRight'||k==='d'||k==='D')acted=playerMove(1,0);
-  else if(k==='Enter'||k==='>'||k==='.'){
-    if(gm[pl.y][pl.x]===TS_up){descend();render();renderSB();return}
+  if(st==='dead'||st==='win'){
+    if(k==='r'||k==='R')startGame();
+    return;
   }
-  else if(k>='1'&&k<='9'){acted=useItem(+k)}
-
-  if(acted){
-    enemyTurn();
-    updateFOV();
-    render();renderSB();
-    if(phase==='gameover'||phase==='clear'){render();renderSB()}
+  switch(k){
+    case 'ArrowUp':case 'w':case 'W':pMv(0,-1);break;
+    case 'ArrowDown':case 's':case 'S':pMv(0,1);break;
+    case 'ArrowLeft':case 'a':case 'A':pMv(-1,0);break;
+    case 'ArrowRight':case 'd':case 'D':pMv(1,0);break;
+    case 'Enter':case '>':trySt();break;
+    case 'r':case 'R':startGame();return;
+    default:
+      var n=parseInt(k);
+      if(n>=1&&n<=9)useInv(n-1);
   }
+  render();
+  if(st==='dead')showOv('ゲームオーバー','力尽きてしまった…<br><span class="k">R</span> でリトライ','d');
+  if(st==='win')showOv('クリア！','地下'+MAXF+'階を踏破しました<br><span class="k">R</span> でリトライ','w');
 });
 
-render();
+st='title';mp=vw=ex=null;pl=null;en=[];it=[];ms=[];fl=1;
+})();
 </script>
 </body>
 </html>
-```
