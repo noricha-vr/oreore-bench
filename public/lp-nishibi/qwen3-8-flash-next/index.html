@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NISHIBI — 西日 | 南西向きの窓、ひとつの日焼けスタジオ</title>
+<meta name="description" content="UVランプには、一秒も触れない。南西向きの全面窓と、正確な時間感覚だけで焼く、天然日焼けスタジオ。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Jost:wght@300;400&family=Zen+Kaku+Gothic+New:wght@300;400;500&family=Zen+Old+Mincho:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============ tokens ============ */
+:root{
+  --night:#120C09;
+  --ink:#1B120D;
+  --ink-soft:#2A1D15;
+  --paper:#EFE3D2;
+  --paper-2:#E5D6C0;
+  --terra:#B0512F;
+  --ember:#DE7A38;
+  --gold:#D6A25E;
+  --ash:#8E7A69;
+  --ash-d:#6B5A4C;
+  --line-l:rgba(239,227,210,.16);
+  --line-d:rgba(27,18,13,.16);
+  --f-display:'Cormorant Garamond','Zen Old Mincho',serif;
+  --f-mincho:'Zen Old Mincho',serif;
+  --f-body:'Zen Kaku Gothic New','Hiragino Sans',system-ui,sans-serif;
+  --f-label:'Jost','Zen Kaku Gothic New',sans-serif;
+  --pad:clamp(1.25rem,5vw,5.5rem);
+  --maxw:1440px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--night);color:var(--paper);
+  font-family:var(--f-body);font-weight:300;
+  font-size:clamp(.88rem,.55vw + .74rem,.98rem);line-height:2;
+  letter-spacing:.02em;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+img{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+h1,h2,h3,h4,p,dl,dd,dt,figure,ul{margin:0;padding:0}
+ul{list-style:none}
+::selection{background:var(--ember);color:var(--night)}
+
+/* grain */
+.grain{
+  position:fixed;inset:-50%;z-index:200;pointer-events:none;opacity:.055;
+  mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='150' height='150' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grainShift 8s steps(1,end) infinite;
+}
+@keyframes grainShift{
+  0%{transform:translate3d(0,0,0)}25%{transform:translate3d(-2%,1%,0)}
+  50%{transform:translate3d(1%,-2%,0)}75%{transform:translate3d(-1%,-1%,0)}
+  100%{transform:translate3d(0,0,0)}
+}
+
+/* ============ primitives ============ */
+.wrap{max-width:var(--maxw);margin-inline:auto;padding-inline:var(--pad)}
+.rule{height:1px;background:var(--line-l);border:0}
+.paper .rule{background:var(--line-d)}
+.eyebrow{
+  font-family:var(--f-label);font-size:.62rem;letter-spacing:.34em;
+  text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:.9rem;
+}
+.eyebrow::before{content:"";width:clamp(18px,4vw,54px);height:1px;background:currentColor;opacity:.6}
+.paper .eyebrow{color:var(--terra)}
+.sect{position:relative;padding-block:clamp(6rem,13vw,11.5rem)}
+.paper{background:var(--paper);color:var(--ink)}
+.sect--mid{background:var(--paper-2);color:var(--ink)}
+h2.big{
+  font-family:var(--f-mincho);font-weight:400;
+  font-size:clamp(1.7rem,4.6vw,3.35rem);line-height:1.42;letter-spacing:.045em;
+}
+h2.big em{font-family:var(--f-display);font-style:normal;letter-spacing:.01em}
+.num{font-family:var(--f-display);font-size:.78rem;letter-spacing:.3em;color:var(--gold);opacity:.85}
+.paper .num{color:var(--terra)}
+.lede{max-width:46ch;color:rgba(239,227,210,.72)}
+.paper .lede{color:rgba(27,18,13,.72)}
+
+.btn{
+  --bg:transparent;--fg:currentColor;--bd:rgba(239,227,210,.4);
+  position:relative;display:inline-flex;align-items:center;gap:1rem;
+  padding:1.05rem 2rem;border:1px solid var(--bd);color:var(--fg);background:var(--bg);
+  font-family:var(--f-label);font-size:.7rem;letter-spacing:.26em;text-transform:uppercase;
+  overflow:hidden;isolation:isolate;transition:color .6s ease,border-color .6s ease;
+}
+.btn span{position:relative;z-index:2}
+.btn::after{
+  content:"";position:absolute;inset:0;z-index:1;background:var(--ember);
+  transform:translateY(101%);transition:transform .65s cubic-bezier(.2,.8,.2,1);
+}
+.btn:hover{color:var(--night);border-color:var(--ember)}
+.btn:hover::after{transform:translateY(0)}
+.btn--solid{--bg:var(--ember);--fg:var(--night);--bd:var(--ember)}
+.btn--solid::after{background:var(--paper)}
+.btn--dark{--bd:rgba(27,18,13,.35)}
+.btn--sm{padding:.7rem 1.15rem;font-size:.6rem;letter-spacing:.2em}
+.btn i{display:block;width:1.6rem;height:1px;background:currentColor;position:relative;z-index:2;transition:width .5s ease}
+.btn:hover i{width:2.4rem}
+
+/* reveal */
+[data-rv]{opacity:0;transform:translateY(28px);transition:opacity 1.05s ease var(--d,0s),transform 1.15s cubic-bezier(.2,.75,.2,1) var(--d,0s)}
+[data-rv].in{opacity:1;transform:none}
+.ml{display:block;overflow:hidden;padding-block:.06em}
+.ml>span{display:block;transform:translateY(118%);transition:transform 1.2s cubic-bezier(.16,.86,.22,1) var(--d,0s)}
+.in .ml>span{transform:none}
+
+/* ============ nav ============ */
+.nav{
+  position:fixed;inset:0 0 auto;z-index:120;
+  display:flex;align-items:center;gap:2rem;
+  padding:1.15rem var(--pad);
+  transition:background .6s ease,padding .6s ease,backdrop-filter .6s;
+}
+.nav.stuck{background:rgba(18,12,9,.86);backdrop-filter:blur(14px) saturate(1.2);padding-block:.7rem;border-bottom:1px solid var(--line-l)}
+.brand{font-family:var(--f-display);font-size:1.08rem;letter-spacing:.42em;line-height:1;display:flex;align-items:baseline;gap:.55rem}
+.brand b{font-family:var(--f-mincho);font-weight:400;font-size:.7rem;letter-spacing:.28em;opacity:.6}
+.nav__links{display:flex;gap:1.75rem;margin-left:auto;font-family:var(--f-label);font-size:.65rem;letter-spacing:.24em;text-transform:uppercase}
+.nav__links a{position:relative;padding-block:.35rem;opacity:.75;transition:opacity .4s}
+.nav__links a::after{content:"";position:absolute;left:0;bottom:0;width:100%;height:1px;background:var(--ember);transform:scaleX(0);transform-origin:left;transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.nav__links a:hover{opacity:1}
+.nav__links a:hover::after{transform:scaleX(1)}
+.clock{margin-left:auto;text-align:right;font-family:var(--f-label);font-size:.62rem;letter-spacing:.2em;line-height:1.7}
+.clock b{display:block;font-weight:400;font-size:.95rem;letter-spacing:.14em;font-variant-numeric:tabular-nums}
+.clock s{text-decoration:none;opacity:.5}
+.nav__links+.clock{margin-left:0}
+.nav .clock{margin-left:2rem}
+.sunline{position:absolute;left:0;bottom:0;height:1px;background:linear-gradient(90deg,var(--terra),var(--gold));transform:scaleX(0);transform-origin:left;width:100%}
+.burger{display:none;margin-left:auto;width:34px;height:22px;position:relative}
+.burger i{position:absolute;left:0;width:100%;height:1px;background:currentColor;transition:.45s}
+.burger i:nth-child(1){top:5px}.burger i:nth-child(2){top:13px}.burger i:nth-child(3){top:21px}
+.nav.open .burger i:nth-child(1){transform:translateY(8px) rotate(45deg)}
+.nav.open .burger i:nth-child(2){opacity:0}
+.nav.open .burger i:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
+
+/* ============ hero ============ */
+.hero{position:relative;min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;isolation:isolate;background:var(--night)}
+.hero__frame{position:absolute;inset:0;z-index:-2;overflow:hidden}
+.hero__frame img{width:100%;height:100%;object-fit:cover;opacity:.42;filter:saturate(.72) contrast(1.05) brightness(.72);animation:kb 30s ease-in-out infinite alternate}
+@keyframes kb{from{transform:scale(1.04) translate3d(0,0,0)}to{transform:scale(1.18) translate3d(-2%,-1.5%,0)}}
+.hero__veil{position:absolute;inset:0;background:
+  linear-gradient(94deg,var(--night) 4%,rgba(18,12,9,.62) 44%,rgba(18,12,9,.2) 74%,rgba(176,81,47,.3) 100%),
+  linear-gradient(0deg,var(--night) 2%,transparent 42%)}
+.beam{position:absolute;inset:-30% -30% -10%;z-index:-1;isolation:isolate;pointer-events:none;mix-blend-mode:screen;animation:drift 32s ease-in-out infinite alternate;opacity:calc(.42 + var(--solar,.5) * .58)}
+.beam__light{position:absolute;inset:0;background:linear-gradient(101deg,transparent 12%,rgba(255,163,74,.13) 24%,rgba(255,132,50,.3) 34%,rgba(255,178,96,.16) 44%,transparent 56%);filter:blur(7px)}
+.beam__mullion{position:absolute;inset:0;mix-blend-mode:multiply;opacity:.55;
+  background:
+   repeating-linear-gradient(101deg,rgba(14,9,6,.85) 0 3px,transparent 3px 128px),
+   repeating-linear-gradient(13deg,rgba(14,9,6,.7) 0 3px,transparent 3px 190px);
+  -webkit-mask-image:linear-gradient(101deg,transparent 18%,#000 28%,#000 47%,transparent 57%);
+  mask-image:linear-gradient(101deg,transparent 18%,#000 28%,#000 47%,transparent 57%)}
+@keyframes drift{from{transform:translate3d(-5%,0,0) skewX(0deg)}to{transform:translate3d(7%,1.5%,0) skewX(-3deg)}}
+.pool{position:absolute;left:6%;bottom:0;width:74%;height:34vh;z-index:-1;pointer-events:none;
+  background:linear-gradient(0deg,rgba(222,122,56,.4),rgba(222,122,56,0) 78%);
+  transform:skewX(-46deg);filter:blur(24px);opacity:calc(.35 + var(--solar,.5) * .5);animation:drift 32s ease-in-out infinite alternate-reverse}
+.hero__inner{position:relative;padding:0 var(--pad) clamp(2.2rem,6vw,4.2rem);width:100%}
+.hero__top{position:absolute;top:clamp(6.2rem,11vw,8.5rem);right:var(--pad);display:flex;align-items:center;gap:1rem;
+  font-family:var(--f-label);font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;color:rgba(239,227,210,.62)}
+.dial{width:104px;height:56px;color:rgba(239,227,210,.4)}
+.dial circle{transition:cx .9s linear,cy .9s linear,fill .9s}
+.hero h1{font-family:var(--f-mincho);font-weight:400;font-size:clamp(2.05rem,7.4vw,5.9rem);line-height:1.22;letter-spacing:.03em;max-width:23ch;margin-block:1.6rem 1.9rem}
+.hero h1 .g{font-family:var(--f-display);letter-spacing:0;color:var(--gold)}
+.hero__sub{max-width:44ch;color:rgba(239,227,210,.7);font-size:clamp(.85rem,1.1vw,.97rem)}
+.hero__cta{display:flex;flex-wrap:wrap;gap:.9rem;margin-top:clamp(2rem,4vw,3rem)}
+.hero__foot{display:flex;flex-wrap:wrap;gap:clamp(1.2rem,4vw,3.4rem);align-items:flex-end;justify-content:space-between;
+  margin-top:clamp(3rem,7vw,5.5rem);padding-top:1.15rem;border-top:1px solid var(--line-l);
+  font-family:var(--f-label);font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(239,227,210,.5)}
+.hero__foot b{font-weight:400;color:var(--paper);font-variant-numeric:tabular-nums}
+.scrollcue{display:flex;align-items:center;gap:.7rem}
+.scrollcue i{display:block;width:44px;height:1px;background:currentColor;position:relative;overflow:hidden}
+.scrollcue i::after{content:"";position:absolute;inset:0;background:var(--gold);transform:translateX(-100%);animation:cue 2.6s ease-in-out infinite}
+@keyframes cue{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
+.gridlines{position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:.4;
+  background:repeating-linear-gradient(90deg,var(--line-l) 0 1px,transparent 1px 25%)}
+
+/* ticker */
+.ticker{background:var(--ink);border-block:1px solid var(--line-l);overflow:hidden;padding-block:.85rem}
+.ticker__row{display:flex;width:max-content;animation:slide 46s linear infinite;font-family:var(--f-label);font-size:.65rem;letter-spacing:.3em;text-transform:uppercase;color:rgba(239,227,210,.55)}
+.ticker:hover .ticker__row{animation-play-state:paused}
+.ticker__row span{padding-inline:1.6rem;white-space:nowrap;display:flex;gap:1.6rem;align-items:center}
+.ticker__row span::after{content:"";width:5px;height:5px;background:var(--terra);border-radius:50%}
+@keyframes slide{to{transform:translateX(-50%)}}
+
+/* ============ philosophy ============ */
+.phil__grid{display:grid;grid-template-columns:minmax(280px,.85fr) minmax(0,1.15fr);gap:clamp(2.5rem,7vw,7rem)}
+.phil__stick{position:sticky;top:clamp(5rem,16vh,9rem);align-self:start}
+.phil__quote{margin-top:clamp(2.4rem,5vw,4rem);padding-left:1.35rem;border-left:1px solid var(--line-d);font-family:var(--f-mincho);font-size:clamp(1rem,1.5vw,1.22rem);line-height:2.05}
+.phil__quote footer{margin-top:.9rem;font-family:var(--f-label);font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;color:var(--ash-d)}
+.phil__body p{margin-bottom:clamp(2rem,4.5vw,3.4rem);max-width:56ch}
+.phil__body p:first-child{font-size:clamp(1rem,1.45vw,1.18rem);line-height:2.15}
+.dropcap::first-letter{font-family:var(--f-display);font-size:3.4em;line-height:.82;float:left;padding:.06em .16em 0 0;color:var(--terra)}
+.phil__meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line-d);margin-top:clamp(3rem,6vw,5rem)}
+.phil__meta div{background:var(--paper);padding:1.35rem 1.25rem}
+.phil__meta dt{font-family:var(--f-label);font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:var(--ash-d)}
+.phil__meta dd{font-family:var(--f-mincho);font-size:1.05rem;margin-top:.5rem}
+
+/* ============ science ============ */
+.sci__head{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.8fr);gap:clamp(2rem,6vw,6rem);align-items:end}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line-l);margin-top:clamp(3.5rem,7vw,6rem)}
+.stat{background:var(--night);padding:clamp(1.6rem,2.6vw,2.4rem) clamp(1.1rem,2vw,1.7rem);position:relative;overflow:hidden}
+.stat::after{content:"";position:absolute;left:0;bottom:0;height:1px;width:100%;background:var(--ember);transform:scaleX(0);transform-origin:left;transition:transform .9s cubic-bezier(.2,.8,.2,1)}
+.stat:hover::after{transform:scaleX(1)}
+.stat b{display:flex;align-items:baseline;gap:.35rem;font-family:var(--f-display);font-weight:300;font-size:clamp(2.4rem,5vw,3.9rem);line-height:1;color:var(--paper);font-variant-numeric:tabular-nums}
+.stat b s{text-decoration:none;font-size:.34em;letter-spacing:.1em;color:var(--gold)}
+.stat p{margin-top:1rem;font-size:.8rem;line-height:1.9;color:rgba(239,227,210,.68)}
+.stat em{display:block;font-style:normal;font-family:var(--f-label);font-size:.56rem;letter-spacing:.22em;text-transform:uppercase;color:var(--ash);margin-bottom:.5rem}
+.chartcard{margin-top:clamp(3rem,6vw,5rem);border:1px solid var(--line-l);padding:clamp(1.4rem,3vw,2.6rem)}
+.chartcard svg{width:100%;height:auto;overflow:visible}
+.chartcard .ax{stroke:var(--line-l);stroke-width:1}
+.chartcard text{font-family:var(--f-label);font-size:9.5px;letter-spacing:.16em;fill:rgba(239,227,210,.45)}
+.curve{fill:none;stroke-width:1.4;stroke-dasharray:1600;stroke-dashoffset:1600;transition:stroke-dashoffset 2.6s cubic-bezier(.3,.7,.2,1)}
+.in .curve{stroke-dashoffset:0}
+.curve--alt{stroke:var(--gold)}
+.curve--ct{stroke:var(--ember)}
+.band{opacity:0;transition:opacity 1.1s ease .5s}
+.in .band{opacity:1}
+.legend{display:flex;flex-wrap:wrap;gap:1.8rem;margin-top:1.6rem;font-family:var(--f-label);font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(239,227,210,.6)}
+.legend i{display:inline-block;width:20px;height:1px;margin-right:.55rem;vertical-align:middle}
+.note{margin-top:1.1rem;font-size:.72rem;color:var(--ash);letter-spacing:.04em}
+.footnotes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.4rem 2.6rem;margin-top:clamp(2.6rem,5vw,4rem);font-size:.74rem;line-height:1.95;color:var(--ash)}
+.footnotes b{color:rgba(239,227,210,.7);font-weight:400}
+
+/* ============ plans ============ */
+.plans__head{display:flex;flex-wrap:wrap;gap:1.5rem 3rem;align-items:flex-end;justify-content:space-between}
+.bands{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1rem,2.4vw,2rem);margin-top:clamp(3.4rem,6vw,5.5rem);align-items:start}
+.band-card{position:relative;border:1px solid var(--line-d);padding:clamp(1.5rem,2.6vw,2.3rem);background:var(--paper);transition:transform .8s cubic-bezier(.2,.8,.2,1),box-shadow .8s,background .6s}
+.band-card:nth-child(2){margin-top:clamp(1.4rem,4vw,3.6rem)}
+.band-card:nth-child(3){margin-top:clamp(2.8rem,8vw,7.2rem)}
+.band-card:hover{transform:translateY(-8px);box-shadow:0 26px 60px -34px rgba(27,18,13,.55)}
+.band-card--dark{background:var(--ink);color:var(--paper);border-color:var(--ink);box-shadow:0 30px 80px -40px rgba(176,81,47,.7)}
+.band-card--dark .band-card__time,.band-card--dark li{color:rgba(239,227,210,.72)}
+.band-card__idx{font-family:var(--f-display);font-size:.72rem;letter-spacing:.3em;color:var(--terra)}
+.band-card--dark .band-card__idx{color:var(--gold)}
+.band-card h3{font-family:var(--f-mincho);font-weight:400;font-size:clamp(1.4rem,2.4vw,1.95rem);letter-spacing:.08em;margin-top:.9rem}
+.band-card__lat{font-family:var(--f-display);font-style:italic;font-size:.95rem;letter-spacing:.1em;color:var(--ash-d);margin-top:.2rem}
+.band-card--dark .band-card__lat{color:var(--gold)}
+.band-card__time{margin-top:1.5rem;padding-top:1.2rem;border-top:1px solid var(--line-d);font-family:var(--f-label);font-size:.68rem;letter-spacing:.16em;line-height:2;color:var(--ash-d);font-variant-numeric:tabular-nums}
+.band-card--dark .band-card__time{border-color:var(--line-l)}
+.band-card__price{display:flex;align-items:baseline;gap:.5rem;margin-top:1.4rem;font-family:var(--f-display);font-size:clamp(1.7rem,3vw,2.3rem);font-weight:300}
+.band-card__price small{font-family:var(--f-body);font-size:.62rem;letter-spacing:.18em;color:var(--ash-d)}
+.band-card ul{margin-top:1.4rem;border-top:1px solid var(--line-d)}
+.band-card--dark ul{border-color:var(--line-l)}
+.band-card li{display:flex;gap:.85rem;padding:.72rem 0;border-bottom:1px solid var(--line-d);font-size:.8rem;line-height:1.85;color:var(--ash-d)}
+.band-card--dark li{border-color:var(--line-l)}
+.band-card li::before{content:"—";color:var(--terra);flex:none}
+.band-card--dark li::before{color:var(--ember)}
+.band-card__tag{position:absolute;top:0;right:clamp(1.5rem,2.6vw,2.3rem);transform:translateY(-50%);background:var(--terra);color:var(--paper);font-family:var(--f-label);font-size:.55rem;letter-spacing:.22em;text-transform:uppercase;padding:.32rem .7rem}
+.plans__aside{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1px;background:var(--line-d);margin-top:clamp(4rem,8vw,7rem)}
+.plans__aside>div{background:var(--paper-2);padding:1.7rem 1.5rem}
+.plans__aside h4{font-family:var(--f-mincho);font-weight:400;font-size:1.05rem;letter-spacing:.06em}
+.plans__aside p{margin-top:.7rem;font-size:.79rem;line-height:1.95;color:var(--ash-d)}
+
+/* ============ studio ============ */
+.studio__grid{display:grid;grid-template-columns:minmax(260px,.8fr) minmax(0,1.2fr);gap:clamp(2.5rem,6vw,6rem)}
+.specs{border-top:1px solid var(--line-l)}
+.spec{display:grid;grid-template-columns:6.2rem minmax(0,1fr);gap:1.4rem;padding:1.5rem 0;border-bottom:1px solid var(--line-l);transition:padding-left .6s,background .6s}
+.spec:hover{padding-left:.8rem;background:linear-gradient(90deg,rgba(222,122,56,.07),transparent)}
+.spec dt{font-family:var(--f-label);font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);padding-top:.3rem}
+.spec dd{font-size:.86rem;line-height:1.95;color:rgba(239,227,210,.78)}
+.spec dd b{font-family:var(--f-display);font-weight:300;font-size:1.18rem;letter-spacing:.05em;color:var(--paper)}
+.collage{display:grid;grid-template-columns:1fr 1fr;gap:clamp(.7rem,1.6vw,1.2rem)}
+.frame{position:relative;overflow:hidden;background:var(--ink-soft)}
+.frame img{width:100%;height:100%;object-fit:cover;aspect-ratio:4/5;filter:saturate(.75) contrast(1.05) brightness(.85);animation:kb 34s ease-in-out infinite alternate;transition:filter .9s}
+.frame:nth-child(2) img,.frame:nth-child(3) img{animation-duration:44s;animation-direction:alternate-reverse}
+.frame:hover img{filter:saturate(1) contrast(1.02) brightness(1)}
+.frame figcaption{position:absolute;inset:auto 0 0;padding:.85rem .95rem;font-family:var(--f-label);font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;color:var(--paper);background:linear-gradient(0deg,rgba(18,12,9,.82),transparent)}
+.frame--wide{grid-column:span 2}
+.frame--wide img{aspect-ratio:16/9}
+/* almanac */
+.almanac{margin-top:clamp(4rem,8vw,7rem)}
+.tbl-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:640px;text-align:left}
+caption{caption-side:bottom;text-align:left;padding-top:1.1rem;font-size:.72rem;color:var(--ash);letter-spacing:.04em}
+th,td{padding:.95rem 1rem;border-bottom:1px solid var(--line-l);font-weight:400;font-variant-numeric:tabular-nums}
+thead th{font-family:var(--f-label);font-size:.58rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);border-bottom-color:var(--line-l)}
+tbody tr{transition:background .45s,transform .45s}
+tbody tr:hover{background:rgba(222,122,56,.08)}
+tbody td:first-child{font-family:var(--f-mincho);font-size:1rem;letter-spacing:.08em}
+td.meter{width:32%}
+.meterbar{position:relative;height:3px;background:rgba(239,227,210,.14)}
+.meterbar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--terra),var(--gold));width:0;transition:width 1.4s cubic-bezier(.2,.8,.2,1)}
+
+/* ============ voices ============ */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1.4rem,3vw,2.6rem);margin-top:clamp(3.4rem,6vw,5.5rem)}
+.pc{position:relative;background:#F6EDE0;border:1px solid rgba(27,18,13,.14);padding:clamp(1.5rem,2.8vw,2.2rem);transition:transform .8s cubic-bezier(.2,.8,.2,1),box-shadow .8s}
+.pc:nth-child(1){transform:rotate(-1.4deg)}
+.pc:nth-child(2){transform:rotate(.9deg) translateY(clamp(1rem,3vw,2.6rem))}
+.pc:nth-child(3){transform:rotate(-.5deg) translateY(clamp(-.6rem,-1vw,0rem))}
+.pc:hover{transform:rotate(0) translateY(-10px);box-shadow:0 30px 70px -38px rgba(27,18,13,.6)}
+.pc blockquote{font-family:var(--f-mincho);font-size:clamp(.98rem,1.35vw,1.1rem);line-height:2.05;letter-spacing:.03em}
+.pc__who{margin-top:1.6rem;padding-top:1.1rem;border-top:1px solid rgba(27,18,13,.16);font-size:.74rem;letter-spacing:.1em;color:var(--ash-d);line-height:1.9}
+.pc__who b{display:block;font-family:var(--f-mincho);font-size:.95rem;font-weight:400;color:var(--ink);letter-spacing:.1em}
+.pc__stamp{position:absolute;top:clamp(1.5rem,2.8vw,2.2rem);right:clamp(1.5rem,2.8vw,2.2rem);width:52px;height:52px;border:1px solid rgba(176,81,47,.5);border-radius:50%;display:grid;place-items:center;font-family:var(--f-label);font-size:.5rem;letter-spacing:.1em;text-align:center;color:var(--terra);transform:rotate(-12deg);line-height:1.3}
+.pc__no{font-family:var(--f-display);font-size:.68rem;letter-spacing:.28em;color:var(--terra)}
+
+/* ============ faq ============ */
+.faq{border-top:1px solid var(--line-l);margin-top:clamp(3rem,6vw,4.5rem)}
+.qa{border-bottom:1px solid var(--line-l)}
+.qa__q{width:100%;display:flex;gap:1.5rem;align-items:baseline;text-align:left;padding:1.55rem 0;font-family:var(--f-mincho);font-size:clamp(.95rem,1.4vw,1.12rem);letter-spacing:.04em;transition:color .5s}
+.qa__q:hover{color:var(--gold)}
+.qa__q i{flex:none;font-family:var(--f-display);font-style:normal;font-size:.7rem;letter-spacing:.2em;color:var(--gold);padding-top:.25rem}
+.qa__q u{margin-left:auto;flex:none;width:16px;height:16px;position:relative;text-decoration:none}
+.qa__q u::before,.qa__q u::after{content:"";position:absolute;inset:50% 0 auto;height:1px;background:currentColor;transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.qa__q u::after{transform:rotate(90deg)}
+.qa.open .qa__q u::after{transform:rotate(0)}
+.qa__a{display:grid;grid-template-rows:0fr;transition:grid-template-rows .7s cubic-bezier(.2,.8,.2,1)}
+.qa.open .qa__a{grid-template-rows:1fr}
+.qa__a>div{overflow:hidden}
+.qa__a p{max-width:60ch;padding:0 0 1.8rem 3.4rem;font-size:.85rem;line-height:2.05;color:rgba(239,227,210,.72)}
+
+/* ============ reserve ============ */
+.res__grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:clamp(2.2rem,5vw,4.5rem);align-items:start;margin-top:clamp(3rem,6vw,4.8rem)}
+.field{margin-bottom:1.9rem}
+.field>label{display:block;font-family:var(--f-label);font-size:.58rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin-bottom:.7rem}
+.field input,.field select,.field textarea{
+  width:100%;background:transparent;border:0;border-bottom:1px solid var(--line-l);color:var(--paper);
+  font-family:var(--f-body);font-size:.95rem;padding:.6rem 0;transition:border-color .5s,background .5s}
+.field textarea{resize:vertical;min-height:72px}
+.field select{font-family:var(--f-body)}
+.field select option{background:var(--night)}
+.field input:focus,.field select:focus,.field textarea:focus{outline:0;border-color:var(--ember);background:linear-gradient(0deg,rgba(222,122,56,.08),transparent)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 1.6rem}
+.pick{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line-l);border:1px solid var(--line-l)}
+.pick label{background:var(--night);padding:1.05rem .9rem;cursor:pointer;transition:background .5s,color .5s;text-align:center}
+.pick input{position:absolute;opacity:0;pointer-events:none}
+.pick b{display:block;font-family:var(--f-mincho);font-size:.98rem;letter-spacing:.08em;font-weight:400}
+.pick s{display:block;text-decoration:none;font-family:var(--f-label);font-size:.55rem;letter-spacing:.16em;margin-top:.4rem;color:var(--ash);font-variant-numeric:tabular-nums}
+.pick label:hover{background:var(--ink-soft)}
+.pick input:checked+span{color:var(--night)}
+.pick label:has(input:checked){background:var(--gold);color:var(--night)}
+.pick label:has(input:checked) s{color:rgba(18,12,9,.7)}
+.receipt{border:1px solid var(--line-l);padding:clamp(1.5rem,3vw,2.2rem);background:linear-gradient(180deg,rgba(222,122,56,.06),transparent)}
+.receipt h3{font-family:var(--f-label);font-size:.62rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
+.receipt dl{margin-top:1.6rem}
+.receipt .row{display:flex;justify-content:space-between;gap:1.5rem;padding:.8rem 0;border-bottom:1px dotted rgba(239,227,210,.2)}
+.receipt dt{font-family:var(--f-label);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ash)}
+.receipt dd{text-align:right;font-size:.86rem;font-variant-numeric:tabular-nums}
+.receipt__done{display:none;margin-top:1.5rem;font-size:.82rem;line-height:2;color:var(--gold)}
+.receipt.is-done{border-color:var(--gold)}
+.receipt.is-done .receipt__done{display:block}
+.err{color:#E9704A;font-size:.72rem;letter-spacing:.06em;margin-top:.5rem;display:none}
+.err.on{display:block}
+
+/* ============ footer ============ */
+footer{background:var(--ink);border-top:1px solid var(--line-l);padding-top:clamp(4rem,8vw,7rem)}
+.foot__word{font-family:var(--f-display);font-size:clamp(3.4rem,17vw,15rem);line-height:.86;letter-spacing:.02em;color:transparent;-webkit-text-stroke:1px rgba(239,227,210,.28);white-space:nowrap;overflow:hidden}
+.foot__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:2.4rem 2rem;margin-top:clamp(3rem,6vw,5rem);padding-bottom:clamp(2.4rem,5vw,4rem)}
+.foot__grid h4{font-family:var(--f-label);font-size:.58rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin-bottom:1.1rem}
+.foot__grid p,.foot__grid a{font-size:.82rem;line-height:2.1;color:rgba(239,227,210,.66);display:block}
+.foot__grid a{position:relative;width:fit-content;transition:color .5s,letter-spacing .5s}
+.foot__grid a:hover{color:var(--gold);letter-spacing:.08em}
+.foot__bar{display:flex;flex-wrap:wrap;gap:1rem 2.5rem;justify-content:space-between;padding-block:1.5rem;border-top:1px solid var(--line-l);font-family:var(--f-label);font-size:.56rem;letter-spacing:.22em;text-transform:uppercase;color:var(--ash-d)}
+
+/* ============ responsive ============ */
+@media(max-width:1080px){
+  .nav__links{display:none}
+  .burger{display:block}
+  .nav.open .nav__links{display:flex;position:fixed;inset:auto 0 0;flex-direction:column;gap:0;background:rgba(18,12,9,.97);backdrop-filter:blur(16px);padding:1.5rem var(--pad) 2.5rem;margin:0}
+  .nav.open .nav__links a{padding:1.1rem 0;border-bottom:1px solid var(--line-l);font-size:.78rem;opacity:1}
+  .clock{margin-left:auto}
+  .nav .clock{margin-left:1.2rem}
+  .nav .btn{display:none}
+  .stats{grid-template-columns:1fr 1fr}
+  .bands{grid-template-columns:1fr}
+  .band-card:nth-child(n){margin-top:0}
+  .cards{grid-template-columns:1fr}
+  .pc:nth-child(n){transform:none}
+  .phil__grid,.studio__grid,.sci__head,.res__grid{grid-template-columns:1fr}
+  .phil__stick{position:static}
+  .two{grid-template-columns:1fr}
+  .hero__top{position:static;order:-1;margin-bottom:2.2rem;padding-top:6rem}
+  .dial{width:84px;height:46px}
+}
+@media(max-width:620px){
+  .stats{grid-template-columns:1fr}
+  .collage{grid-template-columns:1fr}
+  .frame--wide{grid-column:auto}
+  .spec{grid-template-columns:1fr;gap:.4rem}
+  .qa__a p{padding-left:0}
+  .foot__word{-webkit-text-stroke:.6px rgba(239,227,210,.3)}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  html{scroll-behavior:auto}
+  [data-rv]{opacity:1!important;transform:none!important}
+  .ml>span{transform:none!important}
+  .curve{stroke-dashoffset:0!important}
+  .band{opacity:1!important}
+  .grain{animation:none}
+}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="nav" id="nav">
+  <a class="brand" href="#top">NISHIBI<b>西日</b></a>
+  <nav class="nav__links" aria-label="メイン">
+    <a href="#philosophy">思想</a>
+    <a href="#science">科学</a>
+    <a href="#plans">時間帯</a>
+    <a href="#studio">空間</a>
+    <a href="#voices">声</a>
+    <a href="#faq">問答</a>
+  </nav>
+  <div class="clock" aria-live="off">
+    <b id="clock">--:--</b>
+    <s id="clockSub">東京 / 計測中</s>
+  </div>
+  <a class="btn btn--sm" href="#reserve"><span>予約</span></a>
+  <button class="burger" id="burger" aria-label="メニュー" aria-expanded="false"><i></i><i></i><i></i></button>
+  <span class="sunline" id="sunline" aria-hidden="true"></span>
+</header>
+
+<main>
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="top">
+  <div class="hero__frame">
+    <img src="https://picsum.photos/seed/dusk-window-light-interior/1800/1100" alt="夕方の光が差し込む室内">
+    <div class="hero__veil"></div>
+  </div>
+  <div class="gridlines" aria-hidden="true"></div>
+  <div class="beam" id="beam" aria-hidden="true">
+    <div class="beam__light"></div>
+    <div class="beam__mullion"></div>
+  </div>
+  <div class="pool" aria-hidden="true"></div>
+
+  <div class="hero__top">
+    <svg class="dial" id="dial" viewBox="0 0 120 64" aria-hidden="true">
+      <path id="arc" d="M8,58 A52,52 0 0 1 112,58" fill="none" stroke="currentColor" stroke-width=".8"/>
+      <line x1="4" y1="58.5" x2="116" y2="58.5" stroke="currentColor" stroke-width=".5" opacity=".6"/>
+      <circle id="dot" cx="60" cy="6" r="3.2" fill="#D6A25E"/>
+    </svg>
+    <span id="status">西日 計測中</span>
+  </div>
+
+  <div class="hero__inner">
+    <p class="eyebrow" data-rv>Western Sun Studio — Est. 2019, Nishiazabu</p>
+    <h1>
+      <span class="ml"><span style="--d:.05s">太陽が、</span></span>
+      <span class="ml"><span style="--d:.16s">もっとも名残惜しく</span></span>
+      <span class="ml"><span style="--d:.27s"><span class="g">触れる</span>時間。</span></span>
+    </h1>
+    <p class="hero__sub" data-rv style="--d:.42s">
+      UVランプには、一秒も触れない。南西向きの全面窓 4.2m、一枚硝子、無音。
+      機械を積まない日焼けスタジオは、傾いた光だけを正確に測って、あなたを横たえる。
+    </p>
+    <div class="hero__cta" data-rv style="--d:.54s">
+      <a class="btn btn--solid" href="#plans"><span>時間帯を見る</span><i></i></a>
+      <a class="btn" href="#philosophy"><span>思想を読む</span><i></i></a>
+    </div>
+
+    <div class="hero__foot">
+      <div>本日 東京 — 日没 <b id="sunset">--:--</b> ／ 西日 開始 <b id="sunsetStart">--:--</b></div>
+      <div>定員 一日 <b>六名</b> ／ 曇天 <b>休廊</b></div>
+      <div class="scrollcue"><i></i><span>Scroll</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TICKER ============ -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker__row" id="ticker"></div>
+</div>
+
+<!-- ============ PHILOSOPHY ============ -->
+<section class="sect paper" id="philosophy">
+  <div class="wrap phil__grid">
+    <div class="phil__stick">
+      <p class="num">01 — Philosophy</p>
+      <h2 class="big" style="margin-top:1.6rem">
+        <span class="ml"><span>西日は、一日で</span></span>
+        <span class="ml"><span style="--d:.1s">唯一、太陽が</span></span>
+        <span class="ml"><span style="--d:.2s">去っていく光である。</span></span>
+      </h2>
+      <blockquote class="phil__quote" data-rv style="--d:.3s">
+        「私たちは光を設計したのではない。<br>ただ、窓の向きと、45分を決めただけだ。」
+        <footer>設計 — 暮色建築研究所 / 2019</footer>
+      </blockquote>
+    </div>
+
+    <div class="phil__body">
+      <p class="dropcap" data-rv>
+        真午の光は垂直で、無関心だ。肩に当たって、地面を叩き、何も置きずに去っていく。
+        これに対し西日は水平に、長く、部屋の奥まで届く。それは照射ではなく、接触に近い。
+        人は傾いた光のなかでだけ、ゆっくりと熱を覚える。
+      </p>
+      <p data-rv style="--d:.1s">
+        東洋の建築はこの傾きを長く知っていた。西向きの縁側、障子を透過した残照、夕霧の呼称。
+        自然光を「時間帯」として所有する発想である。我々はそれを、機械ではなく、
+        Low-E コーティングを施さない一枚硝子と、厚さ六〇ミリの欅の床だけで再構成した。
+      </p>
+      <p data-rv style="--d:.18s">
+        ランプは日焼けを作業にする。何分、何度、何段。西日は日焼けを経過にする。
+        四十五分、あなたは動かない。動くのは太陽のほうで、光の輪郭は床から壁へ、
+        壁から瞼の裏へと、ゆっくりと移動してゆく。
+      </p>
+      <p data-rv style="--d:.24s">
+        従って我々が発注するのは、紫外線ではない。照射ではない。
+        太陽との、長さの決まった別れである。
+      </p>
+      <dl class="phil__meta" data-rv style="--d:.3s">
+        <div><dt>窓 / Opening</dt><dd>南西 4.2 × 2.7 m</dd></div>
+        <div><dt>滞在 / Duration</dt><dd>18 — 45 分</dd></div>
+        <div><dt>機械 / Machines</dt><dd>0 台</dd></div>
+        <div><dt>電源 / Power</dt><dd>照明 2 灯のみ</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SCIENCE ============ -->
+<section class="sect" id="science">
+  <div class="wrap">
+    <div class="sci__head">
+      <div>
+        <p class="num">02 — Science</p>
+        <h2 class="big" style="margin-top:1.6rem">
+          <span class="ml"><span>傾きは、<em>数値</em>である。</span></span>
+        </h2>
+      </div>
+      <p class="lede" data-rv>
+        西日は気まぐれな情緒ではない。太陽高度が15度を切る七十二分間、光は定数repeatで、
+        予測可能な物理として室内に流入する。以下は西日光医学研究所（2019–2024、n=148）の測定値。
+      </p>
+    </div>
+
+    <div class="stats">
+      <div class="stat" data-rv>
+        <em>近赤外線比率</em>
+        <b><span class="cnt" data-to="1.8" data-dec="1">0.0</span><s>倍</s></b>
+        <p>正午比。皮膚表層でなく深部まで届く波長帯の占比が、日没前に最大となる。</p>
+      </div>
+      <div class="stat" data-rv style="--d:.08s">
+        <em>色温度</em>
+        <b><span class="cnt" data-to="2340" data-dec="0">0</span><s>K</s></b>
+        <p>茜時間の平均。ヘモグロビンとメラニンが同時に反応する領域で、色の“濃さ”より“深さ”が出る。</p>
+      </div>
+      <div class="stat" data-rv style="--d:.16s">
+        <em>UV インデックス</em>
+        <b><span class="cnt" data-to="27" data-dec="0">0</span><s>%</s></b>
+        <p>正午 12:00 に対する 16:40 時点の比。同じ黒化を、弱い負荷で、時間をかけて得る。</p>
+      </div>
+      <div class="stat" data-rv style="--d:.24s">
+        <em>分泌開始の早期化</em>
+        <b>+<span class="cnt" data-to="41" data-dec="0">0</span><s>分</s></b>
+        <p>夕方の強光曝露を八週間継続した群で、メラトニン分泌時刻が平均41分前倒し。</p>
+      </div>
+    </div>
+
+    <div class="chartcard" data-rv id="chartcard">
+      <svg viewBox="0 0 720 260" role="img" aria-label="正午から日没までの日の高度と色温度の推移">
+        <line class="ax" x1="60" y1="210" x2="690" y2="210"/>
+        <line class="ax" x1="60" y1="40" x2="60" y2="210"/>
+        <g class="band">
+          <rect x="487" y="40" width="53" height="170" fill="#D6A25E" opacity=".1"/>
+          <rect x="540" y="40" width="60" height="170" fill="#DE7A38" opacity=".16"/>
+          <rect x="600" y="40" width="30" height="170" fill="#B0512F" opacity=".22"/>
+          <text x="490" y="32" fill="#D6A25E">黄金</text>
+          <text x="543" y="32" fill="#DE7A38">茜</text>
+          <text x="603" y="32" fill="#B0512F">残光</text>
+        </g>
+        <path class="curve curve--alt" d="M60,46 L150,80 L240,117 L330,151 L420,182 L510,204 L600,210 L690,210"/>
+        <path class="curve curve--ct" d="M60,51 L150,66 L240,80 L330,97 L420,114 L510,128 L600,144 L690,151" stroke-dasharray="6 4"/>
+        <g>
+          <text x="56" y="230">12:00</text>
+          <text x="146" y="230">13:00</text>
+          <text x="236" y="230">14:00</text>
+          <text x="326" y="230">15:00</text>
+          <text x="416" y="230">16:00</text>
+          <text x="506" y="230">17:00</text>
+          <text x="596" y="230">18:00</text>
+          <text x="662" y="230">19:00</text>
+          <text x="6" y="50">60° / 6000K</text>
+          <text x="6" y="208">0° / 0K</text>
+        </g>
+        <circle cx="600" cy="210" r="2.6" fill="#D6A25E"/>
+      </svg>
+      <div class="legend">
+        <span><i style="background:#D6A25E"></i>日の高度</span>
+        <span><i style="background:#DE7A38"></i>色温度</span>
+        <span>例 — 春分 / 東京 / 快晴</span>
+      </div>
+      <p class="note">窓に有効な西日が当たるのは、図の三帯あわせて <b style="color:var(--paper)">1時間27分</b>。このために一日を待つ。
+      <br>※ 数値は西日光医学研究所「傾斜日射と生体反応に関する長期追跡」第4報告より抜粋。個差あり。</p>
+    </div>
+
+    <div class="footnotes" data-rv>
+      <p><b>皮膚深部温度 / +2.4℃</b><br>茜時間 15分曝露後、腹部深部温度は正午比で2.4℃高く推移。発汗は平均6分後に開始。</p>
+      <p><b>黒化の立ち上がり / 遅延 9時間</b><br>西日による黒化は曝露当日ではなく翌朝に現れる。重ねるほど輪郭がぼやけない。</p>
+      <p><b>硝子透過率 / 62%</b><br>紫外線 A波のみを透過する 6mm 一枚硝子。B波は 4% 以下。火傷の要因を先に落とす。</p>
+      <p><b>西日の年間平均 / 2時間47分</b><br>東京・南西向き・遮蔽物なしの窓で計測。雨天 0分。曇天 0分（休廊）。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PLANS ============ -->
+<section class="sect sect--mid paper" id="plans">
+  <div class="wrap">
+    <div class="plans__head">
+      <div>
+        <p class="num">03 — Time Bands</p>
+        <h2 class="big" style="margin-top:1.6rem">
+          <span class="ml"><span>三分の</span></span>
+          <span class="ml"><span style="--d:.1s">夕暮れ。</span></span>
+        </h2>
+      </div>
+      <p class="lede" data-rv>
+        料金は曜日ではなく、日没時刻が決める。同じ時間帯でも、季節によって長さが変わるため、
+        毎月の運用時刻は暦に準ずる。全プラン、予約は一日六名まで。
+      </p>
+    </div>
+
+    <div class="bands">
+      <article class="band-card" data-rv>
+        <span class="band-card__idx">Band 01</span>
+        <h3>黄金時間</h3>
+        <p class="band-card__lat">Golden Hour</p>
+        <div class="band-card__time">
+          日没 −75分 ／ −40分<br>
+          所要 45分 ・ 定員 2名 ・ 長椅子2
+        </div>
+        <p class="band-card__price">¥22,000<small>税込・席料込</small></p>
+        <ul>
+          <li>冷製麦茶と燻塩の一皿</li>
+          <li>真鍮のアイマスク（持ち帰り可）</li>
+          <li>光量キャプション付き記録プリント 1枚</li>
+          <li>着替え 15分 / リネン貸出</li>
+        </ul>
+      </article>
+
+      <article class="band-card band-card--dark" data-rv style="--d:.1s">
+        <span class="band-card__tag">一枠のみ</span>
+        <span class="band-card__idx">Band 02</span>
+        <h3>茜時間</h3>
+        <p class="band-card__lat">Sienna Hour</p>
+        <div class="band-card__time">
+          日没 −40分 ／ 日没<br>
+          所要 40分 ・ 定員 1名 ・ 完全個室
+        </div>
+        <p class="band-card__price">¥34,000<small>税込・席料込</small></p>
+        <ul>
+          <li>窓全開。光量 最大帯を単独で占有</li>
+          <li>光量計測と黒化カルテ（西日帖に記載）</li>
+          <li>夕餉の一皿 — 南瓜・燻製・日本酒一合</li>
+          <li>次回以降の優先枠 二席</li>
+          <li>退廊は暗転後、案内係付き</li>
+        </ul>
+      </article>
+
+      <article class="band-card" data-rv style="--d:.2s">
+        <span class="band-card__idx">Band 03</span>
+        <h3>残光時間</h3>
+        <p class="band-card__lat">Afterglow</p>
+        <div class="band-card__time">
+          日没 ／ 日没 +18分<br>
+          所要 18分 ・ 定員 3名 ・ 立礼
+        </div>
+        <p class="band-card__price">¥18,000<small>税込・席料込</small></p>
+        <ul>
+          <li>焼かない時間。触れるだけの光</li>
+          <li>温壺の茶、燻した香</li>
+          <li>静座 — 会話・端末・時計の持ち込み不可</li>
+          <li>初回はこちらを推奨</li>
+        </ul>
+      </article>
+    </div>
+
+    <div class="plans__aside">
+      <div data-rv>
+        <h4>西日帖 — 定期</h4>
+        <p>六回分 ¥118,000。有効期限は、購入日から翌年の冬至の日没まで。使い切れなければ、それはその年の夕方がそれだけ少なかったということになる。</p>
+      </div>
+      <div data-rv style="--d:.08s">
+        <h4>貸切 — 窓の所有</h4>
+        <p>一日四組まで。空間ごと一日 ¥420,000 より。촬影像・取材・沈黙のための二時間。光の方向が変わるため、什器の移動は事前に相談いただきたい。</p>
+      </div>
+      <div data-rv style="--d:.16s">
+        <h4>注意事項</h4>
+        <p>曇天・雨天・黄砂・煙霧の場合は休廊とし、前日 17:00 までに判断して全額を返金する。西日は人造できない。代替の照明は用意していない。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STUDIO ============ -->
+<section class="sect" id="studio">
+  <div class="wrap">
+    <div class="studio__grid">
+      <div>
+        <p class="num">04 — Studio</p>
+        <h2 class="big" style="margin-top:1.6rem">
+          <span class="ml"><span>調度は</span></span>
+          <span class="ml"><span style="--d:.1s">三つだけ。</span></span>
+        </h2>
+        <p class="lede" data-rv style="margin-top:1.8rem">
+          西麻布の裏通り、二階。エレベータはない。
+          階段を上がると、まず床の温度がわかる。それから音が消える。
+        </p>
+        <dl class="specs" style="margin-top:clamp(2.4rem,5vw,3.6rem)">
+          <div class="spec" data-rv><dt>開口</dt><dd><b>4.2 × 2.7 m</b><br>南西向き全面窓。6mm 一枚硝子、Low-E 施工なし。可動の欅庇により、夏は光を切って涼のみ、冬は奥行き 5.4m まで光を通す。</dd></div>
+          <div class="spec" data-rv style="--d:.06s"><dt>床</dt><dd><b>欅 無垢 60mm</b><br>樹齢 120年、解体材の再利用。西日の蓄熱で、冬でも素足で横たわれる。軋みは仕様で、補修しない。</dd></div>
+          <div class="spec" data-rv style="--d:.12s"><dt>音</dt><dd><b>常時 22 dB</b><br>防音等級 NC-20。BGM は流さない。聞こえるのは、外の遠い幹線道路と、硝子の外側で鳴る風だけ。</dd></div>
+          <div class="spec" data-rv style="--d:.18s"><dt>壁 / 天井</dt><dd><b>手漆喰 3 層</b><br>西日を乱反射させて拡散し、影の輪郭を消す。照明は 2 灯、どちらも調光下限 3%。</dd></div>
+          <div class="spec" data-rv style="--d:.24s"><dt>空気</dt><dd><b>埋設管自然給気</b><br>地下 1.8m を通した給気で機械換気を廃止。運転音ゼロ。夏季は地中の温度で予冷される。</dd></div>
+          <div class="spec" data-rv style="--d:.3s"><dt>調度</dt><dd><b>長椅子 1 / 椅子 2 / 真鍮時計 1</b><br>鏡、掲示、待合の雑誌、電源コンセントの増設は、いずれも置いていない。</dd></div>
+        </dl>
+      </div>
+
+      <div>
+        <div class="collage">
+          <figure class="frame" data-rv>
+            <img src="https://picsum.photos/seed/west-window-dusk-interior/900/1125" alt="夕方の窓から光が伸びる室内">
+            <figcaption>開口 / 16:52</figcaption>
+          </figure>
+          <figure class="frame" data-rv style="--d:.08s">
+            <img src="https://picsum.photos/seed/solid-keyaki-wood-floor-light/900/1125" alt="無垢材の床に落ちる光">
+            <figcaption>欅床 / 17:14</figcaption>
+          </figure>
+          <figure class="frame frame--wide" data-rv style="--d:.16s">
+            <img src="https://picsum.photos/seed/shikkui-wall-shadow-diffusion/1600/900" alt="漆喰の壁に拡散する光">
+            <figcaption>漆喰 3 層 / 17:38 — 茜時間</figcaption>
+          </figure>
+          <figure class="frame" data-rv style="--d:.24s">
+            <img src="https://picsum.photos/seed/brass-clock-window-silence/900/1125" alt="真鍮の時計と窓">
+            <figcaption>真鍮時計 / 日没</figcaption>
+          </figure>
+          <figure class="frame" data-rv style="--d:.3s">
+            <img src="https://picsum.photos/seed/linen-lounger-afterglow/900/1125" alt="リネンの長椅子と残光">
+            <figcaption>長椅子 / 日没 + 9分</figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+
+    <div class="almanac" id="almanac">
+      <p class="num">04.2 — Almanac</p>
+      <h3 class="big" style="font-size:clamp(1.3rem,2.6vw,2rem);margin-top:1.2rem" data-rv>暦が、枠を決める。</h3>
+      <div class="tbl-scroll" data-rv style="--d:.08s">
+        <table>
+          <caption>東京・南西向き開口における年間平均。満席率は一昨年同期の実績値。</caption>
+          <thead>
+            <tr><th>月</th><th>日没</th><th>西日 開始</th><th>有効時間</th><th class="meter">満席率</th></tr>
+          </thead>
+          <tbody id="almBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VOICES ============ -->
+<section class="sect paper" id="voices">
+  <div class="wrap">
+    <p class="num">05 — Testimony</p>
+    <h2 class="big" style="margin-top:1.6rem;max-width:28ch">
+      <span class="ml"><span>何も起きなかった、</span></span>
+      <span class="ml"><span style="--d:.1s">という報告。</span></span>
+    </h2>
+
+    <div class="cards">
+      <figure class="pc" data-rv>
+        <span class="pc__stamp">茜<br>時間</span>
+        <p class="pc__no">No. 014</p>
+        <blockquote>
+          床に落ちる光の輪郭が、毎日、少しずつ違う。それを眺めるために四十分を払う価値が、この街にはまだ残っていた。退室時に時計を見なかったことに気づいた。
+        </blockquote>
+        <figcaption class="pc__who"><b>K. Arisugawa</b>建築家 / 44歳 / 六回利用</figcaption>
+      </figure>
+      <figure class="pc" data-rv style="--d:.1s">
+        <span class="pc__stamp">黄金<br>時間</span>
+        <p class="pc__no">No. 227</p>
+        <blockquote>
+          西日には匂いがある。木が温まる、あの匂い。調香の仕事を十五年やって、室内の光が香りの設計まで変えるのだと初めて知った。
+        </blockquote>
+        <figcaption class="pc__who"><b>M. Setsugekka</b>調香師 / 37歳 / 二回利用</figcaption>
+      </figure>
+      <figure class="pc" data-rv style="--d:.2s">
+        <span class="pc__stamp">残光<br>時間</span>
+        <p class="pc__no">No. 391</p>
+        <blockquote>
+          会話もなく、音楽もなく、staff は最後まで一度も口を開かなかった。帰りの電車で、初めて居眠りしなかった。あれから毎週、残光_only で通っている。
+        </blockquote>
+        <figcaption class="pc__who"><b>T. Kurousa</b>編集者 / 58歳 / 十一回利用</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="sect" id="faq">
+  <div class="wrap">
+    <p class="num">06 — Questions</p>
+    <h2 class="big" style="margin-top:1.6rem" data-rv>よくある問答</h2>
+    <div class="faq" id="faqList">
+      <div class="qa">
+        <button class="qa__q"><i>01</i><span>曇りや雨の日はどうなりますか。</span><u></u></button>
+        <div class="qa__a"><div><p>休廊いたします。西日は人造できない。前日 17:00 までに気象データで判断し、全額を返金する。振替は任意で、優先枠をそのまま保持する。なお年間の休廊は平均 47日。</p></div></div>
+      </div>
+      <div class="qa">
+        <button class="qa__q"><i>02</i><span>本当に焼けますか。ランプより弱いのでは。</span><u></u></button>
+        <div class="qa__a"><div><p>焼ける。茜時間の 45 分は、一般的なランプの 18 分相当の黒化を、9 時間後の遅延でもたらす。違いは立ち上がりの緩やかさと、赤みの出にくさです。均一な濃度は 4 — 6 回の継続で得られる。</p></div></div>
+      </div>
+      <div class="qa">
+        <button class="qa__q"><i>03</i><span>服装を教えてください。</span><u></u></button>
+        <div class="qa__a"><div><p>リネンの一枚をご用意している。着用でも非着用でも、窓は区別しない。ただし日焼け跡を残したくない部位は布で覆うこと。硝子は UVA のみ透過するため、火傷のリスクは低い。</p></div></div>
+      </div>
+      <div class="qa">
+        <button class="qa__q"><i>04</i><span>予約はいつから取れますか。</span><u></u></button>
+        <div class="qa__a"><div><p>翌月分を毎月 1 日 12:00 に公開。開始時刻は日没基準のため、予約日によって毎日変わる。4 月は 17:08、12 月は 15:22。その差 1 時間 46 分が、この店の繁忙期を決めている。</p></div></div>
+      </div>
+      <div class="qa">
+        <button class="qa__q"><i>05</i><span>機器の安全基準と保守について。</span><u></u></button>
+        <div class="qa__a"><div><p>機器がありません。従って点検項目は三つ — 硝子の埃、庇の角度、時計の精度。いずれも毎朝、開廊 90 分前に行う。</p></div></div>
+      </div>
+      <div class="qa">
+        <button class="qa__q"><i>06</i><span>男性利用・同伴は可能ですか。</span><u></u></button>
+        <div class="qa__a"><div><p>性別による区別はない。同伴は茜時間のみ不可（定員一名のため）。黄金時間・残光時間は二名まで同時。ただし会話は、どちらの帯でも推奨していない。</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RESERVE ============ -->
+<section class="sect" id="reserve" style="background:linear-gradient(180deg,var(--ink),#1A100A 60%,var(--night))">
+  <div class="wrap">
+    <p class="num">07 — Reserve</p>
+    <h2 class="big" style="margin-top:1.6rem;max-width:26ch">
+      <span class="ml"><span>枠は、</span></span>
+      <span class="ml"><span style="--d:.1s">窓が決める。</span></span>
+    </h2>
+
+    <div class="res__grid">
+      <form id="resForm" novalidate>
+        <div class="two">
+          <div class="field">
+            <label for="name">氏名 / Name</label>
+            <input id="name" name="name" type="text" autocomplete="name" placeholder="西日 太郎">
+          </div>
+          <div class="field">
+            <label for="mail">連絡先 / Email</label>
+            <input id="mail" name="mail" type="email" autocomplete="email" placeholder="name@example.jp">
+          </div>
+        </div>
+        <div class="two">
+          <div class="field">
+            <label for="date">希望日 / Date</label>
+            <input id="date" name="date" type="date">
+          </div>
+          <div class="field">
+            <label for="pax">人数 / Party</label>
+            <select id="pax" name="pax">
+              <option>1 名</option><option>2 名</option><option>3 名（残光時間のみ）</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>時間帯 / Band</label>
+          <div class="pick" id="pick">
+            <label><input type="radio" name="band" value="golden" checked><span><b>黄金時間</b><s data-band="golden">--:-- – --:--</s></span></label>
+            <label><input type="radio" name="band" value="sienna"><span><b>茜時間</b><s data-band="sienna">--:-- – --:--</s></span></label>
+            <label><input type="radio" name="band" value="afterglow"><span><b>残光時間</b><s data-band="afterglow">--:-- – --:--</s></span></label>
+          </div>
+        </div>
+        <div class="field">
+          <label for="note">特記 / Note</label>
+          <textarea id="note" name="note" placeholder="日焼け歴、服用中の医薬品、沈黙についてのご希望など"></textarea>
+        </div>
+        <p class="err" id="err">氏名・連絡先・希望日をご入力ください。光は、それから測ります。</p>
+        <button class="btn btn--solid" type="submit" style="margin-top:.6rem"><span>この枠を出す</span><i></i></button>
+        <p style="margin-top:1.6rem;font-size:.74rem;color:var(--ash);max-width:52ch">
+          送信後、営業時間内に案内を送る。曇天が予測される場合は、この時点で休廊を通知する。キャンセルは前日 17:00 まで。
+        </p>
+      </form>
+
+      <aside class="receipt" id="receipt" aria-live="polite">
+        <h3>Tentative — 仮台紙</h3>
+        <dl>
+          <div class="row"><dt>Band</dt><dd id="rBand">黄金時間</dd></div>
+          <div class="row"><dt>Window</dt><dd id="rWin">--:– – --:–</dd></div>
+          <div class="row"><dt>Date</dt><dd id="rDate">未定</dd></div>
+          <div class="row"><dt>Party</dt><dd id="rPax">1 名</dd></div>
+          <div class="row"><dt>Guest</dt><dd id="rName">—</dd></div>
+          <div class="row"><dt>光量（予測）</dt><dd id="rLux">中 / 62%</dd></div>
+          <div class="row"><dt>料金</dt><dd id="rFee">¥22,000</dd></div>
+        </dl>
+        <p class="receipt__done" id="rDone"></p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot__word" aria-hidden="true">NISHIBI</div>
+    <div class="foot__grid">
+      <div>
+        <h4>Studio</h4>
+        <p>西日館 2F<br>東京都港区西麻布 四丁目 8 番 2 号<br>TEL 03-6420-0016</p>
+      </div>
+      <div>
+        <h4>Hours</h4>
+        <p>14:00 — 日没後 20 分<br>定休日：曇天・雨天・<br>夏季点検期間（8/13 – 8/19）</p>
+      </div>
+      <div>
+        <h4>Index</h4>
+        <a href="#philosophy">思想 / Philosophy</a>
+        <a href="#science">科学 / Science</a>
+        <a href="#plans">時間帯 / Plans</a>
+        <a href="#studio">空間 / Studio</a>
+        <a href="#reserve">予約 / Reserve</a>
+      </div>
+      <div>
+        <h4>Elsewhere</h4>
+        <a href="#" rel="noopener">Instagram / @nishibi.studio</a>
+        <a href="#" rel="noopener">The Journal — 日暮れ手帖</a>
+        <a href="#" rel="noopener">Newsletter — 月一回、日没一覧</a>
+        <a href="#" rel="noopener">Press Kit (PDF 6.4MB)</a>
+      </div>
+    </div>
+    <div class="foot__bar">
+      <span>© 2025 NISHIBI Western Sun Studio</span>
+      <span>本サイトの色温度は 2,340K に合わせてあります</span>
+      <span>Design — 暮色建築研究所 / Light — 太陽</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  /* ---------- reveal ---------- */
+  var targets = document.querySelectorAll('[data-rv], .ml');
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    },{rootMargin:'0px 0px -12% 0px',threshold:.15});
+    targets.forEach(function(t){ io.observe(t); });
+    // headings containing masked lines need .in on parent
+    document.querySelectorAll('h1, h2, h3').forEach(function(h){
+      if(h.querySelector('.ml')){
+        if(!('IntersectionObserver' in window)){h.classList.add('in');return;}
+        var o=new IntersectionObserver(function(en){en.forEach(function(x){if(x.isIntersecting){x.target.classList.add('in');o.disconnect();}})},{threshold:.25});
+        o.observe(h);
+      }
+    });
+  }else{
+    targets.forEach(function(t){t.classList.add('in');});
+  }
+
+  /* ---------- counters ---------- */
+  function fmt(v,d){ return v.toLocaleString('ja-JP',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+  var cnts = document.querySelectorAll('.cnt');
+  function runCount(el){
+    var to = parseFloat(el.dataset.to), d = parseInt(el.dataset.dec||0,10);
+    if(reduce.matches){ el.textContent = fmt(to,d); return; }
+    var t0 = performance.now(), dur = 1700;
+    function tick(t){
+      var p = Math.min(1,(t-t0)/dur), e = 1-Math.pow(1-p,3);
+      el.textContent = fmt(to*e,d);
+      if(p<1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  if('IntersectionObserver' in window){
+    var co = new IntersectionObserver(function(en){en.forEach(function(x){if(x.isIntersecting){runCount(x.target);co.unobserve(x.target);}})},{threshold:.6});
+    cnts.forEach(function(c){co.observe(c);});
+  } else cnts.forEach(runCount);
+
+  /* ---------- ticker ---------- */
+  var tickerItems = ['NISHIBI — Western Sun Studio','本日の日没 — 東京','西日は人造できません','定員 一日六名','UV INDEX 3.2 / 正午比 27%','色温度 2,340K','曇天休廊','南西 4.2 × 2.7 m','常時 22 dB','機械 0 台','Nishiazabu, Tokyo'];
+  var tk = document.getElementById('ticker');
+  if(tk){
+    var html = tickerItems.map(function(s){return '<span>'+s+'</span>';}).join('');
+    tk.innerHTML = html + html;
+  }
+
+  /* ---------- almanac ---------- */
+  var ALM = [
+    ['1月','16:58','15:35','1時間23分',94],['2月','17:30','16:05','1時間25分',96],
+    ['3月','18:05','16:38','1時間27分',99],['4月','18:38','17:08','1時間30分',100],
+    ['5月','19:05','17:33','1時間32分',98],['6月','19:20','17:52','1時間28分',88],
+    ['7月','19:10','17:45','1時間25分',84],['8月','18:45','17:22','1時間23分',92],
+    ['9月','18:05','16:44','1時間21分',97],['10月','17:25','16:07','1時間18分',99],
+    ['11月','16:50','15:36','1時間14分',93],['12月','16:32','15:22','1時間10分',95]
+  ];
+  var body = document.getElementById('almBody');
+  if(body){
+    body.innerHTML = ALM.map(function(r){
+      return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td>'+r[3]+'</td>'+
+             '<td class="meter"><div class="meterbar"><i data-w="'+r[4]+'"></i></div>'+
+             '<span style="font-family:var(--f-label);font-size:.6rem;letter-spacing:.14em;display:block;margin-top:.45rem;color:var(--ash)">'+r[4]+'%</span></td></tr>';
+    }).join('');
+    var bars = body.querySelectorAll('.meterbar i');
+    if('IntersectionObserver' in window){
+      var bo = new IntersectionObserver(function(en){en.forEach(function(x){
+        if(x.isIntersecting){ x.target.style.width = x.target.dataset.w+'%'; bo.unobserve(x.target);} });},{threshold:.4});
+      bars.forEach(function(b){bo.observe(b);});
+    } else bars.forEach(function(b){b.style.width=b.dataset.w+'%';});
+  }
+
+  /* ---------- sun engine ---------- */
+  var SUNSET = {1:'16:58',2:'17:30',3:'18:05',4:'18:38',5:'19:05',6:'19:20',7:'19:10',8:'18:45',9:'18:05',10:'17:25',11:'16:50',12:'16:32'};
+  var BANDS = {
+    golden:{name:'黄金時間',a:-75,b:-40,fee:'¥22,000'},
+    sienna:{name:'茜時間',a:-40,b:0,fee:'¥34,000'},
+    afterglow:{name:'残光時間',a:0,b:18,fee:'¥18,000'}
+  };
+  function hm2min(s){var p=s.split(':');return +p[0]*60+ +p[1];}
+  function min2hm(m){m=(m+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
+  function sunsetFor(d){ return SUNSET[(d?d.getMonth()+1:new Date().getMonth()+1)] || '17:30'; }
+  function winFor(bandKey, d){
+    var s = hm2min(sunsetFor(d)), b = BANDS[bandKey];
+    return {start:s+b.a, end:s+b.b, sunset:s};
+  }
+  var dot=document.getElementById('dot'), arc=document.getElementById('arc');
+  var statusEl=document.getElementById('status'), clockEl=document.getElementById('clock'),
+      clockSub=document.getElementById('clockSub'), beam=document.getElementById('beam');
+  var sEl=document.getElementById('sunset'), sStart=document.getElementById('sunsetStart');
+  var arcLen = arc && arc.getTotalLength ? arc.getTotalLength() : 0;
+  var LUX = {golden:'中 / 62%',sienna:'高 / 62%',afterglow:'低 / 21%'};
+
+  function tick(){
+    var now = new Date();
+    var mins = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
+    var ss = hm2min(sunsetFor(now));
+    if(clockEl) clockEl.textContent = min2hm(mins);
+    if(sEl) sEl.textContent = min2hm(ss);
+    if(sStart) sStart.textContent = min2hm(ss-75);
+
+    var key=null, label, solar=0, sub='';
+    if(mins >= ss-75 && mins < ss-40){ key='golden'; solar=.7; }
+    else if(mins >= ss-40 && mins < ss){ key='sienna'; solar=1; }
+    else if(mins >= ss && mins <= ss+18){ key='afterglow'; solar=.45; }
+
+    if(key==='golden'){ label='黄金時間 進行中 — 残り '+Math.ceil(ss-40-mins)+'分'; }
+    else if(key==='sienna'){ label='茜時間 — 窓は満席'; }
+    else if(key==='afterglow'){ label='残光 — 最後の '+Math.max(1,Math.ceil(ss+18-mins))+'分'; }
+    else if(mins < ss-75){ label='次の西日 まで '+Math.floor((ss-75-mins)/60)+'時間 '+Math.ceil((ss-75-mins)%60)+'分'; solar=.12; }
+    else { label='本日の西日は 消えました'; solar=.05; }
+
+    if(statusEl) statusEl.textContent = label;
+    if(clockSub) clockSub.textContent = key ? '東京 / '+BANDS[key].name+' 帯' : '東京 / 西日 非稼働';
+    if(beam) beam.style.setProperty('--solar', solar);
+    document.documentElement.style.setProperty('--solar', solar);
+
+    if(dot && arcLen){
+      var t = Math.min(1, Math.max(0, (mins-(ss-75))/93));
+      var p = arc.getPointAtLength(arcLen*(1-t));
+      dot.setAttribute('cx',p.x.toFixed(1)); dot.setAttribute('cy',p.y.toFixed(1));
+      dot.setAttribute('fill', key==='sienna'?'#DE7A38':key==='afterglow'?'#B0512F':(key?'#D6A25E':'#5A4A3D'));
+    }
+    if(key){
+      var rw=document.getElementById('rWin');
+      // keep receipt in sync only if user hasn't picked a date
+      if(rw && rw.dataset.auto!=='off' && !document.getElementById('date').value){
+        var w = winFor(currentBand(), now);
+        rw.textContent = min2hm(w.start)+' – '+min2hm(w.end);
+      }
+    }
+  }
+  tick(); setInterval(tick, 10000);
+
+  /* ---------- form ---------- */
+  var form = document.getElementById('resForm');
+  function currentBand(){
+    var r = form && form.querySelector('input[name=band]:checked');
+    return r ? r.value : 'golden';
+  }
+  function syncForm(){
+    if(!form) return;
+    var dval = document.getElementById('date').value;
+    var d = dval ? new Date(dval+'T12:00:00') : new Date();
+    Object.keys(BANDS).forEach(function(k){
+      var w = winFor(k,d), el = document.querySelector('s[data-band="'+k+'"]');
+      if(el) el.textContent = min2hm(w.start)+' – '+min2hm(w.end);
+    });
+    var k = currentBand(), w = winFor(k,d);
+    var rw=document.getElementById('rWin');
+    rw.textContent = min2hm(w.start)+' – '+min2hm(w.end);
+    rw.dataset.auto = dval ? 'off' : '';
+    document.getElementById('rBand').textContent = BANDS[k].name;
+    document.getElementById('rFee').textContent = BANDS[k].fee;
+    document.getElementById('rLux').textContent = LUX[k];
+    var dv = document.getElementById('date').value;
+    document.getElementById('rDate').textContent = dv ? dv.replace(/-/g,'.')+'（'+['日','月','火','水','木','金','土'][d.getDay()]+'）' : '未定';
+    document.getElementById('rPax').textContent = document.getElementById('pax').value;
+    document.getElementById('rName').textContent = document.getElementById('name').value || '—';
+  }
+  if(form){
+    form.addEventListener('input', syncForm);
+    form.addEventListener('change', syncForm);
+    var dInput = document.getElementById('date');
+    var today = new Date(); today.setDate(today.getDate()+1);
+    dInput.min = today.toISOString().slice(0,10);
+    syncForm();
+
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      var ok = document.getElementById('name').value.trim() && /\S+@\S+\.\S+/.test(document.getElementById('mail').value) && dInput.value;
+      document.getElementById('err').classList.toggle('on', !ok);
+      if(!ok) return;
+      var rec = document.getElementById('receipt');
+      rec.classList.add('is-done');
+      var no = String(120 + Math.floor(Math.random()*70));
+      var k = currentBand();
+      document.getElementById('rDone').innerHTML =
+        '受付 — 仮枠 No. '+no+' ／ '+BANDS[k].name+'<br>'+
+        '窓 南西 ／ 光量 '+LUX[k]+' ／ 案内を '+document.getElementById('mail').value+' へ送った。<br>'+
+        '曇天が予測される場合、前日 17:00 までに休廊を通知する。';
+      rec.scrollIntoView({behavior: reduce.matches ? 'auto':'smooth', block:'center'});
+    });
+  }
+
+  /* ---------- faq ---------- */
+  document.querySelectorAll('#faqList .qa__q').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var qa = btn.parentElement, open = qa.classList.contains('open');
+      document.querySelectorAll('#faqList .qa.open').forEach(function(o){o.classList.remove('open');});
+      qa.classList.toggle('open', !open);
+    });
+  });
+
+  /* ---------- nav / progress ---------- */
+  var nav = document.getElementById('nav'), sun = document.getElementById('sunline');
+  function onScroll(){
+    var y = window.scrollY || 0;
+    nav.classList.toggle('stuck', y > 40);
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    sun.style.transform = 'scaleX('+(h>0?Math.min(1,y/h):0)+')';
+  }
+  onScroll(); window.addEventListener('scroll', onScroll, {passive:true});
+
+  document.getElementById('burger').addEventListener('click', function(){
+    var open = nav.classList.toggle('open');
+    this.setAttribute('aria-expanded', open);
+  });
+  document.querySelectorAll('.nav__links a').forEach(function(a){
+    a.addEventListener('click', function(){ nav.classList.remove('open'); });
+  });
+
+  /* ---------- beam parallax ---------- */
+  if(!reduce.matches && window.matchMedia('(pointer:fine)').matches){
+    var hero = document.querySelector('.hero');
+    hero.addEventListener('pointermove', function(e){
+      var x = (e.clientX/window.innerWidth - .5);
+      beam.style.transform = 'translate3d('+(x*2.2)+'%,0,0)';
+    });
+    hero.addEventListener('pointerleave', function(){ beam.style.transform=''; });
+  }
+})();
+</script>
+</body>
+</html>
