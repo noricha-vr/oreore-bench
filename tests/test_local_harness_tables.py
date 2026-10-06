@@ -5,6 +5,8 @@ LOCAL_HARNESSES lives in two runners, the harness enum lives in a JS validator,
 and the display labels live in index.html.  A harness added to one place only is
 silently invisible on the site, so these tests compare the four definitions
 directly instead of trusting that an author updated all of them.
+The sampling keys the local runners record are checked against the validator
+for the same reason.
 """
 from __future__ import annotations
 
@@ -49,7 +51,8 @@ def js_object_keys(source: str, start: str, end: str) -> set[str]:
     return set(re.findall(r"(?:^|[{,]\s*)['\"]?([A-Za-z0-9._-]+)['\"]?\s*:", block))
 
 
-MLX_TABLE = harness_runtime(load_script("mlx_lm_run", "mlx-lm-run.py").LOCAL_HARNESSES)
+MLX_RUNNER = load_script("mlx_lm_run", "mlx-lm-run.py")
+MLX_TABLE = harness_runtime(MLX_RUNNER.LOCAL_HARNESSES)
 LADDER_TABLE = harness_runtime(load_script("json_ladder_run", "json-ladder-run.py").LOCAL_HARNESSES)
 
 
@@ -75,3 +78,13 @@ def test_local_harnesses_and_engines_are_labelled_on_the_site() -> None:
 
     assert set(MLX_TABLE) | set(LADDER_TABLE) <= harness_labels
     assert engines <= engine_labels
+
+
+def test_recorded_sampling_keys_are_accepted_by_the_run_json_validator() -> None:
+    """Every sampling key a local runner writes passes validate-runs.mjs, old 3 keys included."""
+    allowed = js_string_keys(VALIDATE_RUNS.read_text(encoding="utf-8"), "const SAMPLING_ALLOWED", ");")
+    recorded = MLX_RUNNER.Sampling(temperature=0.3).record(65000)
+
+    assert set(MLX_RUNNER.SAMPLING_RECORD_KEYS) == set(recorded)
+    assert set(recorded) <= allowed
+    assert {"temperature", "max_tokens", "top_p"} <= allowed

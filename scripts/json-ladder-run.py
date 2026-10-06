@@ -97,6 +97,15 @@ _REQUIRED_LOCAL = (
     "DEFAULT_BASE_URL", "DEFAULT_RUNAWAY_THRESHOLD", "DEFAULT_TIMEOUT_SECONDS",
     "MlxApiError", "UsageMissingError", "PUBLIC_MODEL_ID_RE", "RUNTIME_VALUE_RE", "build_local_cost",
     "call_model", "endpoint", "preflight", "request_json", "resolve_base_url",
+    "Sampling", "add_sampling_arguments", "parse_sampling",
+)
+# local backend 専用のサンプリング引数（argparse の dest 名, CLI フラグ）。openrouter で渡したら止める
+LOCAL_SAMPLING_FLAGS = (
+    ("temperature", "--temperature"),
+    ("top_p", "--top-p"),
+    ("top_k", "--top-k"),
+    ("min_p", "--min-p"),
+    ("presence_penalty", "--presence-penalty"),
 )
 for _module, _names in ((OPENROUTER, _REQUIRED_OPENROUTER), (LOCAL, _REQUIRED_LOCAL)):
     _missing = [n for n in _names if not hasattr(_module, n)]
@@ -190,7 +199,7 @@ def run_levels(
 
 
 def run_local_levels(
-    model_id: str, theme_dir: Path, base_url: str, max_tokens: int
+    model_id: str, theme_dir: Path, base_url: str, max_tokens: int, sampling: Any
 ) -> tuple[list[dict[str, Any]], int, int, list[str]]:
     """Make five sequential loopback requests without rejecting empty responses.
 
@@ -211,6 +220,7 @@ def run_local_levels(
             LOCAL.DEFAULT_TIMEOUT_SECONDS,
             LOCAL.DEFAULT_RUNAWAY_THRESHOLD,
             True,
+            sampling=sampling,
         )
         levels.append(
             {
@@ -305,6 +315,7 @@ def build_local_run(
     attempts: int,
     prompt_tokens: int,
     completion_tokens: int,
+    sampling: Any,
     timings: list[str] | None = None,
 ) -> dict[str, Any]:
     """Build validator-compatible aggregate metadata for local inference."""
@@ -321,7 +332,7 @@ def build_local_run(
         "attempts": attempts,
         "generated_at": None,
         "generated_at_source": "unknown",
-        "sampling": {"temperature": 0.3, "max_tokens": max_tokens, "top_p": "default"},
+        "sampling": sampling.record(max_tokens),
         "system_prompt": "none",
         "post_processing": f"json-ladder-{len(LEVEL_NUMBERS)}-levels",
         "runtime": runtime,
@@ -410,6 +421,9 @@ def parse_args() -> argparse.Namespace:
         choices=list(REASONING_LABELS),
         help="local backend の run.json reasoning_effort に記録するラベル",
     )
+    # local backend 専用。--temperature は local で必須だが openrouter では使わないため、
+    # argparse では必須にせず prepare_run で backend に応じて検証する
+    LOCAL.add_sampling_arguments(parser, temperature_required=False)
     parser.add_argument(
         "--overwrite", action="store_true", help="complete existing result を原子的に置換する"
     )
@@ -429,6 +443,7 @@ def check_local_only_flags(args: argparse.Namespace) -> None:
             ("--public-model-id", args.public_model_id is not None),
             ("--runtime-extra", args.runtime_extra is not None),
             ("--reasoning-label", args.reasoning_label != "unknown"),
+            *((flag, getattr(args, dest) is not None) for dest, flag in LOCAL_SAMPLING_FLAGS),
         )
         if given
     ]
@@ -460,6 +475,22 @@ def validate_published_model_id(args: argparse.Namespace) -> None:
         )
 
 
+def resolve_local_sampling(args: argparse.Namespace) -> Any:
+    """Return validated local sampling, or None on the OpenRouter path.
+
+    temperature は local backend で必須（モデル公式推奨値を渡す）。dry-run も本番と同じく要求し、
+    指定漏れを生成前に落とす。
+    """
+    if args.backend != "local":
+        return None
+    if args.temperature is None:
+        raise ValueError(
+            "--backend local では --temperature が必須です"
+            "（モデル公式推奨値を渡す。README のサンプリング方針を参照）"
+        )
+    return LOCAL.parse_sampling(args)
+
+
 def prepare_run(args: argparse.Namespace) -> tuple[Path, Path, int, str | None]:
     """Validate common inputs and resolve the target before requests start."""
     if args.model in {".", ".."} or not OPENROUTER.NAME_RE.fullmatch(args.model):
@@ -469,6 +500,7 @@ def prepare_run(args: argparse.Namespace) -> tuple[Path, Path, int, str | None]:
     if args.max_tokens <= 0:
         raise ValueError("--max-tokens must be greater than zero")
     check_local_only_flags(args)
+    resolve_local_sampling(args)
     parse_runtime_extra(args.runtime_extra)
     validate_published_model_id(args)
     theme_dir = validate_theme_dir()
@@ -530,9 +562,10 @@ def run_local_backend(
     api_model_id = args.model_id or args.model
     # 公開 run.json にローカル絶対パスを書かない（mlx_lm.server はモデルディレクトリを ID にする）
     published_model_id = args.public_model_id or api_model_id
+    sampling = resolve_local_sampling(args)
     check_local_preconditions(base_url)
     levels, prompt_tokens, completion_tokens, timings = run_local_levels(
-        api_model_id, theme_dir, base_url, args.max_tokens
+        api_model_id, theme_dir, base_url, args.max_tokens, sampling
     )
     run = build_local_run(
         args.model,
@@ -544,6 +577,7 @@ def run_local_backend(
         attempts,
         prompt_tokens,
         completion_tokens,
+        sampling,
         timings,
     )
     return levels, run, 0.0

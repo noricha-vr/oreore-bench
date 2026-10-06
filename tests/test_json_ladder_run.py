@@ -198,6 +198,8 @@ def test_local_length_response_is_saved(monkeypatch: pytest.MonkeyPatch, tmp_pat
             "local-model",
             "--backend",
             "local",
+            "--temperature",
+            "0.3",
             "--base-url",
             base_url,
         ) == 0
@@ -226,7 +228,7 @@ def test_local_empty_content_is_saved_as_a_failed_level(
             monkeypatch,
             tmp_path,
             "--model", "local-model",
-            "--backend", "local",
+            "--backend", "local", "--temperature", "0.3",
             "--base-url", base_url,
         ) == 0
 
@@ -256,7 +258,7 @@ def test_local_runaway_aborts_without_creating_output(
             monkeypatch,
             tmp_path,
             "--model", "local-model",
-            "--backend", "local",
+            "--backend", "local", "--temperature", "0.3",
             "--base-url", base_url,
         ) == 2
 
@@ -274,7 +276,7 @@ def test_local_path_model_id_requires_a_public_model_id(
             monkeypatch,
             tmp_path,
             "--model", "hy3-t512",
-            "--backend", "local",
+            "--backend", "local", "--temperature", "0.3",
             "--base-url", base_url,
             "--model-id", "/Users/someone/models/hy3-t512",
         ) != 0
@@ -295,7 +297,7 @@ def test_non_registry_model_id_requires_a_public_model_id(
             monkeypatch,
             tmp_path,
             "--model", "local-model",
-            "--backend", "local",
+            "--backend", "local", "--temperature", "0.3",
             "--base-url", base_url,
             "--model-id", model_id,
         ) == 1
@@ -314,7 +316,7 @@ def test_public_model_id_is_published_instead_of_the_api_path(
             monkeypatch,
             tmp_path,
             "--model", "hy3-t512",
-            "--backend", "local",
+            "--backend", "local", "--temperature", "0.3",
             "--base-url", base_url,
             "--model-id", "/Users/someone/models/hy3-t512",
             "--public-model-id", "avlp12/Hy3-Alis-MLX-Dynamic",
@@ -339,7 +341,7 @@ def test_lmstudio_run_records_harness_model_id_and_runtime(
             monkeypatch,
             tmp_path,
             "--model", "gemma-4-12b-qat",
-            "--backend", "local",
+            "--backend", "local", "--temperature", "0.3",
             "--base-url", base_url,
             "--harness", "lmstudio-api",
             "--model-id", "google/gemma-4-12b-qat",
@@ -383,7 +385,7 @@ def test_ollama_run_records_its_own_engine_and_source(
             monkeypatch,
             tmp_path,
             "--model", "gemma-4-31b",
-            "--backend", "local",
+            "--backend", "local", "--temperature", "0.3",
             "--base-url", base_url,
             "--harness", "ollama-api",
             "--model-id", "gemma4:31b",
@@ -401,6 +403,140 @@ def test_ollama_run_records_its_own_engine_and_source(
     assert "L5: elapsed_seconds=" in run["usage"]["note"]
 
 
+LOCAL_SAMPLING_ARGS = (
+    "--temperature", "1.0",
+    "--top-p", "0.95",
+    "--top-k", "64",
+    "--min-p", "0.0",
+    "--presence-penalty", "1.5",
+)
+LOCAL_SAMPLING_VALUES: dict[str, Any] = {
+    "temperature": 1.0, "top_p": 0.95, "top_k": 64, "min_p": 0.0, "presence_penalty": 1.5,
+}
+
+
+def invoke_local(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, server: StubServer, *sampling: str
+) -> int:
+    """Run the local backend against the stub server with only the given sampling flags."""
+    base_url = server.url.removesuffix("/chat/completions") + "/v1"
+    return invoke(
+        monkeypatch, tmp_path,
+        "--model", "local-model", "--backend", "local", "--base-url", base_url, *sampling,
+    )
+
+
+def test_local_sampling_is_sent_on_every_level_and_recorded(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """公式推奨サンプリングは全レベルのリクエストに同じ値で載り、run.json に残る。"""
+    make_theme(tmp_path)
+    with StubServer([response(level) for level in ladder.LEVEL_NUMBERS]) as server:
+        assert invoke_local(monkeypatch, tmp_path, server, *LOCAL_SAMPLING_ARGS) == 0
+        requests = server.requests
+
+    assert len(requests) == len(ladder.LEVEL_NUMBERS)
+    for request in requests:
+        for key, value in LOCAL_SAMPLING_VALUES.items():
+            assert request[key] == value
+            assert type(request[key]) is type(value)
+    run = json.loads((tmp_path / "json-ladder" / "local-model" / "run.json").read_text(encoding="utf-8"))
+    assert run["sampling"] == {**LOCAL_SAMPLING_VALUES, "max_tokens": ladder.OPENROUTER.DEFAULT_MAX_TOKENS}
+
+
+def test_local_omitted_sampling_is_not_sent_and_recorded_as_default(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """温度は指定値をそのまま使い（旧来の 0.3 固定ではない）、他は送らず "default" と記録する。"""
+    make_theme(tmp_path)
+    with StubServer([response(level) for level in ladder.LEVEL_NUMBERS]) as server:
+        assert invoke_local(monkeypatch, tmp_path, server, "--temperature", "0.7") == 0
+        requests = server.requests
+
+    for request in requests:
+        assert request["temperature"] == 0.7
+        for key in ("top_p", "top_k", "min_p", "presence_penalty"):
+            assert key not in request
+    run = json.loads((tmp_path / "json-ladder" / "local-model" / "run.json").read_text(encoding="utf-8"))
+    assert run["sampling"] == {
+        "temperature": 0.7,
+        "max_tokens": ladder.OPENROUTER.DEFAULT_MAX_TOKENS,
+        "top_p": "default",
+        "top_k": "default",
+        "min_p": "default",
+        "presence_penalty": "default",
+    }
+
+
+@pytest.mark.parametrize("dry_run", [False, True])
+def test_local_backend_requires_temperature(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    dry_run: bool,
+) -> None:
+    """local では温度の指定漏れを、dry-run も含めて 1 リクエストも送る前に止める。"""
+    make_theme(tmp_path)
+    extra = ("--dry-run",) if dry_run else ()
+    with StubServer([response(level) for level in ladder.LEVEL_NUMBERS]) as server:
+        assert invoke_local(monkeypatch, tmp_path, server, "--top-k", "20", *extra) == 1
+        assert server.requests == []
+
+    assert "--temperature" in capsys.readouterr().err
+    assert not (tmp_path / "json-ladder" / "local-model").exists()
+
+
+@pytest.mark.parametrize(
+    "flag_args",
+    [
+        ("--temperature", "0.3"),
+        ("--top-p", "0.95"),
+        ("--top-k", "20"),
+        ("--min-p", "0.05"),
+        ("--presence-penalty", "1.5"),
+    ],
+)
+def test_sampling_flags_are_rejected_on_openrouter_backend(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    flag_args: tuple[str, str],
+) -> None:
+    """openrouter はサンプリングを送らないので、渡されたら記録とのズレを生む前に止める。"""
+    make_theme(tmp_path)
+    monkeypatch.setenv("OPENROUTER_API_URL", "http://127.0.0.1:9/unused")
+
+    assert invoke(
+        monkeypatch, tmp_path, "--model", "claude-opus-5", "--backend", "openrouter", *flag_args
+    ) == 1
+
+    assert f"{flag_args[0]} は --backend local 専用" in capsys.readouterr().err
+    assert not (tmp_path / "json-ladder" / "claude-opus-5").exists()
+
+
+@pytest.mark.parametrize(
+    ("flag_args", "flag"),
+    [
+        (("--temperature", "2.5"), "--temperature"),
+        (("--temperature", "0.3", "--top-p", "1.5"), "--top-p"),
+        (("--temperature", "0.3", "--top-k", "-1"), "--top-k"),
+    ],
+)
+def test_local_out_of_range_sampling_is_rejected_before_any_request(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    flag_args: tuple[str, ...],
+    flag: str,
+) -> None:
+    make_theme(tmp_path)
+    with StubServer([response(level) for level in ladder.LEVEL_NUMBERS]) as server:
+        assert invoke_local(monkeypatch, tmp_path, server, *flag_args) == 1
+        assert server.requests == []
+
+    assert flag in capsys.readouterr().err
+
+
 def test_runtime_extra_rejects_keys_outside_validator_allowlist(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -410,7 +546,7 @@ def test_runtime_extra_rejects_keys_outside_validator_allowlist(
         monkeypatch,
         tmp_path,
         "--model", "local-model",
-        "--backend", "local",
+        "--backend", "local", "--temperature", "0.3",
         "--base-url", "http://127.0.0.1:9/v1",
         "--runtime-extra", '{"engine_notes": "leaked"}',
     ) == 1
@@ -444,7 +580,7 @@ def test_runtime_extra_rejects_unsafe_values(
         monkeypatch,
         tmp_path,
         "--model", "local-model",
-        "--backend", "local",
+        "--backend", "local", "--temperature", "0.3",
         "--base-url", "http://127.0.0.1:9/v1",
         "--runtime-extra", json.dumps({"hardware": value}),
     ) == 1
@@ -552,7 +688,7 @@ def test_local_dry_run_succeeds_against_a_running_server(
         base_url = server.url.removesuffix("/chat/completions") + "/v1"
 
         assert invoke(
-            monkeypatch, tmp_path, "--model", "local-model", "--backend", "local",
+            monkeypatch, tmp_path, "--model", "local-model", "--backend", "local", "--temperature", "0.3",
             "--base-url", base_url, "--dry-run",
         ) == 0
 
@@ -566,7 +702,7 @@ def test_local_dry_run_fails_when_the_server_is_not_running(
     make_theme(tmp_path)
 
     assert invoke(
-        monkeypatch, tmp_path, "--model", "local-model", "--backend", "local",
+        monkeypatch, tmp_path, "--model", "local-model", "--backend", "local", "--temperature", "0.3",
         "--base-url", "http://127.0.0.1:9/v1", "--dry-run",
     ) == 2
     assert not (tmp_path / "json-ladder" / "local-model").exists()
@@ -598,6 +734,7 @@ def test_mlx_explicit_theme_rejects_json_ladder(monkeypatch: pytest.MonkeyPatch,
         [
             "mlx-lm-run.py", "--theme", "json-ladder", "--model", "test-model",
             "--api-model-id", "local-test", "--public-model-id", "owner/name",
+            "--temperature", "0.3",
         ],
     )
 

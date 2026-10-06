@@ -29,7 +29,8 @@ const RUN_ALLOWED = new Set([
   'attempts', 'generated_at', 'generated_at_source', 'sampling', 'system_prompt',
   'post_processing', 'runtime', 'usage', 'cost',
 ]);
-const SAMPLING_ALLOWED = new Set(['temperature', 'max_tokens', 'top_p']);
+// mlx-lm-run.py の SAMPLING_RECORD_KEYS を含む集合。旧 run.json（temperature / max_tokens / top_p の 3 キー）も通す
+const SAMPLING_ALLOWED = new Set(['temperature', 'max_tokens', 'top_p', 'top_k', 'min_p', 'presence_penalty']);
 const RUNTIME_ALLOWED = new Set([
   'engine', 'version', 'framework', 'model_revision', 'quantization', 'hardware', 'api',
 ]);

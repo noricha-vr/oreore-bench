@@ -49,11 +49,24 @@ LOCAL_HARNESSES: dict[str, dict[str, str]] = {
     "llamacpp-api": {"engine": "llama.cpp", "api": "openai-compat", "server": "llama-server API"},
 }
 DEFAULT_HARNESS = "mlx-lm-api"
+# OpenAI 互換 API が top_k / min_p をリクエスト body で受け付けない harness
+HARNESSES_IGNORING_TOP_K_MIN_P = ("ollama-api",)
 # 前置き文 + ```html フェンス付きで返すモデルは、openrouter-run.py と同じ規則で本体だけを抜く
 RESUMABLE_POST_PROCESSING = ("none", "extract-fenced-html")
 DEFAULT_BASE_URL = "http://127.0.0.1:18081/v1"
 DEFAULT_MAX_TOKENS = 65000
-DEFAULT_TEMPERATURE = 0.3
+# サンプリング引数の受理範囲。値そのものはモデル公式推奨を CLI で渡す（README のサンプリング方針）。
+# top_k=0 は llama-server / mlx_lm.server / Ollama で「無効」を意味するので許可する。
+TEMPERATURE_RANGE = (0.0, 2.0)
+TOP_P_RANGE = (0.0, 1.0)
+MIN_P_RANGE = (0.0, 1.0)
+PRESENCE_PENALTY_RANGE = (-2.0, 2.0)
+MIN_TOP_K = 0
+# run.json の sampling に記録するキーの順序。未指定は "default"。
+# validate-runs.mjs の SAMPLING_ALLOWED はこの集合を含む。
+SAMPLING_RECORD_KEYS = ("temperature", "max_tokens", "top_p", "top_k", "min_p", "presence_penalty")
+# 送らなかった（サーバ既定に任せた）サンプリング値の記録表現
+SAMPLING_DEFAULT = "default"
 DEFAULT_TIMEOUT_SECONDS = 3600
 MAX_SSE_LINE_BYTES = 1 << 20
 MAX_CHARS_PER_TOKEN = 8
@@ -222,6 +235,108 @@ def parse_sse_chunk(line: bytes) -> dict[str, Any] | None:
 # thinking を本文と別フィールドで返すサーバの delta キー。
 # mlx_lm.server は "reasoning"、oMLX / LM Studio / Ollama は "reasoning_content" を使う。
 REASONING_DELTA_KEYS = ("reasoning_content", "reasoning")
+
+
+class Sampling(NamedTuple):
+    """Sampling parameters sent to the local API and recorded in run.json.
+
+    temperature は必須（モデル公式推奨値を渡す）。それ以外は None なら API に送らず、
+    run.json には "default"（サーバ既定）として記録する。top_k / min_p は OpenAI 本家に
+    無い拡張キーだが、llama-server・mlx_lm.server・LM Studio の OpenAI 互換 API は
+    リクエスト body でそのまま受け付ける（Ollama だけは受け付けないので parse_sampling で止める）。
+    NamedTuple なのは StreamTiming と同じ理由（spec_from_file_location 読み込みで dataclass が使えない）。
+    """
+
+    temperature: float
+    top_p: float | None = None
+    top_k: int | None = None
+    min_p: float | None = None
+    presence_penalty: float | None = None
+
+    def payload_fields(self) -> dict[str, float | int]:
+        """Return only the parameters the request body should carry."""
+        return {key: value for key, value in self._asdict().items() if value is not None}
+
+    def record(self, max_tokens: int) -> dict[str, float | int | str]:
+        """Render the run.json sampling block, marking omitted parameters as "default"."""
+        values: dict[str, Any] = {**self._asdict(), "max_tokens": max_tokens}
+        return {
+            key: SAMPLING_DEFAULT if values[key] is None else values[key]
+            for key in SAMPLING_RECORD_KEYS
+        }
+
+
+def check_range(flag: str, value: float | int | None, bounds: tuple[float, float]) -> None:
+    """Reject a sampling value outside the inclusive range the servers accept."""
+    if value is None:
+        return
+    low, high = bounds
+    if not low <= value <= high:
+        raise ValueError(f"{flag} must be between {low:g} and {high:g}")
+
+
+def parse_sampling(args: argparse.Namespace) -> Sampling:
+    """Build validated sampling parameters from CLI arguments."""
+    check_range("--temperature", args.temperature, TEMPERATURE_RANGE)
+    check_range("--top-p", args.top_p, TOP_P_RANGE)
+    check_range("--min-p", args.min_p, MIN_P_RANGE)
+    check_range("--presence-penalty", args.presence_penalty, PRESENCE_PENALTY_RANGE)
+    if args.top_k is not None and args.top_k < MIN_TOP_K:
+        raise ValueError(f"--top-k must be {MIN_TOP_K} or greater")
+    # Ollama の /v1/chat/completions は top_k / min_p を黙って捨てる。送ったつもりの値を
+    # run.json に記録すると「サーバ既定で生成した結果」を推奨値の実測として公開してしまう
+    ignored = [
+        flag
+        for flag, value in (("--top-k", args.top_k), ("--min-p", args.min_p))
+        if value is not None
+    ]
+    if getattr(args, "harness", None) in HARNESSES_IGNORING_TOP_K_MIN_P and ignored:
+        raise ValueError(
+            f"{args.harness} は {', '.join(ignored)} を受け付けない。"
+            "llama-server か LM Studio で測るか、Modelfile の PARAMETER で設定する"
+        )
+    return Sampling(
+        temperature=args.temperature,
+        top_p=args.top_p,
+        top_k=args.top_k,
+        min_p=args.min_p,
+        presence_penalty=args.presence_penalty,
+    )
+
+
+def add_sampling_arguments(parser: argparse.ArgumentParser, *, temperature_required: bool) -> None:
+    """Register the shared sampling options on a local-runner CLI.
+
+    json-ladder-run.py も同じ引数を持つ。そちらは openrouter backend で temperature を
+    使わないため、必須判定を呼び出し側に任せられるよう temperature_required で切り替える。
+    """
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        required=temperature_required,
+        default=None,
+        help=(
+            "モデル公式推奨値を渡す（README のサンプリング方針を参照）。"
+            "run.json の sampling.temperature に記録される"
+            + ("" if temperature_required else "。--backend local では必須")
+        ),
+    )
+    optional = (
+        ("--top-p", float, "top_p"),
+        ("--top-k", int, "top_k"),
+        ("--min-p", float, "min_p"),
+        ("--presence-penalty", float, "presence_penalty"),
+    )
+    for flag, kind, key in optional:
+        parser.add_argument(
+            flag,
+            type=kind,
+            default=None,
+            help=(
+                f"モデル公式推奨値があれば渡す。省略時は API に送らず "
+                f'run.json の sampling.{key} を "default" と記録する'
+            ),
+        )
 
 
 class StreamTiming(NamedTuple):
@@ -467,7 +582,7 @@ def build_run_json(
     finish_reason: str,
     timing: StreamTiming,
     runtime: dict[str, str],
-    temperature: float = DEFAULT_TEMPERATURE,
+    sampling: Sampling,
     post_processing: str = "none",
 ) -> dict[str, Any]:
     """Build schema-versioned metadata for one measured local API generation."""
@@ -481,7 +596,7 @@ def build_run_json(
         "attempts": 1,
         "generated_at": datetime.now(timezone.utc).astimezone().replace(microsecond=0).isoformat(),
         "generated_at_source": "measured",
-        "sampling": {"temperature": temperature, "max_tokens": max_tokens, "top_p": "default"},
+        "sampling": sampling.record(max_tokens),
         "system_prompt": "none",
         "post_processing": post_processing,
         "runtime": runtime,
@@ -604,20 +719,38 @@ def validate_resume_identity(
         raise ValueError(f"resume metadata has an invalid public model ID: {run_path}")
 
 
-def validate_resume_sampling_usage(
-    run: dict[str, Any], run_path: Path, temperature: float = DEFAULT_TEMPERATURE
-) -> None:
-    """Validate measured sampling and positive non-boolean token counts."""
-    sampling = run.get("sampling")
+def resume_sampling_mismatches(stored: dict[str, Any], sampling: Sampling) -> list[str]:
+    """List sampling keys whose stored value differs from this invocation.
+
+    欠けたキー（top_k 等を記録する前の公開済み run.json）は "default"（API に送らなかった）
+    とみなして比較する。max_tokens は既存仕様どおり呼び出し側で正の整数であることだけを見るため、
+    保存値をそのまま期待値に使う。
+    """
+    expected = sampling.record(stored["max_tokens"])
+    mismatched = [key for key in stored if key not in SAMPLING_RECORD_KEYS]
+    for key in SAMPLING_RECORD_KEYS:
+        actual = stored.get(key, SAMPLING_DEFAULT)
+        # type まで比べる: bool は int の、int は float の別値として扱い取り違えない
+        if type(actual) is not type(expected[key]) or actual != expected[key]:
+            mismatched.append(key)
+    return mismatched
+
+
+def validate_resume_sampling_usage(run: dict[str, Any], run_path: Path, sampling: Sampling) -> None:
+    """Validate matching sampling and positive non-boolean token counts."""
+    stored = run.get("sampling")
     if (
-        not isinstance(sampling, dict)
-        or type(sampling.get("temperature")) is not float
-        or sampling.get("temperature") != temperature
-        or type(sampling.get("max_tokens")) is not int
-        or sampling["max_tokens"] <= 0
-        or sampling.get("top_p") != "default"
+        not isinstance(stored, dict)
+        or type(stored.get("max_tokens")) is not int
+        or stored["max_tokens"] <= 0
     ):
         raise ValueError(f"resume metadata has invalid sampling: {run_path}")
+    mismatched = resume_sampling_mismatches(stored, sampling)
+    if mismatched:
+        # 別のサンプリングで測った結果を今回の指定で測ったものとして残さない
+        raise ValueError(
+            f"resume metadata sampling does not match this run ({', '.join(mismatched)}): {run_path}"
+        )
     usage = run.get("usage")
     if not isinstance(usage, dict) or usage.get("estimated") is not False or usage.get("method") != "api-usage":
         raise ValueError(f"resume metadata has invalid usage: {run_path}")
@@ -660,12 +793,12 @@ def validate_resume_output(
     model: str,
     public_model_id: str,
     harness: str,
-    temperature: float = DEFAULT_TEMPERATURE,
+    sampling: Sampling,
 ) -> None:
     """Require a complete, matching prior local API result before resume skips it."""
     run, run_path = load_resume_run(out_dir, output_name)
     validate_resume_identity(run, run_path, theme, model, public_model_id, harness)
-    validate_resume_sampling_usage(run, run_path, temperature)
+    validate_resume_sampling_usage(run, run_path, sampling)
     validate_resume_runtime_cost(run, run_path, harness)
 
 
@@ -700,7 +833,8 @@ def call_model(
     timeout: int,
     runaway_threshold: float | None,
     allow_empty: bool = False,
-    temperature: float = DEFAULT_TEMPERATURE,
+    *,
+    sampling: Sampling,
 ) -> tuple[str, str, int, int, StreamTiming]:
     """Call the chat endpoint once and return validated content, usage, and stream timing."""
     detector = RunawayDetector(runaway_threshold) if runaway_threshold is not None else None
@@ -710,7 +844,7 @@ def call_model(
         {
             "model": api_model_id,
             "messages": [{"role": "user", "content": prompt}],
-            "temperature": temperature,
+            **sampling.payload_fields(),
             "max_tokens": max_tokens,
             "stream": True,
             "stream_options": {"include_usage": True},
@@ -740,7 +874,7 @@ def run_theme(
     runtime: dict[str, str],
     resume: bool,
     runaway_threshold: float | None,
-    temperature: float = DEFAULT_TEMPERATURE,
+    sampling: Sampling,
 ) -> str:
     """Generate and publish one theme, or skip an already complete resumed run."""
     theme_dir = resolve_theme_dir(theme)
@@ -756,7 +890,7 @@ def run_theme(
     if out_dir.exists():
         if resume:
             validate_resume_output(
-                out_dir, output_name, theme, model, public_model_id, harness, temperature
+                out_dir, output_name, theme, model, public_model_id, harness, sampling
             )
             return "skipped"
         raise FileExistsError(f"already exists: {out_dir}; use --resume only for a complete run")
@@ -769,7 +903,7 @@ def run_theme(
         max_tokens,
         timeout,
         runaway_threshold,
-        temperature=temperature,
+        sampling=sampling,
     )
     post_processing = "none"
     if kind == "html":
@@ -789,7 +923,7 @@ def run_theme(
         finish_reason=finish_reason,
         timing=timing,
         runtime=runtime,
-        temperature=temperature,
+        sampling=sampling,
         post_processing=post_processing,
     )
     write_atomically(out_dir, output_name, content, run)
@@ -814,15 +948,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
     parser.add_argument("--max-tokens", type=int, default=DEFAULT_MAX_TOKENS)
-    parser.add_argument(
-        "--temperature",
-        type=float,
-        default=DEFAULT_TEMPERATURE,
-        help=(
-            f"sampling temperature (既定: {DEFAULT_TEMPERATURE})。run.json の sampling.temperature に"
-            "記録される。モデル推奨値で追試する時だけ変える"
-        ),
-    )
+    add_sampling_arguments(parser, temperature_required=True)
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT_SECONDS)
     parser.add_argument("--resume", action="store_true", help="skip complete existing theme outputs")
     parser.add_argument(
@@ -852,8 +978,7 @@ def main() -> int:
         validate_public_model_id(args.public_model_id)
         if args.max_tokens <= 0 or args.timeout <= 0:
             raise ValueError("--max-tokens and --timeout must be greater than zero")
-        if not 0.0 <= args.temperature <= 2.0:
-            raise ValueError("--temperature must be between 0 and 2")
+        sampling = parse_sampling(args)
         runaway_threshold = None if args.no_runaway_check else args.runaway_threshold
         if runaway_threshold is not None and not 0.0 < runaway_threshold < 1.0:
             raise ValueError("--runaway-threshold must be between 0 and 1")
@@ -889,7 +1014,7 @@ def main() -> int:
                 runtime=runtime,
                 resume=args.resume,
                 runaway_threshold=runaway_threshold,
-                temperature=args.temperature,
+                sampling=sampling,
             )
             print(f"[ok] {theme}/{args.model}: {result}", file=sys.stderr)
     except (MlxApiError, UsageMissingError, ValueError, FileExistsError, OSError) as exc:

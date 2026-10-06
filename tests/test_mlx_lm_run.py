@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import re
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -107,6 +108,10 @@ def make_args(**overrides: object) -> argparse.Namespace:
         "runaway_threshold": runner.DEFAULT_RUNAWAY_THRESHOLD,
         "no_runaway_check": False,
         "temperature": 0.3,
+        "top_p": None,
+        "top_k": None,
+        "min_p": None,
+        "presence_penalty": None,
         "version": "0.31.3",
         "framework": "MLX 0.32.0",
         "model_revision": "abc123",
@@ -170,7 +175,14 @@ def test_main_writes_raw_content_and_measured_metadata(tmp_path: Path, monkeypat
     assert run["harness"] == "mlx-lm-api"
     assert run["model_id"] == "example/Hy3-T512"
     assert "/private/models" not in json.dumps(run)
-    assert run["sampling"] == {"temperature": 0.3, "max_tokens": 65000, "top_p": "default"}
+    assert run["sampling"] == {
+        "temperature": 0.3,
+        "max_tokens": 65000,
+        "top_p": "default",
+        "top_k": "default",
+        "min_p": "default",
+        "presence_penalty": "default",
+    }
     assert run["runtime"]["api"] == "openai-compat-chat"
     assert run["runtime"]["version"] == "0.31.3"
     assert run["runtime"]["framework"] == "MLX 0.32.0"
@@ -269,6 +281,306 @@ def test_resume_rejects_a_result_measured_at_another_temperature(
     monkeypatch.setattr(runner, "parse_args", lambda: make_args(temperature=1.0, resume=True))
     install_fake_http(monkeypatch, [{"data": []}])
     assert runner.main() == 1
+
+
+# モデル公式推奨サンプリング（Qwen3 系の thinking 推奨値に相当する組）。min_p=0.0 は
+# 「送る値が偽値でも省略しない」ことを確かめるために含める。
+RECOMMENDED_SAMPLING: dict[str, object] = {
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "top_k": 20,
+    "min_p": 0.0,
+    "presence_penalty": 1.5,
+}
+OPTIONAL_SAMPLING_KEYS = ("top_p", "top_k", "min_p", "presence_penalty")
+LEGACY_SAMPLING = {"temperature": 0.3, "max_tokens": 65000, "top_p": "default"}
+
+
+def publish_once(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, **overrides: object) -> Path:
+    """Publish one demo run with the given CLI overrides and return its run.json path."""
+    public = make_public(tmp_path)
+    monkeypatch.setattr(runner, "PUBLIC", public)
+    monkeypatch.setattr(runner, "parse_args", lambda: make_args(**overrides))
+    install_fake_http(monkeypatch, [{"data": []}, completion()])
+    assert runner.main() == 0
+    return public / "demo" / "hy3-t512" / "run.json"
+
+
+def resume_once(monkeypatch: pytest.MonkeyPatch, **overrides: object) -> tuple[int, list[Any]]:
+    """Re-run with --resume and return the exit code and the requests that were sent."""
+    monkeypatch.setattr(runner, "parse_args", lambda: make_args(resume=True, **overrides))
+    sent = install_fake_http(monkeypatch, [{"data": []}])
+    return runner.main(), sent
+
+
+def test_recommended_sampling_is_sent_and_recorded(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Every given sampling value reaches the request body and run.json unchanged."""
+    public = make_public(tmp_path)
+    monkeypatch.setattr(runner, "PUBLIC", public)
+    monkeypatch.setattr(runner, "parse_args", lambda: make_args(**RECOMMENDED_SAMPLING))
+    sent = install_fake_http(monkeypatch, [{"data": []}, completion()])
+
+    assert runner.main() == 0
+
+    payload = json.loads(sent[1][0].data.decode("utf-8"))
+    for key, value in RECOMMENDED_SAMPLING.items():
+        assert payload[key] == value
+        assert type(payload[key]) is type(value)
+    assert payload["max_tokens"] == 65000
+    run = json.loads((public / "demo" / "hy3-t512" / "run.json").read_text(encoding="utf-8"))
+    assert run["sampling"] == {**RECOMMENDED_SAMPLING, "max_tokens": 65000}
+    assert list(run["sampling"]) == list(runner.SAMPLING_RECORD_KEYS)
+
+
+def test_omitted_sampling_is_not_sent_and_recorded_as_default(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Unspecified parameters are left to the server, not sent as null or a guessed value."""
+    public = make_public(tmp_path)
+    monkeypatch.setattr(runner, "PUBLIC", public)
+    monkeypatch.setattr(runner, "parse_args", lambda: make_args(top_k=40))
+    sent = install_fake_http(monkeypatch, [{"data": []}, completion()])
+
+    assert runner.main() == 0
+
+    payload = json.loads(sent[1][0].data.decode("utf-8"))
+    assert payload["temperature"] == 0.3
+    assert payload["top_k"] == 40
+    for key in ("top_p", "min_p", "presence_penalty"):
+        assert key not in payload
+    run = json.loads((public / "demo" / "hy3-t512" / "run.json").read_text(encoding="utf-8"))
+    assert run["sampling"] == {
+        "temperature": 0.3,
+        "max_tokens": 65000,
+        "top_p": "default",
+        "top_k": 40,
+        "min_p": "default",
+        "presence_penalty": "default",
+    }
+
+
+CLI_BASE_ARGV = [
+    "mlx-lm-run.py",
+    "--theme", "demo",
+    "--model", "hy3-t512",
+    "--api-model-id", "/models/hy3",
+    "--public-model-id", "avlp12/Hy3-Alis-MLX-Dynamic",
+]
+
+
+def test_temperature_is_required_on_the_cli(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """There is no silent 0.3 fallback: the model's recommended value must be passed."""
+    monkeypatch.setattr(sys, "argv", CLI_BASE_ARGV)
+
+    with pytest.raises(SystemExit) as exc_info:
+        runner.parse_args()
+
+    assert exc_info.value.code == 2
+    assert "--temperature" in capsys.readouterr().err
+    assert not hasattr(runner, "DEFAULT_TEMPERATURE")
+
+
+def test_cli_parses_sampling_options_with_their_types(monkeypatch: pytest.MonkeyPatch) -> None:
+    """top_k is an integer and the others are floats; omitted options stay None."""
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [*CLI_BASE_ARGV, "--temperature", "1", "--top-p", "0.95", "--top-k", "64", "--min-p", "0"],
+    )
+
+    args = runner.parse_args()
+
+    assert args.temperature == 1.0 and type(args.temperature) is float
+    assert args.top_p == 0.95
+    assert args.top_k == 64 and type(args.top_k) is int
+    assert args.min_p == 0.0
+    assert args.presence_penalty is None
+    assert runner.parse_sampling(args) == runner.Sampling(
+        temperature=1.0, top_p=0.95, top_k=64, min_p=0.0
+    )
+
+
+def test_cli_rejects_a_fractional_top_k(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(sys, "argv", [*CLI_BASE_ARGV, "--temperature", "0.7", "--top-k", "1.5"])
+
+    with pytest.raises(SystemExit) as exc_info:
+        runner.parse_args()
+
+    assert exc_info.value.code == 2
+    assert "--top-k" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    ("override", "flag"),
+    [
+        ({"temperature": 2.5}, "--temperature"),
+        ({"temperature": -0.1}, "--temperature"),
+        ({"temperature": float("nan")}, "--temperature"),
+        ({"top_p": 1.5}, "--top-p"),
+        ({"top_p": float("nan")}, "--top-p"),
+        ({"min_p": -0.01}, "--min-p"),
+        ({"presence_penalty": 2.5}, "--presence-penalty"),
+        ({"top_k": -1}, "--top-k"),
+    ],
+)
+def test_out_of_range_sampling_is_rejected_before_any_request(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    override: dict[str, object],
+    flag: str,
+) -> None:
+    public = make_public(tmp_path)
+    monkeypatch.setattr(runner, "PUBLIC", public)
+    monkeypatch.setattr(runner, "parse_args", lambda: make_args(**override))
+    sent = install_fake_http(monkeypatch, [])
+
+    assert runner.main() == 1
+
+    assert flag in capsys.readouterr().err
+    assert sent == []
+    assert not (public / "demo" / "hy3-t512").exists()
+
+
+@pytest.mark.parametrize(("override", "flag"), [({"top_k": 20}, "--top-k"), ({"min_p": 0.05}, "--min-p")])
+def test_ollama_rejects_sampling_keys_it_would_silently_ignore(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    override: dict[str, object],
+    flag: str,
+) -> None:
+    """Ollama drops top_k / min_p, so recording them would publish server defaults as the recommended run."""
+    public = make_public(tmp_path)
+    monkeypatch.setattr(runner, "PUBLIC", public)
+    args = make_args(base_url="http://127.0.0.1:11434/v1", harness="ollama-api", **override)
+    monkeypatch.setattr(runner, "parse_args", lambda: args)
+    sent = install_fake_http(monkeypatch, [])
+
+    assert runner.main() == 1
+
+    assert flag in capsys.readouterr().err
+    assert sent == []
+
+
+def test_ollama_accepts_the_sampling_keys_it_honours() -> None:
+    """temperature / top_p / presence_penalty still reach Ollama."""
+    args = make_args(harness="ollama-api", top_p=0.95, presence_penalty=1.5)
+
+    assert runner.parse_sampling(args).payload_fields() == {
+        "temperature": 0.3,
+        "top_p": 0.95,
+        "presence_penalty": 1.5,
+    }
+
+
+def test_boundary_sampling_values_are_accepted() -> None:
+    """Range ends are inclusive, and top_k=0 (disabled on llama.cpp/MLX/Ollama) is allowed."""
+    args = make_args(temperature=0.0, top_p=1.0, top_k=0, min_p=1.0, presence_penalty=-2.0)
+
+    assert runner.parse_sampling(args).payload_fields() == {
+        "temperature": 0.0,
+        "top_p": 1.0,
+        "top_k": 0,
+        "min_p": 1.0,
+        "presence_penalty": -2.0,
+    }
+
+
+def test_resume_skips_a_run_measured_with_the_same_recommended_sampling(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    publish_once(tmp_path, monkeypatch, **RECOMMENDED_SAMPLING)
+
+    code, sent = resume_once(monkeypatch, **RECOMMENDED_SAMPLING)
+
+    assert code == 0
+    assert len(sent) == 1  # preflight だけで、生成リクエストは送らない
+
+
+@pytest.mark.parametrize("key", OPTIONAL_SAMPLING_KEYS)
+def test_resume_stops_when_one_sampling_value_differs(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    key: str,
+) -> None:
+    """A run measured with other sampling is not passed off as this invocation's result."""
+    run_path = publish_once(tmp_path, monkeypatch, **RECOMMENDED_SAMPLING)
+    run_before = run_path.read_bytes()
+    capsys.readouterr()
+
+    code, sent = resume_once(monkeypatch, **{**RECOMMENDED_SAMPLING, key: None})
+
+    assert code == 1
+    named = re.search(r"sampling does not match this run \(([^)]*)\)", capsys.readouterr().err)
+    assert named is not None and named.group(1) == key
+    assert len(sent) == 1
+    assert run_path.read_bytes() == run_before
+
+
+def test_resume_accepts_a_published_three_key_run_as_all_default(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """run.json written before top_k/min_p/presence_penalty existed still resumes unchanged."""
+    run_path = publish_once(tmp_path, monkeypatch)
+    run = json.loads(run_path.read_text(encoding="utf-8"))
+    run["sampling"] = dict(LEGACY_SAMPLING)
+    run_path.write_text(json.dumps(run), encoding="utf-8")
+    run_before = run_path.read_bytes()
+
+    code, sent = resume_once(monkeypatch)
+
+    assert code == 0
+    assert len(sent) == 1
+    assert run_path.read_bytes() == run_before
+
+
+@pytest.mark.parametrize(
+    "override",
+    [{"top_k": 20}, {"top_p": 0.95}, {"min_p": 0.0}, {"presence_penalty": 0.0}, {"temperature": 1.0}],
+)
+def test_resume_of_a_three_key_run_stops_when_a_new_value_is_given(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    override: dict[str, object],
+) -> None:
+    """Missing keys mean "default", so explicitly sending any value is a different measurement."""
+    run_path = publish_once(tmp_path, monkeypatch)
+    run = json.loads(run_path.read_text(encoding="utf-8"))
+    run["sampling"] = dict(LEGACY_SAMPLING)
+    run_path.write_text(json.dumps(run), encoding="utf-8")
+    capsys.readouterr()
+
+    code, _sent = resume_once(monkeypatch, **override)
+
+    assert code == 1
+    assert next(iter(override)) in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    ("stored", "sampling", "expected_key"),
+    [
+        ({"top_k": 20.0}, runner.Sampling(temperature=0.3, top_k=20), "top_k"),
+        ({"top_k": True}, runner.Sampling(temperature=0.3, top_k=1), "top_k"),
+        ({"temperature": "default"}, runner.Sampling(temperature=0.3), "temperature"),
+        ({"seed": 1}, runner.Sampling(temperature=0.3), "seed"),
+    ],
+)
+def test_resume_sampling_comparison_is_type_strict_and_rejects_unknown_keys(
+    stored: dict[str, object], sampling: Any, expected_key: str
+) -> None:
+    """20.0 is not top_k=20, True is not 1, and an unrecorded key is not ignored."""
+    record = {**sampling.record(65000), **stored}
+
+    assert runner.resume_sampling_mismatches(record, sampling) == [expected_key]
 
 
 def test_thinking_only_failure_still_reports_timing(
@@ -754,6 +1066,8 @@ def test_framework_cli_option_is_distinct_from_runner_version(monkeypatch: pytes
             "0.31.3",
             "--framework",
             "MLX 0.32.0",
+            "--temperature",
+            "0.3",
         ],
     )
 
@@ -773,6 +1087,7 @@ def test_harness_flag_defaults_to_mlx_and_accepts_local_backends(
         "--model", "hy3-t512",
         "--api-model-id", "qwen3:27b",
         "--public-model-id", "avlp12/Hy3-Alis-MLX-Dynamic",
+        "--temperature", "0.3",
     ]
     monkeypatch.setattr(sys, "argv", argv)
     assert runner.resolve_harness(runner.parse_args().harness, runner.DEFAULT_BASE_URL) == "mlx-lm-api"

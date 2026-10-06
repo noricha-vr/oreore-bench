@@ -227,6 +227,8 @@ loopback で OpenAI 互換 API を起動済みにし、`mlx-lm-run.py` で生成
 既定以外の `--base-url` に `--harness` を付けずに実行すると、エラーで停止する
 （ollama の測定が `mlx-lm-api` として公開される事故を構造的に防ぐため）。
 
+サンプリング値は例示。実際はモデルカードの推奨値を渡す（「サンプリング方針」参照）。
+
 ```bash
 # 前提: http://127.0.0.1:18081/v1 で mlx_lm.server が起動済み
 MLX_MODEL_DIR=/path/to/hy3-t512
@@ -235,6 +237,7 @@ uv run scripts/mlx-lm-run.py \
   --model hy3-t512 \
   --api-model-id "$MLX_MODEL_DIR" \
   --public-model-id avlp12/Hy3-Alis-MLX-Dynamic \
+  --temperature 1.0 --top-p 0.95 \
   --version 0.31.3 \
   --framework "MLX 0.31.2" \
   --model-revision f1dc8e8f4b847071ecb3dc0a09f56bf76f117677 \
@@ -244,6 +247,7 @@ uv run scripts/mlx-lm-run.py \
 
 ```bash
 # 前提: ollama serve が起動済み（既定ポート 11434）
+# Ollama の OpenAI 互換 API は top_k / min_p を受け付けないので、渡すとエラーで止まる
 uv run scripts/mlx-lm-run.py \
   --theme lp-nishibi \
   --model qwen3-8-27b \
@@ -251,6 +255,7 @@ uv run scripts/mlx-lm-run.py \
   --base-url http://127.0.0.1:11434/v1 \
   --api-model-id qwen3:27b \
   --public-model-id Qwen/Qwen3-27B \
+  --temperature 1.0 --top-p 0.95 \
   --version 0.17.1 \
   --framework "Ollama 0.17.1" \
   --model-revision unknown \
@@ -304,7 +309,8 @@ uv run scripts/json-ladder-run.py --model <slug> --backend openrouter --dry-run
 uv run scripts/json-ladder-run.py --model <slug> --backend openrouter
 
 # ローカル（mlx_lm.server 互換 API）
-uv run scripts/json-ladder-run.py --model <slug> --backend local --base-url http://127.0.0.1:8080/v1
+uv run scripts/json-ladder-run.py --model <slug> --backend local --base-url http://127.0.0.1:8080/v1 \
+  --temperature <推奨値> [--top-p ...] [--top-k ...] [--min-p ...] [--presence-penalty ...]
 
 # 検証 + HTML ビルド
 node scripts/validate-json-ladder.mjs --model <slug>
@@ -364,6 +370,23 @@ wrangler pages deploy public/ --project-name=oreore-bench --branch=main
 - **プロンプトは凍結**: 一度出した `PROMPT.md` は編集しない。改訂したい時は別テーマを切る（過去結果との比較性を守る）
 - **ローカルもクラウドも同じ俎上に乗せる**: `local/...` モデルと `claude-...` モデルを分け隔てなく並べる
 - **スペック値は一次情報のみ**: 公式ドキュメント / Hugging Face / モデルカードから引く。推測値には注記を入れる
+- **サンプリングはモデルの公式推奨値**: 各モデルが想定する条件で実力を測る（下記）
+
+### サンプリング方針（2026-10-07〜）
+
+ローカル実測は、モデルカード・`generation_config.json` に書かれた**公式推奨のサンプリング一式**で回す。
+API モデルはプロバイダの既定値（`"default"`）のまま回しているので、ローカルだけ低温に固定すると
+条件がそろわず、thinking モデルではループや本文なしの失敗を招く（旧既定の temperature 0.3 で
+DeepSeek V4 Flash の発散・MiMo V2.6 Flash の本文なし終了が出ていた）。
+
+- 推奨値は `temperature` / `top_p` / `top_k` / `min_p` / `presence_penalty` をセットで渡す。温度だけ合わせて残りをサーバ既定に任せない
+- thinking / instruct で推奨値が分かれるモデルは、実際に使うモードの値を使う（例: Qwen3.8 系は thinking で `1.0 / 0.95 / 20 / 0.0 / 0.0`）
+- 公式推奨が見つからない時は `temperature 1.0`、他は `"default"` とし、`data.js` の当該モデルの説明に「推奨値の記載なし」と書く
+- `mlx-lm-run.py` / `json-ladder-run.py`（local）は `--temperature` が必須。指定した値はすべて run.json の `sampling` に記録され、未指定のキーは `"default"` になる
+- 推奨値の出典（モデルカードの URL）は `data.js` の `links` に入れる
+- 旧既定（0.3）で測った結果は、手元にモデルがあれば推奨値で測り直して上書きする。測り直すまでは run.json の `sampling.temperature` で区別できる
+
+フェンス（```` ```html ````）の除去は出力形式の正規化であって「手直し」ではない。run.json の `post_processing` に記録する。
 
 ## 観察された面白い現象
 
