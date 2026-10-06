@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>灰底牢 UNDERASH ― 地下三階</title>
+<style>
+:root{
+  --void:#06080b; --ink:#0a0d12; --ink2:#0e131a; --ink3:#131b24;
+  --line:#212b36; --line2:#2c3846;
+  --bone:#e9e2d1; --dim:#7f8c9c; --dimmer:#5a6675;
+  --brass:#e8b054; --rust:#c4453d; --moss:#54b39a; --lilac:#a489dc; --amber:#f0c67a;
+  --serif:"Palatino Linotype","Palatino","Book Antiqua","Hiragino Mincho ProN","Yu Mincho",serif;
+  --sans:"Hiragino Sans","Yu Gothic UI","Yu Gothic","Meiryo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"DejaVu Sans Mono",ui-monospace,"Menlo","Consolas","Courier New",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  background:
+    radial-gradient(1100px 700px at 10% -10%, rgba(232,176,84,.075), transparent 62%),
+    radial-gradient(900px 620px at 98% 6%, rgba(84,179,154,.06), transparent 64%),
+    radial-gradient(1000px 800px at 46% 118%, rgba(164,137,220,.055), transparent 60%),
+    linear-gradient(180deg,#080b10,#05070b 58%,#04060a);
+  color:var(--bone); font-family:var(--sans); letter-spacing:.01em;
+  padding:20px clamp(12px,3vw,34px) 34px; position:relative; overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:''; position:fixed; inset:-25%; pointer-events:none; z-index:0; opacity:.6;
+  background-image:linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);
+  background-size:46px 46px,46px 46px;
+  -webkit-mask-image:radial-gradient(circle at 50% 38%,#000 26%,transparent 76%);
+          mask-image:radial-gradient(circle at 50% 38%,#000 26%,transparent 76%);
+  animation:drift 64s linear infinite;
+}
+body::after{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:radial-gradient(130% 95% at 50% 46%, transparent 52%, rgba(0,0,0,.62));
+}
+@keyframes drift{to{transform:translate3d(46px,46px,0)}}
+
+.shell{position:relative; z-index:1; max-width:1420px; margin:0 auto}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex; align-items:flex-end; justify-content:space-between; gap:26px;
+  flex-wrap:wrap; padding-bottom:14px; border-bottom:1px solid var(--line);
+  animation:riseIn .7s cubic-bezier(.2,.8,.2,1) both}
+.brand{display:flex; align-items:flex-end; gap:16px; min-width:0}
+.lamp{width:11px;height:11px;border-radius:50%;flex:none;margin-bottom:14px;
+  background:radial-gradient(circle at 40% 35%,#ffe3ae,var(--brass) 55%,#7a4a12);
+  box-shadow:0 0 14px 4px rgba(232,176,84,.45),0 0 34px 10px rgba(232,176,84,.14);
+  animation:flick 3.4s infinite}
+@keyframes flick{
+  0%,100%{opacity:1;transform:scale(1)}
+  22%{opacity:.72;transform:scale(.9)}
+  35%{opacity:1}
+  54%{opacity:.62;transform:scale(.86)}
+  61%{opacity:.98}
+  78%{opacity:.8;transform:scale(.94)}
+}
+.wordmark{margin:0; font-family:var(--serif); font-weight:700; text-transform:uppercase;
+  font-size:clamp(33px,5.4vw,60px); line-height:.86; letter-spacing:.13em; color:#f4ecda;
+  text-shadow:0 0 30px rgba(232,176,84,.2), 0 2px 0 #000}
+.wordmark em{font-style:normal;color:var(--brass)}
+.brand__sub{margin:9px 0 0; font-size:11.5px; letter-spacing:.3em; text-transform:uppercase;
+  color:var(--dimmer)}
+.brand__sub b{color:var(--moss); font-weight:600}
+.meta{display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end}
+.chip{display:flex; align-items:baseline; gap:8px; padding:7px 12px; border:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(20,27,36,.9),rgba(9,12,17,.9)); position:relative;
+  font-family:var(--mono); font-size:13px; color:var(--bone)}
+.chip b{font-family:var(--sans); font-size:9.5px; letter-spacing:.24em; color:var(--dimmer);
+  text-transform:uppercase; font-weight:700}
+.chip::after,.chip::before{content:'';position:absolute;width:5px;height:5px;border:1px solid var(--line2)}
+.chip::before{top:-1px;left:-1px;border-right:0;border-bottom:0}
+.chip::after{bottom:-1px;right:-1px;border-left:0;border-top:0}
+.chip b{transition:color .25s}
+.chip.hot{border-color:rgba(232,176,84,.5)}
+.chip.hot b{color:var(--brass)}
+@keyframes bump{0%{transform:translateY(0)}35%{transform:translateY(-4px) scale(1.04)}100%{transform:translateY(0)}}
+.chip.bump{animation:bump .42s ease}
+
+/* ---------- layout ---------- */
+.stage{display:grid; grid-template-columns:minmax(0,1fr) 336px; gap:18px; margin-top:18px; align-items:start}
+.playcol{display:flex; flex-direction:column; gap:14px; min-width:0; animation:riseIn .8s .06s cubic-bezier(.2,.8,.2,1) both}
+@keyframes riseIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+.panel{position:relative; background:linear-gradient(180deg,var(--ink2),var(--ink));
+  border:1px solid var(--line); box-shadow:inset 0 1px 0 rgba(255,255,255,.03),0 18px 40px -22px rgba(0,0,0,.9)}
+.panel::before,.panel::after{content:''; position:absolute; width:9px; height:9px; border:1px solid var(--line2); pointer-events:none}
+.panel::before{top:-1px;left:-1px;border-right:0;border-bottom:0}
+.panel::after{bottom:-1px;right:-1px;border-left:0;border-top:0}
+.panel__hd{display:flex; align-items:center; gap:12px; padding:10px 14px; border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(255,255,255,.022),transparent)}
+.panel__hd h2{margin:0; font-family:var(--sans); font-size:10.5px; letter-spacing:.32em;
+  text-transform:uppercase; color:var(--dim); font-weight:700}
+.panel__hd .rule{flex:1; height:1px; background:linear-gradient(90deg,var(--line2),transparent)}
+.panel__hd .tag{font-family:var(--mono); font-size:10.5px; color:var(--dimmer)}
+
+/* ---------- viewport ---------- */
+.viewport{padding:10px}
+.canvas-wrap{position:relative}
+canvas{display:block; width:100%; height:auto; image-rendering:pixelated;
+  background:#05070a; box-shadow:inset 0 0 0 1px rgba(255,255,255,.035),inset 0 0 90px 20px rgba(0,0,0,.75)}
+.vrail{position:absolute; left:-1px; top:14px; writing-mode:vertical-rl; text-orientation:mixed;
+  font-family:var(--serif); font-size:12px; letter-spacing:.42em; color:#3b4653; pointer-events:none}
+.embers{position:absolute; inset:0; pointer-events:none; overflow:hidden}
+.embers i{position:absolute; bottom:-6px; width:2px; height:2px; border-radius:50%;
+  background:var(--brass); opacity:0; animation:ember linear infinite}
+@keyframes ember{
+  0%{opacity:0;transform:translateY(0) translateX(0)}
+  12%{opacity:.75}
+  70%{opacity:.4}
+  100%{opacity:0;transform:translateY(-120px) translateX(14px)}
+}
+.inspect{display:flex; align-items:center; justify-content:space-between; gap:14px;
+  margin-top:10px; padding:8px 10px; border:1px solid var(--line); background:rgba(6,9,13,.7);
+  font-family:var(--mono); font-size:12px; color:var(--dim); min-height:34px}
+.inspect b{font-family:var(--sans); font-size:10px; letter-spacing:.24em; color:var(--dimmer); text-transform:uppercase}
+.inspect span{color:var(--bone)}
+
+/* ---------- ledger ---------- */
+.ledger .log{display:flex; flex-direction:column; gap:1px; padding:10px 14px 12px;
+  font-family:var(--mono); font-size:12.5px; line-height:1.8; min-height:calc(6 * 23px)}
+.log__line{display:flex; gap:9px; color:#93a1b1; animation:logIn .34s ease both}
+.log__line::before{content:'\203A'; color:#41505f; flex:none}
+.log__line:nth-last-child(n+5){opacity:.5}
+.log__line:nth-last-child(n+6){opacity:.32}
+.log__line.t-good{color:#a9dcb7}
+.log__line.t-bad{color:#e88d85}
+.log__line.t-combat{color:#dcbb78}
+.log__line.t-level{color:var(--brass); letter-spacing:.02em}
+.log__line.t-sys{color:#6f7b8c}
+@keyframes logIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+
+/* ---------- side panel ---------- */
+.panel--side{animation:riseIn .8s .14s cubic-bezier(.2,.8,.2,1) both}
+.sheet{padding:14px 14px 4px; display:flex; align-items:flex-end; gap:14px}
+.sheet__who{flex:1; min-width:0}
+.sheet__who p{margin:0; font-size:11px; letter-spacing:.26em; color:var(--dimmer); text-transform:uppercase}
+.sheet__who h3{margin:2px 0 0; font-family:var(--serif); font-size:25px; letter-spacing:.06em; color:#f0e7d5; font-weight:600}
+.lv{text-align:right; line-height:.8}
+.lv__n{font-family:var(--serif); font-size:52px; font-weight:700; color:var(--brass);
+  text-shadow:0 0 26px rgba(232,176,84,.3)}
+.lv__l{display:block; font-size:9.5px; letter-spacing:.3em; color:var(--dimmer); text-transform:uppercase; margin-top:6px}
+.bars{padding:6px 14px 12px; display:flex; flex-direction:column; gap:9px}
+.bar__hd{display:flex; align-items:baseline; justify-content:space-between; font-family:var(--mono); font-size:11px; color:var(--dim)}
+.bar__hd span{color:var(--dimmer); letter-spacing:.1em}
+.bar__hd b{font-family:var(--sans); font-size:15px; color:var(--bone); font-weight:700; letter-spacing:.02em}
+.bar__hd i{font-style:normal; color:var(--dimmer); font-size:11px}
+.track{position:relative; height:8px; margin-top:5px; background:#0b0f15; border:1px solid var(--line); overflow:hidden}
+.fill{position:absolute; inset:0 auto 0 0; width:100%; background:linear-gradient(90deg,#8e2f28,#c4453d 62%,#e2726a);
+  transition:width .32s cubic-bezier(.2,.8,.2,1)}
+.fill.low{background:linear-gradient(90deg,#7c241f,#c4453d); animation:danger .9s ease-in-out infinite}
+@keyframes danger{0%,100%{filter:brightness(1)}50%{filter:brightness(1.55)}}
+.track--xp .fill{background:linear-gradient(90deg,#2c7c68,#54b39a 70%,#7fd6bd)}
+.ticks{position:absolute; inset:0; pointer-events:none;
+  background:repeating-linear-gradient(90deg,transparent 0 9px,rgba(0,0,0,.55) 9px 10px)}
+
+.pips{display:flex; gap:6px; padding:2px 14px 12px}
+.pip{flex:1; text-align:center; padding:8px 0 7px; border:1px solid var(--line); background:rgba(8,11,16,.8);
+  font-family:var(--mono); font-size:11px; color:var(--dimmer); transition:all .3s}
+.pip.on{color:var(--bone); border-color:var(--line2)}
+.pip.here{color:#0a0d12; background:linear-gradient(180deg,#f0c67a,#d0913a); border-color:#f0c67a;
+  box-shadow:0 0 18px rgba(232,176,84,.3); animation:pulse 2.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 14px rgba(232,176,84,.24)}50%{box-shadow:0 0 26px rgba(232,176,84,.45)}}
+
+.stats{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line); border-top:1px solid var(--line); border-bottom:1px solid var(--line)}
+.stat{background:linear-gradient(180deg,var(--ink3),var(--ink)); padding:10px 14px; transition:background .25s}
+.stat:hover{background:linear-gradient(180deg,#182029,#0c1116)}
+.stat__v{font-family:var(--mono); font-size:26px; line-height:1; color:#f0e7d5; font-weight:700}
+.stat__v small{font-size:12px; color:var(--dimmer); font-weight:400; margin-left:3px}
+.stat__l{display:block; margin-top:5px; font-size:9.5px; letter-spacing:.24em; color:var(--dimmer); text-transform:uppercase}
+
+.inv{display:grid; grid-template-columns:repeat(3,1fr); gap:7px; padding:12px 14px 14px}
+.slot{position:relative; aspect-ratio:1/.92; border:1px solid var(--line); background:rgba(7,10,14,.85);
+  display:flex; align-items:center; justify-content:center; transition:transform .18s, border-color .18s, box-shadow .18s}
+.slot__n{position:absolute; top:3px; left:5px; font-family:var(--mono); font-size:9.5px; color:#3c4756}
+.slot__g{font-family:var(--mono); font-size:22px; font-weight:700; line-height:1}
+.slot__x{position:absolute; bottom:3px; right:5px; font-family:var(--mono); font-size:10px; color:var(--dim)}
+.slot__dash{color:#2b3542; font-size:18px}
+.slot.has{border-color:var(--line2); background:radial-gradient(120% 100% at 50% 0,rgba(255,255,255,.05),rgba(7,10,14,.9))}
+.slot.has:hover{transform:translateY(-3px); border-color:rgba(232,176,84,.55); box-shadow:0 8px 18px -8px rgba(0,0,0,.9),0 0 0 1px rgba(232,176,84,.16) inset}
+.slot.empty:hover{border-color:#313d4b}
+
+.keys{display:flex; flex-direction:column; gap:7px; padding:0 14px 12px}
+.keys div{display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--dim)}
+kbd{font-family:var(--mono); font-size:10.5px; color:#dcd4c2; background:#141b23; border:1px solid var(--line2);
+  border-bottom-width:2px; padding:2px 6px; letter-spacing:.04em}
+.legend{display:grid; grid-template-columns:repeat(2,1fr); gap:5px 10px; padding:0 14px 14px;
+  font-family:var(--mono); font-size:11px; color:var(--dim)}
+.legend b{font-weight:700; margin-right:5px}
+.acts{display:flex; gap:8px; padding:0 14px 14px}
+button{flex:1; font-family:var(--sans); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--bone); background:linear-gradient(180deg,#182029,#0d1218); border:1px solid var(--line2);
+  padding:9px 6px; cursor:pointer; transition:all .2s}
+button:hover{color:#0a0d12; background:linear-gradient(180deg,#f0c67a,#cf9138); border-color:#f0c67a}
+button:active{transform:translateY(1px)}
+
+footer.foot{margin-top:16px; padding-top:12px; border-top:1px solid var(--line);
+  display:flex; justify-content:space-between; gap:18px; flex-wrap:wrap;
+  font-family:var(--mono); font-size:11px; color:#4e5a69}
+
+/* ---------- overlay cards ---------- */
+.overlay{position:absolute; inset:0; display:grid; place-items:center; padding:22px; z-index:5;
+  background:radial-gradient(120% 90% at 50% 45%,rgba(6,8,12,.72),rgba(4,5,8,.94));
+  transition:opacity .3s; }
+.overlay.gone{opacity:0; pointer-events:none}
+.card{position:relative; width:min(560px,100%); padding:26px 30px 24px;
+  background:linear-gradient(180deg,#111a23,#090d12 70%);
+  border:1px solid var(--line2); box-shadow:0 30px 70px -20px rgba(0,0,0,.95),0 0 0 6px rgba(6,9,13,.6)}
+.card::before,.card::after{content:''; position:absolute; width:14px; height:14px; border:1px solid var(--brass); opacity:.55}
+.card::before{top:-1px;left:-1px;border-right:0;border-bottom:0}
+.card::after{bottom:-1px;right:-1px;border-left:0;border-top:0}
+.card__kick{font-size:10px; letter-spacing:.4em; text-transform:uppercase; color:var(--dimmer)}
+.card h1{margin:8px 0 0; font-family:var(--serif); font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+  font-size:clamp(30px,4.4vw,46px); line-height:.95; color:#f4ecda}
+.card h1 em{font-style:normal;color:var(--brass)}
+.card h1.ded{color:#e88d85; text-shadow:0 0 34px rgba(196,69,61,.4)}
+.card h1.win{color:#7fd6bd; text-shadow:0 0 34px rgba(84,179,154,.35)}
+.card p{margin:12px 0 0; font-size:13.5px; line-height:1.95; color:#9dabb9; max-width:46ch}
+.card__keys{display:grid; grid-template-columns:1fr 1fr; gap:8px 18px; margin:18px 0 4px;
+  padding:14px 0 4px; border-top:1px solid var(--line); font-size:11.5px; color:var(--dim)}
+.card__keys div{display:flex; gap:9px; align-items:center}
+.card__stats{display:flex; flex-wrap:wrap; gap:22px; margin:18px 0 6px; padding:14px 0 4px; border-top:1px solid var(--line)}
+.card__stats div{min-width:74px}
+.card__stats b{display:block; font-family:var(--mono); font-size:25px; color:var(--brass); line-height:1}
+.card__stats span{font-size:9.5px; letter-spacing:.22em; text-transform:uppercase; color:var(--dimmer)}
+.prompt{margin-top:20px; font-family:var(--mono); font-size:12px; color:var(--amber); letter-spacing:.1em}
+.prompt b{animation:blink 1.15s steps(1) infinite}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:.15}}
+.shaft{position:absolute; left:0; right:0; top:0; height:2px;
+  background:linear-gradient(90deg,transparent,rgba(232,176,84,.7),transparent); animation:sweep 3.6s ease-in-out infinite}
+@keyframes sweep{0%{transform:translateY(0);opacity:0}20%{opacity:1}100%{transform:translateY(300px);opacity:0}}
+@media (max-width:1080px){
+  .stage{grid-template-columns:minmax(0,1fr)}
+  .panel--side{order:2}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="masthead">
+    <div class="brand">
+      <span class="lamp"></span>
+      <div>
+        <h1 class="wordmark">UNDER<em>ASH</em></h1>
+        <p class="brand__sub">灰底牢 ― 地下三階 &nbsp;/&nbsp; turn-based <b>dungeon crawl</b></p>
+      </div>
+    </div>
+    <div class="meta">
+      <div class="chip" id="chipSeed"><b>seed</b><span id="seedOut">—</span></div>
+      <div class="chip" id="chipDepth"><b>depth</b><span id="depthOut">B1</span></div>
+      <div class="chip" id="chipTurn"><b>turn</b><span id="turnOut">0</span></div>
+    </div>
+  </header>
+
+  <main class="stage">
+    <div class="playcol">
+      <section class="panel viewport">
+        <div class="canvas-wrap">
+          <canvas id="game" width="960" height="560"></canvas>
+          <div class="vrail">灰底牢・地下三階</div>
+          <div class="embers" id="embers"></div>
+          <div class="overlay" id="overlay"></div>
+        </div>
+        <div class="inspect"><b>inspect</b><span id="inspectOut">マスにカーソルを合わせると詳細を表示</span></div>
+      </section>
+
+      <section class="panel ledger">
+        <div class="panel__hd"><h2>行動日誌</h2><span class="rule"></span><span class="tag" id="logTag">last 6</span></div>
+        <div class="log" id="log"></div>
+      </section>
+    </div>
+
+    <aside class="panel panel--side">
+      <div class="panel__hd"><h2>牢囚</h2><span class="rule"></span><span class="tag">@ 灰被り</span></div>
+      <div class="sheet">
+        <div class="sheet__who">
+          <p>walker of ash</p>
+          <h3>灰被りの探索者</h3>
+        </div>
+        <div class="lv"><span class="lv__n" id="oLv">1</span><span class="lv__l">level</span></div>
+      </div>
+
+      <div class="bars">
+        <div class="bar">
+          <div class="bar__hd"><span>hit points</span><div><b id="hpNow">32</b><i> / <span id="hpMax">32</span></i></div></div>
+          <div class="track"><div class="fill" id="hpFill"></div><div class="ticks"></div></div>
+        </div>
+        <div class="bar">
+          <div class="bar__hd"><span>experience</span><div><b id="xpNow">0</b><i> / <span id="xpNeed">12</span></i></div></div>
+          <div class="track track--xp"><div class="fill" id="xpFill" style="width:0%"></div><div class="ticks"></div></div>
+        </div>
+      </div>
+
+      <div class="pips">
+        <div class="pip" data-d="1">B1</div><div class="pip" data-d="2">B2</div><div class="pip" data-d="3">B3</div><div class="pip" data-d="4">門</div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="stat__v" id="oAtk">7</div><span class="stat__l">攻撃 force</span></div>
+        <div class="stat"><div class="stat__v" id="oDef">1</div><span class="stat__l">防御 guard</span></div>
+        <div class="stat"><div class="stat__v" id="oKill">0</div><span class="stat__l">撃破 kills</span></div>
+        <div class="stat"><div class="stat__v" id="oDmg">0</div><span class="stat__l">与 damage</span></div>
+      </div>
+
+      <div class="panel__hd" style="border-top:1px solid var(--line)"><h2>所持品</h2><span class="rule"></span><span class="tag">1–9 で使用</span></div>
+      <div class="inv" id="invGrid"></div>
+
+      <div class="panel__hd" style="border-top:1px solid var(--line)"><h2>操作</h2><span class="rule"></span></div>
+      <div class="keys">
+        <div><kbd>↑↓←→</kbd><kbd>WASD</kbd> 移動 / 敵にぶつかると攻撃</div>
+        <div><kbd>1</kbd>…<kbd>9</kbd> 对应スロットを使用</div>
+        <div><kbd>Enter</kbd><kbd>&gt;</kbd> 階段を降りる</div>
+        <div><kbd>.</kbd> その場で待つ</div>
+        <div><kbd>R</kbd> 新しい牢を生成</div>
+      </div>
+
+      <div class="panel__hd" style="border-top:1px solid var(--line)"><h2>凡例</h2><span class="rule"></span></div>
+      <div class="legend">
+        <div><b style="color:#f0c67a">@</b>自分</div>
+        <div><b style="color:#5ad0b0">&gt;</b>階段</div>
+        <div><b style="color:#b8a888">r</b>灰鼠</div>
+        <div><b style="color:#7fbd7a">s</b>灰滑り</div>
+        <div><b style="color:#c9b45c">g</b>穴居人</div>
+        <div><b style="color:#dcd6c8">o</b>灰骨の兵</div>
+        <div><b style="color:#a489dc">w</b>残り火（壁抜け）</div>
+        <div><b style="color:#e0645f">D</b>獄卒</div>
+        <div><b style="color:#e0645f">!</b>薬</div>
+        <div><b style="color:#8fb4d8">/</b>武器</div>
+        <div><b style="color:#a489dc">*</b>巻物</div>
+        <div><b style="color:#e8a04c">(</b>火打石</div>
+      </div>
+      <div class="acts">
+        <button id="btnDown" type="button">降りる ⏎</button>
+        <button id="btnNew" type="button">再生成 R</button>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="foot">
+    <span>完全ローカル・依存ゼロ／1 入力 = 1 ターン。視界の外は存在しないのと同じ。</span>
+    <span id="footHint">深い階ほど、闇は厚い。</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ================= 定数・ユーティリティ ================= */
+const W=48,H=28,TILE=20,FOV_R=9,MAX_DEPTH=3;
+const DIRS=[[0,-1],[1,0],[0,1],[-1,0]];
+const idx=(x,y)=>y*W+x;
+const inB=(x,y)=>x>=0&&y>=0&&x<W&&y<H;
+const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const q=s=>document.querySelector(s);
+
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+let rng=mulberry32(1);
+const rnd=()=>rng();
+const ri=n=>Math.floor(rnd()*n);
+const pick=a=>a[ri(a.length)];
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=ri(i+1);const t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function hash2(x,y){let h=(x*374761393+y*668265263)>>>0;h=(h^(h>>>13))>>>0;h=Math.imul(h,1274126177)>>>0;return (h>>>0)/4294967295;}
+function wpick(list,wf){let t=0;for(const it of list)t+=wf(it);if(t<=0)return list[0];let r=rnd()*t;for(const it of list){r-=wf(it);if(r<=0)return it;}return list[list.length-1];}
+
+const cv=q('#game'), ctx=cv.getContext('2d');
+(function fit(){
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  cv.width=W*TILE*dpr; cv.height=H*TILE*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font='700 15px '+MONO();
+})();
+function MONO(){return '"DejaVu Sans Mono",ui-monospace,Menlo,Consolas,monospace';}
+ctx.font='700 15px '+MONO();
+
+/* ================= 定義 ================= */
+const BEASTS={
+  rat:{name:'灰鼠',glyph:'r',color:'#bfae8c',hp:7,atk:3,def:0,xp:5,sight:7,flee:true,min:1,wt:30},
+  slime:{name:'灰滑り',glyph:'s',color:'#7fbd7a',hp:15,atk:4,def:1,xp:8,sight:4,min:1,wt:26},
+  gob:{name:'穴居のゴブリン',glyph:'g',color:'#cdb85f',hp:20,atk:6,def:1,xp:13,sight:9,min:1,wt:22},
+  bone:{name:'灰骨の兵',glyph:'o',color:'#dcd6c8',hp:30,atk:8,def:3,xp:22,sight:8,min:2,wt:20},
+  shade:{name:'残り火',glyph:'w',color:'#a489dc',hp:18,atk:7,def:0,xp:20,sight:11,fly:true,min:2,wt:14},
+  warden:{name:'獄卒ドゥーム',glyph:'D',color:'#e0645f',hp:58,atk:12,def:4,xp:70,sight:12,min:3,wt:0,elite:true}
+};
+const ITEMS={
+  herb:{name:'灰の薬草',glyph:'!',color:'#e0645f',kind:'heal',pct:.45,min:1,wt:34,desc:'最大HPの45%を回復'},
+  elixir:{name:'濾過した秘薬',glyph:'!',color:'#f08ab0',kind:'heal',pct:1,min:2,wt:12,desc:'HPを全回復'},
+  knife:{name:'曲がった短剣',glyph:'/',color:'#8fb4d8',kind:'atk',power:2,min:1,wt:20,desc:'攻撃力 +2（永久）'},
+  claw:{name:'鉤爪の刃',glyph:'/',color:'#b9d0e8',kind:'atk',power:3,min:2,wt:14,desc:'攻撃力 +3（永久）'},
+  saw:{name:'鋸刃の片手剣',glyph:'/',color:'#e3ecf6',kind:'atk',power:5,min:3,wt:8,desc:'攻撃力 +5（永久）'},
+  scroll:{name:'灯火の巻物',glyph:'*',color:'#a489dc',kind:'reveal',min:1,wt:14,desc:'階全体の地図を得る'},
+  flint:{name:'火打石の欠片',glyph:'(',color:'#e8a04c',kind:'fire',min:1,wt:16,desc:'周囲3マスに炎（範囲攻撃）'}
+};
+
+/* ================= 状態 ================= */
+const S={
+  phase:'title', locked:false, depth:1, turns:0, seed:1,
+  map:new Uint8Array(W*H), seen:new Uint8Array(W*H), vis:new Uint8Array(W*H),
+  rooms:[], stairs:{x:0,y:0},
+  player:{x:1,y:1,lv:1,xp:0,xpNext:12,maxhp:32,hp:32,atk:7,def:1,nx:0,ny:0},
+  monsters:[], items:[], inv:[],
+  stats:{kills:0,dmgDealt:0,dmgTaken:0}, logs:[]
+};
+const fx={floats:[],parts:[],dust:[],shake:0,flash:0,flashCol:'255,90,80'};
+for(let i=0;i<52;i++)fx.dust.push({x:rnd()*W*TILE,y:rnd()*H*TILE,vx:-4+rnd()*8,vy:-6-rnd()*14,s:.6+rnd()*1.4,p:rnd()*6.28});
+
+const isWall=(x,y)=>!inB(x,y)||S.map[idx(x,y)]===0;
+const monsterAt=(x,y)=>S.monsters.find(m=>m.x===x&&m.y===y&&m.hp>0);
+const itemAt=(x,y)=>S.items.find(it=>it.x===x&&it.y===y);
+
+/* ================= 階層生成 ================= */
+function carveRect(x,y,w,h){for(let j=y;j<y+h;j++)for(let i=x;i<x+w;i++)if(inB(i,j))S.map[idx(i,j)]=1;}
+function carveH(y,x0,x1){for(let i=Math.min(x0,x1);i<=Math.max(x0,x1);i++)if(inB(i,y)&&i>0&&i<W-1)S.map[idx(i,y)]=1;}
+function carveV(x,y0,y1){for(let j=Math.min(y0,y1);j<=Math.max(y0,y1);j++)if(inB(x,j)&&j>0&&j<H-1)S.map[idx(x,j)]=1;}
+function corridor(a,b){
+  if(rnd()<.5){carveH(a.cy,a.cx,b.cx);carveV(b.cx,a.cy,b.cy);}
+  else{carveV(a.cx,a.cy,b.cy);carveH(b.cy,a.cx,b.cx);}
+}
+function generateMap(){
+  const want=9+(rnd()<.5?0:2);
+  for(let guard=0;guard<90;guard++){
+    S.map.fill(0); S.rooms=[];
+    for(let a=0;a<520&&S.rooms.length<want+4;a++){
+      const w=5+ri(7),h=4+ri(5),x=1+ri(W-w-2),y=1+ri(H-h-2);
+      let ok=true;
+      for(const o of S.rooms){if(x<o.x+o.w+2&&x+w+2>o.x&&y<o.y+o.h+2&&y+h+2>o.y){ok=false;break;}}
+      if(!ok)continue;
+      const r={x,y,w,h,cx:(x+w/2)|0,cy:(y+h/2)|0};
+      S.rooms.push(r); carveRect(x,y,w,h);
+    }
+    if(S.rooms.length>=8)break;
+  }
+  const order=S.rooms.slice().sort((a,b)=>(a.cx+a.cy*.4)-(b.cx+b.cy*.4));
+  for(let i=1;i<order.length;i++)corridor(order[i-1],order[i]);
+  const extra=1+ri(3);
+  for(let i=0;i<extra;i++)corridor(pick(S.rooms),pick(S.rooms));
+
+  const start=order[0];
+  let far=order[order.length-1],bd=-1;
+  for(const r of S.rooms){if(r===start)continue;const d=Math.hypot(r.cx-start.cx,r.cy-start.cy);if(d>bd){bd=d;far=r;}}
+  S.stairs={x:far.cx,y:far.cy};
+  S.map[idx(S.stairs.x,S.stairs.y)]=2;
+  return start;
+}
+function spawnBeast(kind,x,y){
+  const b=BEASTS[kind],d=S.depth;
+  const m={kind,x,y,aware:0,intro:false,elite:!!b.elite,
+    maxhp:Math.round(b.hp*(1+.30*(d-1))),
+    atk:Math.round(b.atk*(1+.22*(d-1))),
+    def:b.def+Math.floor((d-1)/2),
+    xp:Math.round(b.xp*(1+.25*(d-1)))};
+  m.hp=m.maxhp; return m;
+}
+function rollItem(forceDeep){
+  const list=Object.keys(ITEMS).filter(k=>ITEMS[k].min<=(forceDeep?S.depth:S.depth));
+  return wpick(list,it=>ITEMS[it].wt);
+}
+function populate(){
+  S.monsters=[]; S.items=[];
+  const cells=[];
+  for(const r of S.rooms)
+    for(let y=r.y;y<r.y+r.h;y++)for(let x=r.x;x<r.x+r.w;x++){
+      if(S.map[idx(x,y)]!==1)continue;
+      if(Math.max(Math.abs(x-S.player.x),Math.abs(y-S.player.y))<5)continue;
+      cells.push({x,y});
+    }
+  shuffle(cells);
+  const nMon=7+S.depth*2;
+  const pool=Object.keys(BEASTS).filter(k=>BEASTS[k].min<=S.depth&&BEASTS[k].wt>0);
+  for(let i=0;i<nMon&&cells.length;i++){
+    const c=cells.pop();
+    S.monsters.push(spawnBeast(wpick(pool,k=>BEASTS[k].wt),c.x,c.y));
+  }
+  if(S.depth>=MAX_DEPTH){
+    const near=S.rooms.slice().sort((a,b)=>Math.hypot(b.cx-S.stairs.x,b.cy-S.stairs.y)-Math.hypot(a.cx-S.stairs.x,a.cy-S.stairs.y))[0];
+    let sx=near.cx,sy=near.cy;
+    for(let tries=0;tries<60;tries++){
+      const x=near.x+ri(near.w),y=near.y+ri(near.h);
+      if(S.map[idx(x,y)]===1&&Math.max(Math.abs(x-sx),Math.abs(y-sy))>0&&!monsterAt(x,y)){sx=x;sy=y;break;}
+    }
+    S.monsters.push(spawnBeast('warden',sx,sy));
+  }
+  const nItem=5+ri(2);
+  for(let i=0;i<nItem&&cells.length;i++){
+    const c=cells.pop();
+    S.items.push({x:c.x,y:c.y,kind:rollItem()});
+  }
+}
+function buildFloor(){
+  const start=generateMap();
+  S.player.x=start.cx; S.player.y=start.cy;
+  populate();
+  S.seen.fill(0);
+  computeFOV();
+  syncHUD();
+}
+
+/* ================= 視界 ================= */
+const M1=[1,0,0,-1,-1,0,0,1],M2=[0,1,-1,0,0,1,-1,0];
+function lit(x,y){if(inB(x,y)){S.vis[idx(x,y)]=1;S.seen[idx(x,y)]=1;}}
+function castLight(cx,cy,row,start,end,xx,xy,yx,yy,r){
+  if(start<end)return;
+  const r2=r*r;
+  for(let j=row;j<=r;j++){
+    let dx=-j-1,dy=-j,blocked=false,newStart=0;
+    while(dx<=0){
+      dx++;
+      const X=cx+dx*xx+dy*xy, Y=cy+dx*yx+dy*yy;
+      const lS=(dx-.5)/(dy+.5), rS=(dx+.5)/(dy-.5);
+      if(rS>start)continue;
+      if(lS<end)break;
+      if(dx*dx+dy*dy<=r2)lit(X,Y);
+      if(blocked){
+        if(isWall(X,Y)){newStart=rS;continue;}
+        blocked=false;start=newStart;
+      }else if(isWall(X,Y)&&j<r){
+        blocked=true;
+        castLight(cx,cy,j+1,start,lS,xx,xy,yx,yy,r);
+        end=rS;
+      }
+    }
+    if(blocked)break;
+  }
+}
+function computeFOV(){
+  S.vis.fill(0);
+  const p=S.player;
+  lit(p.x,p.y);
+  for(let i=0;i<8;i++)castLight(p.x,p.y,1,1,0,M1[i],M2[i],M2[i],M1[i],FOV_R);
+}
+function los(x0,y0,x1,y1){
+  let dx=Math.abs(x1-x0),dy=Math.abs(y1-y0);
+  let sx=x0<x1?1:-1,sy=y0<y1?1:-1,err=dx-dy,x=x0,y=y0,g=0;
+  while(g++<400){
+    if(x===x1&&y===y1)return true;
+    if(!(x===x0&&y===y0)&&isWall(x,y))return false;
+    const e2=2*err;
+    if(e2>-dy){err-=dy;x+=sx;}
+    if(e2<dx){err+=dx;y+=sy;}
+  }
+  return false;
+}
+
+/* ================= FX ================= */
+function floatText(x,y,text,color){fx.floats.push({x:x*TILE+TILE/2,y:y*TILE+6,text,color,life:900,age:0});}
+function burst(x,y,color,n){
+  for(let i=0;i<n;i++){
+    const a=rnd()*6.283,s=24+rnd()*74;
+    fx.parts.push({x:x*TILE+TILE/2,y:y*TILE+TILE/2,vx:Math.cos(a)*s,vy:Math.sin(a)*s-14,life:400+rnd()*420,age:0,color,r:.8+rnd()*1.9});
+  }
+}
+function shake(n){fx.shake=Math.max(fx.shake,n);}
+function flash(c,amt){fx.flashCol=c;fx.flash=Math.max(fx.flash,amt);}
+
+/* ================= ログ ================= */
+const logBox=q('#log');
+function log(text,tone){
+  const el=document.createElement('div');
+  el.className='log__line'+(tone?' t-'+tone:'');
+  el.textContent=text;
+  logBox.appendChild(el);
+  while(logBox.children.length>6)logBox.removeChild(logBox.firstChild);
+  logBox.scrollTop=logBox.scrollHeight;
+}
+
+/* ================= HUD ================= */
+function bumpChip(id){const c=q(id);c.classList.remove('bump');void c.offsetWidth;c.classList.add('bump');}
+function renderInv(){
+  const g=q('#invGrid'); g.innerHTML='';
+  for(let i=0;i<9;i++){
+    const st=S.inv[i],d=document.createElement('div');
+    d.className='slot'+(st?' has':' empty');
+    let html='<span class="slot__n">'+(i+1)+'</span>';
+    if(st){
+      const def=ITEMS[st.kind];
+      html+='<span class="slot__g" style="color:'+def.color+'">'+def.glyph+'</span>';
+      if(st.n>1)html+='<span class="slot__x">x'+st.n+'</span>';
+      d.title=def.name+' — '+def.desc+'　[キー '+(i+1)+']';
+    }else html+='<span class="slot__dash">·</span>';
+    d.innerHTML=html;
+    d.addEventListener('click',()=>{if(st)useItem(i);});
+    g.appendChild(d);
+  }
+}
+function syncHUD(){
+  const p=S.player;
+  q('#oLv').textContent=p.lv;
+  q('#hpNow').textContent=p.hp; q('#hpMax').textContent=p.maxhp;
+  const hp=clamp(p.hp/p.maxhp,0,1)*100;
+  const hf=q('#hpFill'); hf.style.width=hp+'%'; hf.classList.toggle('low',hp<=34);
+  q('#xpNow').textContent=p.xp; q('#xpNeed').textContent=p.xpNext;
+  q('#xpFill').style.width=(clamp(p.xp/p.xpNext,0,1)*100)+'%';
+  q('#oAtk').textContent=p.atk; q('#oDef').textContent=p.def;
+  q('#oKill').textContent=S.stats.kills; q('#oDmg').textContent=S.stats.dmgDealt;
+  q('#turnOut').textContent=S.turns;
+  q('#depthOut').textContent='B'+Math.min(S.depth,MAX_DEPTH);
+  q('#seedOut').textContent=S.seed.toString(36).toUpperCase().slice(-6);
+  document.querySelectorAll('.pip').forEach(el=>{
+    const d=+el.dataset.d;
+    el.classList.toggle('on',d<=S.depth);
+    el.classList.toggle('here',d===S.depth);
+  });
+  renderInv();
+}
+
+/* ================= 経験値・レベル ================= */
+function gainXp(n){
+  const p=S.player; p.xp+=n;
+  while(p.xp>=p.xpNext){
+    p.xp-=p.xpNext; p.lv++;
+    p.maxhp+=7; p.hp=Math.min(p.maxhp,p.hp+7); p.atk+=2;
+    if(p.lv%2===0)p.def+=1;
+    p.xpNext=Math.round(12*Math.pow(1.5,p.lv-1));
+    log('LV.'+p.lv+' に到達。骨の奥で刃が熱を持つ。','level');
+    flash('232,176,84',.22); bumpChip('#chipTurn');
+  }
+}
+
+/* ================= コンバット ================= */
+function playerAttack(m){
+  const p=S.player,b=BEASTS[m.kind];
+  const crit=rnd()<.09;
+  let dmg=Math.max(1,p.atk-m.def+ri(3));
+  if(crit)dmg=Math.round(dmg*1.8);
+  m.hp-=dmg; m.aware=8;
+  S.stats.dmgDealt+=dmg;
+  floatText(m.x,m.y,(crit?'急所 ':'')+'-'+dmg,crit?'#ffd489':'#f2e8d4');
+  burst(m.x,m.y,b.color,crit?15:9);
+  log(b.name+'に '+dmg+' ダメージ'+(crit?'（急所を突いた！）':''),'good');
+  if(m.hp<=0){
+    const i=S.monsters.indexOf(m); if(i>=0)S.monsters.splice(i,1);
+    killMonster(m);
+  }
+  return true;
+}
+function killMonster(m){
+  const b=BEASTS[m.kind];
+  S.stats.kills++;
+  floatText(m.x,m.y,'+'+m.xp+' XP','#5ad0b0');
+  burst(m.x,m.y,b.color,16);
+  log(b.name+'は灰に崩れた（+'+m.xp+' EXP）','good');
+  gainXp(m.xp);
+  if(rnd()<.18){
+    const k=rollItem(true);
+    if(addItem(k))log('落としていた '+ITEMS[k].name+' を拾った。','sys');
+  }
+}
+function attackPlayer(m){
+  const p=S.player,b=BEASTS[m.kind];
+  const dmg=Math.max(1,m.atk-p.def+ri(3)-1);
+  p.hp-=dmg; S.stats.dmgTaken+=dmg;
+  floatText(p.x,p.y,'-'+dmg,'#ef7a70');
+  burst(p.x,p.y,b.color,10);
+  shake(m.elite?9:5.5); flash('200,60,52',.3);
+  bumpChip('#chipDepth');
+  log(b.name+'の攻撃。'+dmg+' のダメージを受けた。','bad');
+  if(p.hp<=0){p.hp=0;gameOver(b);}
+}
+
+/* ================= アイテム ================= */
+function addItem(kind){
+  const st=S.inv.find(s=>s.kind===kind);
+  if(st){if(st.n<9){st.n++;syncHUD();return true;} }
+  if(S.inv.length<9){S.inv.push({kind,n:1});syncHUD();return true;}
+  return false;
+}
+function useItem(i){
+  if(S.phase!=='play'||S.locked)return;
+  const st=S.inv[i];
+  if(!st){log('スロット '+(i+1)+' には何もない。','sys');return;}
+  const def=ITEMS[st.kind],p=S.player;
+  if(def.kind==='heal'){
+    if(p.hp>=p.maxhp){log('今は傷がない。薬は無駄にできない。','sys');return;}
+    const heal=Math.max(1,Math.round(p.maxhp*def.pct)-p.hp)+0;
+    const before=p.hp; p.hp=Math.min(p.maxhp,p.hp+Math.round(p.maxhp*def.pct));
+    floatText(p.x,p.y,'+'+(p.hp-before),'#7fd6bd');
+    log(def.name+'を飲んだ。HPが '+(p.hp-before)+' 戻る。','good');
+  }else if(def.kind==='atk'){
+    p.atk+=def.power;
+    floatText(p.x,p.y,'ATK +'+def.power,'#cfe3f7');
+    flash('150,190,230',.16);
+    log(def.name+'を帯刀した。攻撃力 +'+def.power+'。','level');
+  }else if(def.kind==='reveal'){
+    S.seen.fill(1);
+    flash('170,140,230',.3);
+    log('巻物が燃え、階全体の輪郭が頭に焼き付いた。','level');
+  }else if(def.kind==='fire'){
+    let n=0;
+    const dead=[];
+    for(const m of S.monsters){
+      if(Math.hypot(m.x-p.x,m.y-p.y)<=3.2){
+        const dmg=8+p.lv*2+ri(6);
+        m.hp-=dmg; m.aware=8; n++;
+        floatText(m.x,m.y,'-'+dmg,'#ffb15c'); burst(m.x,m.y,'#ff9a3c',11);
+        S.stats.dmgDealt+=dmg;
+        if(m.hp<=0)dead.push(m);
+      }
+    }
+    for(const m of dead){const k=S.monsters.indexOf(m);if(k>=0)S.monsters.splice(k,1);killMonster(m);}
+    burst(p.x,p.y,'#ffb45a',30); flash('255,150,60',.34);
+    log('火打石が閃いた。'+n+'体'+(n?'を炎に巻いた。':'しなかった。'),'good');
+  }
+  st.n--; if(st.n<=0)S.inv.splice(i,1);
+  endTurn();
+}
+
+/* ================= 敵AI ================= */
+function canStand(x,y,m){
+  if(!inB(x,y))return false;
+  if(!BEASTS[m.kind].fly&&isWall(x,y))return false;
+  if(x===S.player.x&&y===S.player.y)return false;
+  const o=monsterAt(x,y);
+  if(o&&!(BEASTS[m.kind].fly&&BEASTS[o.kind].fly))return false;
+  return true;
+}
+function stepToward(m,flee){
+  const p=S.player;
+  const opts=[];
+  for(const d of DIRS){
+    const nx=m.x+d[0],ny=m.y+d[1];
+    if(!canStand(nx,ny,m))continue;
+    const md=Math.abs(nx-p.x)+Math.abs(ny-p.y);
+    opts.push({nx,ny,k:(flee?-md:md)+rnd()*.7});
+  }
+  if(!opts.length)return false;
+  opts.sort((a,b)=>a.k-b.k);
+  m.x=opts[0].nx; m.y=opts[0].ny; return true;
+}
+function stepRandom(m){
+  const dirs=shuffle(DIRS.slice());
+  for(const d of dirs){
+    const nx=m.x+d[0],ny=m.y+d[1];
+    if(canStand(nx,ny,m)){m.x=nx;m.y=ny;return true;}
+  }
+  return false;
+}
+function monsterTurn(m){
+  const p=S.player,b=BEASTS[m.kind];
+  const man=Math.abs(m.x-p.x)+Math.abs(m.y-p.y);
+  const sees=S.vis[idx(m.x,m.y)]===1&&man<=b.sight&&los(m.x,m.y,p.x,p.y);
+  if(sees)m.aware=6; else if(m.aware>0)m.aware--;
+  if(m.elite)m.aware=Math.max(m.aware,1);
+  if(man===1){attackPlayer(m);return;}
+  if(S.phase!=='play')return;
+  const hunting=m.aware>0;
+  const fleeing=b.flee&&m.hp<m.maxhp*.28&&hunting;
+  let moved=false;
+  if(hunting)moved=stepToward(m,fleeing);
+  if(!moved&&(!hunting||rnd()<.3))stepRandom(m);
+}
+function monstersAct(){
+  const list=S.monsters.slice();
+  for(const m of list){
+    if(S.phase!=='play'||m.hp<=0)continue;
+    monsterTurn(m);
+  }
+}
+
+/* ================= ターン進行 ================= */
+function endTurn(){
+  S.turns++; bumpChip('#chipTurn');
+  monstersAct();
+  if(S.phase!=='play'){syncHUD();return;}
+  computeFOV();
+  announce();
+  syncHUD();
+}
+function announce(){
+  for(const m of S.monsters){
+    if(!m.intro&&S.vis[idx(m.x,m.y)]===1){
+      m.intro=true;
+      const b=BEASTS[m.kind];
+      log('視界に'+b.name+（m.elite?'が膨れ上がった。逃れられない。':'が滑り込んだ。'),m.elite?'bad':'sys');
+    }
+  }
+}
+function tryMove(dx,dy){
+  if(S.phase!=='play'||S.locked)return;
+  const p=S.player,nx=p.x+dx,ny=p.y+dy;
+  const m=monsterAt(nx,ny);
+  if(m){playerAttack(m);endTurn();return;}
+  if(isWall(nx,ny)){
+    p.nx=dx*6; p.ny=dy*6;
+    log('冷たい石壁が手を弾いた。','sys');
+    return;
+  }
+  p.x=nx;p.y=ny;
+  const it=itemAt(nx,ny);
+  if(it){
+    if(addItem(it.kind)){
+      S.items.splice(S.items.indexOf(it),1);
+      const d=ITEMS[it.kind];
+      floatText(nx,ny,d.glyph+' 入手',d.color);
+      log(d.name+'を拾った。（'+d.desc+'）','sys');
+    }else{
+      log('荷物がいっぱいだ。'+ITEMS[it.kind].name+'は床に残した。','bad');
+    }
+  }
+  if(S.map[idx(nx,ny)]===2)log('階段が下へ口を開けている。Enter で降りる。','sys');
+  endTurn();
+}
+function wait(){
+  if(S.phase!=='play'||S.locked)return;
+  log('その場で息を殺し、闇に耳を澄ました。','sys');
+  endTurn();
+}
+function tryDescend(){
+  if(S.phase!=='play'||S.locked)return;
+  const p=S.player;
+  if(S.map[idx(p.x,p.y)]!==2){log('ここには階段はない。','sys');return;}
+  if(S.depth>=MAX_DEPTH){victory();return;}
+  S.locked=true;
+  S.depth++;
+  showCard('down');
+  setTimeout(()=>{buildFloor();},380);
+  setTimeout(()=>{
+    hideCard(); S.locked=false;
+    bumpChip('#chipDepth');
+    log('地下 '+S.depth+' 階。冷気が傷を締めつける。','level');
+  },1150);
+}
+
+/* ================= 開始・終了 ================= */
+function newRun(){
+  S.seed=(Date.now()^(Math.random()*0xffffffff))>>>0;
+  rng=mulberry32(S.seed);
+  S.depth=1; S.turns=0; S.inv=[];
+  S.stats={kills:0,dmgDealt:0,dmgTaken:0};
+  S.player={x:1,y:1,lv:1,xp:0,xpNext:12,maxhp:32,hp:32,atk:7,def:1,nx:0,ny:0};
+  fx.floats.length=0; fx.parts.length=0; fx.shake=0; fx.flash=0;
+  logBox.innerHTML='';
+  buildFloor();
+  log('牢は毎回塗り替えられる。今回の刻印は '+q('#seedOut').textContent+'。','sys');
+  log('灰底牢 UNDERASH ― Enter で踏み出す。','level');
+  syncHUD();
+}
+function startRun(){
+  S.phase='play'; hideCard();
+  log('一歩目。闇が息をひそめた。','sys');
+}
+function gameOver(beast){
+  S.phase='dead';
+  log('お前は'+beast.name+'に討たれ、灰底に沈んだ。','bad');
+  flash('200,40,34',.6); shake(14);
+  showCard('dead');
+}
+function victory(){
+  S.phase='clear';
+  S.depth=MAX_DEPTH+1; syncHUD();
+  log('封じの門が開いた。灰の向こうへ、光がある。','level');
+  flash('120,220,190',.5);
+  showCard('clear');
+}
+
+/* ================= カード ================= */
+const ov=q('#overlay');
+function statRow(){
+  return '<div class="card__stats">'+
+    '<div><b>'+S.player.lv+'</b><span>level</span></div>'+
+    '<div><b>'+S.stats.kills+'</b><span>kills</span></div>'+
+    '<div><b>'+S.stats.dmgDealt+'</b><span>damage dealt</span></div>'+
+    '<div><b>'+S.stats.dmgTaken+'</b><span>damage taken</span></div>'+
+    '<div><b>'+S.turns+'</b><span>turns</span></div>'+
+  '</div>';
+}
+function showCard(kind){
+  let html='<div class="shaft"></div>';
+  if(kind==='title'){
+    html+='<div class="card"><p class="card__kick">turn-based roguelike / ascii dungeon</p>'+
+      '<h1>UNDER<em>ASH</em></h1><h1 style="font-size:22px;letter-spacing:.5em;color:#8c9aa9;margin-top:6px">灰底牢</h1>'+
+      '<p>灯りはひとつ、灰を被った自分の呼吸だけ。階段を見つけたら Enter を押して下へ。地下三階の門を抜ければ、この牢からは出られる。<br>壁に阻まれた手はタンを消費しない。迷ってもいい。だが闇は待つことを許さない。</p>'+
+      '<div class="card__keys">'+
+        '<div><kbd>↑ ↓ ← →</kbd> <kbd>W A S D</kbd> 移動・体当たり攻撃</div>'+
+        '<div><kbd>1</kbd>…<kbd>9</kbd> 所持品を使用</div>'+
+        '<div><kbd>Enter</kbd> <kbd>&gt;</kbd> 階段を降りる</div>'+
+        '<div><kbd>.</kbd> 待つ　<kbd>R</kbd> 再生成</div>'+
+      '</div>'+
+      '<p class="prompt"><b>▶ PRESS ENTER</b> to descend</p></div>';
+  }else if(kind==='down'){
+    html+='<div class="card" style="text-align:center">'+
+      '<p class="card__kick">descending</p>'+
+      '<h1 style="letter-spacing:.34em">地下 <em>'+S.depth+'</em> 階</h1>'+
+      '<p style="margin:14px auto 0">階段を降り切る。闇の密度が変わった。</p>'+
+      '<div style="font-family:var(--mono);font-size:22px;color:#5ad0b0;letter-spacing:.6em;margin-top:16px">&gt;<br>&gt;<br>&gt;</div></div>';
+  }else if(kind==='dead'){
+    html+='<div class="card"><p class="card__kick">run ended · depth B'+Math.min(S.depth,MAX_DEPTH)+'</p>'+
+      '<h1 class="ded">YOU DIED</h1>'+
+      '<p>灰は灰を招き、お前の灯は消えた。牢はすでに新しい形へ塗り替わっている。</p>'+
+      statRow()+
+      '<p class="prompt"><b>▶ PRESS R</b> for a new dungeon</p></div>';
+  }else if(kind==='clear'){
+    html+='<div class="card"><p class="card__kick">sealed gate opened · seed '+q('#seedOut').textContent+'</p>'+
+      '<h1 class="win">ESCAPED</h1>'+
+      '<p>地下三階の門をくぐり抜けた。背中で石が鳴り、二度と同じ道にはならない。</p>'+
+      statRow()+
+      '<p class="prompt"><b>▶ PRESS R</b> to enter the ash again</p></div>';
+  }
+  ov.innerHTML=html;
+  ov.classList.remove('gone');
+}
+function hideCard(){ov.classList.add('gone');}
+
+/* ================= 描画 ================= */
+function rr(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+}
+let noisePat=null;
+(function noise(){
+  const c=document.createElement('canvas'); c.width=c.height=150;
+  const g=c.getContext('2d'), d=g.createImageData(150,150);
+  for(let i=0;i<d.data.length;i+=4){
+    const v=Math.random()*255|0;
+    d.data[i]=d.data[i+1]=d.data[i+2]=v; d.data[i+3]=15;
+  }
+  g.putImageData(d,0,0);
+  noisePat=ctx.createPattern(c,'repeat');
+})();
+
+function drawTile(x,y){
+  const i=idx(x,y);
+  const lit=S.vis[i]===1, mem=!lit&&S.seen[i]===1;
+  if(!lit&&!mem)return;
+  const px=x*TILE,py=y*TILE;
+  const t=S.map[i];
+  const a=lit?1:.46;
+  ctx.globalAlpha=a;
+  if(t===0){
+    const nb=[inB(x,y+1)&&S.map[idx(x,y+1)]!==0,inB(x,y-1)&&S.map[idx(x,y-1)]!==0,
+              inB(x+1,y)&&S.map[idx(x+1,y)]!==0,inB(x-1,y)&&S.map[idx(x-1,y)]!==0];
+    const tone=.5+.5*hash2(x,y);
+    const base=lit? ['#2b3541','#28323d','#2f3a47','#262f3a'] : ['#1a212a','#171e26','#1c232c','#151b23'];
+    ctx.fillStyle=base[(Math.floor(hash2(x*3,y*7)*4))%4];
+    rr(px,py,TILE,TILE,2.5); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.035)'; ctx.fillRect(px+2,py+1.5,TILE-4,1.2);
+    for(let k=0;k<3;k++){
+      const h=hash2(x*13+k*7,y*17+k*3);
+      if(h>.62){
+        ctx.fillStyle='rgba(0,0,0,.32)';
+        ctx.fillRect(px+3+h*(TILE-7)|0,py+3+(hash2(y+k,x+k)*(TILE-7)|0),2,2);
+      }
+    }
+    if(nb[0]){
+      ctx.fillStyle=lit?'rgba(120,152,178,.16)':'rgba(80,100,120,.08)';
+      ctx.fillRect(px+1,py+TILE-2.4,TILE-2,2);
+      ctx.fillStyle=lit?'rgba(0,0,0,.45)':'rgba(0,0,0,.25)';
+      ctx.fillRect(px+1,py+TILE-.4,TILE-2,1.2);
+    }
+  }else{
+    ctx.fillStyle=lit?'#121922':'#0c1017';
+    rr(px,py,TILE,TILE,2.5); ctx.fill();
+    ctx.fillStyle=lit?'#3d4b58':'#212a34';
+    ctx.fillRect(px+TILE/2-1,py+TILE/2-1,2,2);
+  }
+  ctx.globalAlpha=1;
+}
+function drawStairs(t){
+  const x=S.stairs.x,y=S.stairs.y;
+  if(S.vis[idx(x,y)]!==1&&S.seen[idx(x,y)]!==1)return;
+  const isLit=S.vis[idx(x,y)]===1;
+  const p=(Math.sin(t/430)+1)/2;
+  ctx.save();
+  if(isLit){ctx.shadowColor='rgba(90,208,176,'+(.45+.4*p)+')';ctx.shadowBlur=10+8*p;}
+  ctx.globalAlpha=isLit?1:.42;
+  ctx.fillStyle=isLit?'#6ee0c0':'#3b8574';
+  ctx.font='700 '+(17+1.4*p)+'px '+MONO();
+  ctx.fillText('>',x*TILE+TILE/2,y*TILE+TILE/2);
+  ctx.restore();
+}
+function drawItems(t){
+  ctx.font='700 15px '+MONO();
+  for(const it of S.items){
+    const i=idx(it.x,it.y);
+    if(S.vis[i]!==1)continue;
+    const d=ITEMS[it.kind],p=(Math.sin(t/380+it.x*1.7+it.y)+1)/2;
+    ctx.save();
+    ctx.shadowColor=d.color; ctx.shadowBlur=4+7*p;
+    ctx.fillStyle=d.color;
+    ctx.fillText(d.glyph,it.x*TILE+TILE/2,it.y*TILE+TILE/2+Math.sin(t/520+it.x)*1.1);
+    ctx.restore();
+  }
+}
+function drawMonsters(t){
+  for(const m of S.monsters){
+    const i=idx(m.x,m.y);
+    if(S.vis[i]!==1)continue;
+    const b=BEASTS[m.kind];
+    const bob=Math.sin(t/500+m.x*2+m.y)*1.2;
+    ctx.save();
+    ctx.shadowColor=b.color; ctx.shadowBlur=m.elite?14:6;
+    ctx.fillStyle=m.elite?'#f0776f':b.color;
+    ctx.font='700 '+(m.elite?19:16)+'px '+MONO();
+    ctx.fillText(b.glyph,m.x*TILE+TILE/2,m.y*TILE+TILE/2+bob);
+    ctx.restore();
+    const w=TILE-8,ratio=clamp(m.hp/m.maxhp,0,1);
+    ctx.fillStyle='rgba(0,0,0,.62)';
+    ctx.fillRect(m.x*TILE+4,m.y*TILE-2.6,w,2.2);
+    ctx.fillStyle=ratio>.55?'#5fbf92':(ratio>.28?'#d9a94f':'#c4453d');
+    ctx.fillRect(m.x*TILE+4,m.y*TILE-2.6,w*ratio,2.2);
+    if(m.aware>0){
+      ctx.save();
+      ctx.globalAlpha=.6+.4*Math.abs(Math.sin(t/220));
+      ctx.fillStyle='#e8635a'; ctx.font='700 12px '+MONO();
+      ctx.fillText('!',m.x*TILE+TILE-4,m.y*TILE+4);
+      ctx.restore();
+    }
+  }
+}
+function drawPlayer(t){
+  const p=S.player;
+  const bob=Math.sin(t/560)*1.2;
+  ctx.save();
+  ctx.shadowColor='rgba(240,198,122,.9)'; ctx.shadowBlur=13;
+  ctx.fillStyle='#f6e0b0';
+  ctx.font='700 20px '+MONO();
+  ctx.fillText('@',p.x*TILE+TILE/2+p.nx,p.y*TILE+TILE/2+bob+p.ny);
+  ctx.restore();
+}
+function draw(t,dt){
+  ctx.fillStyle='#05070a'; ctx.fillRect(0,0,W*TILE,H*TILE);
+  const sh=fx.shake;
+  const ox=sh?(rnd()*2-1)*sh:0, oy=sh?(rnd()*2-1)*sh:0;
+  ctx.save(); ctx.translate(ox,oy);
+
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)drawTile(x,y);
+  drawStairs(t); drawItems(t); drawMonsters(t); drawPlayer(t);
+
+  // 松明の減衰
+  const p=S.player;
+  const cx=p.x*TILE+TILE/2+p.nx, cy=p.y*TILE+TILE/2;
+  const flick=.94+.06*Math.sin(t/95)+.03*Math.sin(t/37);
+  const rad=TILE*(FOV_R+1.1)*flick;
+  const g=ctx.createRadialGradient(cx,cy,TILE*1.1,cx,cy,rad);
+  g.addColorStop(0,'rgba(3,5,8,0)');
+  g.addColorStop(.55,'rgba(4,6,10,.3)');
+  g.addColorStop(1,'rgba(3,4,7,.9)');
+  ctx.fillStyle=g; ctx.fillRect(-40,-40,W*TILE+80,H*TILE+80);
+
+  ctx.globalCompositeOperation='lighter';
+  const gg=ctx.createRadialGradient(cx,cy,0,cx,cy,TILE*4.6*flick);
+  gg.addColorStop(0,'rgba(255,196,124,.24)');
+  gg.addColorStop(.5,'rgba(226,150,70,.09)');
+  gg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=gg; ctx.fillRect(cx-TILE*6,cy-TILE*6,TILE*12,TILE*12);
+  for(const d of fx.dust){
+    d.x+=d.vx*dt/1000; d.y+=d.vy*dt/1000;
+    if(d.y<-6){d.y=H*TILE+6;d.x=rnd()*W*TILE;}
+    if(d.x<-6)d.x=W*TILE+6;
+    const dd=Math.hypot(d.x-cx,d.y-cy);
+    if(dd>TILE*7)continue;
+    const near=1-dd/(TILE*7);
+    ctx.globalAlpha=(.10+.16*Math.abs(Math.sin(t/700+d.p)))*near;
+    ctx.fillStyle='#ffd79a';
+    ctx.fillRect(d.x,d.y,d.s,d.s);
+  }
+  ctx.globalAlpha=1;
+  ctx.globalCompositeOperation='source-over';
+
+  // 粒子
+  for(let i=fx.parts.length-1;i>=0;i--){
+    const q2=fx.parts[i]; q2.age+=dt;
+    if(q2.age>=q2.life){fx.parts.splice(i,1);continue;}
+    q2.x+=q2.vx*dt/1000; q2.y+=q2.vy*dt/1000; q2.vy+=140*dt/1000;
+    const k=1-q2.age/q2.life;
+    ctx.globalAlpha=k*.95; ctx.fillStyle=q2.color;
+    ctx.fillRect(q2.x-q2.r/2,q2.y-q2.r/2,q2.r,q2.r);
+  }
+  ctx.globalAlpha=1;
+  // 浮遊テキスト
+  ctx.font='700 13px '+MONO(); ctx.textAlign='center';
+  for(let i=fx.floats.length-1;i>=0;i--){
+    const f=fx.floats[i]; f.age+=dt;
+    if(f.age>=f.life){fx.floats.splice(i,1);continue;}
+    const k=f.age/f.life;
+    ctx.globalAlpha=1-k*k;
+    ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillText(f.text,f.x+1,f.y-k*26+1);
+    ctx.fillStyle=f.color; ctx.fillText(f.text,f.x,f.y-k*26);
+  }
+  ctx.globalAlpha=1;
+  ctx.restore();
+
+  if(noisePat){ctx.globalAlpha=.5;ctx.fillStyle=noisePat;ctx.fillRect(0,0,W*TILE,H*TILE);ctx.globalAlpha=1;}
+  if(fx.flash>0.001){
+    ctx.fillStyle='rgba('+fx.flashCol+','+fx.flash+')';
+    ctx.fillRect(0,0,W*TILE,H*TILE);
+  }
+  fx.shake*=Math.exp(-dt/110);
+  fx.flash*=Math.exp(-dt/190);
+  const pl=S.player;
+  pl.nx*=Math.exp(-dt/70); pl.ny*=Math.exp(-dt/70);
+}
+let last=performance.now();
+function loop(t){
+  const dt=Math.min(48,t-last); last=t;
+  draw(t,dt);
+  requestAnimationFrame(loop);
+}
+
+/* ================= 入力 ================= */
+const KEYDIR={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],
+  w:[0,-1],W:[0,-1],s:[0,1],S:[0,1],a:[-1,0],A:[-1,0],d:[1,0],D:[1,0]};
+window.addEventListener('keydown',e=>{
+  const k=e.key;
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].indexOf(k)>=0)e.preventDefault();
+  if(k==='r'||k==='R'){newRun();if(S.phase!=='title'){startRun();}else{S.phase='title';showCard('title');}return;}
+  if(S.phase==='title'){
+    if(k==='Enter'||k===' ')startRun();
+    return;
+  }
+  if(S.phase!=='play'){
+    if((k==='Enter'||k===' ')&&S.phase==='clear')  {newRun();startRun();}
+    return;
+  }
+  if(S.locked)return;
+  if(KEYDIR[k]){const d=KEYDIR[k];tryMove(d[0],d[1]);return;}
+  if(k==='Enter'||k==='>'||k==='.'){ if(k==='.')wait(); else tryDescend(); return;}
+  if(k>='1'&&k<='9')useItem(+k-1);
+});
+
+/* ホバーinspect */
+cv.addEventListener('mousemove',e=>{
+  const r=cv.getBoundingClientRect();
+  const x=Math.floor((e.clientX-r.left)/r.width*W);
+  const y=Math.floor((e.clientY-r.top)/r.height*H);
+  const out=q('#inspectOut');
+  if(!inB(x,y)){out.textContent='—';return;}
+  const i=idx(x,y);
+  if(S.vis[i]===1){
+    const m=monsterAt(x,y);
+    if(m){const b=BEASTS[m.kind];
+      out.innerHTML='<span style="color:'+b.color+'">'+b.glyph+'</span> '+b.name+(m.elite?'（獄卒）':'')+'　HP '+m.hp+' / '+m.maxhp+'　攻撃 '+m.atk+'　防御 '+m.def+(m.aware>0?'　<b style="color:#e88d85">警觉</b>':'');
+      return;}
+    const it=itemAt(x,y);
+    if(it){out.innerHTML='<span style="color:'+ITEMS[it.kind].color+'">'+ITEMS[it.kind].glyph+'</span> '+ITEMS[it.kind].name+'　'+ITEMS[it.kind].desc;return;}
+    const t=S.map[i];
+    if(t===2){out.textContent='階段 ― Enter / > で次の階へ';return;}
+    out.textContent=t===0?'岩壁 ― 越えられない':'床　('+x+', '+y+')';
+  }else if(S.seen[i]===1){
+    out.textContent=S.map[i]===2?'記憶：階段があるはずだ':'記憶 ― 踏んだことのある'+(S.map[i]===0?'岩壁':'床');
+  }else out.textContent='未踏 ― 闇の中';
+});
+cv.addEventListener('mouseleave',()=>{q('#inspectOut').textContent='マスにカーソルを合わせると詳細を表示';});
+
+q('#btnDown').addEventListener('click',function(){tryDescend();this.blur();});
+q('#btnNew').addEventListener('click',function(){newRun();startRun();this.blur();});
+
+/* 余燼 */
+(function embers(){
+  const box=q('#embers');
+  for(let i=0;i<7;i++){
+    const s=document.createElement('i');
+    s.style.left=(6+rnd()*88)+'%';
+    s.style.animationDuration=(7+rnd()*7).toFixed(2)+'s';
+    s.style.animationDelay=(-rnd()*10).toFixed(2)+'s';
+    box.appendChild(s);
+  }
+})();
+
+/* 起動 */
+newRun();
+showCard('title');
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
