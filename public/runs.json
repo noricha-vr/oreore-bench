@@ -397,15 +397,18 @@
     "harness": "mlx-lm-api",
     "reasoning_effort": "unknown",
     "attempts": 1,
-    "generated_at": "2026-09-25T14:57:49+09:00",
+    "generated_at": "2026-10-07T03:51:36+09:00",
     "generated_at_source": "measured",
     "sampling": {
-      "temperature": 0.3,
+      "temperature": 1.0,
       "max_tokens": 65000,
-      "top_p": "default"
+      "top_p": 0.95,
+      "top_k": "default",
+      "min_p": "default",
+      "presence_penalty": "default"
     },
     "system_prompt": "none",
-    "post_processing": "none",
+    "post_processing": "extract-fenced-html",
     "runtime": {
       "engine": "mlx-lm",
       "version": "0.31.3",
@@ -419,8 +422,8 @@
       "estimated": false,
       "method": "api-usage",
       "prompt_tokens": 819,
-      "completion_tokens": 28675,
-      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=652.627; ttft_seconds=1.737; effective_prefill_tok_s=471.6; decode_tok_s=44.1; time_to_content_seconds=566.825; thinking_seconds=565.088; reasoning_chunks=24318; content_chunks=3447."
+      "completion_tokens": 40884,
+      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=941.120; ttft_seconds=1.777; effective_prefill_tok_s=460.8; decode_tok_s=43.5; time_to_content_seconds=873.517; thinking_seconds=871.740; reasoning_chunks=37302; content_chunks=2569."
     },
     "cost": {
       "estimated": true,
@@ -465,6 +468,53 @@
       "prompt_tokens": 723,
       "completion_tokens": 38519,
       "note": "Ollama API applied the model chat template; finish_reason=stop; elapsed_seconds=2022.127."
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
+  "hasami-shogi/qwen3-8-flash-next": {
+    "schema_version": 1,
+    "theme": "hasami-shogi",
+    "model": "qwen3-8-flash-next",
+    "model_id": "unsloth/Qwen3.8-Flash-Next-GGUF",
+    "harness": "llamacpp-api",
+    "reasoning_effort": "unknown",
+    "attempts": 1,
+    "generated_at": "2026-10-07T01:54:55+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": 1.0,
+      "max_tokens": 65000,
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0.0,
+      "presence_penalty": 0.0
+    },
+    "system_prompt": "none",
+    "post_processing": "extract-fenced-html",
+    "runtime": {
+      "engine": "llama.cpp",
+      "version": "0.6.0",
+      "framework": "llama.cpp b11429",
+      "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+      "quantization": "Q8_0 (MTP Q8_0)",
+      "hardware": "Mac Studio M3 Ultra 512GB",
+      "api": "openai-compat"
+    },
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 723,
+      "completion_tokens": 43444,
+      "note": "llama-server API applied the model chat template; finish_reason=stop; elapsed_seconds=844.369; ttft_seconds=1.144; effective_prefill_tok_s=632.1; decode_tok_s=51.5; time_to_content_seconds=566.905; thinking_seconds=565.761; reasoning_chunks=26547; content_chunks=16835."
     },
     "cost": {
       "estimated": true,
@@ -646,13 +696,16 @@
     "model_id": "Vontra/MiMo-V2.6-Flash-RL-MLX-4bit-MTP",
     "harness": "mlx-lm-api",
     "reasoning_effort": "unknown",
-    "attempts": 1,
+    "attempts": 2,
     "generated_at": null,
     "generated_at_source": "unknown",
     "sampling": {
-      "temperature": 0.3,
+      "temperature": 1.0,
       "max_tokens": 65000,
-      "top_p": "default"
+      "top_p": 0.95,
+      "top_k": "default",
+      "min_p": "default",
+      "presence_penalty": "default"
     },
     "system_prompt": "none",
     "post_processing": "json-ladder-6-levels",
@@ -669,8 +722,8 @@
       "estimated": false,
       "method": "api-usage",
       "prompt_tokens": 12590,
-      "completion_tokens": 13569,
-      "note": "ローカル MLX API 実測。6段階を独立リクエストで合算。 計測: L1: elapsed_seconds=5.052; ttft_seconds=3.280; effective_prefill_tok_s=522.3; decode_tok_s=50.5; time_to_content_seconds=4.030; thinking_seconds=0.750; reasoning_chunks=29; content_chunks=43 / L2: elapsed_seconds=16.756; ttft_seconds=3.465; effective_prefill_tok_s=531.5; decode_tok_s=49.2; time_to_content_seconds=14.834; thinking_seconds=11.369; reasoning_chunks=500; content_chunks=84 / L3: elapsed_seconds=14.028; ttft_seconds=3.534; effective_prefill_tok_s=529.4; decode_tok_s=49.3; time_to_content_seconds=11.430; thinking_seconds=7.896; reasoning_chunks=368; content_chunks=120 / L4: elapsed_seconds=22.639; ttft_seconds=3.520; effective_prefill_tok_s=528.4; decode_tok_s=49.1; time_to_content_seconds=19.078; thinking_seconds=15.558; reasoning_chunks=695; content_chunks=163 / L5: elapsed_seconds=62.764; ttft_seconds=4.687; effective_prefill_tok_s=509.5; decode_tok_s=48.4; time_to_content_seconds=48.401; thinking_seconds=43.714; reasoning_chunks=1948; content_chunks=653 / L6: elapsed_seconds=193.661; ttft_seconds=5.547; effective_prefill_tok_s=525.7; decode_tok_s=45.5; time_to_content_seconds=165.778; thinking_seconds=160.231; reasoning_chunks=6875; content_chunks=1221."
+      "completion_tokens": 22143,
+      "note": "ローカル MLX API 実測。6段階を独立リクエストで合算。 計測: L1: elapsed_seconds=5.047; ttft_seconds=3.278; effective_prefill_tok_s=522.5; decode_tok_s=50.6; time_to_content_seconds=4.028; thinking_seconds=0.750; reasoning_chunks=29; content_chunks=43 / L2: elapsed_seconds=24.943; ttft_seconds=3.462; effective_prefill_tok_s=532.0; decode_tok_s=49.3; time_to_content_seconds=23.019; thinking_seconds=19.557; reasoning_chunks=859; content_chunks=84 / L3: elapsed_seconds=12.950; ttft_seconds=3.524; effective_prefill_tok_s=530.9; decode_tok_s=49.6; time_to_content_seconds=10.366; thinking_seconds=6.842; reasoning_chunks=316; content_chunks=120 / L4: elapsed_seconds=15.185; ttft_seconds=3.519; effective_prefill_tok_s=528.6; decode_tok_s=49.5; time_to_content_seconds=11.645; thinking_seconds=8.126; reasoning_chunks=371; content_chunks=163 / L5: elapsed_seconds=80.972; ttft_seconds=4.694; effective_prefill_tok_s=508.7; decode_tok_s=48.5; time_to_content_seconds=66.653; thinking_seconds=61.958; reasoning_chunks=2742; content_chunks=649 / L6: elapsed_seconds=358.390; ttft_seconds=5.542; effective_prefill_tok_s=526.2; decode_tok_s=46.1; time_to_content_seconds=328.983; thinking_seconds=323.442; reasoning_chunks=13944; content_chunks=1246."
     },
     "cost": {
       "estimated": true,
@@ -714,6 +767,53 @@
       "prompt_tokens": 11304,
       "completion_tokens": 35033,
       "note": "Ollama API 実測。6段階を独立リクエストで合算。"
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
+  "json-ladder/qwen3-8-flash-next": {
+    "schema_version": 1,
+    "theme": "json-ladder",
+    "model": "qwen3-8-flash-next",
+    "model_id": "unsloth/Qwen3.8-Flash-Next-GGUF",
+    "harness": "llamacpp-api",
+    "reasoning_effort": "unknown",
+    "attempts": 1,
+    "generated_at": null,
+    "generated_at_source": "unknown",
+    "sampling": {
+      "temperature": 1.0,
+      "max_tokens": 65000,
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0.0,
+      "presence_penalty": 0.0
+    },
+    "system_prompt": "none",
+    "post_processing": "json-ladder-6-levels",
+    "runtime": {
+      "engine": "llama.cpp",
+      "api": "openai-compat",
+      "version": "0.6.0",
+      "framework": "llama.cpp b11429",
+      "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+      "quantization": "Q8_0 (MTP Q8_0)",
+      "hardware": "Mac Studio M3 Ultra 512GB"
+    },
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 11304,
+      "completion_tokens": 35754,
+      "note": "llama-server API 実測。6段階を独立リクエストで合算。 計測: L1: elapsed_seconds=5.664; ttft_seconds=2.032; effective_prefill_tok_s=750.0; decode_tok_s=60.6; time_to_content_seconds=5.116; thinking_seconds=3.084; reasoning_chunks=172; content_chunks=46 / L2: elapsed_seconds=45.191; ttft_seconds=2.245; effective_prefill_tok_s=727.9; decode_tok_s=49.9; time_to_content_seconds=43.645; thinking_seconds=41.400; reasoning_chunks=2016; content_chunks=125 / L3: elapsed_seconds=17.318; ttft_seconds=2.288; effective_prefill_tok_s=731.6; decode_tok_s=56.9; time_to_content_seconds=15.431; thinking_seconds=13.143; reasoning_chunks=701; content_chunks=152 / L4: elapsed_seconds=38.080; ttft_seconds=2.275; effective_prefill_tok_s=731.5; decode_tok_s=53.6; time_to_content_seconds=35.883; thinking_seconds=33.608; reasoning_chunks=1740; content_chunks=177 / L5: elapsed_seconds=281.554; ttft_seconds=3.009; effective_prefill_tok_s=720.3; decode_tok_s=49.9; time_to_content_seconds=271.165; thinking_seconds=268.156; reasoning_chunks=13096; content_chunks=788 / L6: elapsed_seconds=330.732; ttft_seconds=3.621; effective_prefill_tok_s=729.4; decode_tok_s=51.1; time_to_content_seconds=312.226; thinking_seconds=308.605; reasoning_chunks=15289; content_chunks=1375."
     },
     "cost": {
       "estimated": true,
@@ -1379,15 +1479,18 @@
     "harness": "mlx-lm-api",
     "reasoning_effort": "unknown",
     "attempts": 1,
-    "generated_at": "2026-09-25T17:23:23+09:00",
+    "generated_at": "2026-10-07T04:34:45+09:00",
     "generated_at_source": "measured",
     "sampling": {
       "temperature": 1.0,
       "max_tokens": 65000,
-      "top_p": "default"
+      "top_p": 0.95,
+      "top_k": "default",
+      "min_p": "default",
+      "presence_penalty": "default"
     },
     "system_prompt": "none",
-    "post_processing": "none",
+    "post_processing": "extract-fenced-html",
     "runtime": {
       "engine": "mlx-lm",
       "version": "0.31.3",
@@ -1401,8 +1504,8 @@
       "estimated": false,
       "method": "api-usage",
       "prompt_tokens": 1080,
-      "completion_tokens": 59311,
-      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=1498.228; ttft_seconds=7.778; effective_prefill_tok_s=138.8; decode_tok_s=39.8; time_to_content_seconds=1004.997; thinking_seconds=997.218; reasoning_chunks=39789; content_chunks=17550."
+      "completion_tokens": 44117,
+      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=1028.499; ttft_seconds=2.184; effective_prefill_tok_s=494.6; decode_tok_s=43.0; time_to_content_seconds=643.508; thinking_seconds=641.325; reasoning_chunks=27770; content_chunks=14923."
     },
     "cost": {
       "estimated": true,
@@ -1447,6 +1550,53 @@
       "prompt_tokens": 945,
       "completion_tokens": 55360,
       "note": "Ollama API applied the model chat template; finish_reason=stop; elapsed_seconds=2968.165."
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
+  "lp-fable5/qwen3-8-flash-next": {
+    "schema_version": 1,
+    "theme": "lp-fable5",
+    "model": "qwen3-8-flash-next",
+    "model_id": "unsloth/Qwen3.8-Flash-Next-GGUF",
+    "harness": "llamacpp-api",
+    "reasoning_effort": "unknown",
+    "attempts": 1,
+    "generated_at": "2026-10-07T02:20:11+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": 1.0,
+      "max_tokens": 65000,
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0.0,
+      "presence_penalty": 0.0
+    },
+    "system_prompt": "none",
+    "post_processing": "extract-fenced-html",
+    "runtime": {
+      "engine": "llama.cpp",
+      "version": "0.6.0",
+      "framework": "llama.cpp b11429",
+      "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+      "quantization": "Q8_0 (MTP Q8_0)",
+      "hardware": "Mac Studio M3 Ultra 512GB",
+      "api": "openai-compat"
+    },
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 945,
+      "completion_tokens": 46769,
+      "note": "llama-server API applied the model chat template; finish_reason=stop; elapsed_seconds=832.820; ttft_seconds=1.398; effective_prefill_tok_s=675.8; decode_tok_s=56.3; time_to_content_seconds=313.590; thinking_seconds=312.192; reasoning_chunks=15354; content_chunks=31368."
     },
     "cost": {
       "estimated": true,
@@ -1856,15 +2006,18 @@
     "harness": "mlx-lm-api",
     "reasoning_effort": "unknown",
     "attempts": 1,
-    "generated_at": "2026-09-25T14:43:49+09:00",
+    "generated_at": "2026-10-07T03:25:36+09:00",
     "generated_at_source": "measured",
     "sampling": {
-      "temperature": 0.3,
+      "temperature": 1.0,
       "max_tokens": 65000,
-      "top_p": "default"
+      "top_p": 0.95,
+      "top_k": "default",
+      "min_p": "default",
+      "presence_penalty": "default"
     },
     "system_prompt": "none",
-    "post_processing": "none",
+    "post_processing": "extract-fenced-html",
     "runtime": {
       "engine": "mlx-lm",
       "version": "0.31.3",
@@ -1878,8 +2031,8 @@
       "estimated": false,
       "method": "api-usage",
       "prompt_tokens": 757,
-      "completion_tokens": 11655,
-      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=260.083; ttft_seconds=3.417; effective_prefill_tok_s=221.5; decode_tok_s=45.4; time_to_content_seconds=4.899; thinking_seconds=1.482; reasoning_chunks=72; content_chunks=10848."
+      "completion_tokens": 37564,
+      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=879.872; ttft_seconds=24.843; effective_prefill_tok_s=30.5; decode_tok_s=43.9; time_to_content_seconds=706.320; thinking_seconds=681.477; reasoning_chunks=29457; content_chunks=6878."
     },
     "cost": {
       "estimated": true,
@@ -1897,22 +2050,25 @@
     "theme": "lp-nishibi",
     "model": "qwen3-8-27b",
     "model_id": "Qwen/Qwen3.8-27B",
-    "harness": "ollama-api",
+    "harness": "llamacpp-api",
     "reasoning_effort": "unknown",
     "attempts": 1,
-    "generated_at": "2026-08-15T05:08:48+09:00",
+    "generated_at": "2026-10-07T05:53:57+09:00",
     "generated_at_source": "measured",
     "sampling": {
-      "temperature": 0.3,
+      "temperature": 1.0,
       "max_tokens": 65000,
-      "top_p": "default"
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0.0,
+      "presence_penalty": 0.0
     },
     "system_prompt": "none",
-    "post_processing": "none",
+    "post_processing": "extract-fenced-html",
     "runtime": {
-      "engine": "ollama",
-      "version": "0.30.6",
-      "framework": "llama.cpp (ollama 0.30.6)",
+      "engine": "llama.cpp",
+      "version": "0.6.0",
+      "framework": "llama.cpp b11429",
       "model_revision": "fdd03b8bbd279c1694563650e79d85a2373d9934",
       "quantization": "Q8_0",
       "hardware": "Mac Studio M3 Ultra 512GB",
@@ -1922,8 +2078,55 @@
       "estimated": false,
       "method": "api-usage",
       "prompt_tokens": 681,
-      "completion_tokens": 38734,
-      "note": "Ollama API applied the model chat template; finish_reason=stop; elapsed_seconds=2024.586."
+      "completion_tokens": 31370,
+      "note": "llama-server API applied the model chat template; finish_reason=stop; elapsed_seconds=1562.598; ttft_seconds=2.177; effective_prefill_tok_s=312.8; decode_tok_s=20.1; time_to_content_seconds=834.805; thinking_seconds=832.628; reasoning_chunks=17089; content_chunks=14259."
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
+  "lp-nishibi/qwen3-8-flash-next": {
+    "schema_version": 1,
+    "theme": "lp-nishibi",
+    "model": "qwen3-8-flash-next",
+    "model_id": "unsloth/Qwen3.8-Flash-Next-GGUF",
+    "harness": "llamacpp-api",
+    "reasoning_effort": "unknown",
+    "attempts": 1,
+    "generated_at": "2026-10-07T01:30:37+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": 1.0,
+      "max_tokens": 65000,
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0.0,
+      "presence_penalty": 0.0
+    },
+    "system_prompt": "none",
+    "post_processing": "extract-fenced-html",
+    "runtime": {
+      "engine": "llama.cpp",
+      "version": "0.6.0",
+      "framework": "llama.cpp b11429",
+      "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+      "quantization": "Q8_0 (MTP Q8_0)",
+      "hardware": "Mac Studio M3 Ultra 512GB",
+      "api": "openai-compat"
+    },
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 681,
+      "completion_tokens": 33254,
+      "note": "llama-server API applied the model chat template; finish_reason=stop; elapsed_seconds=587.322; ttft_seconds=1.264; effective_prefill_tok_s=538.6; decode_tok_s=56.7; time_to_content_seconds=206.877; thinking_seconds=205.612; reasoning_chunks=9705; content_chunks=23513."
     },
     "cost": {
       "estimated": true,
@@ -2337,15 +2540,18 @@
     "harness": "mlx-lm-api",
     "reasoning_effort": "unknown",
     "attempts": 1,
-    "generated_at": "2026-09-25T14:46:56+09:00",
+    "generated_at": "2026-10-07T03:35:55+09:00",
     "generated_at_source": "measured",
     "sampling": {
-      "temperature": 0.3,
+      "temperature": 1.0,
       "max_tokens": 65000,
-      "top_p": "default"
+      "top_p": 0.95,
+      "top_k": "default",
+      "min_p": "default",
+      "presence_penalty": "default"
     },
     "system_prompt": "none",
-    "post_processing": "none",
+    "post_processing": "extract-fenced-html",
     "runtime": {
       "engine": "mlx-lm",
       "version": "0.31.3",
@@ -2359,8 +2565,8 @@
       "estimated": false,
       "method": "api-usage",
       "prompt_tokens": 264,
-      "completion_tokens": 8586,
-      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=187.494; ttft_seconds=0.892; effective_prefill_tok_s=295.8; decode_tok_s=46.0; time_to_content_seconds=137.312; thinking_seconds=136.420; reasoning_chunks=6052; content_chunks=2254."
+      "completion_tokens": 27968,
+      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=618.712; ttft_seconds=0.970; effective_prefill_tok_s=272.1; decode_tok_s=45.3; time_to_content_seconds=557.511; thinking_seconds=556.541; reasoning_chunks=23727; content_chunks=2299."
     },
     "cost": {
       "estimated": true,
@@ -2378,22 +2584,25 @@
     "theme": "othello",
     "model": "qwen3-8-27b",
     "model_id": "Qwen/Qwen3.8-27B",
-    "harness": "ollama-api",
+    "harness": "llamacpp-api",
     "reasoning_effort": "unknown",
     "attempts": 1,
-    "generated_at": "2026-08-15T05:42:20+09:00",
+    "generated_at": "2026-10-07T06:32:47+09:00",
     "generated_at_source": "measured",
     "sampling": {
-      "temperature": 0.3,
+      "temperature": 1.0,
       "max_tokens": 65000,
-      "top_p": "default"
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0.0,
+      "presence_penalty": 0.0
     },
     "system_prompt": "none",
-    "post_processing": "none",
+    "post_processing": "extract-fenced-html",
     "runtime": {
-      "engine": "ollama",
-      "version": "0.30.6",
-      "framework": "llama.cpp (ollama 0.30.6)",
+      "engine": "llama.cpp",
+      "version": "0.6.0",
+      "framework": "llama.cpp b11429",
       "model_revision": "fdd03b8bbd279c1694563650e79d85a2373d9934",
       "quantization": "Q8_0",
       "hardware": "Mac Studio M3 Ultra 512GB",
@@ -2403,8 +2612,55 @@
       "estimated": false,
       "method": "api-usage",
       "prompt_tokens": 273,
-      "completion_tokens": 38563,
-      "note": "Ollama API applied the model chat template; finish_reason=stop; elapsed_seconds=2012.085."
+      "completion_tokens": 45909,
+      "note": "llama-server API applied the model chat template; finish_reason=stop; elapsed_seconds=2329.780; ttft_seconds=0.877; effective_prefill_tok_s=311.2; decode_tok_s=19.7; time_to_content_seconds=1699.572; thinking_seconds=1698.695; reasoning_chunks=34009; content_chunks=11832."
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
+  "othello/qwen3-8-flash-next": {
+    "schema_version": 1,
+    "theme": "othello",
+    "model": "qwen3-8-flash-next",
+    "model_id": "unsloth/Qwen3.8-Flash-Next-GGUF",
+    "harness": "llamacpp-api",
+    "reasoning_effort": "unknown",
+    "attempts": 1,
+    "generated_at": "2026-10-07T01:40:50+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": 1.0,
+      "max_tokens": 65000,
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0.0,
+      "presence_penalty": 0.0
+    },
+    "system_prompt": "none",
+    "post_processing": "extract-fenced-html",
+    "runtime": {
+      "engine": "llama.cpp",
+      "version": "0.6.0",
+      "framework": "llama.cpp b11429",
+      "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+      "quantization": "Q8_0 (MTP Q8_0)",
+      "hardware": "Mac Studio M3 Ultra 512GB",
+      "api": "openai-compat"
+    },
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 273,
+      "completion_tokens": 33865,
+      "note": "llama-server API applied the model chat template; finish_reason=stop; elapsed_seconds=613.535; ttft_seconds=0.610; effective_prefill_tok_s=447.6; decode_tok_s=55.2; time_to_content_seconds=341.002; thinking_seconds=340.392; reasoning_chunks=16812; content_chunks=16994."
     },
     "cost": {
       "estimated": true,
@@ -3070,15 +3326,18 @@
     "harness": "mlx-lm-api",
     "reasoning_effort": "unknown",
     "attempts": 1,
-    "generated_at": "2026-09-25T16:47:36+09:00",
+    "generated_at": "2026-10-07T05:17:48+09:00",
     "generated_at_source": "measured",
     "sampling": {
-      "temperature": 0.3,
+      "temperature": 1.0,
       "max_tokens": 65000,
-      "top_p": "default"
+      "top_p": 0.95,
+      "top_k": "default",
+      "min_p": "default",
+      "presence_penalty": "default"
     },
     "system_prompt": "none",
-    "post_processing": "none",
+    "post_processing": "extract-fenced-html",
     "runtime": {
       "engine": "mlx-lm",
       "version": "0.31.3",
@@ -3092,8 +3351,8 @@
       "estimated": false,
       "method": "api-usage",
       "prompt_tokens": 1672,
-      "completion_tokens": 62201,
-      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=1623.561; ttft_seconds=3.184; effective_prefill_tok_s=525.1; decode_tok_s=38.4; time_to_content_seconds=1166.420; thinking_seconds=1163.236; reasoning_chunks=46564; content_chunks=13150."
+      "completion_tokens": 42235,
+      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=982.364; ttft_seconds=3.179; effective_prefill_tok_s=526.0; decode_tok_s=43.1; time_to_content_seconds=635.773; thinking_seconds=632.595; reasoning_chunks=27522; content_chunks=13169."
     },
     "cost": {
       "estimated": true,
@@ -3138,6 +3397,53 @@
       "prompt_tokens": 1504,
       "completion_tokens": 65000,
       "note": "Ollama API applied the model chat template; finish_reason=length; elapsed_seconds=3533.317."
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
+  "phoenix-lp/qwen3-8-flash-next": {
+    "schema_version": 1,
+    "theme": "phoenix-lp",
+    "model": "qwen3-8-flash-next",
+    "model_id": "unsloth/Qwen3.8-Flash-Next-GGUF",
+    "harness": "llamacpp-api",
+    "reasoning_effort": "unknown",
+    "attempts": 1,
+    "generated_at": "2026-10-07T02:54:28+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": 1.0,
+      "max_tokens": 65000,
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0.0,
+      "presence_penalty": 0.0
+    },
+    "system_prompt": "none",
+    "post_processing": "extract-fenced-html",
+    "runtime": {
+      "engine": "llama.cpp",
+      "version": "0.6.0",
+      "framework": "llama.cpp b11429",
+      "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+      "quantization": "Q8_0 (MTP Q8_0)",
+      "hardware": "Mac Studio M3 Ultra 512GB",
+      "api": "openai-compat"
+    },
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 1504,
+      "completion_tokens": 48369,
+      "note": "llama-server API applied the model chat template; finish_reason=stop; elapsed_seconds=915.311; ttft_seconds=2.173; effective_prefill_tok_s=692.0; decode_tok_s=53.0; time_to_content_seconds=511.885; thinking_seconds=509.712; reasoning_chunks=24528; content_chunks=23784."
     },
     "cost": {
       "estimated": true,
@@ -3587,12 +3893,15 @@
     "harness": "mlx-lm-api",
     "reasoning_effort": "unknown",
     "attempts": 1,
-    "generated_at": "2026-09-25T17:43:22+09:00",
+    "generated_at": "2026-10-07T05:19:14+09:00",
     "generated_at_source": "measured",
     "sampling": {
-      "temperature": 0.3,
+      "temperature": 1.0,
       "max_tokens": 65000,
-      "top_p": "default"
+      "top_p": 0.95,
+      "top_k": "default",
+      "min_p": "default",
+      "presence_penalty": "default"
     },
     "system_prompt": "none",
     "post_processing": "none",
@@ -3609,8 +3918,8 @@
       "estimated": false,
       "method": "api-usage",
       "prompt_tokens": 2763,
-      "completion_tokens": 3273,
-      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=73.333; ttft_seconds=5.430; effective_prefill_tok_s=508.8; decode_tok_s=48.2; time_to_content_seconds=30.085; thinking_seconds=24.655; reasoning_chunks=1164; content_chunks=1957."
+      "completion_tokens": 3915,
+      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=86.506; ttft_seconds=5.424; effective_prefill_tok_s=509.4; decode_tok_s=48.3; time_to_content_seconds=46.519; thinking_seconds=41.095; reasoning_chunks=1849; content_chunks=1776."
     },
     "cost": {
       "estimated": true,
@@ -3655,6 +3964,53 @@
       "prompt_tokens": 2475,
       "completion_tokens": 12004,
       "note": "Ollama API applied the model chat template; finish_reason=stop; elapsed_seconds=615.747."
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
+  "pr-triage/qwen3-8-flash-next": {
+    "schema_version": 1,
+    "theme": "pr-triage",
+    "model": "qwen3-8-flash-next",
+    "model_id": "unsloth/Qwen3.8-Flash-Next-GGUF",
+    "harness": "llamacpp-api",
+    "reasoning_effort": "unknown",
+    "attempts": 1,
+    "generated_at": "2026-10-07T02:57:43+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": 1.0,
+      "max_tokens": 65000,
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0.0,
+      "presence_penalty": 0.0
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "llama.cpp",
+      "version": "0.6.0",
+      "framework": "llama.cpp b11429",
+      "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+      "quantization": "Q8_0 (MTP Q8_0)",
+      "hardware": "Mac Studio M3 Ultra 512GB",
+      "api": "openai-compat"
+    },
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 2475,
+      "completion_tokens": 8529,
+      "note": "llama-server API applied the model chat template; finish_reason=stop; elapsed_seconds=194.438; ttft_seconds=3.513; effective_prefill_tok_s=704.5; decode_tok_s=44.7; time_to_content_seconds=159.347; thinking_seconds=155.834; reasoning_chunks=6515; content_chunks=2011."
     },
     "cost": {
       "estimated": true,
@@ -4248,15 +4604,18 @@
     "harness": "mlx-lm-api",
     "reasoning_effort": "unknown",
     "attempts": 1,
-    "generated_at": "2026-09-25T16:58:24+09:00",
+    "generated_at": "2026-10-07T04:17:36+09:00",
     "generated_at_source": "measured",
     "sampling": {
       "temperature": 1.0,
       "max_tokens": 65000,
-      "top_p": "default"
+      "top_p": 0.95,
+      "top_k": "default",
+      "min_p": "default",
+      "presence_penalty": "default"
     },
     "system_prompt": "none",
-    "post_processing": "none",
+    "post_processing": "extract-fenced-html",
     "runtime": {
       "engine": "mlx-lm",
       "version": "0.31.3",
@@ -4270,8 +4629,8 @@
       "estimated": false,
       "method": "api-usage",
       "prompt_tokens": 1072,
-      "completion_tokens": 26876,
-      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=645.646; ttft_seconds=9.842; effective_prefill_tok_s=108.9; decode_tok_s=42.3; time_to_content_seconds=516.517; thinking_seconds=506.675; reasoning_chunks=20780; content_chunks=5214."
+      "completion_tokens": 63369,
+      "note": "mlx_lm.server applied the model chat template; finish_reason=stop; elapsed_seconds=1559.561; ttft_seconds=2.160; effective_prefill_tok_s=496.3; decode_tok_s=40.7; time_to_content_seconds=1419.193; thinking_seconds=1417.033; reasoning_chunks=56044; content_chunks=4741."
     },
     "cost": {
       "estimated": true,
@@ -4316,6 +4675,53 @@
       "prompt_tokens": 944,
       "completion_tokens": 37137,
       "note": "Ollama API applied the model chat template; finish_reason=stop; elapsed_seconds=1931.643."
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
+  "roguelike/qwen3-8-flash-next": {
+    "schema_version": 1,
+    "theme": "roguelike",
+    "model": "qwen3-8-flash-next",
+    "model_id": "unsloth/Qwen3.8-Flash-Next-GGUF",
+    "harness": "llamacpp-api",
+    "reasoning_effort": "unknown",
+    "attempts": 1,
+    "generated_at": "2026-10-07T02:06:18+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": 1.0,
+      "max_tokens": 65000,
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0.0,
+      "presence_penalty": 0.0
+    },
+    "system_prompt": "none",
+    "post_processing": "none",
+    "runtime": {
+      "engine": "llama.cpp",
+      "version": "0.6.0",
+      "framework": "llama.cpp b11429",
+      "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+      "quantization": "Q8_0 (MTP Q8_0)",
+      "hardware": "Mac Studio M3 Ultra 512GB",
+      "api": "openai-compat"
+    },
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 944,
+      "completion_tokens": 37508,
+      "note": "llama-server API applied the model chat template; finish_reason=stop; elapsed_seconds=683.483; ttft_seconds=1.417; effective_prefill_tok_s=666.1; decode_tok_s=55.0; time_to_content_seconds=360.887; thinking_seconds=359.470; reasoning_chunks=17264; content_chunks=20198."
     },
     "cost": {
       "estimated": true,
@@ -5005,6 +5411,53 @@
       "prompt_tokens": 648,
       "completion_tokens": 50516,
       "note": "Ollama API applied the model chat template; finish_reason=stop; elapsed_seconds=2723.377."
+    },
+    "cost": {
+      "estimated": true,
+      "usd": null,
+      "actual_usd": 0,
+      "prompt_usd_per_mtok": null,
+      "completion_usd_per_mtok": null,
+      "pricing_source": "local-no-reference",
+      "pricing_model": null,
+      "pricing_fetched_at": null
+    }
+  },
+  "suminagashi/qwen3-8-flash-next": {
+    "schema_version": 1,
+    "theme": "suminagashi",
+    "model": "qwen3-8-flash-next",
+    "model_id": "unsloth/Qwen3.8-Flash-Next-GGUF",
+    "harness": "llamacpp-api",
+    "reasoning_effort": "unknown",
+    "attempts": 1,
+    "generated_at": "2026-10-07T02:39:13+09:00",
+    "generated_at_source": "measured",
+    "sampling": {
+      "temperature": 1.0,
+      "max_tokens": 65000,
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0.0,
+      "presence_penalty": 0.0
+    },
+    "system_prompt": "none",
+    "post_processing": "extract-fenced-html",
+    "runtime": {
+      "engine": "llama.cpp",
+      "version": "0.6.0",
+      "framework": "llama.cpp b11429",
+      "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+      "quantization": "Q8_0 (MTP Q8_0)",
+      "hardware": "Mac Studio M3 Ultra 512GB",
+      "api": "openai-compat"
+    },
+    "usage": {
+      "estimated": false,
+      "method": "api-usage",
+      "prompt_tokens": 648,
+      "completion_tokens": 58248,
+      "note": "llama-server API applied the model chat template; finish_reason=stop; elapsed_seconds=1141.636; ttft_seconds=1.121; effective_prefill_tok_s=578.3; decode_tok_s=51.1; time_to_content_seconds=874.301; thinking_seconds=873.181; reasoning_chunks=42068; content_chunks=16097."
     },
     "cost": {
       "estimated": true,
