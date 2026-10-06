@@ -182,6 +182,35 @@ def test_main_writes_raw_content_and_measured_metadata(tmp_path: Path, monkeypat
     assert "system" not in json.dumps(payload)
 
 
+def test_fenced_html_is_extracted_and_recorded(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A preamble + ```html fence reply publishes only the HTML body, like openrouter-run.py."""
+    public = make_public(tmp_path)
+    monkeypatch.setattr(runner, "PUBLIC", public)
+    monkeypatch.setattr(runner, "parse_args", lambda: make_args())
+    body = "<!DOCTYPE html>\n<html><body>ok</body></html>"
+    install_fake_http(monkeypatch, [{"data": []}, completion(f"Here it is.\n```html\n{body}\n```\nEnjoy!\n")])
+
+    assert runner.main() == 0
+
+    model_dir = public / "demo" / "hy3-t512"
+    assert (model_dir / "index.html").read_text(encoding="utf-8") == body
+    run = json.loads((model_dir / "run.json").read_text(encoding="utf-8"))
+    assert run["post_processing"] == "extract-fenced-html"
+
+
+def test_unfenced_html_is_published_raw(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without a fence the artifact keeps the exact response and post_processing stays none."""
+    public = make_public(tmp_path)
+    monkeypatch.setattr(runner, "PUBLIC", public)
+    monkeypatch.setattr(runner, "parse_args", lambda: make_args())
+    install_fake_http(monkeypatch, [{"data": []}, completion("<html>raw</html>\n")])
+
+    assert runner.main() == 0
+
+    run = json.loads((public / "demo" / "hy3-t512" / "run.json").read_text(encoding="utf-8"))
+    assert run["post_processing"] == "none"
+
+
 @pytest.mark.parametrize("reasoning_key", ["reasoning", "reasoning_content"])
 def test_reasoning_deltas_are_timed_but_never_published(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, reasoning_key: str

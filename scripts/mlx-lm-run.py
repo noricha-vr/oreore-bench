@@ -49,6 +49,8 @@ LOCAL_HARNESSES: dict[str, dict[str, str]] = {
     "llamacpp-api": {"engine": "llama.cpp", "api": "openai-compat", "server": "llama-server API"},
 }
 DEFAULT_HARNESS = "mlx-lm-api"
+# 前置き文 + ```html フェンス付きで返すモデルは、openrouter-run.py と同じ規則で本体だけを抜く
+RESUMABLE_POST_PROCESSING = ("none", "extract-fenced-html")
 DEFAULT_BASE_URL = "http://127.0.0.1:18081/v1"
 DEFAULT_MAX_TOKENS = 65000
 DEFAULT_TEMPERATURE = 0.3
@@ -466,6 +468,7 @@ def build_run_json(
     timing: StreamTiming,
     runtime: dict[str, str],
     temperature: float = DEFAULT_TEMPERATURE,
+    post_processing: str = "none",
 ) -> dict[str, Any]:
     """Build schema-versioned metadata for one measured local API generation."""
     return {
@@ -480,7 +483,7 @@ def build_run_json(
         "generated_at_source": "measured",
         "sampling": {"temperature": temperature, "max_tokens": max_tokens, "top_p": "default"},
         "system_prompt": "none",
-        "post_processing": "none",
+        "post_processing": post_processing,
         "runtime": runtime,
         "usage": build_usage(
             prompt_tokens,
@@ -581,8 +584,9 @@ def validate_resume_identity(
         "attempts": 1,
         "generated_at_source": "measured",
         "system_prompt": "none",
-        "post_processing": "none",
     }
+    if run.get("post_processing") not in RESUMABLE_POST_PROCESSING:
+        raise ValueError(f"{run_path}: post_processing mismatch: {run.get('post_processing')!r}")
     mismatched = [
         key
         for key, value in expected.items()
@@ -767,6 +771,13 @@ def run_theme(
         runaway_threshold,
         temperature=temperature,
     )
+    post_processing = "none"
+    if kind == "html":
+        # フェンスが無い応答は生のまま残す（抽出した時だけ本文を差し替えて記録する）
+        extracted_html, extracted = PROMPTS.extract_fenced_html(content)
+        if extracted:
+            content = extracted_html
+            post_processing = "extract-fenced-html"
     run = build_run_json(
         theme=theme,
         model=model,
@@ -779,6 +790,7 @@ def run_theme(
         timing=timing,
         runtime=runtime,
         temperature=temperature,
+        post_processing=post_processing,
     )
     write_atomically(out_dir, output_name, content, run)
     return "written"
