@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "theme": "json-ladder",
+  "model": "qwen3-8-flash-next",
+  "model_id": "unsloth/Qwen3.8-Flash-Next-GGUF",
+  "harness": "llamacpp-api",
+  "reasoning_effort": "unknown",
+  "attempts": 1,
+  "generated_at": null,
+  "generated_at_source": "unknown",
+  "sampling": {
+    "temperature": 1.0,
+    "max_tokens": 65000,
+    "top_p": 0.95,
+    "top_k": 20,
+    "min_p": 0.0,
+    "presence_penalty": 0.0
+  },
+  "system_prompt": "none",
+  "post_processing": "json-ladder-6-levels",
+  "runtime": {
+    "engine": "llama.cpp",
+    "api": "openai-compat",
+    "version": "0.6.0",
+    "framework": "llama.cpp b11429",
+    "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+    "quantization": "Q8_0 (MTP Q8_0)",
+    "hardware": "Mac Studio M3 Ultra 512GB"
+  },
+  "usage": {
+    "estimated": false,
+    "method": "api-usage",
+    "prompt_tokens": 11304,
+    "completion_tokens": 35754,
+    "note": "llama-server API 実測。6段階を独立リクエストで合算。 計測: L1: elapsed_seconds=5.664; ttft_seconds=2.032; effective_prefill_tok_s=750.0; decode_tok_s=60.6; time_to_content_seconds=5.116; thinking_seconds=3.084; reasoning_chunks=172; content_chunks=46 / L2: elapsed_seconds=45.191; ttft_seconds=2.245; effective_prefill_tok_s=727.9; decode_tok_s=49.9; time_to_content_seconds=43.645; thinking_seconds=41.400; reasoning_chunks=2016; content_chunks=125 / L3: elapsed_seconds=17.318; ttft_seconds=2.288; effective_prefill_tok_s=731.6; decode_tok_s=56.9; time_to_content_seconds=15.431; thinking_seconds=13.143; reasoning_chunks=701; content_chunks=152 / L4: elapsed_seconds=38.080; ttft_seconds=2.275; effective_prefill_tok_s=731.5; decode_tok_s=53.6; time_to_content_seconds=35.883; thinking_seconds=33.608; reasoning_chunks=1740; content_chunks=177 / L5: elapsed_seconds=281.554; ttft_seconds=3.009; effective_prefill_tok_s=720.3; decode_tok_s=49.9; time_to_content_seconds=271.165; thinking_seconds=268.156; reasoning_chunks=13096; content_chunks=788 / L6: elapsed_seconds=330.732; ttft_seconds=3.621; effective_prefill_tok_s=729.4; decode_tok_s=51.1; time_to_content_seconds=312.226; thinking_seconds=308.605; reasoning_chunks=15289; content_chunks=1375."
+  },
+  "cost": {
+    "estimated": true,
+    "usd": null,
+    "actual_usd": 0,
+    "prompt_usd_per_mtok": null,
+    "completion_usd_per_mtok": null,
+    "pricing_source": "local-no-reference",
+    "pricing_model": null,
+    "pricing_fetched_at": null
+  }
+}
