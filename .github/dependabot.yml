@@ -1,0 +1,17 @@
+# 依存の更新 PR を週 1 回 Dependabot に作らせる。patch / minor は groups で 1 本にまとめ、
+# .github/workflows/dependabot-automerge.yml の dependabot-policy が判定して auto-merge を予約する。
+# major・高リスク（課金・認証）・マニフェストと lockfile 以外の変更は needs-decision ラベルが付き、人間判断。
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 2
+    groups:
+      actions:
+        update-types: ["minor", "patch"]
+    labels: ["dependencies"]
