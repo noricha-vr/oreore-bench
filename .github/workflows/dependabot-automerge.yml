@@ -58,6 +58,8 @@ jobs:
           commits=$(gh api --paginate "repos/$REPO/pulls/$PR/commits" --jq '.[] | [.sha, (.author.login // ""), (.committer.login // ""), (.commit.verification.reason // "")] | @tsv')
           last_sha=$(printf '%s\n' "$commits" | tail -n1 | cut -f1)
           [ "$last_sha" = "$HEAD_SHA" ] || reasons+=("コミット一覧の最後が head と一致しない")
+          # Dependabot の PR は rebase 後もコミット 1 本。2 本以上ある PR は判定を単純に保つため通さない
+          [ "$(printf '%s\n' "$commits" | grep -c .)" = "1" ] || reasons+=("コミットが 1 本でない")
           unsigned=false
           if printf '%s\n' "$commits" | awk -F'\t' '$2!="dependabot[bot]" || $3!="web-flow" || $4!="valid"{bad=1} END{exit bad?0:1}'; then
             reasons+=("Dependabot の署名済みでないコミットがある"); unsigned=true
@@ -93,17 +95,33 @@ jobs:
           msgs=$(gh api --paginate "repos/$REPO/pulls/$PR/commits" --jq '.[].commit.message')
           n_names=$(printf '%s\n' "$msgs" | grep -cE '^ *- dependency-name:' || true)
           n_types=$(printf '%s\n' "$msgs" | grep -cE '^ *update-type:' || true)
+          # update-type が書かれていても版は必ず見る。Dependabot は 0.1→0.2 を semver-minor と書くが、0.x の minor は破壊的変更の扱い。
+          # 版は依存名ごとに取り（「name 旧版 新版」）、metadata の全依存に版があることを確かめる（行数だけだと二重計上で数が合ってしまう）
+          # shellcheck disable=SC2016  # バッククォートは本文の文字そのもの
+          named=$(printf '%s\n' "$msgs" | sed -nE \
+            -e 's/^Updates `([^`]+)` from v?([0-9]+\.[0-9]+[0-9A-Za-z.+-]*) to v?([0-9]+\.[0-9]+[0-9A-Za-z.+-]*)$/\1 \2 \3/p' \
+            -e 's/^Bumps \[([^]]+)\]\([^)]*\) from v?([0-9]+\.[0-9]+[0-9A-Za-z.+-]*) to v?([0-9]+\.[0-9]+[0-9A-Za-z.+-]*[0-9A-Za-z])\.?$/\1 \2 \3/p' \
+            -e 's/^Bumps ([^ []+) from v?([0-9]+\.[0-9]+[0-9A-Za-z.+-]*) to v?([0-9]+\.[0-9]+[0-9A-Za-z.+-]*[0-9A-Za-z])\.?$/\1 \2 \3/p')
+          # 版の行は 1 本ずつ確かめる。読めない行が 1 本でもある、または同じ依存に版の組が 2 つ以上ある時は通さない
+          # （読める別の行の陰に、読めない更新が隠れないようにする）
+          # shellcheck disable=SC2016  # バッククォートは本文の文字そのもの
+          n_ver_lines=$(printf '%s\n' "$msgs" | grep -cE '^Updates `[^`]+` from |^Bumps .+ from .+ to ' || true)
+          n_named=$(printf '%s' "$named" | grep -c . || true)
+          if printf '%s\n' "$msgs" | grep -qE '^Updates the requirements on '; then reasons+=("requirements を広げる更新を含む（版を確かめられない）"); fi
+          [ "$n_ver_lines" = "$n_named" ] || reasons+=("読めない版の行がある（行 ${n_ver_lines} / 読めた ${n_named}）")
+          named=$(printf '%s\n' "$named" | sort -u)
+          dup=$(printf '%s\n' "$named" | awk 'NF{c[$1]++} END{for (n in c) if (c[n] > 1) print n}')
+          [ -z "$dup" ] || reasons+=("同じ依存に版の行が複数ある: $(printf '%s' "$dup" | tr '\n' ' ')")
           types=""
           if [ "$n_types" -gt 0 ]; then
             # 一部だけ欠けている時は計算で補わずに読めない扱いにする（既にある major を上書きしないため）
             if [ "$n_names" = "$n_types" ]; then types=$(printf '%s\n' "$msgs" | sed -n 's/^ *update-type: *//p' | sort -u); fi
           else
-            # security グループの PR は update-type を書かないので、本文の「Updates `X` from A to B」から計算する。
-            # 先頭の数字（v は除く）が変われば major とみなす。依存の数と行の数が合わなければ読めない扱い
-            # shellcheck disable=SC2016  # バッククォートは本文の文字そのもの
-            updates=$(printf '%s\n' "$msgs" | sed -nE 's/^Updates `([^`]+)` from v?([0-9A-Za-z.+-]+) to v?([0-9A-Za-z.+-]+)$/\1 \2 \3/p')
-            upd_names=$(printf '%s\n' "$updates" | awk 'NF{print $1}' | sort)
-            dep_names=$(printf '%s\n' "$msgs" | sed -n 's/^ *- dependency-name: *//p' | tr -d "\"'" | sort)
+            # security update の PR は update-type を書かないので、本文の版の行（グループは「Updates `X` from A to B」、
+            # 単独は「Bumps [X](…) from A to B.」）から計算する。先頭の数字（v は除く）が変われば major とみなす
+            updates=$named
+            upd_names=$(printf '%s\n' "$updates" | awk 'NF{print $1}' | sort -u)
+            dep_names=$(printf '%s\n' "$msgs" | sed -n 's/^ *- dependency-name: *//p' | tr -d "\"'" | sort -u)
             # 本文の行と metadata の依存名が 1 対 1 で一致する時だけ計算する
             if [ -n "$upd_names" ] && [ "$upd_names" = "$dep_names" ]; then
               # 先頭の数字が変われば major。0.x は minor の桁が変われば major（0.x の minor は破壊的変更の扱い）。数字でない版は読めない扱い
@@ -114,13 +132,6 @@ jobs:
             fi
           fi
           [ -n "$types" ] || reasons+=("update-type が読めない（依存 $n_names / 種類 ${n_types}）")
-          # update-type が書かれていても版は必ず見る。Dependabot は 0.1→0.2 を semver-minor と書くが、0.x の minor は破壊的変更の扱い。
-          # 版は依存名ごとに取り（「name 旧版 新版」）、metadata の全依存に版があることを確かめる（行数だけだと二重計上で数が合ってしまう）
-          # shellcheck disable=SC2016  # バッククォートは本文の文字そのもの
-          named=$(printf '%s\n' "$msgs" | sed -nE \
-            -e 's/^Updates `([^`]+)` from v?([0-9][0-9A-Za-z.+-]*) to v?([0-9][0-9A-Za-z.+-]*)$/\1 \2 \3/p' \
-            -e 's/^Bumps \[([^]]+)\]\([^)]*\) from v?([0-9][0-9A-Za-z.+-]*) to v?([0-9][0-9A-Za-z.+-]*[0-9A-Za-z])\.?$/\1 \2 \3/p' \
-            -e 's/^Bumps ([^ []+) from v?([0-9][0-9A-Za-z.+-]*) to v?([0-9][0-9A-Za-z.+-]*[0-9A-Za-z])\.?$/\1 \2 \3/p' | sort -u)
           missing=$(printf '%s\n' "$msgs" | sed -n 's/^ *- dependency-name: *//p' | tr -d "\"'" | sort -u | while IFS= read -r n; do
             [ -n "$n" ] || continue
             printf '%s\n' "$named" | awk -v n="$n" '$1==n{f=1} END{exit f?0:1}' || printf '%s\n' "$n"
